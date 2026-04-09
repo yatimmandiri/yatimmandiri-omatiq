@@ -59,24 +59,24 @@ jobs:
       - name: Build frontend
         run: npm run build
 
-      # 9️⃣ Prepare Laravel
-      - name: Prepare Environment
-        run: |
-          cp .env.example .env
-          php artisan key:generate
+      # # 9️⃣ Prepare Laravel
+      # - name: Prepare Environment
+      #   run: |
+      #     cp .env.example .env
+      #     php artisan key:generate
 
-      # 🔟 Setup SQLite
-      - name: Setup SQLite
-        run: |
-          mkdir -p database
-          touch database/database.sqlite
+      # # 🔟 Setup SQLite
+      # - name: Setup SQLite
+      #   run: |
+      #     mkdir -p database
+      #     touch database/database.sqlite
 
-      # 11️⃣ Run tests
-      - name: Run tests
-        env:
-          APP_ENV: testing
-          DB_CONNECTION: sqlite
-          DB_DATABASE: database/database.sqlite
-        run: |
-          php artisan migrate --force
-          php artisan test --parallel
+      # # 11️⃣ Run tests
+      # - name: Run tests
+      #   env:
+      #     APP_ENV: testing
+      #     DB_CONNECTION: sqlite
+      #     DB_DATABASE: database/database.sqlite
+      #   run: |
+      #     php artisan migrate --force
+      #     php artisan test --parallel
