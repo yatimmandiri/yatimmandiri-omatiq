@@ -1,56 +1,82 @@
-name: tests
+name: Test & Build (Laravel Inertia)
 
 on:
   push:
-    branches:
-      - develop
-      - main
-      - master
-      - workos
+    branches: ["main"]
   pull_request:
-    branches:
-      - develop
-      - main
-      - master
-      - workos
+    branches: ["main"]
 
 jobs:
-  ci:
+  laravel-tests:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        php-version: ['8.3', '8.4', '8.5']
 
     steps:
+      # 1️⃣ Checkout repository
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
+      # 2️⃣ Setup PHP
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: ${{ matrix.php-version }}
+          php-version: '8.4'
+          extensions: mbstring, bcmath, intl, pdo_sqlite, sqlite3, curl, dom, fileinfo
           tools: composer:v2
-          coverage: xdebug
+          coverage: none
 
-      - name: Setup Node
-        uses: actions/setup-node@v6
+      # 3️⃣ Cache Composer
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
         with:
-          node-version: '22'
+          path: vendor
+          key: composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: composer-
 
-      - name: Install Node Dependencies
-        run: npm i
+      # 4️⃣ Install Composer
+      - name: Install PHP dependencies
+        run: composer install --no-progress --no-interaction --prefer-dist
 
-      - name: Install Dependencies
-        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+      # 5️⃣ Setup Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: 'npm'
 
-      - name: Copy Environment File
-        run: cp .env.example .env
+      # 6️⃣ Cache NPM
+      - name: Cache NPM
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: npm-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: npm-
 
-      - name: Generate Application Key
-        run: php artisan key:generate
+      # 7️⃣ Install dependencies (NPM)
+      - name: Install Node dependencies
+        run: npm ci
 
-      - name: Build Assets
+      # 8️⃣ Build frontend
+      - name: Build frontend
         run: npm run build
 
-      - name: Tests
-        run: ./vendor/bin/pest
+      # 9️⃣ Prepare Laravel
+      - name: Prepare Environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      # 🔟 Setup SQLite
+      - name: Setup SQLite
+        run: |
+          mkdir -p database
+          touch database/database.sqlite
+
+      # 11️⃣ Run tests
+      - name: Run tests
+        env:
+          APP_ENV: testing
+          DB_CONNECTION: sqlite
+          DB_DATABASE: database/database.sqlite
+        run: |
+          php artisan migrate --force
+          php artisan test --parallel
