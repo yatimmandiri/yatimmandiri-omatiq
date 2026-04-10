@@ -1,4 +1,3 @@
-import { Form, Head } from '@inertiajs/react';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
 import TextLink from '@/components/text-link';
@@ -8,8 +7,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { register } from '@/routes';
+import google from '@/routes/google';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
+import { Form, Head } from '@inertiajs/react';
+import { Fragment } from 'react';
+import { FcGoogle } from 'react-icons/fc';
 
 type Props = {
     status?: string;
@@ -23,7 +26,7 @@ export default function Login({
     canRegister,
 }: Props) {
     return (
-        <>
+        <Fragment>
             <Head title="Log in" />
 
             <Form
@@ -111,7 +114,24 @@ export default function Login({
                     {status}
                 </div>
             )}
-        </>
+
+            <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
+                <span className="relative z-10 bg-background px-2 text-muted-foreground">
+                    Or continue with
+                </span>
+            </div>
+
+            <Button asChild type="button" variant="outline">
+                <a
+                    href={google.redirect({ provider: 'google' }).url}
+                    // href={route('google.redirect', { provider: 'google' })}
+                    className="w-full"
+                >
+                    <FcGoogle />
+                    Login with Google
+                </a>
+            </Button>
+        </Fragment>
     );
 }
 

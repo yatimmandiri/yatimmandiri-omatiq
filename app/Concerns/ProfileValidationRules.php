@@ -2,7 +2,7 @@
 
 namespace App\Concerns;
 
-use App\Models\User;
+use App\Models\Core\Users;
 use Illuminate\Validation\Rule;
 
 trait ProfileValidationRules
