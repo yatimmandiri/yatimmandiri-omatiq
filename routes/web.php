@@ -1,9 +1,8 @@
 <?php
 
-use App\Http\Controllers\Welcome\HomeController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', [HomeController::class, 'index'])->name('welcome'); // ← kasih nama di sini
+Route::redirect('/', '/admin/dashboard')->name('home');
 
 require __DIR__ . '/auth.php';
 require __DIR__ . '/settings.php';

@@ -9,17 +9,24 @@
 
 namespace App\Models\Core\Region;
 
-use App\Models\Core\Region\District;
-use App\Models\Core\Region\Province;
 use AzisHapidin\IndoRegion\Traits\RegencyTrait;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
+
+#[Fillable([
+    'name',
+    'province_id',
+])]
 
 /**
  * Regency Model.
  */
 class Regency extends Model
 {
-    use RegencyTrait;
+    use RegencyTrait, LogsActivity;
 
     /**
      * Table name.
@@ -55,5 +62,20 @@ class Regency extends Model
     public function districts()
     {
         return $this->hasMany(District::class);
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable()
+            ->logOnlyDirty()
+            ->useLogName('System');
+    }
+
+    public function scopeSearch(Builder $query, ?string $search)
+    {
+        return $query->when($search, function ($q, $search) {
+            $q->where('name', 'like', "%{$search}%");
+        });
     }
 }

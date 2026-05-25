@@ -1,3 +1,4 @@
+import { Toaster } from '@/components/ui/sonner';
 import AuthLayoutTemplate from '@/layouts/auth/auth-split-layout';
 import { ReactNode } from 'react';
 
@@ -13,6 +14,7 @@ export default function AuthLayout({
     return (
         <AuthLayoutTemplate title={title} description={description}>
             {children}
+            <Toaster position="top-right" richColors />
         </AuthLayoutTemplate>
     );
 }

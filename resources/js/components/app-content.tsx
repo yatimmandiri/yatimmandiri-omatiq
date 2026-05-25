@@ -1,8 +1,7 @@
-import * as React from 'react';
 import { SidebarInset } from '@/components/ui/sidebar';
 import type { AppVariant } from '@/types';
 
-type Props = React.ComponentProps<'main'> & {
+type Props = ComponentProps<'main'> & {
     variant?: AppVariant;
 };
 

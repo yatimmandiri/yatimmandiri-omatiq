@@ -20,7 +20,7 @@ class CreateVillagesTables extends Migration
      */
     public function up()
     {
-        Schema::create('villages', function(Blueprint $table){
+        Schema::create('villages', function (Blueprint $table) {
             $table->char('id', 10)->index();
             $table->char('district_id', 7);
             $table->string('name', 50);
@@ -28,6 +28,7 @@ class CreateVillagesTables extends Migration
                 ->references('id')
                 ->on('districts')
                 ->onUpdate('cascade')->onDelete('restrict');
+            $table->timestamps();
         });
     }
 

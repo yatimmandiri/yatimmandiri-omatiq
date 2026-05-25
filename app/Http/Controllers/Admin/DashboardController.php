@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Services\DashboardService;
+use App\Services\Views\DashboardService;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 

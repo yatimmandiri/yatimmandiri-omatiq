@@ -3,6 +3,10 @@
 namespace Database\Seeders;
 
 use App\Models\Core\Permission;
+use App\Models\Core\Region\District;
+use App\Models\Core\Region\Province;
+use App\Models\Core\Region\Regency;
+use App\Models\Core\Region\Village;
 use App\Models\Core\Role;
 use App\Models\Core\User;
 use Illuminate\Database\Seeder;
@@ -42,11 +46,28 @@ class UserRolePermissionSeeder extends Seeder
             ['name' => 'bulk-user', 'guard_name' => 'web'],
             ['name' => 'view-settings-site', 'guard_name' => 'web'],
             ['name' => 'update-settings-site', 'guard_name' => 'web'],
-            ['name' => 'view-region', 'guard_name' => 'web'],
-            ['name' => 'create-region', 'guard_name' => 'web'],
-            ['name' => 'update-region', 'guard_name' => 'web'],
-            ['name' => 'delete-region', 'guard_name' => 'web'],
-            ['name' => 'data-region', 'guard_name' => 'web'],
+            ['name' => 'view-province', 'guard_name' => 'web'],
+            ['name' => 'create-province', 'guard_name' => 'web'],
+            ['name' => 'update-province', 'guard_name' => 'web'],
+            ['name' => 'delete-province', 'guard_name' => 'web'],
+            ['name' => 'data-province', 'guard_name' => 'web'],
+            ['name' => 'view-regency', 'guard_name' => 'web'],
+            ['name' => 'create-regency', 'guard_name' => 'web'],
+            ['name' => 'update-regency', 'guard_name' => 'web'],
+            ['name' => 'delete-regency', 'guard_name' => 'web'],
+            ['name' => 'data-regency', 'guard_name' => 'web'],
+            ['name' => 'view-district', 'guard_name' => 'web'],
+            ['name' => 'create-district', 'guard_name' => 'web'],
+            ['name' => 'update-district', 'guard_name' => 'web'],
+            ['name' => 'delete-district', 'guard_name' => 'web'],
+            ['name' => 'data-district', 'guard_name' => 'web'],
+            ['name' => 'view-village', 'guard_name' => 'web'],
+            ['name' => 'create-village', 'guard_name' => 'web'],
+            ['name' => 'update-village', 'guard_name' => 'web'],
+            ['name' => 'delete-village', 'guard_name' => 'web'],
+            ['name' => 'data-village', 'guard_name' => 'web'],
+            ['name' => 'view-log-activity', 'guard_name' => 'web'],
+            ['name' => 'data-log-activity', 'guard_name' => 'web'],
         ])->each(fn($permission) => Permission::create($permission)->assignRole('Administrators'));
 
         User::create([
@@ -55,5 +76,25 @@ class UserRolePermissionSeeder extends Seeder
             'email_verified_at' => now(),
             'password' => Hash::make(uniqid()),
         ])->assignRole('Administrators');
+
+        Province::query()->update([
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Regency::query()->update([
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        District::query()->update([
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Village::query()->update([
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
     }
 }

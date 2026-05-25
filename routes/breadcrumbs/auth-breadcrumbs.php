@@ -3,12 +3,12 @@
 use Diglactic\Breadcrumbs\Breadcrumbs;
 use Diglactic\Breadcrumbs\Generator as BreadcrumbTrail;
 
-Breadcrumbs::for('google.redirect', function (BreadcrumbTrail $trail) {
-    $trail->push('Google Redirect', route('google.redirect', ['provider' => 'google']));
+Breadcrumbs::for('auth.redirect', function (BreadcrumbTrail $trail) {
+    $trail->push('Google Redirect', route('auth.redirect', ['provider' => 'google']));
 });
 
-Breadcrumbs::for('google.callback', function (BreadcrumbTrail $trail) {
-    $trail->push('Google Callback', route('google.callback', ['provider' => 'google']));
+Breadcrumbs::for('auth.callback', function (BreadcrumbTrail $trail) {
+    $trail->push('Google Callback', route('auth.callback', ['provider' => 'google']));
 });
 
 Breadcrumbs::for('login', function (BreadcrumbTrail $trail) {
@@ -27,6 +27,14 @@ Breadcrumbs::for('verification.notice', function (BreadcrumbTrail $trail) {
     $trail->push('Verify Email', route('verification.notice'));
 });
 
-Breadcrumbs::for('password.reset', function (BreadcrumbTrail $trail, $token) {
-    $trail->push('Reset Password', route('password.reset', $token));
+Breadcrumbs::for('admin.profile.edit', function (BreadcrumbTrail $trail) {
+    $trail->push('Profile Settings', route('admin.profile.edit'));
+});
+
+Breadcrumbs::for('admin.security.edit', function (BreadcrumbTrail $trail) {
+    $trail->push('Profile Settings', route('admin.security.edit'));
+});
+
+Breadcrumbs::for('admin.appearance.edit', function (BreadcrumbTrail $trail) {
+    $trail->push('Profile Settings', route('admin.appearance.edit'));
 });

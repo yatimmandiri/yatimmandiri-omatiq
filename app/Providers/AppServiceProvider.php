@@ -2,9 +2,11 @@
 
 namespace App\Providers;
 
+use App\Settings\SiteSettings;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -37,14 +39,26 @@ class AppServiceProvider extends ServiceProvider
             app()->isProduction(),
         );
 
-        Password::defaults(fn (): ?Password => app()->isProduction()
-            ? Password::min(12)
+        Password::defaults(
+            fn(): ?Password => app()->isProduction()
+                ? Password::min(12)
                 ->mixedCase()
                 ->letters()
                 ->numbers()
                 ->symbols()
                 ->uncompromised()
-            : null,
+                : null,
         );
+
+        View::composer('*', function ($view) {
+            $settings = app(SiteSettings::class);
+
+            $view->with('settings', [
+                'site_name' => $settings->site_name,
+                'site_description' => $settings->site_description,
+                'logo' => $settings->logo ? asset('storage/' . $settings->logo) : null,
+                'favicon' => $settings->favicon ? asset('storage/' . $settings->favicon) : null,
+            ]);
+        });
     }
 }

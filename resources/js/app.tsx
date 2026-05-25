@@ -1,10 +1,14 @@
-import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { initializeTheme } from '@/hooks/use-appearance';
+import AppLayout from '@/layouts/app-layout';
 import AuthLayout from '@/layouts/auth-layout';
+import SettingsLayout from '@/layouts/settings/layout';
 import { createInertiaApp } from '@inertiajs/react';
-import AppLayout from './layouts/app-layout';
-import { WelcomeLayout } from './layouts/welcome-layout';
+import { configureEcho } from '@laravel/echo-react';
+
+configureEcho({
+    broadcaster: 'reverb',
+});
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
@@ -16,22 +20,15 @@ createInertiaApp({
                 return null;
             case name.startsWith('auth/'):
                 return AuthLayout;
-            // case name.startsWith('settings/'):
-            //     return [AppLayout, SettingsLayout];
-            case name.startsWith('admin/'):
-                return AppLayout;
+            case name.startsWith('settings/'):
+                return [AppLayout, SettingsLayout];
             default:
-                return WelcomeLayout;
+                return AppLayout;
         }
     },
     strictMode: true,
     withApp(app) {
-        return (
-            <TooltipProvider delayDuration={0}>
-                {app}
-                <Toaster />
-            </TooltipProvider>
-        );
+        return <TooltipProvider delayDuration={0}>{app}</TooltipProvider>;
     },
     progress: {
         color: '#4B5563',

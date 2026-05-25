@@ -20,7 +20,7 @@ class CreateDistrictsTables extends Migration
      */
     public function up()
     {
-        Schema::create('districts', function(Blueprint $table){
+        Schema::create('districts', function (Blueprint $table) {
             $table->char('id', 7)->index();
             $table->char('regency_id', 4);
             $table->string('name', 50);
@@ -28,6 +28,7 @@ class CreateDistrictsTables extends Migration
                 ->references('id')
                 ->on('regencies')
                 ->onUpdate('cascade')->onDelete('restrict');
+            $table->timestamps();
         });
     }
 

@@ -2,10 +2,10 @@
 
 namespace App\Http\Middleware;
 
-use App\Settings\SiteSetting;
-use Diglactic\Breadcrumbs\Breadcrumbs;
+use App\Settings\SiteSettings;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
+use Diglactic\Breadcrumbs\Breadcrumbs;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -37,7 +37,7 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        $settings = app(SiteSetting::class);
+        $settings = app(SiteSettings::class);
 
         return [
             ...parent::share($request),
@@ -50,11 +50,6 @@ class HandleInertiaRequests extends Middleware
                         'permissions' => $request->user()->getAllPermissions()->pluck('name')->values(),
                     ]
                     : null,
-                // 'roles' => $request->user()?->roles->pluck('name') ?? [],
-                // 'raw_permissions' => $request->user()?->roles->flatMap->resolvedPermissions->pluck('name'),
-                // 'permissions' => $request->user()
-                //     ? $request->user()->getAllPermissions()->pluck('name')
-                //     : [],
             ],
             'flash' => [
                 'success' => $request->session()->get('success'),
@@ -65,23 +60,25 @@ class HandleInertiaRequests extends Middleware
                 'site_description' => $settings->site_description,
                 'logo' => $settings->logo ? asset('storage/' . $settings->logo) : null,
                 'favicon' => $settings->favicon ? asset('storage/' . $settings->favicon) : null,
-                // 'email' => $settings->email,
-                // 'phone' => $settings->phone,
-                // 'address' => $settings->address,
-                // 'social' => [
-                //     'facebook' => $settings->facebook,
-                //     'twitter' => $settings->twitter,
-                //     'instagram' => $settings->instagram,
-                //     'youtube' => $settings->youtube,
-                //     'tiktok' => $settings->tiktok,
-                //     'whatsapp' => $settings->whatsapp,
-                // ],
-                // 'maintenance_mode' => $settings->maintenance_mode,
+                'email' => $settings->email,
+                'phone' => $settings->phone,
+                'address' => $settings->address,
+                'social' => [
+                    'facebook' => $settings->facebook,
+                    'twitter' => $settings->twitter,
+                    'instagram' => $settings->instagram,
+                    'youtube' => $settings->youtube,
+                    'tiktok' => $settings->tiktok,
+                    'whatsapp' => $settings->whatsapp,
+                ],
+                'maintenance_mode' => $settings->maintenance_mode,
             ],
-            // 'breadcrumbs' => fn() =>
-            // $request->isMethod('get')
-            //     ? Breadcrumbs::generate()
-            //     : [],
+            'breadcrumbs' => $request->isMethod('get') && $request->route()
+                ? Breadcrumbs::generate(
+                    $request->route()->getName(),
+                    ...array_values($request->route()->parameters())
+                )
+                : [],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }

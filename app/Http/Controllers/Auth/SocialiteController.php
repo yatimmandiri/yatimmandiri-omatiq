@@ -2,11 +2,9 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\Concerns\Trait\LogActivity;
+use App\Concerns\Traits\LogActivity;
 use App\Http\Controllers\Controller;
-use App\Models\Core\Social;
 use App\Models\Core\User;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -25,40 +23,35 @@ class SocialiteController extends Controller
     {
         $response = Socialite::driver($provider)->user();
 
-        $user = User::where('email', $response->getEmail())->first();
-        $name = $response->getNickname() ?? $response->getName();
+        $email = $response->getEmail();
 
-        if (!$user) {
-            $user = User::create([
-                'name' => $name,
-                'email' => $response->getEmail(),
+        $user = User::firstOrCreate(
+            [
+                'email' => $email,
+            ],
+            [
+                'name' => $response->getNickname() ?? $response->getName(),
                 'password' => Hash::make(Str::random(8)),
-            ])->assignRole('Users');
+            ]
+        );
 
-            $user->socials()->create([
-                'provider_id' => $response->getId(),
-                'provider' => $provider,
-                'provider_token' => $response->token,
-                'provider_refresh_token' => $response->refreshToken
-            ]);
+        if ($user->wasRecentlyCreated) {
+            $user->assignRole('Users');
         }
 
-        $socials = Social::where('user_id', $user->id)
-            ->where('provider', $provider)
-            ->first();
-
-        if (!$socials) {
-            $user->socials()->create([
-                'provider_id' => $response->getId(),
+        $user->socials()->updateOrCreate(
+            [
                 'provider' => $provider,
+            ],
+            [
+                'provider_id' => $response->getId(),
                 'provider_token' => $response->token,
-                'provider_refresh_token' => $response->refreshToken
-            ]);
-        }
+                'provider_refresh_token' => $response->refreshToken,
+            ]
+        );
 
         Auth::login($user);
 
-        $user->refresh();
         $user->load('roles');
 
         if ($user) {

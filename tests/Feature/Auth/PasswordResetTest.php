@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\Core\Users;
+use App\Models\Core\User;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\Facades\Notification;
 use Laravel\Fortify\Features;

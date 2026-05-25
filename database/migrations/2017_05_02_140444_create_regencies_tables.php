@@ -20,7 +20,7 @@ class CreateRegenciesTables extends Migration
      */
     public function up()
     {
-        Schema::create('regencies', function(Blueprint $table){
+        Schema::create('regencies', function (Blueprint $table) {
             $table->char('id', 4)->index();
             $table->char('province_id', 2);
             $table->string('name', 50);
@@ -28,6 +28,7 @@ class CreateRegenciesTables extends Migration
                 ->references('id')
                 ->on('provinces')
                 ->onUpdate('cascade')->onDelete('restrict');
+            $table->timestamps();
         });
     }
 

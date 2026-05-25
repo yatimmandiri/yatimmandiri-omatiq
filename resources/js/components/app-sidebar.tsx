@@ -9,8 +9,10 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { NavigationList } from '@/data/menus';
 import { dashboard } from '@/routes/admin';
 import { Link } from '@inertiajs/react';
+import { MainNav } from './nav-main';
 
 export function AppSidebar() {
     return (
@@ -28,7 +30,7 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                {/* <NavigationMai  n items={NavigationList} /> */}
+                <MainNav items={NavigationList} />
             </SidebarContent>
 
             <SidebarFooter>

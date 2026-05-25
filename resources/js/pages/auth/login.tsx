@@ -7,11 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { register } from '@/routes';
-import google from '@/routes/google';
+import { redirect } from '@/routes/auth';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
 import { Form, Head } from '@inertiajs/react';
-import { Fragment } from 'react';
 import { FcGoogle } from 'react-icons/fc';
 
 type Props = {
@@ -26,7 +25,7 @@ export default function Login({
     canRegister,
 }: Props) {
     return (
-        <Fragment>
+        <>
             <Head title="Log in" />
 
             <Form
@@ -123,7 +122,7 @@ export default function Login({
 
             <Button asChild type="button" variant="outline">
                 <a
-                    href={google.redirect({ provider: 'google' }).url}
+                    href={redirect({ provider: 'google' }).url}
                     // href={route('google.redirect', { provider: 'google' })}
                     className="w-full"
                 >
@@ -131,7 +130,7 @@ export default function Login({
                     Login with Google
                 </a>
             </Button>
-        </Fragment>
+        </>
     );
 }
 
