@@ -42,7 +42,11 @@ class UserRolePermissionSeeder extends Seeder
             ['name' => 'bulk-user', 'guard_name' => 'web'],
             ['name' => 'view-settings-site', 'guard_name' => 'web'],
             ['name' => 'update-settings-site', 'guard_name' => 'web'],
-
+            ['name' => 'view-region', 'guard_name' => 'web'],
+            ['name' => 'create-region', 'guard_name' => 'web'],
+            ['name' => 'update-region', 'guard_name' => 'web'],
+            ['name' => 'delete-region', 'guard_name' => 'web'],
+            ['name' => 'data-region', 'guard_name' => 'web'],
         ])->each(fn($permission) => Permission::create($permission)->assignRole('Administrators'));
 
         User::create([

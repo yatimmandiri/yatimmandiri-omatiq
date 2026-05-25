@@ -1,3 +1,11 @@
+import permissions from '@/routes/admin/core/permissions';
+import districts from '@/routes/admin/core/regions/districts';
+import provinces from '@/routes/admin/core/regions/provinces';
+import regencies from '@/routes/admin/core/regions/regencies';
+import villages from '@/routes/admin/core/regions/villages';
+import roles from '@/routes/admin/core/roles';
+import users from '@/routes/admin/core/users';
+import settings from '@/routes/admin/settings';
 import { ChevronRight, CogIcon, CpuIcon, MapIcon } from 'lucide-react';
 
 export const NavigationList = [
@@ -12,19 +20,19 @@ export const NavigationList = [
                 children: [
                     {
                         title: 'Permissions',
-                        href: { name: 'permissions.index' },
+                        href: permissions.index().url,
                         permission: 'view-permission',
                         icon: ChevronRight,
                     },
                     {
                         title: 'Roles',
-                        href: { name: 'roles.index' },
+                        href: roles.index().url,
                         permission: 'view-role',
                         icon: ChevronRight,
                     },
                     {
                         title: 'Users',
-                        href: { name: 'users.index' },
+                        href: users.index().url,
                         permission: 'view-user',
                         icon: ChevronRight,
                     },
@@ -35,25 +43,25 @@ export const NavigationList = [
                         children: [
                             {
                                 title: 'Provinces',
-                                href: { name: 'provinces.index' },
+                                href: provinces.index().url,
                                 permission: 'view-region',
                                 icon: ChevronRight,
                             },
                             {
                                 title: 'Regencies',
-                                href: { name: 'regencies.index' },
+                                href: regencies.index().url,
                                 permission: 'view-region',
                                 icon: ChevronRight,
                             },
                             {
                                 title: 'Districts',
-                                href: { name: 'districts.index' },
+                                href: districts.index().url,
                                 permission: 'view-region',
                                 icon: ChevronRight,
                             },
                             {
                                 title: 'Villages',
-                                href: { name: 'villages.index' },
+                                href: villages.index().url,
                                 permission: 'view-region',
                                 icon: ChevronRight,
                             },
@@ -61,6 +69,7 @@ export const NavigationList = [
                     },
                 ],
             },
+
             {
                 title: 'Settings',
                 roles: ['Administrators'],
@@ -68,7 +77,7 @@ export const NavigationList = [
                 children: [
                     {
                         title: 'Site',
-                        href: { name: 'settings.site.edit' },
+                        href: settings.site.edit().url,
                         permission: 'view-settings-site',
                         icon: ChevronRight,
                     },

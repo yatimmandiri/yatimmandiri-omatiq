@@ -1,5 +1,4 @@
 import AppLogo from '@/components/app-logo';
-import { NavigationMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import {
     Sidebar,
@@ -10,19 +9,8 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { NavigationList } from '@/data/menus';
 import { dashboard } from '@/routes/admin';
-import type { NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { LayoutGrid } from 'lucide-react';
-
-const mainNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
-    },
-];
 
 export function AppSidebar() {
     return (
@@ -40,8 +28,7 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                {/* <NavMain items={mainNavItems} /> */}
-                <NavigationMain items={NavigationList} />
+                {/* <NavigationMai  n items={NavigationList} /> */}
             </SidebarContent>
 
             <SidebarFooter>

@@ -78,10 +78,10 @@ class HandleInertiaRequests extends Middleware
                 // ],
                 // 'maintenance_mode' => $settings->maintenance_mode,
             ],
-            'breadcrumbs' => fn() =>
-            $request->isMethod('get')
-                ? Breadcrumbs::generate()
-                : [],
+            // 'breadcrumbs' => fn() =>
+            // $request->isMethod('get')
+            //     ? Breadcrumbs::generate()
+            //     : [],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }
