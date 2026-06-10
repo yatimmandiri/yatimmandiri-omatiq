@@ -1,31 +1,57 @@
-﻿import { MarketingShell } from '@/components/marketing/marketing-components';
-import { Head, usePage } from '@inertiajs/react';
-import { ReactNode } from 'react';
-import { Toaster } from 'sonner';
+﻿import { Head, usePage } from '@inertiajs/react';
+import { ReactNode, useEffect } from 'react';
+import { toast, Toaster } from 'sonner';
+import {
+    FloatingButtonSection,
+    HomeFooterComponent,
+} from './app/home-footer-layout';
+import { HomeHeaderComponent } from './app/home-header-layout';
+import { SidebarProvider } from './app/home-sidebar-layout';
 
-type MetaProps = {
-    pageTitle?: string;
-    meta?: {
-        title?: string;
-        description?: string;
-    };
+const Helmet = ({ children }: { children: ReactNode }) => {
+    return <Head>{children}</Head>;
 };
 
 export const HomeLayout = ({ children }: { children: ReactNode }) => {
-    const { pageTitle, meta } = usePage<MetaProps>().props;
-    const title = meta?.title || pageTitle || 'OMATIQ';
-    const description = meta?.description || 'OMATIQ is a modern education and community platform for creative learning, collaboration, and real impact.';
+    const { props } = usePage<any>();
+    const {
+        pageTitle = 'OMATIQ',
+        meta = {
+            title: 'OMATIQ',
+            description:
+                'OMATIQ is a modern education and community platform for creative learning, collaboration, and real impact.',
+            keywords: 'OMATIQ, education, community, learning, programs',
+        },
+        flash = {},
+    } = props;
+    const { success, error } = flash;
+
+    useEffect(() => {
+        if (success) {
+            toast.success(success);
+        }
+
+        if (error) {
+            toast.error(error);
+        }
+    }, [success, error]);
 
     return (
-        <MarketingShell>
-            <Head title={title}>
-                <meta name="description" content={description} />
-                <meta property="og:title" content={title} />
-                <meta property="og:description" content={description} />
-                <meta property="og:type" content="website" />
-            </Head>
-            {children}
+        <div>
+            <SidebarProvider>
+                <div className="flex min-h-screen flex-col antialiased">
+                    <Head title={meta.title ? meta.title : pageTitle} />
+                    <Helmet>
+                        <meta name="description" content={meta.description} />
+                        <meta name="keywords" content={meta.keywords} />
+                    </Helmet>
+                    <HomeHeaderComponent />
+                    <main className="flex flex-1 flex-col">{children}</main>
+                    <HomeFooterComponent />
+                    <FloatingButtonSection />
+                </div>
+            </SidebarProvider>
             <Toaster position="top-right" richColors />
-        </MarketingShell>
+        </div>
     );
 };

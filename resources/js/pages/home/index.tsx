@@ -1,12 +1,12 @@
 ﻿import {
     CTASection,
     FeatureIcon,
-    HeroSection,
     NewsCard,
     ProgramCard,
     SectionHeader,
     TestimonialCard,
 } from '@/components/marketing/marketing-components';
+import { SliderSection } from '@/components/sections/home/slider-section';
 import { news, partners, programs, testimonials } from '@/components/marketing/site-data';
 import { Link, usePage } from '@inertiajs/react';
 import { ArrowRight, BookOpenCheck, HeartHandshake, Lightbulb, ShieldCheck } from 'lucide-react';
@@ -27,7 +27,7 @@ export default function HomePage() {
 
     return (
         <>
-            <HeroSection />
+            <SliderSection />
 
             <section className="px-5 py-16 lg:px-8">
                 <div className="mx-auto max-w-7xl">
@@ -115,3 +115,4 @@ export default function HomePage() {
         </>
     );
 }
+
