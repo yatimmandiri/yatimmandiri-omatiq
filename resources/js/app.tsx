@@ -1,8 +1,9 @@
-import { TooltipProvider } from '@/components/ui/tooltip';
+﻿import { TooltipProvider } from '@/components/ui/tooltip';
 import { initializeTheme } from '@/hooks/use-appearance';
 import AppLayout from '@/layouts/app-layout';
 import AuthLayout from '@/layouts/auth-layout';
 import SettingsLayout from '@/layouts/settings/layout';
+import { HomeLayout } from '@/layouts/home-layout';
 import { createInertiaApp } from '@inertiajs/react';
 import { configureEcho } from '@laravel/echo-react';
 
@@ -18,6 +19,8 @@ createInertiaApp({
         switch (true) {
             case name === 'welcome':
                 return null;
+            case name.startsWith('home/'):
+                return HomeLayout;
             case name.startsWith('auth/'):
                 return AuthLayout;
             case name.startsWith('settings/'):
@@ -37,3 +40,4 @@ createInertiaApp({
 
 // This will set light / dark mode on load...
 initializeTheme();
+
