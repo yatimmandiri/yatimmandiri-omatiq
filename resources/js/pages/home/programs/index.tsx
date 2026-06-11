@@ -58,7 +58,7 @@ export default function ProgramsPage() {
                 <div className="mx-auto max-w-7xl rounded-[32px] bg-white p-8 shadow-sm ring-1 ring-slate-100 md:p-12">
                     <div className="grid items-center gap-10 lg:grid-cols-[1fr_0.8fr]">
                         <div>
-                            <span className="inline-flex rounded-full bg-[#F15F23]/10 px-4 py-2 text-sm font-black text-[#F15F23]">Programs</span>
+                            <span className="inline-flex rounded-full bg-[#F15F23]/10 px-4 py-2 text-sm font-black text-[#F15F23]">Olimpiade</span>
                             <h1 className="mt-6 text-5xl font-black leading-tight tracking-tight text-[#1E293B] md:text-6xl">Temukan program yang cocok untuk ritme belajarmu.</h1>
                             <p className="mt-5 max-w-2xl text-lg leading-8 text-[#64748B]">Jelajahi katalog OMATIQ berdasarkan minat, kategori, dan tujuan belajar komunitasmu.</p>
                         </div>
@@ -87,7 +87,7 @@ export default function ProgramsPage() {
                     </div>
 
                     <div className="mt-12">
-                        <SectionHeader eyebrow="Catalog" title="Program pilihan OMATIQ" description={`${filteredPrograms.length} program tersedia untuk dijelajahi.`} align="left" />
+                        <SectionHeader eyebrow="Catalog" title="Olimpiade pilihan OMATIQ" description={`${filteredPrograms.length} program tersedia untuk dijelajahi.`} align="left" />
                         {visiblePrograms.length > 0 ? (
                             <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                                 {visiblePrograms.map((program) => <ProgramCard key={program.id} program={program} />)}

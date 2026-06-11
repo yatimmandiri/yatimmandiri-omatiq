@@ -46,9 +46,9 @@ export const HomeFooterComponent = () => {
                             {[
                                 ['Home', '/'],
                                 ['About Us', '/about'],
-                                ['Programs', '/programs'],
+                                ['Olimpiade', '/programs'],
                                 ['News', '/news'],
-                                ['Contact', '/contact'],
+                                ['Contact', '/kontak'],
                             ].map(([label, href]) => (
                                 <li key={href}>
                                     <a href={href} className="transition hover:text-white">
@@ -60,14 +60,14 @@ export const HomeFooterComponent = () => {
                     </div>
 
                     <div>
-                        <h3 className="mb-5 text-lg font-bold">Program Unggulan</h3>
+                        <h3 className="mb-5 text-lg font-bold">Cabang Olimpiade</h3>
                         <ul className="space-y-3 text-sm text-white/75">
                             {[
-                                'Creative Learning Lab',
-                                'Community Builder Academy',
-                                'Future Ready Classroom',
-                                'Digital Skills Sprint',
-                                'Mentor Circle',
+                                "Olimpiade Al-Quran",
+                                'Olimpiade Matematika',
+                                'Try Out Nasional',
+                                'Kelas Persiapan',
+                                'Final Nasional',
                             ].map((item) => (
                                 <li key={item}>
                                     <a href="/programs" className="transition hover:text-white">
@@ -97,7 +97,7 @@ export const HomeFooterComponent = () => {
 
                         <div className="mt-6">
                             <p className="mb-3 text-sm font-medium">
-                                Dapatkan Update Program
+                                Dapatkan Update Olimpiade
                             </p>
                             <div className="flex overflow-hidden rounded-2xl border border-white/10 bg-white/5">
                                 <input
@@ -174,3 +174,6 @@ export const FloatingButtonSection = () => {
         </div>
     );
 };
+
+
+

@@ -9,7 +9,11 @@ import {
 export const HomeHeaderComponent = () => {
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const { settings } = usePage<any>().props;
+    const page = usePage<any>();
+    const { settings } = page.props;
+    const currentPath = (page.url || '/').split('?')[0];
+    const isHomePage = currentPath === '/';
+    const useSolidHeader = isScrolled || !isHomePage;
 
     const logoUrl = (() => {
         if (!settings?.logo) {
@@ -40,8 +44,8 @@ export const HomeHeaderComponent = () => {
         <Fragment>
             <header
                 className={`fixed top-0 left-0 z-50 w-full transition-all duration-300 ${
-                    isScrolled
-                        ? 'border-b border-white/10 bg-[#0F60AC]/95 shadow-2xl backdrop-blur-xl'
+                    useSolidHeader
+                        ? 'border-b border-slate-200/70 bg-white/95 shadow-xl shadow-[#0F60AC]/5 backdrop-blur-xl dark:border-slate-700/60 dark:bg-slate-950/95'
                         : 'bg-transparent'
                 }`}
             >
@@ -58,25 +62,25 @@ export const HomeHeaderComponent = () => {
                                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#F15F23] font-black text-white shadow-lg shadow-[#F15F23]/25">
                                     <Sparkles className="h-6 w-6" />
                                 </div>
-                                <div className="text-white">
+                                <div className={useSolidHeader ? 'text-[#1E293B] dark:text-white' : 'text-white'}>
                                     <h1 className="text-lg font-black">
                                         OMATIQ
                                     </h1>
-                                    <p className="text-xs text-white/65">
-                                        Learn. Create. Grow.
+                                    <p className={useSolidHeader ? 'text-xs text-[#64748B] dark:text-white/65' : 'text-xs text-white/65'}>
+                                        Olimpiade Anak Indonesia
                                     </p>
                                 </div>
                             </Fragment>
                         )}
                     </a>
 
-                    <NavigationComponent />
+                    <NavigationComponent solid={useSolidHeader} />
 
                     <a
                         href="/kontak"
                         className="hidden rounded-xl bg-[#F15F23] px-5 py-3 text-sm font-black text-white shadow-lg shadow-[#F15F23]/20 transition hover:-translate-y-0.5 hover:bg-[#d94f18] lg:inline-flex"
                     >
-                        Join Community
+                        Daftar OMATIQ
                     </a>
 
                     <button
@@ -88,8 +92,12 @@ export const HomeHeaderComponent = () => {
                             event.stopPropagation();
                             setIsMobileMenuOpen((open) => !open);
                         }}
-                        className={`flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 text-white backdrop-blur-md transition hover:bg-white/20 lg:hidden ${
-                            isMobileMenuOpen ? 'bg-[#F15F23]' : 'bg-white/10'
+                        className={`flex h-11 w-11 items-center justify-center rounded-xl backdrop-blur-md transition lg:hidden ${
+                            isMobileMenuOpen
+                                ? 'border border-[#F15F23] bg-[#F15F23] text-white'
+                                : useSolidHeader
+                                  ? 'border border-slate-200 bg-white text-[#0F60AC] shadow-sm hover:bg-[#F8FAFC] dark:border-white/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/20'
+                                  : 'border border-white/10 bg-white/10 text-white hover:bg-white/20'
                         }`}
                     >
                         <Menu size={22} />

@@ -1,6 +1,6 @@
 ﻿import { Link, usePage } from '@inertiajs/react';
-import { ArrowRight, ChevronLeft, ChevronRight, PlayCircle, X } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { ArrowRight, PlayCircle, X } from 'lucide-react';
+import { PointerEvent, useEffect, useMemo, useState } from 'react';
 
 type SliderItem = {
     title: string;
@@ -20,34 +20,34 @@ type HeroStats = {
 
 const fallbackSliders: SliderItem[] = [
     {
-        title: 'Belajar kreatif, tumbuh bersama, berdampak nyata.',
+        title: 'Olimpiade nasional untuk generasi cerdas dan berakhlak.',
         subtitle:
-            'OMATIQ menghadirkan pengalaman belajar modern untuk pelajar, mentor, sekolah, dan komunitas yang ingin bergerak lebih jauh.',
+            'OMATIQ menjadi ruang kompetisi nasional untuk anak-anak Indonesia dalam bidang Al-Quran dan Matematika, dengan pengalaman lomba yang seru, terarah, dan inspiratif.',
         featured_image:
             'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&w=1920&q=80',
         url: '/programs',
         video_url: 'https://www.youtube.com/watch?v=ysz5S6PUM-U',
-        badge: 'Modern Education & Community',
+        badge: 'Olimpiade Nasional Anak Indonesia',
     },
     {
-        title: 'Program ramah komunitas untuk skill masa depan.',
+        title: 'Mulai dari tajwid, cara baca, sampai logika matematika.',
         subtitle:
-            'Dari creative learning sampai community builder academy, setiap sesi dirancang praktis, playful, dan mudah diterapkan.',
+            'Cabang awal OMATIQ fokus pada Olimpiade Al-Quran dan Olimpiade Matematika, lalu akan berkembang ke bidang lain di masa depan.',
         featured_image:
             'https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1920&q=80',
         url: '/programs',
         video_url: 'https://www.youtube.com/watch?v=ysz5S6PUM-U',
-        badge: 'Project-Based Learning',
+        badge: 'Al-Quran & Matematika',
     },
     {
-        title: 'Ruang tumbuh untuk mentor, learner, dan partner.',
+        title: 'Ajang prestasi untuk anak-anak dari seluruh Indonesia.',
         subtitle:
-            'Bangun kolaborasi pendidikan yang hangat, terukur, dan relevan dengan kebutuhan komunitas hari ini.',
+            'OMATIQ dirancang agar sekolah, orang tua, guru, dan peserta dapat mengikuti perjalanan lomba dengan mudah dan penuh semangat.',
         featured_image:
             'https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=1920&q=80',
-        url: '/contact',
+        url: '/kontak',
         video_url: 'https://www.youtube.com/watch?v=ysz5S6PUM-U',
-        badge: 'Collaboration Starts Here',
+        badge: 'Dari Daerah Menuju Nasional',
     },
 ];
 
@@ -59,6 +59,7 @@ export const SliderSection = () => {
     );
     const [activeIndex, setActiveIndex] = useState(0);
     const [selectedSlider, setSelectedSlider] = useState<SliderItem | null>(null);
+    const [touchStartX, setTouchStartX] = useState<number | null>(null);
 
     useEffect(() => {
         const interval = window.setInterval(() => {
@@ -72,12 +73,36 @@ export const SliderSection = () => {
         ? getVideoEmbedUrl(selectedSlider.video_url)
         : null;
 
-    const goToSlide = (index: number) => {
-        setActiveIndex((index + sliderItems.length) % sliderItems.length);
+    const moveSlide = (direction: 1 | -1) => {
+        setActiveIndex((current) => (current + direction + sliderItems.length) % sliderItems.length);
+    };
+
+    const handlePointerDown = (event: PointerEvent<HTMLElement>) => {
+        setTouchStartX(event.clientX);
+    };
+
+    const handlePointerUp = (event: PointerEvent<HTMLElement>) => {
+        if (touchStartX === null) {
+            return;
+        }
+
+        const diff = event.clientX - touchStartX;
+        setTouchStartX(null);
+
+        if (Math.abs(diff) < 45) {
+            return;
+        }
+
+        moveSlide(diff < 0 ? 1 : -1);
     };
 
     return (
-        <section className="relative overflow-hidden bg-slate-950">
+        <section
+            className="relative touch-pan-y overflow-hidden bg-slate-950"
+            onPointerDown={handlePointerDown}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={() => setTouchStartX(null)}
+        >
             <div className="relative min-h-162.5 overflow-hidden sm:min-h-180 lg:h-195">
                 {sliderItems.map((item: SliderItem, index: number) => (
                     <SliderItemSection
@@ -89,43 +114,6 @@ export const SliderSection = () => {
                         onPlayVideo={setSelectedSlider}
                     />
                 ))}
-            </div>
-
-            <div className="absolute right-4 bottom-8 left-4 z-20 mx-auto flex max-w-7xl items-center justify-between gap-4 px-0 sm:px-2 lg:px-8">
-                <div className="flex items-center gap-2">
-                    {sliderItems.map((item: SliderItem, index: number) => (
-                        <button
-                            key={`${item.title}-dot`}
-                            type="button"
-                            onClick={() => goToSlide(index)}
-                            aria-label={`Go to slide ${index + 1}`}
-                            className={`h-2.5 rounded-full transition-all ${
-                                index === activeIndex
-                                    ? 'w-10 bg-[#F15F23]'
-                                    : 'w-2.5 bg-white/45 hover:bg-white/80'
-                            }`}
-                        />
-                    ))}
-                </div>
-
-                <div className="hidden items-center gap-2 sm:flex">
-                    <button
-                        type="button"
-                        onClick={() => goToSlide(activeIndex - 1)}
-                        className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white backdrop-blur-md transition hover:bg-white/20"
-                        aria-label="Previous slide"
-                    >
-                        <ChevronLeft className="h-5 w-5" />
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => goToSlide(activeIndex + 1)}
-                        className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white backdrop-blur-md transition hover:bg-white/20"
-                        aria-label="Next slide"
-                    >
-                        <ChevronRight className="h-5 w-5" />
-                    </button>
-                </div>
             </div>
 
             {selectedVideoUrl && selectedSlider && (
@@ -206,7 +194,7 @@ const SliderItemSection = ({
                     <div className="max-w-3xl text-white">
                         <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-bold backdrop-blur-md sm:mb-6 sm:px-5 sm:text-sm">
                             <span className="h-2 w-2 rounded-full bg-[#5DD39E]" />
-                            {item.badge || 'OMATIQ Learning Community'}
+                            {item.badge || 'OMATIQ National Olympiad'}
                         </div>
                         <h1 className="text-3xl leading-tight font-black sm:text-5xl md:text-6xl lg:text-7xl">
                             {item.title}
@@ -219,7 +207,7 @@ const SliderItemSection = ({
                                 href={item.url || '/programs'}
                                 className="group inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#F15F23] px-5 py-3 text-sm font-black text-white shadow-xl shadow-[#F15F23]/25 transition hover:scale-[1.02] hover:bg-[#d94f18] sm:w-auto sm:px-6 sm:py-4 sm:text-base"
                             >
-                                <span>Pelajari Selengkapnya</span>
+                                <span>Lihat Olimpiade</span>
                                 <ArrowRight
                                     size={18}
                                     className="transition group-hover:translate-x-1"
@@ -232,7 +220,7 @@ const SliderItemSection = ({
                                 className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur-md transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:px-6 sm:py-4 sm:text-base"
                             >
                                 <PlayCircle size={20} />
-                                Video Program
+                                Video Olimpiade
                             </button>
                         </div>
                         <div className="mt-8 grid grid-cols-2 gap-3 sm:mt-12 sm:gap-4 lg:grid-cols-4">
@@ -259,7 +247,7 @@ const SliderItemSection = ({
 
 const getHeroStats = (stats: HeroStats) => [
     { label: 'Peserta Belajar', value: stats.participants ?? 12000 },
-    { label: 'Program Aktif', value: stats.activePrograms ?? 48 },
+    { label: 'Cabang Olimpiade', value: stats.activePrograms ?? 48 },
     { label: 'Komunitas', value: stats.communities ?? 120 },
     { label: 'Mitra Kolaborasi', value: stats.partners ?? 36 },
 ];
@@ -305,3 +293,8 @@ const getVideoEmbedUrl = (url: string | null | undefined) => {
 
     return url;
 };
+
+
+
+
+

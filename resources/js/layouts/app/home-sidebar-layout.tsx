@@ -1,4 +1,4 @@
-import {
+﻿import {
     Disclosure,
     DisclosureButton,
     DisclosurePanel,
@@ -13,9 +13,8 @@ export const UseSidebar = () => useContext(SidebarContext);
 
 export const SidebarProvider = ({ children }: { children: ReactNode }) => {
     const menus = [
-        { label: 'Home', href: '/' },
         { label: 'Tentang Kami', href: '/about' },
-        { label: 'Program', href: '/programs' },
+        { label: 'Olimpiade', href: '/programs' },
         { label: 'Artikel', href: '/berita' },
         { label: 'Kontak', href: '/kontak' },
     ];
@@ -37,7 +36,7 @@ export const SidebarProvider = ({ children }: { children: ReactNode }) => {
     );
 };
 
-export const NavigationComponent = () => {
+export const NavigationComponent = ({ solid = false }: { solid?: boolean }) => {
     const { menus }: any = UseSidebar();
 
     return (
@@ -46,19 +45,23 @@ export const NavigationComponent = () => {
                 <div key={menu.href} className="group relative">
                     <a
                         href={menu.href}
-                        className="flex items-center gap-1 rounded-xl px-4 py-2 text-sm font-bold text-white/85 transition hover:bg-white/10 hover:text-white"
+                        className={`flex items-center gap-1 rounded-xl px-4 py-2 text-sm font-bold transition ${
+                            solid
+                                ? 'text-[#1E293B] hover:bg-[#0F60AC]/10 hover:text-[#0F60AC] dark:text-white/85 dark:hover:bg-white/10 dark:hover:text-white'
+                                : 'text-white/85 hover:bg-white/10 hover:text-white'
+                        }`}
                     >
                         {menu.label}
                         {menu.children && <ChevronDown size={16} />}
                     </a>
 
                     {menu.children && (
-                        <div className="pointer-events-none absolute top-full left-0 mt-3 min-w-56 translate-y-3 rounded-2xl border border-white/10 bg-slate-950/95 p-2 opacity-0 shadow-2xl backdrop-blur-xl transition-all duration-300 group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100">
+                        <div className="pointer-events-none absolute top-full left-0 mt-3 min-w-56 translate-y-3 rounded-2xl border border-slate-200/70 bg-white/95 p-2 opacity-0 shadow-2xl backdrop-blur-xl transition-all duration-300 group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100 dark:border-white/10 dark:bg-slate-950/95">
                             {menu.children.map((child: any) => (
                                 <a
                                     key={child.href}
                                     href={child.href}
-                                    className="block rounded-xl px-4 py-3 text-sm text-white/70 transition hover:bg-white/10 hover:text-white"
+                                    className="block rounded-xl px-4 py-3 text-sm font-semibold text-[#1E293B] transition hover:bg-[#0F60AC]/10 hover:text-[#0F60AC] dark:text-white/70 dark:hover:bg-white/10 dark:hover:text-white"
                                 >
                                     {child.label}
                                 </a>
