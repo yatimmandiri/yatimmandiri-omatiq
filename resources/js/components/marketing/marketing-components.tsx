@@ -335,7 +335,7 @@ export const CTASection = ({ title = 'Siap tumbuh bersama OMATIQ?', description 
                     <h2 className="mt-4 max-w-3xl text-3xl font-black tracking-tight md:text-5xl">{title}</h2>
                     <p className="mt-4 max-w-2xl text-base leading-8 text-white/85">{description}</p>
                 </div>
-                <Link href="/contact" className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-6 py-4 text-sm font-black text-[#F15F23] shadow-lg transition hover:-translate-y-1">
+                <Link href="/kontak" className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-6 py-4 text-sm font-black text-[#F15F23] shadow-lg transition hover:-translate-y-1">
                     Start Collaboration
                     <ArrowRight className="h-4 w-4" />
                 </Link>

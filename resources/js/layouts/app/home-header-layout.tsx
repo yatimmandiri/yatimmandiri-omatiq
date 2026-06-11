@@ -73,7 +73,7 @@ export const HomeHeaderComponent = () => {
                     <NavigationComponent />
 
                     <a
-                        href="/contact"
+                        href="/kontak"
                         className="hidden rounded-xl bg-[#F15F23] px-5 py-3 text-sm font-black text-white shadow-lg shadow-[#F15F23]/20 transition hover:-translate-y-0.5 hover:bg-[#d94f18] lg:inline-flex"
                     >
                         Join Community
@@ -81,8 +81,16 @@ export const HomeHeaderComponent = () => {
 
                     <button
                         type="button"
-                        onClick={() => setIsMobileMenuOpen(true)}
-                        className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/10 text-white backdrop-blur-md transition hover:bg-white/20 lg:hidden"
+                        aria-label="Open navigation menu"
+                        aria-expanded={isMobileMenuOpen}
+                        onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            setIsMobileMenuOpen((open) => !open);
+                        }}
+                        className={`flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 text-white backdrop-blur-md transition hover:bg-white/20 lg:hidden ${
+                            isMobileMenuOpen ? 'bg-[#F15F23]' : 'bg-white/10'
+                        }`}
                     >
                         <Menu size={22} />
                     </button>
