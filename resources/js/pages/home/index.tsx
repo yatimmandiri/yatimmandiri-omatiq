@@ -6,7 +6,7 @@
     TestimonialCard,
 } from '@/components/marketing/marketing-components';
 import { SliderSection } from '@/components/sections/home/slider-section';
-import { news, partners, testimonials } from '@/components/marketing/site-data';
+import { news, partners, programs, testimonials } from '@/components/marketing/site-data';
 import { Link, usePage } from '@inertiajs/react';
 import { PointerEvent, useEffect, useState } from 'react';
 import {
@@ -227,6 +227,28 @@ export default function HomePage() {
                 </div>
             </section>
 
+            <CTASection title="Daftarkan anak untuk tampil di panggung OMATIQ" description="Ajak anak mengikuti olimpiade nasional yang mengasah kemampuan Al-Qur'an, Matematika, keberanian, dan semangat berprestasi sejak dini." />
+            
+            {/* Program view */}
+            <section className="px-5 py-16 lg:px-8">
+                <div className="mx-auto max-w-7xl">
+                    <SectionHeader eyebrow="Olimpiade" title="Olimpiade OMATIQ" description="Olimpiade OMATIQ membantu anak membangun akhlak, ketelitian, logika, dan percaya diri dalam proses belajar." />
+                    <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+                        {programs.map((program) => (
+                            <Link
+                                key={program.title}
+                                href='#'
+                                className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-100 transition hover:-translate-y-1 hover:shadow-xl"
+                            >   
+                                <img src={program.image} alt={program.title} className="min-h-96 w-full object-cover" />
+                                <h3 className="mt-5 text-xl font-black text-[#1E293B]">{program.title}</h3>
+                                <p className="mt-3 text-sm leading-7 text-[#64748B]">{program.description}</p>
+                            </Link>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
             <section className="bg-white px-5 py-16 lg:px-8">
                 <div className="mx-auto max-w-7xl">
                     <SectionHeader eyebrow="Latest News" title="Kabar terbaru dari OMATIQ" description="Ikuti update olimpiade, informasi cabang lomba, dan cerita perjalanan peserta dari berbagai daerah." />
@@ -267,8 +289,6 @@ export default function HomePage() {
                     <PartnerSlider items={partnerItems} />
                 </div>
             </section>
-
-            <CTASection title="Daftarkan anak untuk tampil di panggung OMATIQ" description="Ajak anak mengikuti olimpiade nasional yang mengasah kemampuan Al-Qur'an, Matematika, keberanian, dan semangat berprestasi sejak dini." />
         </>
     );
 }

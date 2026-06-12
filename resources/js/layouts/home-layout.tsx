@@ -15,16 +15,10 @@ const Helmet = ({ children }: { children: ReactNode }) => {
 export const HomeLayout = ({ children }: { children: ReactNode }) => {
     const { props } = usePage<any>();
     const {
-        pageTitle = 'OMATIQ',
-        meta = {
-            title: 'OMATIQ',
-            description:
-                'OMATIQ is a modern education and community platform for creative learning, collaboration, and real impact.',
-            keywords: 'OMATIQ, education, community, learning, programs',
-        },
-        flash = {},
+        pageTitle,
+        meta,
+        flash: { success, error },
     } = props;
-    const { success, error } = flash;
 
     useEffect(() => {
         if (success) {
