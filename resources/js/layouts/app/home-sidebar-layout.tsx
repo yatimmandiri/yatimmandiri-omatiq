@@ -40,7 +40,7 @@ export const NavigationComponent = ({ solid = false }: { solid?: boolean }) => {
     const { menus }: any = UseSidebar();
 
     return (
-        <nav className="hidden items-center gap-1 lg:flex">
+        <nav className="ml-auto hidden items-center justify-end gap-1 lg:flex">
             {menus.map((menu: any) => (
                 <div key={menu.href} className="group relative">
                     <a

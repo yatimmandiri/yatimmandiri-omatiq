@@ -1,115 +1,303 @@
-﻿import { EmptyState, ProgramCard, SectionHeader } from '@/components/marketing/marketing-components';
-import { categories, programs } from '@/components/marketing/site-data';
-import { usePage } from '@inertiajs/react';
-import { ChevronLeft, ChevronRight, Search, SlidersHorizontal } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import {
+    CTASection,
+    SectionHeader,
+} from '@/components/marketing/marketing-components';
+import { ProgramItem, programs } from '@/components/marketing/site-data';
+import { Link, usePage } from '@inertiajs/react';
+import {
+    ArrowRight,
+    BookOpenCheck,
+    Brain,
+    Calculator,
+    CheckCircle2,
+    Medal,
+    Sparkles,
+    Star,
+    Target,
+    Trophy,
+} from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 type ProgramsProps = {
     programs?: typeof programs | { data?: typeof programs };
-    categories?: string[];
+};
+
+type OlympiadTheme = {
+    icon: LucideIcon;
+    eyebrow: string;
+    accent: string;
+    soft: string;
+    dark: string;
+    number: string;
+    highlights: string[];
+    image: string;
 };
 
 const normalizePrograms = (value: ProgramsProps['programs']) => {
-    if (Array.isArray(value)) {
-        return value;
+    const items = Array.isArray(value)
+        ? value
+        : value?.data && Array.isArray(value.data)
+          ? value.data
+          : programs;
+
+    const olympiads = items.filter((item) => {
+        const content = `${item.title} ${item.category}`.toLowerCase();
+
+        return (
+            content.includes('qur') ||
+            content.includes('matematika') ||
+            content.includes('math')
+        );
+    });
+
+    return (olympiads.length >= 2 ? olympiads : programs.slice(0, 2)).slice(
+        0,
+        2,
+    );
+};
+
+const getTheme = (program: ProgramItem): OlympiadTheme => {
+    const isQuran = `${program.title} ${program.category}`
+        .toLowerCase()
+        .includes('qur');
+
+    if (isQuran) {
+        return {
+            icon: BookOpenCheck,
+            eyebrow: "Ketepatan bacaan & kecintaan Al-Qur'an",
+            accent: '#F15F23',
+            soft: '#FFF1EA',
+            dark: '#9A3412',
+            number: '01',
+            highlights: ['Tajwid', 'Cara baca', 'Adab & percaya diri'],
+            image: program.image,
+        };
     }
 
-    if (value?.data && Array.isArray(value.data)) {
-        return value.data;
-    }
-
-    return programs;
+    return {
+        icon: Calculator,
+        eyebrow: 'Logika, strategi & keberanian bernalar',
+        accent: '#0F60AC',
+        soft: '#EAF5FF',
+        dark: '#083B6B',
+        number: '02',
+        highlights: ['Logika dasar', 'Problem solving', 'Strategi soal'],
+        image: program.image,
+    };
 };
 
 export default function ProgramsPage() {
     const props = usePage<ProgramsProps>().props;
-    const sourcePrograms = normalizePrograms(props.programs);
-    const sourceCategories = props.categories?.length ? ['All', ...props.categories] : categories;
-    const [search, setSearch] = useState('');
-    const [category, setCategory] = useState('All');
-    const [page, setPage] = useState(1);
-    const perPage = 6;
-
-    const filteredPrograms = useMemo(() => {
-        return sourcePrograms.filter((program) => {
-            const matchesSearch = `${program.title} ${program.description} ${program.category}`.toLowerCase().includes(search.toLowerCase());
-            const matchesCategory = category === 'All' || program.category === category;
-
-            return matchesSearch && matchesCategory;
-        });
-    }, [category, search, sourcePrograms]);
-
-    const totalPages = Math.max(1, Math.ceil(filteredPrograms.length / perPage));
-    const visiblePrograms = filteredPrograms.slice((page - 1) * perPage, page * perPage);
-
-    const updateSearch = (value: string) => {
-        setSearch(value);
-        setPage(1);
-    };
-
-    const updateCategory = (value: string) => {
-        setCategory(value);
-        setPage(1);
-    };
+    const olympiads = normalizePrograms(props.programs);
 
     return (
         <>
-            <section className="px-5 py-16 md:py-24 lg:px-8">
-                <div className="mx-auto max-w-7xl rounded-[32px] bg-white p-8 shadow-sm ring-1 ring-slate-100 md:p-12">
-                    <div className="grid items-center gap-10 lg:grid-cols-[1fr_0.8fr]">
-                        <div>
-                            <span className="inline-flex rounded-full bg-[#F15F23]/10 px-4 py-2 text-sm font-black text-[#F15F23]">Olimpiade</span>
-                            <h1 className="mt-6 text-5xl font-black leading-tight tracking-tight text-[#1E293B] md:text-6xl">Temukan program yang cocok untuk ritme belajarmu.</h1>
-                            <p className="mt-5 max-w-2xl text-lg leading-8 text-[#64748B]">Jelajahi katalog OMATIQ berdasarkan minat, kategori, dan tujuan belajar komunitasmu.</p>
-                        </div>
-                        <img src="https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?auto=format&fit=crop&w=1000&q=80" alt="Program catalog learning moment" className="h-80 w-full rounded-3xl object-cover shadow-xl" />
+            <section className="relative overflow-hidden px-5 pt-28 pb-14 sm:pt-32 sm:pb-20 lg:px-8">
+                <div className="absolute top-28 left-0 h-48 w-48 rounded-[48px] bg-[#FFC857]/20 blur-3xl" />
+                <div className="absolute right-0 bottom-0 h-56 w-56 rounded-[56px] bg-[#56CCF2]/15 blur-3xl" />
+
+                <div className="relative mx-auto max-w-7xl text-center">
+                    <span className="inline-flex items-center gap-2 rounded-full bg-[#F15F23]/10 px-4 py-2 text-sm font-black text-[#F15F23]">
+                        <Medal className="h-4 w-4" />
+                        Cabang Olimpiade OMATIQ
+                    </span>
+                    <h1 className="mx-auto mt-6 max-w-5xl text-3xl leading-tight font-black text-[#1E293B] sm:text-4xl md:text-6xl lg:text-7xl">
+                        Dua bidang utama untuk membentuk anak berakhlak dan
+                        bernalar.
+                    </h1>
+                    <p className="mx-auto mt-5 max-w-3xl text-base leading-8 text-[#64748B] sm:mt-6 sm:text-lg">
+                        OMATIQ memusatkan pengalaman lomba pada Al-Qur'an dan
+                        Matematika. Setiap cabang dirancang serius, ramah untuk
+                        anak, dan relevan dengan proses tumbuh mereka.
+                    </p>
+
+                    <div className="mx-auto mt-10 grid max-w-3xl gap-4 sm:grid-cols-3">
+                        {[
+                            {
+                                icon: Trophy,
+                                value: 'Nasional',
+                                label: 'Skala kompetisi',
+                            },
+                            {
+                                icon: Target,
+                                value: '2 Cabang',
+                                label: 'Fokus yang terarah',
+                            },
+                            {
+                                icon: Star,
+                                value: 'Anak Indonesia',
+                                label: 'Panggung prestasi',
+                            },
+                        ].map((item) => (
+                            <div
+                                key={item.label}
+                                className="flex items-center gap-3 rounded-2xl bg-white p-4 text-left shadow-sm ring-1 ring-slate-100"
+                            >
+                                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#0F60AC]/10 text-[#0F60AC]">
+                                    <item.icon className="h-5 w-5" />
+                                </span>
+                                <span>
+                                    <strong className="block text-sm font-black text-[#1E293B]">
+                                        {item.value}
+                                    </strong>
+                                    <span className="text-xs font-semibold text-[#64748B]">
+                                        {item.label}
+                                    </span>
+                                </span>
+                            </div>
+                        ))}
                     </div>
                 </div>
             </section>
 
-            <section className="px-5 pb-16 lg:px-8">
+            <section className="bg-white px-5 py-14 sm:py-20 lg:px-8">
                 <div className="mx-auto max-w-7xl">
-                    <div className="sticky top-20 z-20 rounded-3xl bg-white p-4 shadow-xl shadow-[#0F60AC]/5 ring-1 ring-slate-100">
-                        <div className="grid gap-4 lg:grid-cols-[1fr_auto]">
-                            <label className="relative block">
-                                <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#64748B]" />
-                                <input value={search} onChange={(event) => updateSearch(event.target.value)} placeholder="Search program..." className="w-full rounded-xl border border-slate-200 bg-[#F8FAFC] py-4 pl-12 pr-4 text-sm font-bold outline-none transition focus:border-[#F15F23] focus:bg-white" />
-                            </label>
-                            <div className="flex items-center gap-2 overflow-x-auto pb-1 lg:pb-0">
-                                <span className="hidden items-center gap-2 rounded-xl bg-[#0F60AC]/10 px-4 py-3 text-sm font-black text-[#0F60AC] lg:inline-flex"><SlidersHorizontal className="h-4 w-4" /> Filter</span>
-                                {sourceCategories.map((item) => (
-                                    <button key={item} type="button" onClick={() => updateCategory(item)} className={`whitespace-nowrap rounded-xl px-4 py-3 text-sm font-black transition ${category === item ? 'bg-[#F15F23] text-white shadow-lg shadow-[#F15F23]/20' : 'bg-[#F8FAFC] text-[#64748B] hover:bg-[#0F60AC]/10 hover:text-[#0F60AC]'}`}>
-                                        {item}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
+                    <SectionHeader
+                        eyebrow="Pilih Cabangmu"
+                        title="Kenali dua panggung utama OMATIQ"
+                        description="Bukan sekadar memilih mata lomba. Setiap cabang membawa pengalaman, tantangan, dan kemampuan yang berbeda untuk dikembangkan."
+                    />
 
-                    <div className="mt-12">
-                        <SectionHeader eyebrow="Catalog" title="Olimpiade pilihan OMATIQ" description={`${filteredPrograms.length} program tersedia untuk dijelajahi.`} align="left" />
-                        {visiblePrograms.length > 0 ? (
-                            <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                                {visiblePrograms.map((program) => <ProgramCard key={program.id} program={program} />)}
-                            </div>
-                        ) : (
-                            <div className="mt-8"><EmptyState title="Program tidak ditemukan" description="Coba ubah kata kunci pencarian atau pilih kategori lain." /></div>
-                        )}
-                    </div>
+                    <div className="mt-14 space-y-10">
+                        {olympiads.map((program, index) => {
+                            const theme = getTheme(program);
+                            const Icon = theme.icon;
 
-                    {filteredPrograms.length > perPage && (
-                        <div className="mt-12 flex items-center justify-center gap-3">
-                            <button type="button" disabled={page === 1} onClick={() => setPage((value) => Math.max(1, value - 1))} className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-[#0F60AC] disabled:opacity-40">
-                                <ChevronLeft className="h-5 w-5" />
-                            </button>
-                            <span className="rounded-xl bg-white px-5 py-3 text-sm font-black text-[#1E293B] shadow-sm ring-1 ring-slate-100">Page {page} of {totalPages}</span>
-                            <button type="button" disabled={page === totalPages} onClick={() => setPage((value) => Math.min(totalPages, value + 1))} className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-[#0F60AC] disabled:opacity-40">
-                                <ChevronRight className="h-5 w-5" />
-                            </button>
-                        </div>
-                    )}
+                            return (
+                                <article
+                                    key={program.id}
+                                    className="group overflow-hidden rounded-[28px] border border-slate-100 bg-[#F8FAFC] shadow-sm transition duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-[#0F60AC]/10 sm:rounded-[32px]"
+                                >
+                                    <div
+                                        className={`grid lg:grid-cols-2 ${index % 2 === 1 ? 'lg:[&>*:first-child]:order-2' : ''}`}
+                                    >
+                                        <div className="relative min-h-72 overflow-hidden sm:min-h-80 lg:min-h-[560px]">
+                                            <img
+                                                src={theme.image}
+                                                alt={program.title}
+                                                className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105"
+                                            />
+                                            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/65 via-transparent to-transparent" />
+                                            <span className="absolute top-5 left-5 text-5xl font-black text-white/25 sm:top-6 sm:left-6 sm:text-7xl">
+                                                {theme.number}
+                                            </span>
+                                            <div className="absolute right-6 bottom-6 left-6 flex items-center justify-between gap-4 text-white">
+                                                <div>
+                                                    <p className="text-xs font-black tracking-widest text-white/70 uppercase">
+                                                        OMATIQ National Olympiad
+                                                    </p>
+                                                    <p className="mt-2 text-xl font-black">
+                                                        {program.level}
+                                                    </p>
+                                                </div>
+                                                <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/15 backdrop-blur-md">
+                                                    <Icon className="h-7 w-7" />
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex flex-col justify-center p-5 sm:p-7 md:p-12 lg:p-14">
+                                            <span
+                                                className="inline-flex w-fit items-center gap-2 rounded-full px-4 py-2 text-sm font-black"
+                                                style={{
+                                                    backgroundColor: theme.soft,
+                                                    color: theme.dark,
+                                                }}
+                                            >
+                                                <Sparkles className="h-4 w-4" />
+                                                {theme.eyebrow}
+                                            </span>
+                                            <h2 className="mt-5 text-3xl leading-tight font-black text-[#1E293B] sm:mt-6 sm:text-4xl md:text-5xl">
+                                                {program.title}
+                                            </h2>
+                                            <p className="mt-5 text-base leading-8 text-[#64748B] md:text-lg">
+                                                {program.description}
+                                            </p>
+
+                                            <div className="mt-8 grid gap-3 sm:grid-cols-3">
+                                                {theme.highlights.map(
+                                                    (highlight) => (
+                                                        <div
+                                                            key={highlight}
+                                                            className="flex items-center gap-2 rounded-2xl bg-white p-3 text-sm font-black text-[#1E293B] shadow-sm ring-1 ring-slate-100"
+                                                        >
+                                                            <CheckCircle2
+                                                                className="h-4 w-4 shrink-0"
+                                                                style={{
+                                                                    color: theme.accent,
+                                                                }}
+                                                            />
+                                                            {highlight}
+                                                        </div>
+                                                    ),
+                                                )}
+                                            </div>
+
+                                            <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+                                                <Link
+                                                    href={`/programs/${program.slug}`}
+                                                    className="inline-flex items-center justify-center gap-2 rounded-xl px-6 py-4 text-sm font-black text-white shadow-lg transition hover:-translate-y-1"
+                                                    style={{
+                                                        backgroundColor:
+                                                            theme.accent,
+                                                    }}
+                                                >
+                                                    Pelajari Cabang
+                                                    <ArrowRight className="h-4 w-4" />
+                                                </Link>
+                                                <Link
+                                                    href="/kontak"
+                                                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-6 py-4 text-sm font-black text-[#1E293B] transition hover:-translate-y-1 hover:border-[#0F60AC]/30"
+                                                >
+                                                    Informasi Pendaftaran
+                                                </Link>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </article>
+                            );
+                        })}
+                    </div>
                 </div>
             </section>
+
+            <section className="px-5 py-14 sm:py-20 lg:px-8">
+                <div className="mx-auto grid max-w-7xl items-center gap-10 lg:grid-cols-[0.8fr_1.2fr]">
+                    <SectionHeader
+                        eyebrow="Satu Semangat"
+                        title="Berbeda bidang, bertemu dalam karakter yang sama"
+                        description="Al-Qur'an menguatkan ketepatan, adab, dan kecintaan pada bacaan. Matematika melatih logika, strategi, dan ketekunan. Keduanya bertemu dalam keberanian anak untuk memberikan usaha terbaik."
+                        align="left"
+                    />
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="rounded-3xl bg-[#F15F23] p-7 text-white shadow-xl shadow-[#F15F23]/20">
+                            <BookOpenCheck className="h-9 w-9 text-[#FFC857]" />
+                            <p className="mt-8 text-2xl font-black">
+                                Berakhlak dalam proses
+                            </p>
+                            <p className="mt-3 text-sm leading-7 text-white/80">
+                                Belajar disiplin, menghargai aturan, dan tampil
+                                dengan adab terbaik.
+                            </p>
+                        </div>
+                        <div className="rounded-3xl bg-[#0F60AC] p-7 text-white shadow-xl shadow-[#0F60AC]/20 sm:mt-10">
+                            <Brain className="h-9 w-9 text-[#56CCF2]" />
+                            <p className="mt-8 text-2xl font-black">
+                                Berani menghadapi tantangan
+                            </p>
+                            <p className="mt-3 text-sm leading-7 text-white/80">
+                                Membangun ketahanan, ketelitian, dan percaya
+                                diri saat memecahkan masalah.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <CTASection
+                title="Sudah tahu cabang yang paling cocok?"
+                description="Daftarkan anak untuk mengikuti Olimpiade Al-Qur'an atau Matematika dan berikan pengalaman berkompetisi yang positif di tingkat nasional."
+            />
         </>
     );
 }

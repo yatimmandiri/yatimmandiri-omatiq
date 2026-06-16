@@ -1,81 +1,160 @@
-﻿import { EmptyState, NewsCard, SectionHeader } from '@/components/marketing/marketing-components';
-import { news } from '@/components/marketing/site-data';
-import { usePage } from '@inertiajs/react';
-import { Search } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import {
+    EmptyState,
+    LoadingState,
+    NewsCard,
+    SectionHeader,
+} from '@/components/marketing/marketing-components';
+import { NewsItem, news } from '@/components/marketing/site-data';
+import axios from 'axios';
+import { useCallback, useEffect, useState } from 'react';
 
-type NewsProps = {
-    news?: typeof news | { data?: typeof news };
+const NEWS_API_URL =
+    'https://yatimmandiri.org/news/wp-json/ymapi/v2/posts?categories=557';
+
+type ExternalNewsPost = {
+    id: number;
+    date?: string;
+    title?: string;
+    slug?: string;
+    excerpt?: string;
+    author?: {
+        name?: string;
+    };
+    featured_image?: {
+        medium?: string;
+    };
+    link?: string;
 };
 
-const normalizeNews = (value: NewsProps['news']) => {
-    if (Array.isArray(value)) {
-        return value;
-    }
+const mapExternalPost = (post: ExternalNewsPost): NewsItem => {
+    const excerpt = stripHtml(post.excerpt || '');
 
-    if (value?.data && Array.isArray(value.data)) {
-        return value.data;
-    }
-
-    return news;
+    return {
+        id: post.id,
+        title: stripHtml(post.title || 'Artikel OMATIQ'),
+        slug: post.slug || String(post.id),
+        category: 'OMATIQ',
+        date: post.date || '',
+        excerpt,
+        image:
+            post.featured_image?.medium ||
+            'https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1200&q=80',
+        author: post.author?.name || 'Yatim Mandiri',
+        readTime: `${Math.max(3, Math.ceil(excerpt.split(/\s+/).length / 180))} min read`,
+        link: post.link,
+    };
 };
 
 export default function NewsPage() {
-    const props = usePage<NewsProps>().props;
-    const sourceNews = normalizeNews(props.news);
-    const [search, setSearch] = useState('');
-    const [category, setCategory] = useState('All');
-    const categories = ['All', ...Array.from(new Set(sourceNews.map((item) => item.category)))];
+    const [articles, setArticles] = useState<NewsItem[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [failed, setFailed] = useState(false);
 
-    const articles = useMemo(() => {
-        return sourceNews.filter((article) => {
-            const matchesSearch = `${article.title} ${article.excerpt} ${article.category}`.toLowerCase().includes(search.toLowerCase());
-            const matchesCategory = category === 'All' || article.category === category;
+    const fetchArticles = useCallback(async () => {
+        try {
+            setLoading(true);
+            setFailed(false);
 
-            return matchesSearch && matchesCategory;
-        });
-    }, [category, search, sourceNews]);
+            const response = await axios.get<ExternalNewsPost[]>(NEWS_API_URL);
+            const externalArticles = Array.isArray(response.data)
+                ? response.data.map(mapExternalPost)
+                : [];
 
-    const featured = articles[0] ?? sourceNews[0];
-    const latest = articles.slice(featured ? 1 : 0);
+            setArticles(externalArticles.length ? externalArticles : news);
+        } catch (error) {
+            console.error('Gagal mengambil artikel OMATIQ:', error);
+            setArticles(news);
+            setFailed(true);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchArticles();
+    }, [fetchArticles]);
+
+    const featured = articles[0];
+    const latest = articles.slice(1);
 
     return (
         <>
-            <section className="px-5 py-16 md:py-24 lg:px-8">
+            <section className="px-5 pt-28 pb-12 sm:pt-32 sm:pb-14 lg:px-8">
                 <div className="mx-auto max-w-7xl">
-                    <SectionHeader eyebrow="News & Stories" title="Magazine belajar, komunitas, dan dampak" description="Baca cerita terbaru dari program OMATIQ, insight pendidikan, dan praktik baik dari komunitas." />
-                    {featured && <div className="mt-12"><NewsCard article={featured} featured /></div>}
-                </div>
-            </section>
-
-            <section className="bg-white px-5 py-10 lg:px-8">
-                <div className="mx-auto grid max-w-7xl gap-4 lg:grid-cols-[1fr_auto]">
-                    <label className="relative block">
-                        <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#64748B]" />
-                        <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search articles..." className="w-full rounded-xl border border-slate-200 bg-[#F8FAFC] py-4 pl-12 pr-4 text-sm font-bold outline-none transition focus:border-[#F15F23] focus:bg-white" />
-                    </label>
-                    <div className="flex gap-2 overflow-x-auto pb-1 lg:pb-0">
-                        {categories.map((item) => (
-                            <button key={item} type="button" onClick={() => setCategory(item)} className={`whitespace-nowrap rounded-xl px-4 py-3 text-sm font-black transition ${category === item ? 'bg-[#F15F23] text-white shadow-lg shadow-[#F15F23]/20' : 'bg-[#F8FAFC] text-[#64748B] hover:bg-[#0F60AC]/10 hover:text-[#0F60AC]'}`}>
-                                {item}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
-            <section className="px-5 py-16 lg:px-8">
-                <div className="mx-auto max-w-7xl">
-                    <SectionHeader eyebrow="Latest Articles" title="Tulisan terbaru" align="left" />
-                    {latest.length > 0 ? (
-                        <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                            {latest.map((article) => <NewsCard key={article.id} article={article} />)}
+                    <SectionHeader
+                        eyebrow="Artikel & Kabar"
+                        title="Cerita terbaru dari panggung OMATIQ"
+                        description="Ikuti kabar olimpiade, wawasan pendidikan, dan cerita inspiratif anak Indonesia yang diperbarui langsung dari kanal berita OMATIQ."
+                    />
+                    {loading ? (
+                        <div className="mt-8 sm:mt-12">
+                            <LoadingState />
+                        </div>
+                    ) : featured ? (
+                        <div className="mt-8 sm:mt-12">
+                            <NewsCard article={featured} featured />
                         </div>
                     ) : (
-                        <div className="mt-8"><EmptyState title="Artikel tidak ditemukan" description="Coba gunakan kata kunci lain atau pilih kategori berbeda." /></div>
+                        <div className="mt-8 sm:mt-12">
+                            <EmptyState
+                                title="Artikel belum tersedia"
+                                description="Kami belum menerima data artikel dari kanal berita OMATIQ."
+                            />
+                        </div>
+                    )}
+                </div>
+            </section>
+
+            <section className="bg-white px-5 py-16 lg:px-8">
+                <div className="mx-auto max-w-7xl">
+                    <div className="flex flex-col gap-4 border-b border-slate-200 pb-8 md:flex-row md:items-end md:justify-between">
+                        <SectionHeader
+                            eyebrow="Terbaru"
+                            title="Artikel lainnya"
+                            description="Kumpulan informasi dan cerita terbaru yang hadir dari sumber berita OMATIQ."
+                            align="left"
+                        />
+                        <p className="shrink-0 text-sm font-bold text-[#64748B]">
+                            {loading
+                                ? 'Memuat artikel...'
+                                : `${articles.length} artikel tersedia`}
+                        </p>
+                    </div>
+
+                    {failed && (
+                        <div className="mt-6 rounded-2xl bg-[#FFC857]/20 px-5 py-4 text-sm font-bold text-[#9A3412]">
+                            Data API belum bisa diambil saat ini. Sementara
+                            ditampilkan artikel cadangan OMATIQ.
+                        </div>
+                    )}
+
+                    {loading ? (
+                        <div className="mt-10">
+                            <LoadingState />
+                        </div>
+                    ) : latest.length > 0 ? (
+                        <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                            {latest.map((article) => (
+                                <NewsCard key={article.id} article={article} />
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="mt-10">
+                            <EmptyState
+                                title="Belum ada artikel lainnya"
+                                description="Artikel terbaru akan tampil otomatis ketika tersedia dari sumber berita OMATIQ."
+                            />
+                        </div>
                     )}
                 </div>
             </section>
         </>
     );
 }
+
+const stripHtml = (value: string) => {
+    return value
+        .replace(/<[^>]*>/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+};

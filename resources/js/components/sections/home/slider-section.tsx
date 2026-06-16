@@ -54,11 +54,16 @@ const fallbackSliders: SliderItem[] = [
 export const SliderSection = () => {
     const { sliders, heroStats } = usePage<any>().props;
     const sliderItems = useMemo(
-        () => (Array.isArray(sliders) && sliders.length > 0 ? sliders : fallbackSliders),
+        () =>
+            Array.isArray(sliders) && sliders.length > 0
+                ? sliders
+                : fallbackSliders,
         [sliders],
     );
     const [activeIndex, setActiveIndex] = useState(0);
-    const [selectedSlider, setSelectedSlider] = useState<SliderItem | null>(null);
+    const [selectedSlider, setSelectedSlider] = useState<SliderItem | null>(
+        null,
+    );
     const [touchStartX, setTouchStartX] = useState<number | null>(null);
 
     useEffect(() => {
@@ -74,7 +79,10 @@ export const SliderSection = () => {
         : null;
 
     const moveSlide = (direction: 1 | -1) => {
-        setActiveIndex((current) => (current + direction + sliderItems.length) % sliderItems.length);
+        setActiveIndex(
+            (current) =>
+                (current + direction + sliderItems.length) % sliderItems.length,
+        );
     };
 
     const handlePointerDown = (event: PointerEvent<HTMLElement>) => {
@@ -103,7 +111,7 @@ export const SliderSection = () => {
             onPointerUp={handlePointerUp}
             onPointerCancel={() => setTouchStartX(null)}
         >
-            <div className="relative min-h-162.5 overflow-hidden sm:min-h-180 lg:h-195">
+            <div className="relative min-h-[720px] overflow-hidden sm:min-h-180 lg:h-195">
                 {sliderItems.map((item: SliderItem, index: number) => (
                     <SliderItemSection
                         key={`${item.title}-${index}`}
@@ -189,17 +197,17 @@ const SliderItemSection = ({
             <div className="absolute top-0 -left-20 h-72 w-72 rounded-full bg-[#F15F23]/25 blur-3xl" />
             <div className="absolute right-0 bottom-0 h-96 w-96 rounded-full bg-[#56CCF2]/15 blur-3xl" />
 
-            <div className="relative z-10 flex min-h-162.5 items-center sm:min-h-180 lg:h-195">
-                <div className="mx-auto w-full max-w-7xl px-4 pt-20 sm:px-6 lg:px-8">
+            <div className="relative z-10 flex min-h-[720px] items-center sm:min-h-180 lg:h-195">
+                <div className="mx-auto w-full max-w-7xl px-5 pt-24 pb-8 sm:px-6 sm:pb-0 lg:px-8">
                     <div className="max-w-3xl text-white">
                         <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-bold backdrop-blur-md sm:mb-6 sm:px-5 sm:text-sm">
                             <span className="h-2 w-2 rounded-full bg-[#5DD39E]" />
                             {item.badge || 'OMATIQ National Olympiad'}
                         </div>
-                        <h1 className="text-3xl leading-tight font-black sm:text-5xl md:text-6xl lg:text-7xl line-clamp-2">
+                        <h1 className="text-3xl leading-tight font-black sm:line-clamp-2 sm:text-5xl md:text-6xl lg:text-7xl">
                             {item.title}
                         </h1>
-                        <p className="mt-4 max-w-2xl text-sm leading-relaxed text-gray-200 sm:mt-6 sm:text-base md:text-lg lg:text-xl line-clamp-2">
+                        <p className="mt-4 max-w-2xl text-sm leading-relaxed text-gray-200 sm:mt-6 sm:line-clamp-2 sm:text-base md:text-lg lg:text-xl">
                             {item.subtitle}
                         </p>
                         <div className="mt-6 flex flex-col gap-3 sm:mt-8 sm:flex-row sm:flex-wrap">
@@ -227,7 +235,7 @@ const SliderItemSection = ({
                             {getHeroStats(stats).map((stat) => (
                                 <div
                                     key={stat.label}
-                                    className="rounded-2xl border border-white/10 bg-white/10 p-4 backdrop-blur-md"
+                                    className="rounded-2xl border border-white/10 bg-white/10 p-3 backdrop-blur-md sm:p-4"
                                 >
                                     <h3 className="text-2xl font-bold sm:text-3xl">
                                         {formatStatNumber(stat.value)}
@@ -247,7 +255,7 @@ const SliderItemSection = ({
 
 const getHeroStats = (stats: HeroStats) => [
     { label: 'Peserta Belajar', value: stats.participants ?? 12000 },
-    { label: 'Cabang Olimpiade', value: stats.activePrograms ?? 48 },
+    { label: 'Cabang Olimpiade', value: stats.activePrograms ?? 2 },
     { label: 'Komunitas', value: stats.communities ?? 120 },
     { label: 'Mitra Kolaborasi', value: stats.partners ?? 36 },
 ];
@@ -293,8 +301,3 @@ const getVideoEmbedUrl = (url: string | null | undefined) => {
 
     return url;
 };
-
-
-
-
-
