@@ -131,7 +131,7 @@ export const SliderSection = () => {
                             <div>
                                 <h2 className="text-xl font-black sm:text-2xl">
                                     {selectedSlider.title}
-                                </h2>
+                                </h2> 
                                 <p className="mt-1 text-sm leading-relaxed text-white/70">
                                     {selectedSlider.subtitle}
                                 </p>
