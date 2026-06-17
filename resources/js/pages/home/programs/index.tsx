@@ -242,14 +242,8 @@ export default function ProgramsPage() {
                                                             theme.accent,
                                                     }}
                                                 >
-                                                    Pelajari Cabang
+                                                    Lihat Detail
                                                     <ArrowRight className="h-4 w-4" />
-                                                </Link>
-                                                <Link
-                                                    href="/kontak"
-                                                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-6 py-4 text-sm font-black text-[#1E293B] transition hover:-translate-y-1 hover:border-[#0F60AC]/30"
-                                                >
-                                                    Informasi Pendaftaran
                                                 </Link>
                                             </div>
                                         </div>
