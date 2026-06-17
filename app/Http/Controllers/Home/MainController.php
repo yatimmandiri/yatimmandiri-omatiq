@@ -11,11 +11,11 @@ class MainController extends Controller
     public function index()
     {
         $data = [
-            'pageTitle' => 'Home',
+            'pageTitle' => 'OMATIQ',
             'meta' => [
-                'title' => 'Home',
-                'description' => 'Welcome to our home page.',
-                'keywords' => 'home, welcome, company',
+                'title' => 'OMATIQ',
+                'description' => 'OMATIQ is a modern education and community platform for creative learning, collaboration, and real impact.',
+                'keywords' => 'OMATIQ, education, community, learning, programs',
             ],
         ];
 

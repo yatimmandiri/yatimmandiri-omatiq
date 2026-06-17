@@ -76,13 +76,6 @@ export const HomeHeaderComponent = () => {
 
                     <NavigationComponent solid={useSolidHeader} />
 
-                    <a
-                        href="/kontak"
-                        className="hidden rounded-xl bg-[#F15F23] px-5 py-3 text-sm font-black text-white shadow-lg shadow-[#F15F23]/20 transition hover:-translate-y-0.5 hover:bg-[#d94f18] lg:inline-flex"
-                    >
-                        Daftar OMATIQ
-                    </a>
-
                     <button
                         type="button"
                         aria-label="Open navigation menu"

@@ -349,7 +349,7 @@ export const SectionHeader = ({
                 {eyebrow}
             </span>
         )}
-        <h2 className="mt-4 text-3xl font-black tracking-tight text-[#1E293B] md:text-5xl">
+        <h2 className="mt-4 text-2xl font-black tracking-tight text-[#1E293B] sm:text-3xl md:text-5xl">
             {title}
         </h2>
         {description && (
@@ -497,61 +497,80 @@ export const NewsCard = ({
 }: {
     article: NewsItem;
     featured?: boolean;
-}) => (
-    <Link
-        href={`/news/${article.slug}`}
-        className={`group min-w-0 overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-100 transition duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-[#0F60AC]/10 ${
-            featured
-                ? 'grid lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]'
-                : 'flex h-full flex-col'
-        }`}
-    >
-        <div
-            className={`relative overflow-hidden ${featured ? 'h-72 sm:h-80 lg:h-full lg:min-h-96' : 'h-56 sm:h-64'}`}
-        >
-            <img
-                src={article.image}
-                alt={article.title}
-                className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
-            />
-        </div>
-        <div
-            className={`flex min-w-0 flex-1 flex-col ${featured ? 'p-6 sm:p-8 lg:p-10' : 'p-6 md:p-7'}`}
-        >
-            <div className="flex min-w-0 flex-wrap items-center gap-3 text-xs font-black tracking-wide uppercase">
-                <span className="rounded-full bg-[#F15F23]/10 px-3 py-1 text-[#F15F23]">
-                    {article.category}
-                </span>
-                <span className="text-[#64748B]">{article.date}</span>
+}) => {
+    const className = `group min-w-0 overflow-hidden rounded-[28px] bg-white shadow-sm ring-1 ring-slate-100 transition duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-[#0F60AC]/10 sm:rounded-3xl ${
+        featured
+            ? 'grid md:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]'
+            : 'flex h-full flex-col'
+    }`;
+    const content = (
+        <>
+            <div
+                className={`relative overflow-hidden ${featured ? 'h-56 sm:h-72 md:h-full md:min-h-80 lg:min-h-96' : 'h-52 sm:h-64'}`}
+            >
+                <img
+                    src={article.image}
+                    alt={article.title}
+                    className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
+                />
             </div>
-            <h3
-                className={`mt-4 min-w-0 leading-tight font-black break-words text-[#1E293B] ${
-                    featured
-                        ? 'text-2xl sm:text-3xl lg:text-4xl'
-                        : 'text-xl sm:text-2xl'
-                }`}
+            <div
+                className={`flex min-w-0 flex-1 flex-col ${featured ? 'p-5 sm:p-7 lg:p-10' : 'p-5 sm:p-6 md:p-7'}`}
             >
-                {article.title}
-            </h3>
-            <p
-                className={`${featured ? 'line-clamp-4 text-base leading-8' : 'line-clamp-3 text-sm leading-7'} mt-4 min-w-0 break-words text-[#64748B]`}
+                <div className="flex min-w-0 flex-wrap items-center gap-3 text-xs font-black tracking-wide uppercase">
+                    <span className="rounded-full bg-[#F15F23]/10 px-3 py-1 text-[#F15F23]">
+                        {article.category}
+                    </span>
+                    <span className="text-[#64748B]">{article.date}</span>
+                </div>
+                <h3
+                    className={`mt-4 min-w-0 leading-tight font-black break-words text-[#1E293B] ${
+                        featured
+                            ? 'text-2xl sm:text-3xl lg:text-4xl'
+                            : 'text-xl sm:text-2xl'
+                    }`}
+                >
+                    {article.title}
+                </h3>
+                <p
+                    className={`${featured ? 'line-clamp-4 text-base leading-8' : 'line-clamp-3 text-sm leading-7'} mt-4 min-w-0 break-words text-[#64748B]`}
+                >
+                    {article.excerpt}
+                </p>
+                <span className="mt-auto inline-flex items-center gap-2 pt-6 text-sm font-black text-[#0F60AC] transition group-hover:gap-3">
+                    Read Article
+                    <ArrowRight className="h-4 w-4" />
+                </span>
+            </div>
+        </>
+    );
+
+    if (article.link) {
+        return (
+            <a
+                href={article.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={className}
             >
-                {article.excerpt}
-            </p>
-            <span className="mt-auto inline-flex items-center gap-2 pt-6 text-sm font-black text-[#0F60AC] transition group-hover:gap-3">
-                Read Article
-                <ArrowRight className="h-4 w-4" />
-            </span>
-        </div>
-    </Link>
-);
+                {content}
+            </a>
+        );
+    }
+
+    return (
+        <Link href={`/berita/${article.slug}`} className={className}>
+            {content}
+        </Link>
+    );
+};
 
 export const TestimonialCard = ({
     testimonial,
 }: {
     testimonial: TestimonialItem;
 }) => (
-    <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-100 transition hover:-translate-y-1 hover:shadow-xl">
+    <div className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-100 transition hover:-translate-y-1 hover:shadow-xl sm:p-6">
         <div className="flex gap-1 text-[#FFC857]">
             {Array.from({ length: testimonial.rating }).map((_, index) => (
                 <Star
@@ -586,9 +605,9 @@ export const CTASection = ({
     title?: string;
     description?: string;
 }) => (
-    <section className="px-5 py-16 lg:px-8">
-        <div className="mx-auto max-w-7xl overflow-hidden rounded-[32px] bg-white shadow-2xl ring-1 shadow-[#F15F23]/15 ring-[#F15F23]/10">
-            <div className="relative grid items-center gap-8 bg-gradient-to-br from-[#FFF7ED] via-white to-[#EAF6FF] p-6 md:p-10 lg:grid-cols-[minmax(0,1fr)_minmax(360px,0.82fr)] lg:p-12">
+    <section className="px-5 py-14 sm:py-16 lg:px-8">
+        <div className="mx-auto max-w-7xl overflow-hidden rounded-[28px] bg-white shadow-2xl ring-1 shadow-[#F15F23]/15 ring-[#F15F23]/10 sm:rounded-[32px]">
+            <div className="relative grid items-center gap-8 bg-gradient-to-br from-[#FFF7ED] via-white to-[#EAF6FF] p-5 sm:p-6 md:p-10 lg:grid-cols-[minmax(0,1fr)_minmax(360px,0.82fr)] lg:p-12">
                 <div className="absolute top-6 left-6 h-20 w-20 rounded-[28px] bg-[#FFC857]/30 blur-2xl" />
                 <div className="absolute right-10 bottom-8 h-28 w-28 rounded-[36px] bg-[#56CCF2]/25 blur-3xl" />
 
@@ -597,7 +616,7 @@ export const CTASection = ({
                         <Trophy className="h-4 w-4" />
                         Pendaftaran Olimpiade Dibuka
                     </span>
-                    <h2 className="mt-5 max-w-3xl text-3xl font-black tracking-tight text-[#1E293B] md:text-5xl">
+                    <h2 className="mt-5 max-w-3xl text-2xl font-black tracking-tight text-[#1E293B] sm:text-3xl md:text-5xl">
                         {title}
                     </h2>
                     <p className="mt-4 max-w-2xl text-base leading-8 text-[#64748B] md:text-lg">
@@ -659,7 +678,7 @@ export const CTASection = ({
                     <img
                         src="/assets/images/child.png"
                         alt="Excited student celebrating success in a vibrant school hallway"
-                        className="h-full w-full rounded-2xl object-cover"
+                        className="mx-auto h-auto max-h-96 w-full rounded-2xl object-contain lg:max-h-none"
                     />
                 </div>
             </div>
