@@ -1,0 +1,74 @@
+name: Test & Build (Laravel Inertia)
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  laravel-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1️⃣ Checkout repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2️⃣ Setup PHP
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          extensions: mbstring, bcmath, intl, sqlite3, pdo_sqlite, pdo_mysql, curl, dom, fileinfo, zip
+          tools: composer:v2
+          coverage: none
+
+      # 3️⃣ Install Composer dependencies
+      - name: Install PHP dependencies
+        run: composer install --no-progress --no-interaction --prefer-dist
+
+      # 4️⃣ Prepare Laravel environment
+      - name: Prepare Environment
+        run: |
+          cp .env.example .env
+
+          echo "APP_ENV=testing" >> .env
+          echo "APP_DEBUG=true" >> .env
+
+          echo "DB_CONNECTION=sqlite" >> .env
+          echo "DB_DATABASE=${{ github.workspace }}/database/database.sqlite" >> .env
+
+          echo "CACHE_STORE=file" >> .env
+          echo "CACHE_DRIVER=file" >> .env
+          echo "SESSION_DRIVER=file" >> .env
+          echo "QUEUE_CONNECTION=sync" >> .env
+
+          mkdir -p database
+          touch database/database.sqlite
+
+          php artisan key:generate
+          php artisan optimize:clear
+
+      # 5️⃣ Run database migrations
+      - name: Run migrations
+        run: php artisan migrate --force
+
+      # 6️⃣ Setup Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "yarn"
+
+      # 7️⃣ Install Node dependencies
+      - name: Install Node dependencies
+        run: yarn install --frozen-lockfile
+
+      # 8️⃣ Debug Wayfinder
+      - name: Debug Wayfinder
+        run: php artisan wayfinder:generate --with-form -vvv
+
+      # 9️⃣ Build frontend assets
+      - name: Build frontend
+        run: yarn build
