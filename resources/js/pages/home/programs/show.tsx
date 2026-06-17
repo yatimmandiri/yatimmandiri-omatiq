@@ -8,40 +8,141 @@ import { ProgramItem, programs } from '@/components/marketing/site-data';
 import { Link, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
+    BookOpenCheck,
+    Brain,
+    Calculator,
     CheckCircle2,
     Compass,
     GalleryHorizontalEnd,
     Goal,
     Sparkles,
+    Trophy,
+    UsersRound,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 type ProgramDetailProps = {
+    slug?: string;
     program?: ProgramItem;
     relatedPrograms?: ProgramItem[];
 };
 
-const objectives: Array<{ icon: LucideIcon; title: string; text: string }> = [
-    {
-        icon: Goal,
-        title: 'Build real skills',
-        text: 'Peserta memahami konsep dan langsung menerapkannya dalam project.',
-    },
-    {
-        icon: Compass,
-        title: 'Grow confidence',
-        text: 'Peserta berani mencoba, mempresentasikan ide, dan menerima umpan balik.',
-    },
-    {
-        icon: Sparkles,
-        title: 'Create portfolio',
-        text: 'Setiap peserta membawa hasil karya atau rencana aksi yang bisa dikembangkan.',
-    },
+type DetailContent = {
+    overviewTitle: string;
+    overviewDescription: string;
+    objectives: Array<{ icon: LucideIcon; title: string; text: string }>;
+    gallery: string[];
+    ctaDescription: string;
+};
+
+const defaultGallery = [
+    'https://images.unsplash.com/photo-1529390079861-591de354faf5?auto=format&fit=crop&w=900&q=80',
+    'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&w=900&q=80',
 ];
+
+const detailContents: Record<string, DetailContent> = {
+    'olimpiade-alquran': {
+        overviewTitle: "Apa yang akan dialami peserta Al-Qur'an?",
+        overviewDescription:
+            "Cabang Al-Qur'an membantu anak menguatkan pemahaman tajwid, ketepatan pelafalan, adab membaca, dan keberanian tampil di panggung lomba yang positif.",
+        objectives: [
+            {
+                icon: BookOpenCheck,
+                title: 'Memahami tajwid',
+                text: 'Peserta berlatih mengenali hukum bacaan dan menerapkannya dengan lebih teliti.',
+            },
+            {
+                icon: Compass,
+                title: 'Merapikan cara baca',
+                text: "Anak didorong membaca Al-Qur'an dengan pelafalan yang lebih jelas, tenang, dan percaya diri.",
+            },
+            {
+                icon: Sparkles,
+                title: 'Menumbuhkan adab',
+                text: 'Kompetisi tetap dibangun dengan suasana ramah agar anak belajar disiplin, hormat, dan rendah hati.',
+            },
+        ],
+        gallery: [
+            'https://images.unsplash.com/photo-1609599006353-e629aaabfeae?auto=format&fit=crop&w=900&q=80',
+            'https://images.unsplash.com/photo-1603989872628-78892812af9c?auto=format&fit=crop&w=900&q=80',
+            'https://images.unsplash.com/photo-1588075592446-265fd1e6e76f?auto=format&fit=crop&w=900&q=80',
+        ],
+        ctaDescription:
+            "Kirim pesan ke tim OMATIQ untuk mengetahui informasi pendaftaran, kategori peserta, dan persiapan Olimpiade Al-Qur'an.",
+    },
+    'olimpiade-matematika': {
+        overviewTitle: 'Apa yang akan dialami peserta Matematika?',
+        overviewDescription:
+            'Cabang Matematika dirancang untuk melatih logika, ketelitian, strategi menyelesaikan soal, dan mental berani mencoba tantangan baru.',
+        objectives: [
+            {
+                icon: Calculator,
+                title: 'Mengasah logika',
+                text: 'Peserta belajar membaca pola, memahami konsep dasar, dan memilih strategi pengerjaan yang tepat.',
+            },
+            {
+                icon: Brain,
+                title: 'Melatih problem solving',
+                text: 'Soal dibuat menantang agar anak terbiasa berpikir runtut, teliti, dan tidak mudah menyerah.',
+            },
+            {
+                icon: Trophy,
+                title: 'Berani berkompetisi',
+                text: 'Anak mendapatkan pengalaman tampil dalam ajang nasional yang rapi, sehat, dan membangun percaya diri.',
+            },
+        ],
+        gallery: [
+            'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=900&q=80',
+            'https://images.unsplash.com/photo-1509228468518-180dd4864904?auto=format&fit=crop&w=900&q=80',
+            'https://images.unsplash.com/photo-1596495578065-6e0763fa1178?auto=format&fit=crop&w=900&q=80',
+        ],
+        ctaDescription:
+            'Kirim pesan ke tim OMATIQ untuk mengetahui informasi pendaftaran, level soal, dan panduan persiapan Olimpiade Matematika.',
+    },
+    'try-out-omatiq': {
+        overviewTitle: 'Apa manfaat Try Out OMATIQ?',
+        overviewDescription:
+            'Try Out membantu peserta mengenali format soal, mengukur kesiapan, dan memahami ritme lomba sebelum mengikuti olimpiade utama.',
+        objectives: [
+            {
+                icon: Goal,
+                title: 'Simulasi lomba',
+                text: 'Peserta mendapat gambaran alur pengerjaan soal dan suasana kompetisi.',
+            },
+            {
+                icon: CheckCircle2,
+                title: 'Evaluasi kesiapan',
+                text: 'Hasil latihan membantu anak, orang tua, dan pendamping mengetahui bagian yang perlu diperkuat.',
+            },
+            {
+                icon: UsersRound,
+                title: 'Pendampingan terarah',
+                text: 'Anak lebih siap karena memahami target latihan dan strategi belajar menjelang lomba.',
+            },
+        ],
+        gallery: [
+            'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=900&q=80',
+            ...defaultGallery,
+        ],
+        ctaDescription:
+            'Hubungi tim OMATIQ untuk mendapatkan informasi jadwal try out dan panduan persiapan peserta.',
+    },
+};
 
 export default function ProgramDetailPage() {
     const props = usePage<ProgramDetailProps>().props;
-    const program = props.program ?? programs[0];
+    const currentSlug =
+        props.program?.slug ??
+        props.slug ??
+        (typeof window === 'undefined'
+            ? ''
+            : window.location.pathname.split('/').filter(Boolean).at(-1));
+    const program =
+        props.program ??
+        programs.find((item) => item.slug === currentSlug) ??
+        programs[0];
+    const detail =
+        detailContents[program.slug] ?? detailContents[programs[0].slug];
     const relatedPrograms = props.relatedPrograms?.length
         ? props.relatedPrograms
         : programs.filter((item) => item.id !== program.id).slice(0, 3);
@@ -90,8 +191,8 @@ export default function ProgramDetailPage() {
                 <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[0.8fr_1.2fr]">
                     <SectionHeader
                         eyebrow="Overview"
-                        title="Apa yang akan kamu alami?"
-                        description="Program ini menggabungkan sesi eksplorasi, praktik, mentoring, dan showcase agar peserta pulang membawa progres nyata."
+                        title={detail.overviewTitle}
+                        description={detail.overviewDescription}
                         align="left"
                     />
                     <div className="grid gap-4 md:grid-cols-3">
@@ -120,7 +221,7 @@ export default function ProgramDetailPage() {
                         title="Tujuan pembelajaran"
                     />
                     <div className="mt-10 grid gap-6 md:grid-cols-3">
-                        {objectives.map((item) => (
+                        {detail.objectives.map((item) => (
                             <div
                                 key={item.title}
                                 className="rounded-3xl bg-[#F8FAFC] p-6"
@@ -142,28 +243,26 @@ export default function ProgramDetailPage() {
                 <div className="mx-auto max-w-7xl">
                     <SectionHeader eyebrow="Gallery" title="Suasana program" />
                     <div className="mt-10 grid gap-4 md:grid-cols-[1.2fr_0.8fr_0.8fr]">
-                        {[
-                            program.image,
-                            'https://images.unsplash.com/photo-1529390079861-591de354faf5?auto=format&fit=crop&w=900&q=80',
-                            'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&w=900&q=80',
-                        ].map((image, index) => (
-                            <div
-                                key={image}
-                                className="relative overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-100"
-                            >
-                                <img
-                                    src={image}
-                                    alt={`Program gallery ${index + 1}`}
-                                    className="h-56 w-full object-cover sm:h-80"
-                                />
-                                {index === 0 && (
-                                    <div className="absolute top-5 left-5 inline-flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-sm font-black text-[#0F60AC]">
-                                        <GalleryHorizontalEnd className="h-4 w-4" />{' '}
-                                        Featured
-                                    </div>
-                                )}
-                            </div>
-                        ))}
+                        {[program.image, ...detail.gallery]
+                            .slice(0, 3)
+                            .map((image, index) => (
+                                <div
+                                    key={image}
+                                    className="relative overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-100"
+                                >
+                                    <img
+                                        src={image}
+                                        alt={`Program gallery ${index + 1}`}
+                                        className="h-56 w-full object-cover sm:h-80"
+                                    />
+                                    {index === 0 && (
+                                        <div className="absolute top-5 left-5 inline-flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-sm font-black text-[#0F60AC]">
+                                            <GalleryHorizontalEnd className="h-4 w-4" />{' '}
+                                            Featured
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
                     </div>
                 </div>
             </section>
@@ -184,7 +283,7 @@ export default function ProgramDetailPage() {
 
             <CTASection
                 title={`Daftar minat untuk ${program.title}`}
-                description="Kirim pesan ke tim OMATIQ dan kami akan bantu arahkan program terbaik untuk kebutuhanmu."
+                description={detail.ctaDescription}
             />
         </>
     );

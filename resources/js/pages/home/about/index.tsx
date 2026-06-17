@@ -24,52 +24,50 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import { useState } from 'react';
 
-const [activeYear, setActiveYear] = useState(0);
-
 const timeline = [
     {
         year: 2020,
-        theme: "Perkenalan",
-        title: "Memulai Petualangan OMATIQ",
-        text: "OMATIQ pertama kali diluncurkan dengan antusiasme tinggi, membawa konsep olimpiade matematika yang interaktif dan menyenangkan bagi siswa.",
-        image: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=600&h=400&fit=crop",
-        color: "from-blue-500 to-cyan-500",
+        theme: 'Perkenalan',
+        title: 'Memulai Petualangan OMATIQ',
+        text: 'OMATIQ pertama kali diluncurkan dengan antusiasme tinggi, membawa konsep olimpiade matematika yang interaktif dan menyenangkan bagi siswa.',
+        image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=600&h=400&fit=crop',
+        color: 'from-blue-500 to-cyan-500',
         icon: Award,
     },
     {
         year: 2021,
-        theme: "Ekspansi",
-        title: "Pertumbuhan dan Perkembangan",
-        text: "Dengan dukungan luar biasa dari komunitas, OMATIQ berkembang ke berbagai wilayah dengan lebih banyak peserta dan kategori baru.",
-        image: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=600&h=400&fit=crop",
-        color: "from-purple-500 to-pink-500",
+        theme: 'Ekspansi',
+        title: 'Pertumbuhan dan Perkembangan',
+        text: 'Dengan dukungan luar biasa dari komunitas, OMATIQ berkembang ke berbagai wilayah dengan lebih banyak peserta dan kategori baru.',
+        image: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=600&h=400&fit=crop',
+        color: 'from-purple-500 to-pink-500',
         icon: Sparkles,
     },
     {
         year: 2022,
-        theme: "Inovasi",
-        title: "Era Digital dan Transformasi",
-        text: "OMATIQ mengadopsi teknologi terkini dengan platform online yang memudahkan partisipasi dari seluruh Indonesia.",
-        image: "https://images.unsplash.com/photo-1516321318423-f06f70d504f0?w=600&h=400&fit=crop",
-        color: "from-green-500 to-emerald-500",
+        theme: 'Inovasi',
+        title: 'Era Digital dan Transformasi',
+        text: 'OMATIQ mengadopsi teknologi terkini dengan platform online yang memudahkan partisipasi dari seluruh Indonesia.',
+        image: 'https://images.unsplash.com/photo-1516321318423-f06f70d504f0?w=600&h=400&fit=crop',
+        color: 'from-green-500 to-emerald-500',
         icon: ChevronRight,
     },
     {
         year: 2023,
-        theme: "Kesuksesan",
-        title: "Pencapaian Luar Biasa",
-        text: "OMATIQ mencapai puncak popularitasnya dengan ribuan peserta aktif dan pengakuan internasional atas kontribusinya.",
-        image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=600&h=400&fit=crop",
-        color: "from-orange-500 to-red-500",
+        theme: 'Kesuksesan',
+        title: 'Pencapaian Luar Biasa',
+        text: 'OMATIQ mencapai puncak popularitasnya dengan ribuan peserta aktif dan pengakuan internasional atas kontribusinya.',
+        image: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=600&h=400&fit=crop',
+        color: 'from-orange-500 to-red-500',
         icon: Sparkles,
     },
     {
         year: 2024,
-        theme: "Visi Masa Depan",
-        title: "Melanjutkan Warisan",
-        text: "OMATIQ terus berinovasi dengan fitur-fitur baru yang lebih interaktif, gamified, dan mendukung pembelajaran berkelanjutan.",
-        image: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=600&h=400&fit=crop",
-        color: "from-pink-500 to-rose-500",
+        theme: 'Visi Masa Depan',
+        title: 'Melanjutkan Warisan',
+        text: 'OMATIQ terus berinovasi dengan fitur-fitur baru yang lebih interaktif, gamified, dan mendukung pembelajaran berkelanjutan.',
+        image: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=600&h=400&fit=crop',
+        color: 'from-pink-500 to-rose-500',
         icon: Award,
     },
 ];
@@ -80,31 +78,31 @@ const values: Array<{
     text: string;
     color: 'orange' | 'blue' | 'mint' | 'purple';
 }> = [
-        {
-            icon: Heart,
-            title: 'Ramah untuk Anak',
-            text: 'Kompetisi dibuat menantang tanpa kehilangan rasa aman, hangat, dan menyenangkan.',
-            color: 'orange',
-        },
-        {
-            icon: BookOpenCheck,
-            title: "Cinta Al-Qur'an",
-            text: "Mendorong anak memahami tajwid, memperbaiki cara baca, dan bangga belajar Al-Qur'an.",
-            color: 'mint',
-        },
-        {
-            icon: Brain,
-            title: 'Berani Bernalar',
-            text: 'Matematika menjadi ruang untuk melatih logika, strategi, ketelitian, dan percaya diri.',
-            color: 'blue',
-        },
-        {
-            icon: Users,
-            title: 'Kolaborasi Nasional',
-            text: 'Menghubungkan sekolah, TPQ, orang tua, guru, dan mitra daerah untuk mendukung peserta.',
-            color: 'purple',
-        },
-    ];
+    {
+        icon: Heart,
+        title: 'Ramah untuk Anak',
+        text: 'Kompetisi dibuat menantang tanpa kehilangan rasa aman, hangat, dan menyenangkan.',
+        color: 'orange',
+    },
+    {
+        icon: BookOpenCheck,
+        title: "Cinta Al-Qur'an",
+        text: "Mendorong anak memahami tajwid, memperbaiki cara baca, dan bangga belajar Al-Qur'an.",
+        color: 'mint',
+    },
+    {
+        icon: Brain,
+        title: 'Berani Bernalar',
+        text: 'Matematika menjadi ruang untuk melatih logika, strategi, ketelitian, dan percaya diri.',
+        color: 'blue',
+    },
+    {
+        icon: Users,
+        title: 'Kolaborasi Nasional',
+        text: 'Menghubungkan sekolah, TPQ, orang tua, guru, dan mitra daerah untuk mendukung peserta.',
+        color: 'purple',
+    },
+];
 
 const focusItems = [
     {
@@ -125,6 +123,8 @@ const focusItems = [
 ];
 
 export default function AboutPage() {
+    const [activeYear, setActiveYear] = useState(0);
+
     return (
         <>
             <section className="relative overflow-hidden px-5 pt-28 pb-14 sm:pt-32 sm:pb-16 md:pb-24 lg:px-8">
@@ -317,19 +317,21 @@ export default function AboutPage() {
                         title="Tema perjalanan OMATIQ dari tahun ke tahun"
                         description="Setiap musim OMATIQ dapat membawa tema, visual, dan cerita berbeda agar pengalaman olimpiade selalu segar dan relevan untuk anak-anak."
                     />
-                    <div className="relative mt-16">
+                    <div className="relative mt-10 sm:mt-12 lg:mt-14">
                         {/* Desktop Timeline Line with Animation */}
-                        <div className="hidden lg:block absolute left-1/2 top-0 bottom-0 w-1 -translate-x-1/2">
+                        <div className="absolute top-0 bottom-0 left-1/2 hidden w-1 -translate-x-1/2 lg:block">
                             {/* Static background line */}
                             <div className="absolute inset-0 w-full bg-gradient-to-b from-[#0F60AC] via-[#F15F23] to-[#0F60AC] opacity-20"></div>
 
                             {/* Animated flowing line 1 */}
-                            <div className="absolute inset-0 w-full bg-gradient-to-b from-transparent via-[#0F60AC] to-transparent opacity-60 animated-line"></div>
+                            <div className="animated-line absolute inset-0 w-full bg-gradient-to-b from-transparent via-[#0F60AC] to-transparent opacity-60"></div>
 
                             {/* Animated flowing line 2 */}
                             <div
                                 className="absolute inset-0 w-full bg-gradient-to-b from-transparent via-[#F15F23] to-transparent opacity-40"
-                                style={{ animation: 'flowDown 5s linear infinite 1s' }}
+                                style={{
+                                    animation: 'flowDown 5s linear infinite 1s',
+                                }}
                             ></div>
 
                             {/* Shimmer effect */}
@@ -337,16 +339,16 @@ export default function AboutPage() {
                                 className="absolute inset-0 w-full bg-gradient-to-b from-[#0F60AC]/0 via-white to-[#F15F23]/0 opacity-50"
                                 style={{
                                     animation: 'flowDown 3s linear infinite',
-                                    backgroundSize: '100% 200%'
+                                    backgroundSize: '100% 200%',
                                 }}
                             ></div>
 
                             {/* Glow effect */}
-                            <div className="absolute inset-0 w-1.5 left-1/2 -translate-x-1/2 bg-gradient-to-b from-[#0F60AC]/30 to-[#F15F23]/30 blur-lg opacity-70"></div>
+                            <div className="absolute inset-0 left-1/2 w-1.5 -translate-x-1/2 bg-gradient-to-b from-[#0F60AC]/30 to-[#F15F23]/30 opacity-70 blur-lg"></div>
                         </div>
 
                         {/* Timeline Items */}
-                        <div className="space-y-12 lg:space-y-8">
+                        <div className="space-y-8 sm:space-y-10 lg:space-y-5">
                             {timeline.map((item, index) => {
                                 const Icon = item.icon;
                                 const isEven = index % 2 === 0;
@@ -356,83 +358,170 @@ export default function AboutPage() {
                                         key={item.year}
                                         className="group cursor-pointer"
                                         onClick={() => setActiveYear(index)}
-                                        onMouseEnter={() => setActiveYear(index)}
+                                        onMouseEnter={() =>
+                                            setActiveYear(index)
+                                        }
                                     >
                                         {/* Desktop Layout */}
-                                        <div className="hidden lg:grid lg:grid-cols-2 gap-8 items-center">
+                                        <div className="hidden items-center gap-6 lg:grid lg:grid-cols-2 xl:gap-8">
                                             {/* Left side - content for even, image for odd */}
-                                            <div className={isEven ? 'order-1' : 'order-2'}>
-                                                <div className={`relative group/card rounded-2xl overflow-hidden bg-white shadow-lg ring-1 ring-slate-200 transition-all duration-500 hover:shadow-2xl hover:-translate-y-1`} style={{
-                                                    boxShadow: activeYear === index ? `0 25px 50px -12px rgba(15, 96, 172, 0.3)` : 'initial'
-                                                }}>
+                                            <div
+                                                className={
+                                                    isEven
+                                                        ? 'order-1'
+                                                        : 'order-2'
+                                                }
+                                            >
+                                                <div
+                                                    className={`group/card relative overflow-hidden rounded-2xl bg-white shadow-lg ring-1 ring-slate-200 transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl`}
+                                                    style={{
+                                                        boxShadow:
+                                                            activeYear === index
+                                                                ? `0 25px 50px -12px rgba(15, 96, 172, 0.3)`
+                                                                : 'initial',
+                                                    }}
+                                                >
                                                     {/* Gradient overlay */}
-                                                    <div className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-0 group-hover/card:opacity-10 transition-opacity duration-500`}></div>
+                                                    <div
+                                                        className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-0 transition-opacity duration-500 group-hover/card:opacity-10`}
+                                                    ></div>
 
-                                                    <div className="relative p-8 lg:p-10">
+                                                    <div className="relative p-6 xl:p-7">
                                                         {/* Animated Icon */}
-                                                        <div className={`inline-flex items-center justify-center w-14 h-14 rounded-xl bg-gradient-to-br ${item.color} text-white shadow-lg mb-6 group-hover/card:scale-110 transition-all duration-300`} style={{
-                                                            transform: activeYear === index ? 'scale(1.2) rotate(5deg)' : 'scale(1) rotate(0deg)',
-                                                            filter: activeYear === index ? 'drop-shadow(0 10px 20px rgba(0,0,0,0.2))' : 'none'
-                                                        }}>
-                                                            <Icon className="w-6 h-6" />
+                                                        <div
+                                                            className={`mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br ${item.color} text-white shadow-lg transition-all duration-300 group-hover/card:scale-110 xl:h-12 xl:w-12`}
+                                                            style={{
+                                                                transform:
+                                                                    activeYear ===
+                                                                    index
+                                                                        ? 'scale(1.2) rotate(5deg)'
+                                                                        : 'scale(1) rotate(0deg)',
+                                                                filter:
+                                                                    activeYear ===
+                                                                    index
+                                                                        ? 'drop-shadow(0 10px 20px rgba(0,0,0,0.2))'
+                                                                        : 'none',
+                                                            }}
+                                                        >
+                                                            <Icon className="h-5 w-5 xl:h-6 xl:w-6" />
                                                         </div>
 
                                                         {/* Year & Theme */}
-                                                        <div className="mb-4">
-                                                            <div className="flex items-center gap-2 mb-3">
-                                                                <span className={`inline-flex items-center gap-2 rounded-full bg-gradient-to-r ${item.color} px-3 py-1 text-xs font-black tracking-widest text-white uppercase shadow-md transition-all duration-300`} style={{
-                                                                    opacity: activeYear === index ? 1 : 0.8,
-                                                                    transform: activeYear === index ? 'scale(1.1)' : 'scale(1)'
-                                                                }}>
-                                                                    <span className="inline-block w-2 h-2 rounded-full bg-white pulse-glow"></span>
+                                                        <div className="mb-3">
+                                                            <div className="mb-2 flex items-center gap-2">
+                                                                <span
+                                                                    className={`inline-flex items-center gap-2 rounded-full bg-gradient-to-r ${item.color} px-3 py-1 text-[11px] font-black tracking-widest text-white uppercase shadow-md transition-all duration-300`}
+                                                                    style={{
+                                                                        opacity:
+                                                                            activeYear ===
+                                                                            index
+                                                                                ? 1
+                                                                                : 0.8,
+                                                                        transform:
+                                                                            activeYear ===
+                                                                            index
+                                                                                ? 'scale(1.1)'
+                                                                                : 'scale(1)',
+                                                                    }}
+                                                                >
+                                                                    <span className="pulse-glow inline-block h-1.5 w-1.5 rounded-full bg-white"></span>
                                                                     {item.theme}
                                                                 </span>
                                                             </div>
-                                                            <h3 className="text-2xl lg:text-3xl font-black text-[#1E293B] leading-tight mb-3 transition-all duration-300" style={{
-                                                                color: activeYear === index ? '#0F60AC' : '#1E293B'
-                                                            }}>
+                                                            <h3
+                                                                className="mb-2 text-xl leading-tight font-black text-[#1E293B] transition-all duration-300 xl:text-2xl"
+                                                                style={{
+                                                                    color:
+                                                                        activeYear ===
+                                                                        index
+                                                                            ? '#0F60AC'
+                                                                            : '#1E293B',
+                                                                }}
+                                                            >
                                                                 {item.title}
                                                             </h3>
-                                                            <p className="text-sm lg:text-base leading-relaxed text-[#64748B] mb-4">
+                                                            <p className="mb-3 text-sm leading-7 text-[#64748B]">
                                                                 {item.text}
                                                             </p>
                                                         </div>
 
                                                         {/* Year Display */}
-                                                        <div className={`inline-block px-4 py-2 rounded-lg bg-gradient-to-r ${item.color} text-white font-black text-lg shadow-md transition-all duration-300`} style={{
-                                                            transform: activeYear === index ? 'scale(1.1)' : 'scale(1)',
-                                                            filter: activeYear === index ? 'drop-shadow(0 8px 16px rgba(0,0,0,0.2))' : 'none'
-                                                        }}>
+                                                        <div
+                                                            className={`inline-block rounded-lg bg-gradient-to-r px-3 py-1.5 ${item.color} text-sm font-black text-white shadow-md transition-all duration-300 xl:text-base`}
+                                                            style={{
+                                                                transform:
+                                                                    activeYear ===
+                                                                    index
+                                                                        ? 'scale(1.1)'
+                                                                        : 'scale(1)',
+                                                                filter:
+                                                                    activeYear ===
+                                                                    index
+                                                                        ? 'drop-shadow(0 8px 16px rgba(0,0,0,0.2))'
+                                                                        : 'none',
+                                                            }}
+                                                        >
                                                             {item.year}
                                                         </div>
                                                     </div>
 
                                                     {/* Border animation */}
-                                                    <div className="absolute inset-0 border-2 border-transparent group-hover/card:border-slate-300 rounded-2xl pointer-events-none transition-colors duration-300" style={{
-                                                        borderColor: activeYear === index ? `rgba(${item.color.includes('blue') ? '15, 96, 172' : item.color.includes('purple') ? '147, 51, 234' : item.color.includes('green') ? '34, 197, 94' : item.color.includes('orange') ? '249, 115, 22' : '236, 72, 153'}, 0.5)` : 'transparent'
-                                                    }}></div>
+                                                    <div
+                                                        className="pointer-events-none absolute inset-0 rounded-2xl border-2 border-transparent transition-colors duration-300 group-hover/card:border-slate-300"
+                                                        style={{
+                                                            borderColor:
+                                                                activeYear ===
+                                                                index
+                                                                    ? `rgba(${item.color.includes('blue') ? '15, 96, 172' : item.color.includes('purple') ? '147, 51, 234' : item.color.includes('green') ? '34, 197, 94' : item.color.includes('orange') ? '249, 115, 22' : '236, 72, 153'}, 0.5)`
+                                                                    : 'transparent',
+                                                        }}
+                                                    ></div>
                                                 </div>
                                             </div>
 
                                             {/* Right side - image */}
-                                            <div className={isEven ? 'order-2' : 'order-1'}>
-                                                <div className="relative h-72 lg:h-96 rounded-2xl overflow-hidden shadow-xl group/img">
+                                            <div
+                                                className={
+                                                    isEven
+                                                        ? 'order-2'
+                                                        : 'order-1'
+                                                }
+                                            >
+                                                <div className="group/img relative h-64 overflow-hidden rounded-2xl shadow-xl xl:h-72">
                                                     <img
                                                         src={item.image}
                                                         alt={`${item.theme} ${item.year}`}
                                                         className="h-full w-full object-cover transition-transform duration-700 group-hover/img:scale-110"
                                                     />
                                                     {/* Overlay on hover */}
-                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover/img:opacity-100 transition-opacity duration-300"></div>
+                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover/img:opacity-100"></div>
 
                                                     {/* Animated center circle dot */}
-                                                    <div className="hidden lg:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center justify-center w-12 h-12 rounded-full bg-white shadow-xl timeline-dot" style={{
-                                                        transform: activeYear === index ? 'translate(-50%, -50%) scale(1.3)' : 'translate(-50%, -50%) scale(1)',
-                                                        boxShadow: activeYear === index ? `0 0 20px rgba(15, 96, 172, 0.6)` : '0 10px 25px rgba(0,0,0,0.2)'
-                                                    }}>
-                                                        <div className={`w-8 h-8 rounded-full bg-gradient-to-r ${item.color} transition-all duration-300`} style={{
-                                                            boxShadow: activeYear === index ? `0 0 15px rgba(15, 96, 172, 0.8)` : 'none'
-                                                        }}></div>
+                                                    <div
+                                                        className="timeline-dot absolute top-1/2 left-1/2 hidden h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white shadow-xl lg:flex"
+                                                        style={{
+                                                            transform:
+                                                                activeYear ===
+                                                                index
+                                                                    ? 'translate(-50%, -50%) scale(1.3)'
+                                                                    : 'translate(-50%, -50%) scale(1)',
+                                                            boxShadow:
+                                                                activeYear ===
+                                                                index
+                                                                    ? `0 0 20px rgba(15, 96, 172, 0.6)`
+                                                                    : '0 10px 25px rgba(0,0,0,0.2)',
+                                                        }}
+                                                    >
+                                                        <div
+                                                            className={`h-6 w-6 rounded-full bg-gradient-to-r ${item.color} transition-all duration-300`}
+                                                            style={{
+                                                                boxShadow:
+                                                                    activeYear ===
+                                                                    index
+                                                                        ? `0 0 15px rgba(15, 96, 172, 0.8)`
+                                                                        : 'none',
+                                                            }}
+                                                        ></div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -440,32 +529,38 @@ export default function AboutPage() {
 
                                         {/* Mobile Layout */}
                                         <div className="lg:hidden">
-                                            <div className="relative bg-white rounded-2xl overflow-hidden shadow-lg ring-1 ring-slate-200 transition-all duration-500 hover:shadow-xl hover:-translate-y-1">
+                                            <div className="relative overflow-hidden rounded-2xl bg-white shadow-lg ring-1 ring-slate-200 transition-all duration-500 hover:-translate-y-1 hover:shadow-xl">
                                                 {/* Image */}
-                                                <div className="relative h-48 overflow-hidden">
+                                                <div className="relative h-44 overflow-hidden sm:h-52">
                                                     <img
                                                         src={item.image}
                                                         alt={`${item.theme} ${item.year}`}
                                                         className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
                                                     />
-                                                    <div className={`absolute top-4 right-4 inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-r ${item.color} text-white font-black shadow-lg`}>
+                                                    <div
+                                                        className={`absolute top-4 right-4 inline-flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-r ${item.color} font-black text-white shadow-lg sm:h-12 sm:w-12`}
+                                                    >
                                                         {item.year % 10}
                                                     </div>
                                                 </div>
 
                                                 {/* Content */}
-                                                <div className="p-6">
-                                                    <div className={`inline-flex items-center gap-2 rounded-full bg-gradient-to-r ${item.color} px-3 py-1 text-xs font-black text-white uppercase mb-3 shadow-md`}>
-                                                        <span className="inline-block w-2 h-2 rounded-full bg-white pulse-glow"></span>
+                                                <div className="p-5 sm:p-6">
+                                                    <div
+                                                        className={`inline-flex items-center gap-2 rounded-full bg-gradient-to-r ${item.color} mb-3 px-3 py-1 text-xs font-black text-white uppercase shadow-md`}
+                                                    >
+                                                        <span className="pulse-glow inline-block h-2 w-2 rounded-full bg-white"></span>
                                                         {item.theme}
                                                     </div>
-                                                    <h3 className="text-xl font-black text-[#1E293B] mb-2">
+                                                    <h3 className="mb-2 text-xl font-black text-[#1E293B]">
                                                         {item.title}
                                                     </h3>
-                                                    <p className="text-sm leading-relaxed text-[#64748B] mb-4">
+                                                    <p className="mb-4 text-sm leading-relaxed text-[#64748B]">
                                                         {item.text}
                                                     </p>
-                                                    <div className={`inline-block px-3 py-1 rounded-lg bg-gradient-to-r ${item.color} text-white font-black text-sm shadow-md`}>
+                                                    <div
+                                                        className={`inline-block rounded-lg bg-gradient-to-r px-3 py-1 ${item.color} text-sm font-black text-white shadow-md`}
+                                                    >
                                                         {item.year}
                                                     </div>
                                                 </div>
