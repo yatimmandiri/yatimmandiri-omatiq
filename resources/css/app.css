@@ -95,6 +95,17 @@
         @apply border-border;
     }
 
+    html,
+    body {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+    html::-webkit-scrollbar,
+    body::-webkit-scrollbar {
+        display: none;
+    }
+
     body {
         @apply bg-background text-foreground;
     }
@@ -110,4 +121,12 @@
    Layer Utilities Css
 ======================================== */
 @layer utilities {
+    .scrollbar-hidden {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+    .scrollbar-hidden::-webkit-scrollbar {
+        display: none;
+    }
 }
