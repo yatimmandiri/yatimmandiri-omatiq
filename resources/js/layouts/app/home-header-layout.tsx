@@ -14,7 +14,6 @@ export const HomeHeaderComponent = () => {
     const currentPath = (page.url || '/').split('?')[0];
     const isHomePage = currentPath === '/';
     const useSolidHeader = isScrolled || !isHomePage;
-    console.log(settings);
 
     const logoUrl = (() => {
         if (!settings?.logo) {
