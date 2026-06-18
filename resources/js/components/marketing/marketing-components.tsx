@@ -21,6 +21,7 @@ import {
     Trophy,
     Users,
     X,
+    Calendar,
 } from 'lucide-react';
 import { FormEvent, ReactNode, useMemo, useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
@@ -100,11 +101,10 @@ export const Navbar = () => {
                             <Link
                                 key={item.href}
                                 href={item.href}
-                                className={`rounded-xl px-4 py-2 text-sm font-bold transition ${
-                                    isActive
+                                className={`rounded-xl px-4 py-2 text-sm font-bold transition ${isActive
                                         ? 'bg-[#0F60AC]/10 text-[#0F60AC]'
                                         : 'text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#0F60AC]'
-                                }`}
+                                    }`}
                             >
                                 {item.label}
                             </Link>
@@ -498,11 +498,10 @@ export const NewsCard = ({
     article: NewsItem;
     featured?: boolean;
 }) => {
-    const className = `group min-w-0 overflow-hidden rounded-[28px] bg-white shadow-sm ring-1 ring-slate-100 transition duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-[#0F60AC]/10 sm:rounded-3xl ${
-        featured
+    const className = `group min-w-0 overflow-hidden rounded-[28px] bg-white shadow-sm ring-1 ring-slate-100 transition duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-[#0F60AC]/10 sm:rounded-3xl ${featured
             ? 'grid md:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]'
             : 'flex h-full flex-col'
-    }`;
+        }`;
     const content = (
         <>
             <div
@@ -524,11 +523,10 @@ export const NewsCard = ({
                     <span className="text-[#64748B]">{article.date}</span>
                 </div>
                 <h3
-                    className={`mt-4 min-w-0 leading-tight font-black break-words text-[#1E293B] ${
-                        featured
+                    className={`mt-4 min-w-0 leading-tight font-black break-words text-[#1E293B] ${featured
                             ? 'text-2xl sm:text-3xl lg:text-4xl'
                             : 'text-xl sm:text-2xl'
-                    }`}
+                        }`}
                 >
                     {article.title}
                 </h3>
@@ -662,8 +660,8 @@ export const CTASection = ({
                             href="/programs"
                             className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#0F60AC]/15 bg-white px-6 py-4 text-sm font-black text-[#0F60AC] shadow-sm transition hover:-translate-y-1 hover:border-[#0F60AC]/30 hover:bg-[#0F60AC]/5"
                         >
-                            Lihat Cabang
-                            <BookOpen className="h-4 w-4" />
+                            Lihat Jadwal
+                            <Calendar className="h-4 w-4" />
                         </Link>
                     </div>
                 </div>

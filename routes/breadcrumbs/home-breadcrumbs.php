@@ -17,8 +17,8 @@ Breadcrumbs::for('home.programs', function (BreadcrumbTrail $trail) {
     $trail->parent('home.index')->push('Program', route('home.programs'));
 });
 
-Breadcrumbs::for('home.programs.data', function (BreadcrumbTrail $trail) {
-    $trail->parent('home.programs')->push('Data Program', route('home.programs.data'));
+Breadcrumbs::for('home.programs.data', function (BreadcrumbTrail $trail, $slug) {
+    $trail->parent('home.programs')->push('Detail Olimpiade', route('home.programs.data', $slug));
 });
 
 Breadcrumbs::for('home.berita', function (BreadcrumbTrail $trail) {

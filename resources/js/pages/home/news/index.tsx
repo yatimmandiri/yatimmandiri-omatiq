@@ -10,6 +10,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 const NEWS_API_URL =
     'https://yatimmandiri.org/news/wp-json/ymapi/v2/posts?categories=557';
+const BLOG_API_URL = 'https://yatimmandiri.org/blog/wp-json/ymapi/v2/posts';
 
 type ExternalNewsPost = {
     id: number;
@@ -17,29 +18,47 @@ type ExternalNewsPost = {
     title?: string;
     slug?: string;
     excerpt?: string;
-    author?: {
+    author?:
+        | {
+              name?: string;
+          }
+        | string;
+    categories?: Array<{
         name?: string;
-    };
+    }>;
     featured_image?: {
+        thumbnail?: string;
         medium?: string;
+        large?: string;
+        full?: string;
     };
     link?: string;
 };
 
-const mapExternalPost = (post: ExternalNewsPost): NewsItem => {
+const mapExternalPost = (
+    post: ExternalNewsPost,
+    fallbackCategory = 'OMATIQ',
+): NewsItem => {
     const excerpt = stripHtml(post.excerpt || '');
+    const author =
+        typeof post.author === 'string'
+            ? post.author
+            : post.author?.name || 'Yatim Mandiri';
 
     return {
         id: post.id,
         title: stripHtml(post.title || 'Artikel OMATIQ'),
         slug: post.slug || String(post.id),
-        category: 'OMATIQ',
+        category: post.categories?.[0]?.name || fallbackCategory,
         date: post.date || '',
         excerpt,
         image:
+            post.featured_image?.large ||
             post.featured_image?.medium ||
+            post.featured_image?.full ||
+            post.featured_image?.thumbnail ||
             'https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1200&q=80',
-        author: post.author?.name || 'Yatim Mandiri',
+        author,
         readTime: `${Math.max(3, Math.ceil(excerpt.split(/\s+/).length / 180))} min read`,
         link: post.link,
     };
@@ -47,8 +66,11 @@ const mapExternalPost = (post: ExternalNewsPost): NewsItem => {
 
 export default function NewsPage() {
     const [articles, setArticles] = useState<NewsItem[]>([]);
+    const [blogs, setBlogs] = useState<NewsItem[]>([]);
     const [loading, setLoading] = useState(true);
+    const [blogLoading, setBlogLoading] = useState(true);
     const [failed, setFailed] = useState(false);
+    const [blogFailed, setBlogFailed] = useState(false);
 
     const fetchArticles = useCallback(async () => {
         try {
@@ -57,7 +79,7 @@ export default function NewsPage() {
 
             const response = await axios.get<ExternalNewsPost[]>(NEWS_API_URL);
             const externalArticles = Array.isArray(response.data)
-                ? response.data.map(mapExternalPost)
+                ? response.data.map((post) => mapExternalPost(post))
                 : [];
 
             setArticles(externalArticles.length ? externalArticles : news);
@@ -70,12 +92,35 @@ export default function NewsPage() {
         }
     }, []);
 
+    const fetchBlogs = useCallback(async () => {
+        try {
+            setBlogLoading(true);
+            setBlogFailed(false);
+
+            const response = await axios.get<ExternalNewsPost[]>(BLOG_API_URL);
+            const externalBlogs = Array.isArray(response.data)
+                ? response.data.map((post) => mapExternalPost(post, 'Blog'))
+                : [];
+
+            setBlogs(externalBlogs);
+        } catch (error) {
+            console.error('Gagal mengambil blog Yatim Mandiri:', error);
+            setBlogs([]);
+            setBlogFailed(true);
+        } finally {
+            setBlogLoading(false);
+        }
+    }, []);
+
     useEffect(() => {
         fetchArticles();
-    }, [fetchArticles]);
+        fetchBlogs();
+    }, [fetchArticles, fetchBlogs]);
 
     const featured = articles[0];
     const latest = articles.slice(1);
+    const featuredBlog = blogs[0];
+    const latestBlogs = blogs.slice(1, 7);
 
     return (
         <>
@@ -143,6 +188,58 @@ export default function NewsPage() {
                             <EmptyState
                                 title="Belum ada artikel lainnya"
                                 description="Artikel terbaru akan tampil otomatis ketika tersedia dari sumber berita OMATIQ."
+                            />
+                        </div>
+                    )}
+                </div>
+            </section>
+
+            <section className="px-5 py-16 lg:px-8">
+                <div className="mx-auto max-w-7xl">
+                    <div className="flex flex-col gap-4 border-b border-slate-200 pb-8 md:flex-row md:items-end md:justify-between">
+                        <SectionHeader
+                            eyebrow="Blog"
+                            title="Inspirasi dan wawasan pilihan"
+                            description="Baca artikel edukatif, inspirasi kebaikan, dan wawasan keluarga dari kanal Blog Yatim Mandiri."
+                            align="left"
+                        />
+                        <p className="shrink-0 text-sm font-bold text-[#64748B]">
+                            {blogLoading
+                                ? 'Memuat blog...'
+                                : `${blogs.length} blog tersedia`}
+                        </p>
+                    </div>
+
+                    {blogFailed && (
+                        <div className="mt-6 rounded-2xl bg-[#FFC857]/20 px-5 py-4 text-sm font-bold text-[#9A3412]">
+                            Data blog belum bisa diambil saat ini. Silakan coba
+                            refresh halaman beberapa saat lagi.
+                        </div>
+                    )}
+
+                    {blogLoading ? (
+                        <div className="mt-10">
+                            <LoadingState />
+                        </div>
+                    ) : featuredBlog ? (
+                        <div className="mt-10 space-y-6">
+                            <NewsCard article={featuredBlog} featured />
+                            {latestBlogs.length > 0 && (
+                                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                                    {latestBlogs.map((blog) => (
+                                        <NewsCard
+                                            key={blog.id}
+                                            article={blog}
+                                        />
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="mt-10">
+                            <EmptyState
+                                title="Blog belum tersedia"
+                                description="Kami belum menerima data dari kanal Blog Yatim Mandiri."
                             />
                         </div>
                     )}
