@@ -120,7 +120,7 @@ export default function ProgramsPage() {
                             },
                             {
                                 icon: Target,
-                                value: '2 Cabang',
+                                value: '2 Program',
                                 label: 'Fokus yang terarah',
                             },
                             {
@@ -153,9 +153,9 @@ export default function ProgramsPage() {
             <section className="bg-white px-5 py-14 sm:py-20 lg:px-8">
                 <div className="mx-auto max-w-7xl">
                     <SectionHeader
-                        eyebrow="Pilih Cabangmu"
+                        eyebrow="Pilih Programmu"
                         title="Kenali dua panggung utama OMATIQ"
-                        description="Bukan sekadar memilih mata lomba. Setiap cabang membawa pengalaman, tantangan, dan kemampuan yang berbeda untuk dikembangkan."
+                        description="Bukan sekadar memilih mata lomba. Setiap program membawa pengalaman, tantangan, dan kemampuan yang berbeda untuk dikembangkan."
                     />
 
                     <div className="mt-14 space-y-10">
@@ -289,7 +289,7 @@ export default function ProgramsPage() {
             </section>
 
             <CTASection
-                title="Sudah tahu cabang yang paling cocok?"
+                title="Sudah tahu program yang paling cocok?"
                 description="Daftarkan anak untuk mengikuti Olimpiade Al-Qur'an atau Matematika dan berikan pengalaman berkompetisi yang positif di tingkat nasional."
             />
         </>

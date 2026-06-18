@@ -79,7 +79,7 @@ export default function NewsPage() {
 
             const response = await axios.get<ExternalNewsPost[]>(NEWS_API_URL);
             const externalArticles = Array.isArray(response.data)
-                ? response.data.map(mapExternalPost)
+                ? response.data.map((post) => mapExternalPost(post))
                 : [];
 
             setArticles(externalArticles.length ? externalArticles : news);

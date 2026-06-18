@@ -211,14 +211,18 @@ export default function HomePage() {
                     </div>
 
                     <div className="grid gap-4 lg:relative lg:block lg:min-h-[520px]">
-                        <div className="absolute top-4 left-2 z-10 hidden animate-bounce rounded-3xl bg-[#FFC857] px-5 py-4 text-sm font-black text-[#1E293B] shadow-xl md:block">
-                            Nasional
-                        </div>
-                        <div className="absolute top-28 right-4 z-10 hidden rounded-3xl bg-[#5DD39E] px-5 py-4 text-sm font-black text-white shadow-xl md:block">
-                            Tajwid & Logika
-                        </div>
-                        <div className="absolute bottom-8 left-8 z-10 hidden rounded-3xl bg-[#8B5CF6] px-5 py-4 text-sm font-black text-white shadow-xl md:block">
-                            Anak Indonesia
+                        <div className="hidden lg:block">
+                            <div className="absolute top-4 left-2 z-10 animate-bounce rounded-3xl bg-[#FFC857] px-5 py-4 text-sm font-black text-[#1E293B] shadow-xl">
+                                Nasional
+                            </div>
+
+                            <div className="absolute top-28 right-4 z-10 rounded-3xl bg-[#5DD39E] px-5 py-4 text-sm font-black text-white shadow-xl">
+                                Tajwid & Logika
+                            </div>
+
+                            <div className="absolute bottom-8 left-8 z-10 rounded-3xl bg-[#8B5CF6] px-5 py-4 text-sm font-black text-white shadow-xl">
+                                Anak Indonesia
+                            </div>
                         </div>
 
                         <div className="relative mx-auto w-full max-w-md rounded-[28px] bg-white p-4 shadow-2xl ring-1 shadow-[#0F60AC]/10 ring-slate-100 transition sm:p-5 lg:absolute lg:inset-x-4 lg:top-0 lg:rotate-[-3deg] lg:rounded-[36px] lg:hover:rotate-0">
@@ -377,7 +381,7 @@ export default function HomePage() {
                                         {program.description}
                                     </p>
                                     <span className="mt-5 inline-flex items-center gap-2 text-sm font-black text-[#F15F23]">
-                                        Pelajari Cabang
+                                        Detail Olimpiade
                                         <ArrowRight className="h-4 w-4" />
                                     </span>
                                 </div>
@@ -519,13 +523,12 @@ const PublicFigureReviewSlider = ({
                 {visibleItems.map((item, index) => (
                     <article
                         key={`${item.id}-${activeIndex}`}
-                        className={`group relative min-h-0 overflow-hidden rounded-[28px] bg-white p-5 shadow-sm ring-1 ring-slate-100 transition duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-[#0F60AC]/10 sm:min-h-96 sm:rounded-[32px] sm:p-6 ${
-                            index === 0
+                        className={`group relative min-h-0 overflow-hidden rounded-[28px] bg-white p-5 shadow-sm ring-1 ring-slate-100 transition duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-[#0F60AC]/10 sm:min-h-96 sm:rounded-[32px] sm:p-6 ${index === 0
                                 ? 'lg:rotate-[-1deg]'
                                 : index === 2
-                                  ? 'lg:rotate-[1deg]'
-                                  : ''
-                        }`}
+                                    ? 'lg:rotate-[1deg]'
+                                    : ''
+                            }`}
                     >
                         <div className="absolute top-5 right-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F15F23]/10 text-[#F15F23] transition group-hover:scale-110">
                             <Quote className="h-7 w-7" />
@@ -682,11 +685,10 @@ const PartnerSlider = ({ items }: { items: string[] }) => {
                 {visibleItems.map((partner, index) => (
                     <div
                         key={`${partner}-${activeIndex}`}
-                        className={`group relative min-h-44 overflow-hidden rounded-3xl border border-slate-100 bg-[#F8FAFC] p-5 shadow-sm transition-all duration-700 ease-out hover:-translate-y-2 hover:bg-white hover:shadow-xl hover:shadow-[#0F60AC]/10 ${
-                            index % 2 === 0
+                        className={`group relative min-h-44 overflow-hidden rounded-3xl border border-slate-100 bg-[#F8FAFC] p-5 shadow-sm transition-all duration-700 ease-out hover:-translate-y-2 hover:bg-white hover:shadow-xl hover:shadow-[#0F60AC]/10 ${index % 2 === 0
                                 ? 'animate-in fade-in slide-in-from-bottom-4'
                                 : 'animate-in fade-in slide-in-from-top-4'
-                        }`}
+                            }`}
                     >
                         <div className="absolute -top-6 -right-6 h-24 w-24 rounded-full bg-[#F15F23]/10 transition duration-500 group-hover:scale-125" />
                         <div className="absolute -bottom-8 left-6 h-24 w-24 rounded-full bg-[#56CCF2]/15 transition duration-500 group-hover:scale-125" />

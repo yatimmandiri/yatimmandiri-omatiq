@@ -204,10 +204,10 @@ const SliderItemSection = ({
                             <span className="h-2 w-2 rounded-full bg-[#5DD39E]" />
                             {item.badge || 'OMATIQ National Olympiad'}
                         </div>
-                        <h1 className="text-3xl leading-tight font-black sm:line-clamp-2 sm:text-5xl md:text-6xl lg:text-7xl">
+                        <h1 className="text-3xl leading-tight font-black sm:text-4xl md:text-5xl lg:text-6xl">
                             {item.title}
                         </h1>
-                        <p className="mt-4 max-w-2xl text-sm leading-relaxed text-gray-200 sm:mt-6 sm:line-clamp-2 sm:text-base md:text-lg lg:text-xl">
+                        <p className="mt-4 max-w-2xl text-sm leading-relaxed text-gray-200 sm:mt-6 sm:text-base lg:text-xl">
                             {item.subtitle}
                         </p>
                         <div className="mt-6 flex flex-col gap-3 sm:mt-8 sm:flex-row sm:flex-wrap">
