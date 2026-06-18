@@ -221,7 +221,7 @@ export default function HomePage() {
                             </div>
 
                             <div className="absolute bottom-8 left-8 z-10 rounded-3xl bg-[#8B5CF6] px-5 py-4 text-sm font-black text-white shadow-xl">
-                                Anak Indonesia
+                                Anak Indonesia 
                             </div>
                         </div>
 
