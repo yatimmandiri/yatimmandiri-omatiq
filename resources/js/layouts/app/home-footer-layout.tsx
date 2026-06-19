@@ -69,7 +69,7 @@ export const HomeFooterComponent = () => {
 
                     <div>
                         <h3 className="mb-5 text-lg font-bold">
-                            Cabang Olimpiade
+                            Olimpiade
                         </h3>
                         <ul className="space-y-3 text-sm text-white/75">
                             {[

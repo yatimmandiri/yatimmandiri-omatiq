@@ -72,7 +72,7 @@ const publicFigureReviews: PublicFigureReview[] = [
         id: 2,
         name: 'Ust. Farhan Al-Hafidz',
         role: 'Pembina Tahsin Nasional',
-        quote: 'Cabang Al-Quran di OMATIQ penting karena mempertemukan ketelitian tajwid dengan semangat anak-anak untuk membaca lebih baik.',
+        quote: 'Olimpiade Al-Quran di OMATIQ penting karena mempertemukan ketelitian tajwid dengan semangat anak-anak untuk membaca lebih baik.',
         avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=500&q=80',
         focus: 'Tajwid & Tahsin',
     },
@@ -188,7 +188,7 @@ export default function HomePage() {
                             bertumbuh melalui tantangan Al-Qur'an dan
                             Matematika. Untuk tahap awal, OMATIQ fokus pada soal
                             tajwid, cara baca Al-Qur'an, dan kemampuan
-                            matematika. Ke depannya, cabang olimpiade akan terus
+                            matematika. Ke depannya, olimpiade akan terus
                             dikembangkan.
                         </p>
 
@@ -273,7 +273,7 @@ export default function HomePage() {
                 <div className="mx-auto grid max-w-7xl gap-4 rounded-[32px] bg-white p-5 shadow-sm ring-1 ring-slate-100 md:grid-cols-4 md:p-8">
                     {[
                         ['34+', 'Provinsi'],
-                        ['2', 'Cabang Awal'],
+                        ['2', 'Olimpiade Awal'],
                         ['Nasional', 'Skala Lomba'],
                         ['2026', 'Musim OMATIQ'],
                     ].map(([value, label]) => (
@@ -396,7 +396,7 @@ export default function HomePage() {
                     <SectionHeader
                         eyebrow="Latest News"
                         title="Kabar terbaru dari OMATIQ"
-                        description="Ikuti update olimpiade, informasi cabang lomba, dan cerita perjalanan peserta dari berbagai daerah."
+                        description="Ikuti update olimpiade, informasi olimpiade, dan cerita perjalanan peserta dari berbagai daerah."
                     />
                     {newsLoading ? (
                         <div className="mt-10 space-y-6">

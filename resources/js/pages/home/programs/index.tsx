@@ -99,7 +99,7 @@ export default function ProgramsPage() {
                 <div className="relative mx-auto max-w-7xl text-center">
                     <span className="inline-flex items-center gap-2 rounded-full bg-[#F15F23]/10 px-4 py-2 text-sm font-black text-[#F15F23]">
                         <Medal className="h-4 w-4" />
-                        Cabang Olimpiade OMATIQ
+                        Olimpiade OMATIQ
                     </span>
                     <h1 className="mx-auto mt-6 max-w-5xl text-3xl leading-tight font-black text-[#1E293B] sm:text-4xl md:text-6xl lg:text-7xl">
                         Dua bidang utama untuk membentuk anak berakhlak dan
@@ -107,7 +107,7 @@ export default function ProgramsPage() {
                     </h1>
                     <p className="mx-auto mt-5 max-w-3xl text-base leading-8 text-[#64748B] sm:mt-6 sm:text-lg">
                         OMATIQ memusatkan pengalaman lomba pada Al-Qur'an dan
-                        Matematika. Setiap cabang dirancang serius, ramah untuk
+                        Matematika. Setiap olimpiade dirancang serius, ramah untuk
                         anak, dan relevan dengan proses tumbuh mereka.
                     </p>
 
@@ -155,7 +155,7 @@ export default function ProgramsPage() {
                     <SectionHeader
                         eyebrow="Pilih Programmu"
                         title="Kenali dua panggung utama OMATIQ"
-                        description="Bukan sekadar memilih mata lomba. Setiap program membawa pengalaman, tantangan, dan kemampuan yang berbeda untuk dikembangkan."
+                        description="Bukan sekadar memilih mata lomba. Setiap olimpiade membawa pengalaman, tantangan, dan kemampuan yang berbeda untuk dikembangkan."
                     />
 
                     <div className="mt-14 space-y-10">

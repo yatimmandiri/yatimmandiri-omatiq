@@ -37,8 +37,8 @@ export default function ContactPage() {
                             Mari mulai percakapan yang baik.
                         </h1>
                         <p className="mt-5 text-base leading-8 text-[#64748B] sm:text-lg">
-                            Punya pertanyaan tentang pendaftaran, cabang
-                            olimpiade, atau kerja sama sekolah? Tim OMATIQ siap
+                            Punya pertanyaan tentang pendaftaran, olimpiade
+                            atau kerja sama sekolah? Tim OMATIQ siap
                             membantu.
                         </p>
                     </div>

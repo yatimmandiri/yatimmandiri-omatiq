@@ -145,7 +145,7 @@ export default function AboutPage() {
                         <p className="mt-5 text-base leading-8 text-[#64748B] sm:mt-6 sm:text-lg">
                             OMATIQ adalah ajang olimpiade berbasis nasional
                             untuk anak-anak Indonesia. Pada tahap awal, OMATIQ
-                            berfokus pada dua cabang utama: Al-Qur'an melalui
+                            berfokus pada dua olimpiade utama: Al-Qur'an melalui
                             tajwid dan cara baca, serta Matematika untuk melatih
                             logika, ketelitian, dan keberanian bernalar.
                         </p>
@@ -262,7 +262,7 @@ export default function AboutPage() {
                 <div className="mx-auto max-w-7xl">
                     <SectionHeader
                         eyebrow="Fokus Olimpiade"
-                        title="Dua cabang awal, satu tujuan besar"
+                        title="Dua olimpiade awal, satu tujuan besar"
                         description="OMATIQ dimulai dari bidang yang dekat dengan pembentukan akhlak dan daya pikir anak."
                     />
                     <div className="mt-10 grid gap-6 md:grid-cols-3">

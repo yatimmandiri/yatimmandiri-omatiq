@@ -56,7 +56,7 @@ const detailContents: Record<string, DetailContent> = {
     'olimpiade-alquran': {
         overviewTitle: "Apa yang akan dialami peserta Al-Qur'an?",
         overviewDescription:
-            "Cabang Al-Qur'an membantu anak menguatkan pemahaman tajwid, ketepatan pelafalan, adab membaca, dan keberanian tampil di panggung lomba yang positif.",
+            "Olimpiade Al-Qur'an membantu anak menguatkan pemahaman tajwid, ketepatan pelafalan, adab membaca, dan keberanian tampil di panggung lomba yang positif.",
         objectives: [
             {
                 icon: BookOpenCheck,
@@ -106,7 +106,7 @@ const detailContents: Record<string, DetailContent> = {
     'olimpiade-matematika': {
         overviewTitle: 'Apa yang akan dialami peserta Matematika?',
         overviewDescription:
-            'Cabang Matematika dirancang untuk melatih logika, ketelitian, strategi menyelesaikan soal, dan mental berani mencoba tantangan baru.',
+            'Olimpiade Matematika dirancang untuk melatih logika, ketelitian, strategi menyelesaikan soal, dan mental berani mencoba tantangan baru.',
         objectives: [
             {
                 icon: Calculator,
