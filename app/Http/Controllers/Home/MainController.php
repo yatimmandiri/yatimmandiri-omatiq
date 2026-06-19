@@ -94,35 +94,6 @@ class MainController extends Controller
         return Inertia::render('home/news/show', $data);
     }
 
-    public function berita()
-    {
-        $data = [
-            'pageTitle' => 'Berita',
-            'meta' => [
-                'title' => 'Berita',
-                'description' => 'Latest news and updates.',
-                'keywords' => 'berita, updates, company',
-            ],
-        ];
-
-        return Inertia::render('home/berita/index', $data);
-    }
-
-    public function beritaShow(string $slug)
-    {
-        $data = [
-            'pageTitle' => 'Detail Berita',
-            'slug' => $slug,
-            'meta' => [
-                'title' => 'Detail Berita',
-                'description' => 'Detailed information about the berita article.',
-                'keywords' => 'detail berita, berita, company',
-            ],
-        ];
-
-        return Inertia::render('home/berita/show', $data);
-    }
-
     public function contact()
     {
         $data = [

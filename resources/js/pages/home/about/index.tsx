@@ -3,6 +3,8 @@ import {
     FeatureIcon,
     SectionHeader,
 } from '@/components/marketing/marketing-components';
+import { CapaianPesertaSection } from '@/components/sections/about/capaian-peserta-section';
+import { SistemLombaSection } from '@/components/sections/about/sistem-lomba-section';
 import { Link } from '@inertiajs/react';
 import {
     ArrowRight,
@@ -78,31 +80,31 @@ const values: Array<{
     text: string;
     color: 'orange' | 'blue' | 'mint' | 'purple';
 }> = [
-    {
-        icon: Heart,
-        title: 'Ramah untuk Anak',
-        text: 'Kompetisi dibuat menantang tanpa kehilangan rasa aman, hangat, dan menyenangkan.',
-        color: 'orange',
-    },
-    {
-        icon: BookOpenCheck,
-        title: "Cinta Al-Qur'an",
-        text: "Mendorong anak memahami tajwid, memperbaiki cara baca, dan bangga belajar Al-Qur'an.",
-        color: 'mint',
-    },
-    {
-        icon: Brain,
-        title: 'Berani Bernalar',
-        text: 'Matematika menjadi ruang untuk melatih logika, strategi, ketelitian, dan percaya diri.',
-        color: 'blue',
-    },
-    {
-        icon: Users,
-        title: 'Kolaborasi Nasional',
-        text: 'Menghubungkan sekolah, TPQ, orang tua, guru, dan mitra daerah untuk mendukung peserta.',
-        color: 'purple',
-    },
-];
+        {
+            icon: Heart,
+            title: 'Ramah untuk Anak',
+            text: 'Kompetisi dibuat menantang tanpa kehilangan rasa aman, hangat, dan menyenangkan.',
+            color: 'orange',
+        },
+        {
+            icon: BookOpenCheck,
+            title: "Cinta Al-Qur'an",
+            text: "Mendorong anak memahami tajwid, memperbaiki cara baca, dan bangga belajar Al-Qur'an.",
+            color: 'mint',
+        },
+        {
+            icon: Brain,
+            title: 'Berani Bernalar',
+            text: 'Matematika menjadi ruang untuk melatih logika, strategi, ketelitian, dan percaya diri.',
+            color: 'blue',
+        },
+        {
+            icon: Users,
+            title: 'Kolaborasi Nasional',
+            text: 'Menghubungkan sekolah, TPQ, orang tua, guru, dan mitra daerah untuk mendukung peserta.',
+            color: 'purple',
+        },
+    ];
 
 const focusItems = [
     {
@@ -393,12 +395,12 @@ export default function AboutPage() {
                                                             style={{
                                                                 transform:
                                                                     activeYear ===
-                                                                    index
+                                                                        index
                                                                         ? 'scale(1.2) rotate(5deg)'
                                                                         : 'scale(1) rotate(0deg)',
                                                                 filter:
                                                                     activeYear ===
-                                                                    index
+                                                                        index
                                                                         ? 'drop-shadow(0 10px 20px rgba(0,0,0,0.2))'
                                                                         : 'none',
                                                             }}
@@ -414,12 +416,12 @@ export default function AboutPage() {
                                                                     style={{
                                                                         opacity:
                                                                             activeYear ===
-                                                                            index
+                                                                                index
                                                                                 ? 1
                                                                                 : 0.8,
                                                                         transform:
                                                                             activeYear ===
-                                                                            index
+                                                                                index
                                                                                 ? 'scale(1.1)'
                                                                                 : 'scale(1)',
                                                                     }}
@@ -433,7 +435,7 @@ export default function AboutPage() {
                                                                 style={{
                                                                     color:
                                                                         activeYear ===
-                                                                        index
+                                                                            index
                                                                             ? '#0F60AC'
                                                                             : '#1E293B',
                                                                 }}
@@ -451,12 +453,12 @@ export default function AboutPage() {
                                                             style={{
                                                                 transform:
                                                                     activeYear ===
-                                                                    index
+                                                                        index
                                                                         ? 'scale(1.1)'
                                                                         : 'scale(1)',
                                                                 filter:
                                                                     activeYear ===
-                                                                    index
+                                                                        index
                                                                         ? 'drop-shadow(0 8px 16px rgba(0,0,0,0.2))'
                                                                         : 'none',
                                                             }}
@@ -471,7 +473,7 @@ export default function AboutPage() {
                                                         style={{
                                                             borderColor:
                                                                 activeYear ===
-                                                                index
+                                                                    index
                                                                     ? `rgba(${item.color.includes('blue') ? '15, 96, 172' : item.color.includes('purple') ? '147, 51, 234' : item.color.includes('green') ? '34, 197, 94' : item.color.includes('orange') ? '249, 115, 22' : '236, 72, 153'}, 0.5)`
                                                                     : 'transparent',
                                                         }}
@@ -502,12 +504,12 @@ export default function AboutPage() {
                                                         style={{
                                                             transform:
                                                                 activeYear ===
-                                                                index
+                                                                    index
                                                                     ? 'translate(-50%, -50%) scale(1.3)'
                                                                     : 'translate(-50%, -50%) scale(1)',
                                                             boxShadow:
                                                                 activeYear ===
-                                                                index
+                                                                    index
                                                                     ? `0 0 20px rgba(15, 96, 172, 0.6)`
                                                                     : '0 10px 25px rgba(0,0,0,0.2)',
                                                         }}
@@ -517,7 +519,7 @@ export default function AboutPage() {
                                                             style={{
                                                                 boxShadow:
                                                                     activeYear ===
-                                                                    index
+                                                                        index
                                                                         ? `0 0 15px rgba(15, 96, 172, 0.8)`
                                                                         : 'none',
                                                             }}
@@ -573,6 +575,10 @@ export default function AboutPage() {
                     </div>
                 </div>
             </section>
+
+            <SistemLombaSection />
+
+            <CapaianPesertaSection />
 
             <CTASection
                 title="Daftarkan anak untuk mengikuti OMATIQ"

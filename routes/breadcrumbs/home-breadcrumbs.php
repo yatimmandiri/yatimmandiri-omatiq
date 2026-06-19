@@ -21,12 +21,12 @@ Breadcrumbs::for('home.programs.data', function (BreadcrumbTrail $trail, $slug) 
     $trail->parent('home.programs')->push('Detail Olimpiade', route('home.programs.data', $slug));
 });
 
-Breadcrumbs::for('home.berita', function (BreadcrumbTrail $trail) {
-    $trail->parent('home.index')->push('Berita', route('home.berita'));
+Breadcrumbs::for('home.news', function (BreadcrumbTrail $trail) {
+    $trail->parent('home.index')->push('News', route('home.news'));
 });
 
-Breadcrumbs::for('home.berita.show', function (BreadcrumbTrail $trail, $slug) {
-    $trail->parent('home.berita')->push('Detail Berita', route('home.berita.show', $slug));
+Breadcrumbs::for('home.news.show', function (BreadcrumbTrail $trail, $slug) {
+    $trail->parent('home.news')->push('Detail News', route('home.news.show', $slug));
 });
 
 Breadcrumbs::for('home.sponsorship', function (BreadcrumbTrail $trail) {

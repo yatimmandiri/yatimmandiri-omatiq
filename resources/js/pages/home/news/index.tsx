@@ -19,10 +19,10 @@ type ExternalNewsPost = {
     slug?: string;
     excerpt?: string;
     author?:
-        | {
-              name?: string;
-          }
-        | string;
+    | {
+        name?: string;
+    }
+    | string;
     categories?: Array<{
         name?: string;
     }>;
@@ -159,11 +159,6 @@ export default function NewsPage() {
                             description="Kumpulan informasi dan cerita terbaru yang hadir dari sumber berita OMATIQ."
                             align="left"
                         />
-                        <p className="shrink-0 text-sm font-bold text-[#64748B]">
-                            {loading
-                                ? 'Memuat artikel...'
-                                : `${articles.length} artikel tersedia`}
-                        </p>
                     </div>
 
                     {failed && (
@@ -179,7 +174,7 @@ export default function NewsPage() {
                         </div>
                     ) : latest.length > 0 ? (
                         <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                            {latest.map((article) => (
+                            {latest.slice(0, 3).map((article) => (
                                 <NewsCard key={article.id} article={article} />
                             ))}
                         </div>
@@ -203,11 +198,6 @@ export default function NewsPage() {
                             description="Baca artikel edukatif, inspirasi kebaikan, dan wawasan keluarga dari kanal Blog Yatim Mandiri."
                             align="left"
                         />
-                        <p className="shrink-0 text-sm font-bold text-[#64748B]">
-                            {blogLoading
-                                ? 'Memuat blog...'
-                                : `${blogs.length} blog tersedia`}
-                        </p>
                     </div>
 
                     {blogFailed && (
@@ -226,7 +216,7 @@ export default function NewsPage() {
                             <NewsCard article={featuredBlog} featured />
                             {latestBlogs.length > 0 && (
                                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                                    {latestBlogs.map((blog) => (
+                                    {latestBlogs.slice(0, 3).map((blog) => (
                                         <NewsCard
                                             key={blog.id}
                                             article={blog}
