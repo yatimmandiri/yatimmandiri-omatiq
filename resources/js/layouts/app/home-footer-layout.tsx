@@ -1,4 +1,4 @@
-﻿import { ArrowUp, Mail, MapPin, MessageCircleMore, Phone } from 'lucide-react';
+import { ArrowUp, Mail, MapPin, MessageCircleMore, Phone } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
     FaFacebook,
@@ -51,7 +51,7 @@ export const HomeFooterComponent = () => {
                             {[
                                 ['Home', '/'],
                                 ['About Us', '/about'],
-                                ['Olimpiade', '/programs'],
+                                ['Olimpiade', '/olimpiade'],
                                 ['News', '/berita'],
                                 ['Contact', '/kontak'],
                             ].map(([label, href]) => (
@@ -81,7 +81,7 @@ export const HomeFooterComponent = () => {
                             ].map((item) => (
                                 <li key={item}>
                                     <a
-                                        href="/programs"
+                                        href="/olimpiade"
                                         className="transition hover:text-white"
                                     >
                                         {item}

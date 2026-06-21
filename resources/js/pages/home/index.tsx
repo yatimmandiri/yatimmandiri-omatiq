@@ -1,4 +1,4 @@
-﻿import {
+import {
     CTASection,
     FeatureIcon,
     NewsCard,
@@ -8,9 +8,10 @@
 import { SliderSection } from '@/components/sections/home/slider-section';
 import {
     NewsItem,
+    OlimpiadeItem,
     news,
     partners,
-    programs,
+    olimpiade,
     testimonials,
 } from '@/components/marketing/site-data';
 import { Link, usePage } from '@inertiajs/react';
@@ -119,7 +120,9 @@ const olympiadBranches = [
 type HomeProps = {
     news?: typeof news;
     testimonials?: typeof testimonials;
+    publicFigureReviews?: PublicFigureReview[];
     partners?: string[];
+    olimpiade?: OlimpiadeItem[];
 };
 
 export default function HomePage() {
@@ -128,10 +131,11 @@ export default function HomePage() {
         props.news?.length ? props.news : news,
     );
     const [newsLoading, setNewsLoading] = useState(true);
-    const testimonialItems = props.testimonials?.length
-        ? props.testimonials
-        : testimonials;
+    const testimonialItems = props.testimonials ?? testimonials;
+    const publicFigureReviewItems =
+        props.publicFigureReviews ?? publicFigureReviews;
     const partnerItems = props.partners?.length ? props.partners : partners;
+    const olympiadItems = props.olimpiade ?? olimpiade;
 
     useEffect(() => {
         let isMounted = true;
@@ -201,7 +205,7 @@ export default function HomePage() {
                                 <ArrowRight className="h-4 w-4" />
                             </Link>
                             <Link
-                                href="/programs"
+                                href="/olimpiade"
                                 className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#0F60AC]/15 bg-white px-6 py-4 text-sm font-black text-[#0F60AC] shadow-sm transition hover:-translate-y-1 hover:border-[#0F60AC]/30 hover:bg-[#0F60AC]/5"
                             >
                                 Lihat Olimpiade
@@ -221,7 +225,7 @@ export default function HomePage() {
                             </div>
 
                             <div className="absolute bottom-8 left-8 z-10 rounded-3xl bg-[#8B5CF6] px-5 py-4 text-sm font-black text-white shadow-xl">
-                                Anak Indonesia 
+                                Anak Indonesia
                             </div>
                         </div>
 
@@ -351,7 +355,7 @@ export default function HomePage() {
                 description="Ajak anak mengikuti olimpiade nasional yang mengasah kemampuan Al-Qur'an, Matematika, keberanian, dan semangat berprestasi sejak dini."
             />
 
-            {/* Program view */}
+            {/* Olimpiade view */}
             <section className="px-5 py-16 lg:px-8">
                 <div className="mx-auto max-w-7xl">
                     <SectionHeader
@@ -360,25 +364,25 @@ export default function HomePage() {
                         description="Olimpiade OMATIQ membantu anak membangun akhlak, ketelitian, logika, dan percaya diri dalam proses belajar."
                     />
                     <div className="mt-10 grid gap-6 md:grid-cols-2">
-                        {programs.slice(0, 2).map((program) => (
+                        {olympiadItems.slice(0, 2).map((olimpiade) => (
                             <Link
-                                key={program.title}
-                                href={`/programs/${program.slug}`}
+                                key={olimpiade.title}
+                                href={`/olimpiade/${olimpiade.slug}`}
                                 className="group overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-100 transition hover:-translate-y-1 hover:shadow-xl"
                             >
                                 <div className="h-56 overflow-hidden sm:h-64">
                                     <img
-                                        src={program.image}
-                                        alt={program.title}
+                                        src={olimpiade.image}
+                                        alt={olimpiade.title}
                                         className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
                                     />
                                 </div>
                                 <div className="p-5 sm:p-6">
                                     <h3 className="text-xl font-black text-[#1E293B]">
-                                        {program.title}
+                                        {olimpiade.title}
                                     </h3>
                                     <p className="mt-3 text-sm leading-7 text-[#64748B]">
-                                        {program.description}
+                                        {olimpiade.description}
                                     </p>
                                     <span className="mt-5 inline-flex items-center gap-2 text-sm font-black text-[#F15F23]">
                                         Detail Olimpiade
@@ -424,32 +428,38 @@ export default function HomePage() {
                 </div>
             </section>
 
-            <section className="relative overflow-hidden px-5 py-16 lg:px-8">
-                <div className="absolute top-16 left-0 h-40 w-40 rounded-full bg-[#FFC857]/20 blur-3xl" />
-                <div className="absolute right-0 bottom-16 h-48 w-48 rounded-full bg-[#8B5CF6]/15 blur-3xl" />
-                <div className="relative mx-auto max-w-7xl">
-                    <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
-                        <SectionHeader
-                            eyebrow="Review Tokoh"
-                            title="Dukungan dari para pemerhati pendidikan"
-                            description="Beberapa tokoh dan praktisi melihat OMATIQ sebagai ruang lomba yang bisa membangun prestasi, karakter, dan keberanian anak Indonesia."
-                            align="left"
+            {publicFigureReviewItems.length > 0 && (
+                <section className="relative overflow-hidden px-5 py-16 lg:px-8">
+                    <div className="absolute top-16 left-0 h-40 w-40 rounded-full bg-[#FFC857]/20 blur-3xl" />
+                    <div className="absolute right-0 bottom-16 h-48 w-48 rounded-full bg-[#8B5CF6]/15 blur-3xl" />
+                    <div className="relative mx-auto max-w-7xl">
+                        <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+                            <SectionHeader
+                                eyebrow="Review Tokoh"
+                                title="Dukungan dari para pemerhati pendidikan"
+                                description="Beberapa tokoh dan praktisi melihat OMATIQ sebagai ruang lomba yang bisa membangun prestasi, karakter, dan keberanian anak Indonesia."
+                                align="left"
+                            />
+                        </div>
+                        <PublicFigureReviewSlider
+                            items={publicFigureReviewItems}
                         />
                     </div>
-                    <PublicFigureReviewSlider items={publicFigureReviews} />
-                </div>
-            </section>
+                </section>
+            )}
 
-            <section className="bg-white px-5 py-16 lg:px-8">
-                <div className="mx-auto max-w-7xl">
-                    <SectionHeader
-                        eyebrow="Testimonials"
-                        title="Dipercaya oleh orang tua, guru, dan komunitas"
-                        description="OMATIQ membantu anak-anak berani mencoba, disiplin berlatih, dan bangga pada proses belajarnya."
-                    />
-                    <TestimonialSlider items={testimonialItems} />
-                </div>
-            </section>
+            {testimonialItems.length > 0 && (
+                <section className="bg-white px-5 py-16 lg:px-8">
+                    <div className="mx-auto max-w-7xl">
+                        <SectionHeader
+                            eyebrow="Testimonials"
+                            title="Dipercaya oleh orang tua, guru, dan komunitas"
+                            description="OMATIQ membantu anak-anak berani mencoba, disiplin berlatih, dan bangga pada proses belajarnya."
+                        />
+                        <TestimonialSlider items={testimonialItems} />
+                    </div>
+                </section>
+            )}
 
             <section className="px-5 py-16 lg:px-8">
                 <div className="mx-auto max-w-7xl overflow-hidden rounded-[32px] bg-white p-6 shadow-sm ring-1 ring-slate-100 md:p-8">
@@ -523,12 +533,13 @@ const PublicFigureReviewSlider = ({
                 {visibleItems.map((item, index) => (
                     <article
                         key={`${item.id}-${activeIndex}`}
-                        className={`group relative min-h-0 overflow-hidden rounded-[28px] bg-white p-5 shadow-sm ring-1 ring-slate-100 transition duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-[#0F60AC]/10 sm:min-h-96 sm:rounded-[32px] sm:p-6 ${index === 0
+                        className={`group relative min-h-0 overflow-hidden rounded-[28px] bg-white p-5 shadow-sm ring-1 ring-slate-100 transition duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-[#0F60AC]/10 sm:min-h-96 sm:rounded-[32px] sm:p-6 ${
+                            index === 0
                                 ? 'lg:rotate-[-1deg]'
                                 : index === 2
-                                    ? 'lg:rotate-[1deg]'
-                                    : ''
-                            }`}
+                                  ? 'lg:rotate-[1deg]'
+                                  : ''
+                        }`}
                     >
                         <div className="absolute top-5 right-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F15F23]/10 text-[#F15F23] transition group-hover:scale-110">
                             <Quote className="h-7 w-7" />
@@ -685,10 +696,11 @@ const PartnerSlider = ({ items }: { items: string[] }) => {
                 {visibleItems.map((partner, index) => (
                     <div
                         key={`${partner}-${activeIndex}`}
-                        className={`group relative min-h-44 overflow-hidden rounded-3xl border border-slate-100 bg-[#F8FAFC] p-5 shadow-sm transition-all duration-700 ease-out hover:-translate-y-2 hover:bg-white hover:shadow-xl hover:shadow-[#0F60AC]/10 ${index % 2 === 0
+                        className={`group relative min-h-44 overflow-hidden rounded-3xl border border-slate-100 bg-[#F8FAFC] p-5 shadow-sm transition-all duration-700 ease-out hover:-translate-y-2 hover:bg-white hover:shadow-xl hover:shadow-[#0F60AC]/10 ${
+                            index % 2 === 0
                                 ? 'animate-in fade-in slide-in-from-bottom-4'
                                 : 'animate-in fade-in slide-in-from-top-4'
-                            }`}
+                        }`}
                     >
                         <div className="absolute -top-6 -right-6 h-24 w-24 rounded-full bg-[#F15F23]/10 transition duration-500 group-hover:scale-125" />
                         <div className="absolute -bottom-8 left-6 h-24 w-24 rounded-full bg-[#56CCF2]/15 transition duration-500 group-hover:scale-125" />

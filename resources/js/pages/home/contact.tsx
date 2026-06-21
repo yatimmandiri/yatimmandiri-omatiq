@@ -1,4 +1,4 @@
-﻿import {
+import {
     ContactForm,
     ContactInfoGrid,
     SectionHeader,
@@ -7,19 +7,19 @@ import { ChevronDown, MapPin } from 'lucide-react';
 
 const faqs = [
     [
-        'Bagaimana cara mendaftar program OMATIQ?',
-        'Kamu bisa mengirim pesan melalui form kontak. Tim kami akan membantu memilih program yang paling sesuai dengan kebutuhanmu.',
+        'Bagaimana cara mendaftar olimpiade OMATIQ?',
+        'Kamu bisa mengirim pesan melalui form kontak. Tim kami akan membantu memilih olimpiade yang paling sesuai dengan kebutuhanmu.',
     ],
     [
         'Apakah OMATIQ bisa bekerja sama dengan sekolah atau komunitas?',
-        'Bisa. Kami terbuka untuk kolaborasi program, kelas khusus, workshop, dan pengembangan komunitas.',
+        'Bisa. Kami terbuka untuk kolaborasi olimpiade, kelas khusus, workshop, dan pengembangan komunitas.',
     ],
     [
-        'Apakah tersedia program online?',
-        'Ya. Beberapa program dapat dijalankan online, hybrid, maupun offline sesuai format dan kebutuhan peserta.',
+        'Apakah tersedia olimpiade online?',
+        'Ya. Beberapa olimpiade dapat dijalankan online, hybrid, maupun offline sesuai format dan kebutuhan peserta.',
     ],
     [
-        'Apakah program bisa disesuaikan?',
+        'Apakah olimpiade bisa disesuaikan?',
         'Bisa. Kami dapat menyesuaikan topik, durasi, dan pendekatan pembelajaran untuk mitra tertentu.',
     ],
 ];
@@ -75,7 +75,7 @@ export default function ContactPage() {
                                 </h2>
                                 <p className="mt-3 text-sm leading-7 text-[#64748B]">
                                     Jakarta, Indonesia. Open for education
-                                    programs, community partnerships, and
+                                    olimpiade, community partnerships, and
                                     creative collaborations.
                                 </p>
                             </div>

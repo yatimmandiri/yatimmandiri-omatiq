@@ -1,4 +1,4 @@
-﻿import { Link, usePage } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import {
     ArrowRight,
     BookOpen,
@@ -26,7 +26,7 @@ import {
 import { FormEvent, ReactNode, useMemo, useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { toast } from 'sonner';
-import { NewsItem, ProgramItem, TestimonialItem, navItems } from './site-data';
+import { NewsItem, OlimpiadeItem, TestimonialItem, navItems } from './site-data';
 
 type SharedSettings = {
     site_name?: string;
@@ -188,7 +188,7 @@ export const Footer = () => {
                     </div>
                     <p className="mt-5 max-w-sm text-sm leading-7 text-white/75">
                         {settings.site_description ||
-                            'OMATIQ membantu pelajar, pengajar, dan komunitas tumbuh lewat program belajar yang kreatif, hangat, dan berdampak.'}
+                            'OMATIQ membantu pelajar, pengajar, dan komunitas tumbuh lewat olimpiade belajar yang kreatif, hangat, dan berdampak.'}
                     </p>
                     <div className="mt-6 flex gap-3">
                         {[
@@ -223,12 +223,12 @@ export const Footer = () => {
 
                 <FooterColumn title="Explore" links={navItems} />
                 <FooterColumn
-                    title="Programs"
+                    title="Olimpiade"
                     links={[
-                        { label: 'Digital Skills', href: '/programs' },
-                        { label: 'Community', href: '/programs' },
-                        { label: 'Education', href: '/programs' },
-                        { label: 'Creative Lab', href: '/programs' },
+                        { label: 'Digital Skills', href: '/olimpiade' },
+                        { label: 'Community', href: '/olimpiade' },
+                        { label: 'Education', href: '/olimpiade' },
+                        { label: 'Creative Lab', href: '/olimpiade' },
                     ]}
                 />
 
@@ -237,7 +237,7 @@ export const Footer = () => {
                         Newsletter
                     </h3>
                     <p className="mt-4 text-sm leading-7 text-white/75">
-                        Dapatkan kabar program, cerita komunitas, dan insight
+                        Dapatkan kabar olimpiade, cerita komunitas, dan insight
                         pembelajaran terbaru.
                     </p>
                     <form
@@ -379,10 +379,10 @@ export const HeroSection = () => (
                 </p>
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                     <Link
-                        href="/programs"
+                        href="/olimpiade"
                         className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#F15F23] px-6 py-4 text-sm font-black text-white shadow-xl shadow-[#F15F23]/25 transition hover:-translate-y-1 hover:bg-[#d94f18]"
                     >
-                        Explore Programs
+                        Explore Olimpiade
                         <ArrowRight className="h-4 w-4" />
                     </Link>
                     <Link
@@ -396,7 +396,7 @@ export const HeroSection = () => (
                 <div className="mt-10 grid max-w-lg grid-cols-3 gap-4">
                     {[
                         ['12K+', 'Learners'],
-                        ['48+', 'Programs'],
+                        ['48+', 'Olimpiade'],
                         ['120+', 'Communities'],
                     ].map(([value, label]) => (
                         <div
@@ -451,37 +451,37 @@ export const HeroSection = () => (
     </section>
 );
 
-export const ProgramCard = ({ program }: { program: ProgramItem }) => (
+export const OlimpiadeCard = ({ olimpiade }: { olimpiade: OlimpiadeItem }) => (
     <Link
-        href={`/programs/${program.slug}`}
+        href={`/olimpiade/${olimpiade.slug}`}
         className="group flex h-full flex-col overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-100 transition duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-[#0F60AC]/10"
     >
         <div className="relative h-56 overflow-hidden">
             <img
-                src={program.image}
-                alt={program.title}
+                src={olimpiade.image}
+                alt={olimpiade.title}
                 className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
             />
             <div className="absolute top-4 left-4 rounded-full bg-white/90 px-3 py-1 text-xs font-black text-[#0F60AC] backdrop-blur">
-                {program.category}
+                {olimpiade.category}
             </div>
         </div>
         <div className="flex flex-1 flex-col p-6">
             <div className="flex flex-wrap gap-2 text-xs font-bold text-[#64748B]">
                 <span className="inline-flex items-center gap-1 rounded-full bg-[#F8FAFC] px-3 py-1">
                     <Clock3 className="h-3.5 w-3.5" />
-                    {program.duration}
+                    {olimpiade.duration}
                 </span>
                 <span className="inline-flex items-center gap-1 rounded-full bg-[#F8FAFC] px-3 py-1">
                     <Users className="h-3.5 w-3.5" />
-                    {program.level}
+                    {olimpiade.level}
                 </span>
             </div>
             <h3 className="mt-4 text-xl font-black text-[#1E293B]">
-                {program.title}
+                {olimpiade.title}
             </h3>
             <p className="mt-3 line-clamp-3 text-sm leading-7 text-[#64748B]">
-                {program.description}
+                {olimpiade.description}
             </p>
             <span className="mt-auto inline-flex items-center gap-2 pt-6 text-sm font-black text-[#F15F23] transition group-hover:gap-3">
                 Learn More
@@ -599,9 +599,11 @@ export const TestimonialCard = ({
 export const CTASection = ({
     title = 'Yuk daftarkan anak hebatmu ke OMATIQ!',
     description = "Beri anak kesempatan merasakan olimpiade nasional yang seru, terarah, dan membangun percaya diri melalui cabang Al-Qur'an dan Matematika.",
+    primaryHref = '/kontak',
 }: {
     title?: string;
     description?: string;
+    primaryHref?: string;
 }) => (
     <section className="px-5 py-14 sm:py-16 lg:px-8">
         <div className="mx-auto max-w-7xl overflow-hidden rounded-[28px] bg-white shadow-2xl ring-1 shadow-[#F15F23]/15 ring-[#F15F23]/10 sm:rounded-[32px]">
@@ -650,14 +652,14 @@ export const CTASection = ({
 
                     <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                         <Link
-                            href="/kontak"
+                            href={primaryHref}
                             className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#F15F23] px-6 py-4 text-sm font-black text-white shadow-xl shadow-[#F15F23]/25 transition hover:-translate-y-1 hover:bg-[#d94f18]"
                         >
                             Daftar Olimpiade
                             <ArrowRight className="h-4 w-4" />
                         </Link>
                         <Link
-                            href="/programs"
+                            href="/olimpiade"
                             className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#0F60AC]/15 bg-white px-6 py-4 text-sm font-black text-[#0F60AC] shadow-sm transition hover:-translate-y-1 hover:border-[#0F60AC]/30 hover:bg-[#0F60AC]/5"
                         >
                             Lihat Jadwal
@@ -726,7 +728,7 @@ export const ContactForm = () => {
                 <FormField
                     label="Topic"
                     name="topic"
-                    placeholder="Kolaborasi / Program"
+                    placeholder="Kolaborasi / Olimpiade"
                 />
             </div>
             <label className="mt-4 block">

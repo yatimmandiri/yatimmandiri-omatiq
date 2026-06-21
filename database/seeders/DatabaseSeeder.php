@@ -14,6 +14,8 @@ class DatabaseSeeder extends Seeder
         $this->call([
             IndoRegionSeeder::class,
             UserRolePermissionSeeder::class,
+            OlimpiadeSeeder::class,
+            TestimonialSeeder::class,
         ]);
     }
 }

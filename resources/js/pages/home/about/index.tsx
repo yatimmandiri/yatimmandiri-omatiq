@@ -151,7 +151,7 @@ export default function AboutPage() {
                         </p>
                         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                             <Link
-                                href="/programs"
+                                href="/olimpiade"
                                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#F15F23] px-6 py-4 text-sm font-black text-white shadow-lg shadow-[#F15F23]/25 transition hover:-translate-y-1"
                             >
                                 Lihat Olimpiade

@@ -1,4 +1,4 @@
-﻿import {
+import {
     CTASection,
     NewsCard,
 } from '@/components/marketing/marketing-components';
@@ -91,7 +91,7 @@ export default function NewsDetailPage() {
                             OMATIQ percaya bahwa pendidikan yang baik tidak
                             berhenti pada materi. Pengalaman belajar perlu
                             terasa manusiawi, interaktif, dan dekat dengan
-                            kebutuhan peserta. Karena itu setiap program
+                            kebutuhan peserta. Karena itu setiap olimpiade
                             dirancang dengan perpaduan konten, komunitas, dan
                             pendampingan.
                         </p>

@@ -1,13 +1,35 @@
-﻿export type ProgramItem = {
+export type OlimpiadeObjective = {
+    icon: string;
+    title: string;
+    text: string;
+};
+
+export type OlimpiadeVideo = {
+    title: string;
+    description: string;
+    embedUrl: string;
+    duration: string;
+    tag: string;
+};
+
+export type OlimpiadeItem = {
     id: number;
     title: string;
     slug: string;
     category: string;
+    excerpt?: string | null;
     description: string;
     image: string;
     duration: string;
     level: string;
     benefits: string[];
+    overviewTitle?: string | null;
+    overviewDescription?: string | null;
+    objectives?: OlimpiadeObjective[];
+    gallery?: string[];
+    videos?: OlimpiadeVideo[];
+    ctaDescription?: string | null;
+    registrationUrl?: string | null;
 };
 
 export type NewsItem = {
@@ -35,12 +57,12 @@ export type TestimonialItem = {
 export const navItems = [
     { label: 'Home', href: '/' },
     { label: 'About Us', href: '/about' },
-    { label: 'Olimpiade', href: '/programs' },
+    { label: 'Olimpiade', href: '/olimpiade' },
     { label: 'News', href: '/berita' },
     { label: 'Contact', href: '/kontak' },
 ];
 
-export const programs: ProgramItem[] = [
+export const olimpiade: OlimpiadeItem[] = [
     {
         id: 1,
         title: "Olimpiade Al-Qur'an",

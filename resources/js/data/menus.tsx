@@ -1,3 +1,8 @@
+import olimpiades from '@/routes/admin/companies/olimpiades';
+import olimpiadeGalleries from '@/routes/admin/companies/olimpiade-galleries';
+import olimpiadeObjectives from '@/routes/admin/companies/olimpiade-objectives';
+import olimpiadeVideos from '@/routes/admin/companies/olimpiade-videos';
+import testimonials from '@/routes/admin/companies/testimonials';
 import permissions from '@/routes/admin/core/permissions';
 import districts from '@/routes/admin/core/regions/districts';
 import provinces from '@/routes/admin/core/regions/provinces';
@@ -7,7 +12,7 @@ import roles from '@/routes/admin/core/roles';
 import users from '@/routes/admin/core/users';
 import activities from '@/routes/admin/logs/activities';
 import site from '@/routes/admin/settings/site';
-import { ChevronRight, CogIcon, CpuIcon, MapIcon } from 'lucide-react';
+import { ChevronRight, CogIcon, CpuIcon, MapIcon, Trophy } from 'lucide-react';
 
 export const NavigationList = [
     {
@@ -67,6 +72,43 @@ export const NavigationList = [
                                 icon: ChevronRight,
                             },
                         ],
+                    },
+                ],
+            },
+            {
+                title: 'Company',
+                roles: ['Administrators'],
+                icon: Trophy,
+                children: [
+                    {
+                        title: 'Olimpiade',
+                        href: olimpiades.index().url,
+                        permission: 'view-olimpiade',
+                        icon: ChevronRight,
+                    },
+                    {
+                        title: 'Objectives',
+                        href: olimpiadeObjectives.index().url,
+                        permission: 'view-olimpiade-objective',
+                        icon: ChevronRight,
+                    },
+                    {
+                        title: 'Gallery',
+                        href: olimpiadeGalleries.index().url,
+                        permission: 'view-olimpiade-gallery',
+                        icon: ChevronRight,
+                    },
+                    {
+                        title: 'Video',
+                        href: olimpiadeVideos.index().url,
+                        permission: 'view-olimpiade-video',
+                        icon: ChevronRight,
+                    },
+                    {
+                        title: 'Testimonials',
+                        href: testimonials.index().url,
+                        permission: 'view-testimonial',
+                        icon: ChevronRight,
                     },
                 ],
             },
