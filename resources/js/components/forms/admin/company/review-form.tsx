@@ -27,13 +27,12 @@ type TestimonialRecord = {
     focus?: string | null;
     sort_order: number;
     status: boolean;
-    olimpiade_id: number;
 };
 
-export function TestimonialForm({ dataId }: { dataId?: number }) {
-    const { testimonial, olimpiades } = usePage<{ testimonial?: TestimonialRecord; olimpiades: any[] }>()
-        .props;
 
+export function ReviewForm({ dataId }: { dataId?: number }) {
+    const { testimonial } = usePage<{ testimonial?: TestimonialRecord }>()
+        .props;
     const form = useForm<any>({
         name: testimonial?.name ?? '',
         role: testimonial?.role ?? '',
@@ -46,14 +45,12 @@ export function TestimonialForm({ dataId }: { dataId?: number }) {
         focus: testimonial?.focus ?? '',
         sort_order: testimonial?.sort_order ?? 0,
         status: testimonial?.status ?? true,
-        olimpiade_id: testimonial?.olimpiade_id ?? 0,
     });
 
     form.transform((data: any) => ({
         ...data,
         ...(dataId ? { _method: 'put' } : {}),
         status: data.status ? 1 : 0,
-        olimpiade_id: data.olimpiade_id || 0,
     }));
 
     const submit = (event: FormEvent<HTMLFormElement>) => {
@@ -79,7 +76,7 @@ export function TestimonialForm({ dataId }: { dataId?: number }) {
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h1 className="text-2xl font-bold">
-                        {dataId ? 'Edit' : 'Tambah'} Testimonial
+                        {dataId ? 'Edit' : 'Tambah'} Review
                     </h1>
                     <p className="mt-1 text-sm text-muted-foreground">
                         Kelola testimonial dan review tokoh yang tampil pada
@@ -221,33 +218,6 @@ export function TestimonialForm({ dataId }: { dataId?: number }) {
                             </Button>
                         ))}
                     </div>
-                </Field>
-            </Card>
-
-            <Card className="space-y-5 p-5">
-                <Field label="Olimpiade" error={error('olimpiade_id')}>
-                    <Select
-                        onValueChange={(value) =>
-                            form.setData('olimpiade_id', Number(value))
-                        }
-                        defaultValue={form.data.olimpiade_id.toString()}
-                    >
-                        <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Pilih olimpiade" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {olimpiades.map(
-                                (olimpiade: any) => (
-                                    <SelectItem
-                                        key={olimpiade.id}
-                                        value={olimpiade.id.toString()}
-                                    >
-                                        {olimpiade.name}
-                                    </SelectItem>
-                                ),
-                            )}
-                        </SelectContent>
-                    </Select>
                 </Field>
                 <div className="flex items-center justify-between rounded-md border p-4">
                     <Label>Status aktif</Label>

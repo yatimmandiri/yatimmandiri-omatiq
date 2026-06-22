@@ -5,7 +5,7 @@ namespace App\Http\Requests\Company;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class StoreTestimonialRequest extends FormRequest
+class StoreReviewRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -24,7 +24,6 @@ class StoreTestimonialRequest extends FormRequest
             'focus' => ['nullable', 'required_if:type,public_figure', 'string', 'max:255'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
             'status' => ['sometimes', 'boolean'],
-            'olimpiade_id' => ['required', 'exists:olimpiades,id'],
         ];
     }
 }

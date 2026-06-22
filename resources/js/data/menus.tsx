@@ -13,6 +13,7 @@ import users from '@/routes/admin/core/users';
 import activities from '@/routes/admin/logs/activities';
 import site from '@/routes/admin/settings/site';
 import { ChevronRight, CogIcon, CpuIcon, MapIcon, Trophy } from 'lucide-react';
+import reviews from '@/routes/admin/companies/reviews';
 
 export const NavigationList = [
     {
@@ -108,6 +109,12 @@ export const NavigationList = [
                         title: 'Testimonials',
                         href: testimonials.index().url,
                         permission: 'view-testimonial',
+                        icon: ChevronRight,
+                    },
+                    {
+                        title: 'Reviews',
+                        href: reviews.index().url,
+                        permission: 'view-review',
                         icon: ChevronRight,
                     },
                 ],

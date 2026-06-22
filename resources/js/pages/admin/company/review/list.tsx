@@ -5,8 +5,8 @@ import {
     renderRowParagraph,
 } from '@/components/partials/dataTables/utils/dataTable-utils';
 import { Badge } from '@/components/ui/badge';
-import testimonials from '@/routes/admin/companies/testimonials';
-import { router } from '@inertiajs/react';
+import reviews from '@/routes/admin/companies/reviews';
+import { router, usePage } from '@inertiajs/react';
 import { CheckCircle2, Star, XCircle } from 'lucide-react';
 import { useState } from 'react';
 
@@ -30,17 +30,6 @@ export default function ListPage() {
         {
             header: (info: any) => renderRowHeader(info, 'Nama'),
             accessorKey: 'name',
-        },
-        {
-            header: (info: any) => renderRowHeader(info, 'Olimpiade'),
-            accessorKey: 'olimpiade_id',
-            cell: (info: any) => (
-                <Badge variant="outline">
-                    {info.getValue() === 1
-                        ? 'Olimpiade Alquran'
-                        : 'Olimpiade Mathematics'}
-                </Badge>
-            ),
         },
         {
             header: (info: any) => renderRowHeader(info, 'Peran'),
@@ -70,7 +59,7 @@ export default function ListPage() {
                     className="cursor-pointer"
                     onClick={() =>
                         router.put(
-                            testimonials.status(info.row.original.id).url,
+                            reviews.status(info.row.original.id).url,
                             {},
                             {
                                 preserveScroll: true,
@@ -98,12 +87,11 @@ export default function ListPage() {
                     filterValue={{}}
                     refreshData={refreshData}
                     setRefreshData={setRefreshData}
-                    urlFetchData={testimonials.data().url}
+                    urlFetchData={reviews.data().url}
                     formatDataExport={(items: any[]) =>
                         items.map((item, index) => ({
                             No: index + 1,
                             Nama: item.name,
-                            Olimpiade: item.olimpiade_id === 1 ? 'Olimpiade Alquran' : 'Olimpiade Mathematics',
                             Peran: item.role,
                             Rating: item.rating,
                             Status: item.status ? 'Aktif' : 'Nonaktif',

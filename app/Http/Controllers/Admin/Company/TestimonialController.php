@@ -7,6 +7,7 @@ use App\Concerns\Traits\UploadFiles;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Company\StoreTestimonialRequest;
 use App\Http\Requests\Company\UpdateTestimonialRequest;
+use App\Models\Company\Olimpiade;
 use App\Models\Company\Testimonial;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -28,7 +29,11 @@ class TestimonialController extends Controller
     {
         $this->authorize('create', Testimonial::class);
 
-        return Inertia::render('admin/company/testimonial/create');
+        $data = [
+            'olimpiades' => Olimpiade::where('status', true)->get(),
+        ];
+
+        return Inertia::render('admin/company/testimonial/create', $data);
     }
 
     public function store(StoreTestimonialRequest $request)
@@ -56,7 +61,12 @@ class TestimonialController extends Controller
     {
         $this->authorize('update', $testimonial);
 
-        return Inertia::render('admin/company/testimonial/edit', ['testimonial' => $testimonial]);
+        $data = [
+            'testimonial' => $testimonial,
+            'olimpiades' => Olimpiade::where('status', true)->get(),
+        ];
+
+        return Inertia::render('admin/company/testimonial/edit', $data);
     }
 
     public function update(UpdateTestimonialRequest $request, Testimonial $testimonial)
@@ -112,7 +122,7 @@ class TestimonialController extends Controller
             ->type(data_get($filterValue, 'type'))
             ->when(
                 data_get($filterValue, 'status') !== null,
-                fn ($query) => $query->where('status', filter_var(data_get($filterValue, 'status'), FILTER_VALIDATE_BOOL)),
+                fn($query) => $query->where('status', filter_var(data_get($filterValue, 'status'), FILTER_VALIDATE_BOOL)),
             )
             ->orderBy($orderBy, $direction)
             ->orderBy('id');

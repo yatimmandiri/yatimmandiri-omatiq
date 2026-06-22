@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\Company\OlimpiadeController;
 use App\Http\Controllers\Admin\Company\OlimpiadeGalleryController;
 use App\Http\Controllers\Admin\Company\OlimpiadeObjectiveController;
 use App\Http\Controllers\Admin\Company\OlimpiadeVideoController;
+use App\Http\Controllers\Admin\Company\ReviewController;
 use App\Http\Controllers\Admin\Company\TestimonialController;
 use App\Http\Controllers\Admin\Core\PermissionController;
 use App\Http\Controllers\Admin\Core\Region\DistrictController;
@@ -55,6 +56,10 @@ Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'auth.admi
         Route::put('testimonials/{testimonial}/status', [TestimonialController::class, 'status'])->name('testimonials.status');
         Route::get('testimonials/data', [TestimonialController::class, 'getData'])->name('testimonials.data');
         Route::resource('testimonials', TestimonialController::class);
+
+        Route::put('reviews/{review}/status', [ReviewController::class, 'status'])->name('reviews.status');
+        Route::get('reviews/data', [ReviewController::class, 'getData'])->name('reviews.data');
+        Route::resource('reviews', ReviewController::class);
     });
 
     Route::prefix('core')->as('core.')->group(function () {

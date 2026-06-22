@@ -5,24 +5,16 @@ namespace App\Models\Company;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 
-#[Fillable(['name', 'role', 'quote', 'avatar', 'rating', 'focus', 'sort_order', 'status', 'olimpiade_id'])]
-class Testimonial extends Model
+#[Fillable(['name', 'role', 'quote', 'avatar', 'rating', 'focus', 'sort_order', 'status'])]
+class Review extends Model
 {
     use LogsActivity, SoftDeletes;
-
-    protected $appends = ['avatar_url'];
-
-    public function olimpiades(): BelongsTo
-    {
-        return $this->belongsTo(Olimpiade::class, 'olimpiade_id');
-    }
 
     protected function casts(): array
     {

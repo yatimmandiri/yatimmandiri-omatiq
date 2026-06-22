@@ -6,9 +6,12 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Run the migrations.
+     */
     public function up(): void
     {
-        Schema::create('testimonials', function (Blueprint $table) {
+        Schema::create('reviews', function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->string('role');
@@ -18,14 +21,16 @@ return new class extends Migration
             $table->string('focus')->nullable();
             $table->unsignedInteger('sort_order')->default(0);
             $table->boolean('status')->default(true)->index();
-            $table->foreignId('olimpiade_id')->constrained('olimpiades')->cascadeOnUpdate()->cascadeOnDelete();
             $table->timestamps();
             $table->softDeletes();
         });
     }
 
+    /**
+     * Reverse the migrations.
+     */
     public function down(): void
     {
-        Schema::dropIfExists('testimonials');
+        Schema::dropIfExists('reviews');
     }
 };
