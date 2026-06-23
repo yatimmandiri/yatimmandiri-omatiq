@@ -31,17 +31,16 @@ type TestimonialRecord = {
 };
 
 export function TestimonialForm({ dataId }: { dataId?: number }) {
-    const { testimonial, olimpiades } = usePage<{ testimonial?: TestimonialRecord; olimpiades: any[] }>()
-        .props;
+    const { testimonial, olimpiades } = usePage<{
+        testimonial?: TestimonialRecord;
+        olimpiades: any[];
+    }>().props;
 
     const form = useForm<any>({
         name: testimonial?.name ?? '',
         role: testimonial?.role ?? '',
         quote: testimonial?.quote ?? '',
         avatar_file: null,
-        avatar_url: testimonial?.avatar?.startsWith('http')
-            ? testimonial.avatar
-            : '',
         rating: testimonial?.rating ?? 5,
         focus: testimonial?.focus ?? '',
         sort_order: testimonial?.sort_order ?? 0,
@@ -166,25 +165,17 @@ export function TestimonialForm({ dataId }: { dataId?: number }) {
 
             <Card className="space-y-5 p-5">
                 <h2 className="text-lg font-semibold">Foto dan penilaian</h2>
-                <div className="grid gap-5 md:grid-cols-2">
+                <div className="max-w-xl">
                     <Field label="Upload avatar" error={error('avatar_file')}>
                         <Input
                             type="file"
                             accept="image/jpeg,image/png,image/webp"
+                            required={!dataId}
                             onChange={(event) =>
                                 form.setData(
                                     'avatar_file',
                                     event.target.files?.[0] ?? null,
                                 )
-                            }
-                        />
-                    </Field>
-                    <Field label="Atau URL avatar" error={error('avatar_url')}>
-                        <Input
-                            type="url"
-                            value={form.data.avatar_url}
-                            onChange={(event) =>
-                                form.setData('avatar_url', event.target.value)
                             }
                         />
                     </Field>
@@ -236,16 +227,14 @@ export function TestimonialForm({ dataId }: { dataId?: number }) {
                             <SelectValue placeholder="Pilih olimpiade" />
                         </SelectTrigger>
                         <SelectContent>
-                            {olimpiades.map(
-                                (olimpiade: any) => (
-                                    <SelectItem
-                                        key={olimpiade.id}
-                                        value={olimpiade.id.toString()}
-                                    >
-                                        {olimpiade.name}
-                                    </SelectItem>
-                                ),
-                            )}
+                            {olimpiades.map((olimpiade: any) => (
+                                <SelectItem
+                                    key={olimpiade.id}
+                                    value={olimpiade.id.toString()}
+                                >
+                                    {olimpiade.name}
+                                </SelectItem>
+                            ))}
                         </SelectContent>
                     </Select>
                 </Field>

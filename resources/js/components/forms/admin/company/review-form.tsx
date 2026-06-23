@@ -29,18 +29,13 @@ type ReviewRecord = {
     status: boolean;
 };
 
-
 export function ReviewForm({ dataId }: { dataId?: number }) {
-    const { review } = usePage<{ review?: ReviewRecord }>()
-        .props;
+    const { review } = usePage<{ review?: ReviewRecord }>().props;
     const form = useForm<any>({
         name: review?.name ?? '',
         role: review?.role ?? '',
         quote: review?.quote ?? '',
         avatar_file: null,
-        avatar_url: review?.avatar?.startsWith('http')
-            ? review.avatar
-            : '',
         rating: review?.rating ?? 5,
         focus: review?.focus ?? '',
         sort_order: review?.sort_order ?? 0,
@@ -55,13 +50,10 @@ export function ReviewForm({ dataId }: { dataId?: number }) {
 
     const submit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        form.post(
-            dataId ? reviews.update(dataId).url : reviews.store().url,
-            {
-                forceFormData: true,
-                preserveScroll: true,
-            },
-        );
+        form.post(dataId ? reviews.update(dataId).url : reviews.store().url, {
+            forceFormData: true,
+            preserveScroll: true,
+        });
     };
 
     const error = (name: string) =>
@@ -79,8 +71,8 @@ export function ReviewForm({ dataId }: { dataId?: number }) {
                         {dataId ? 'Edit' : 'Tambah'} Review
                     </h1>
                     <p className="mt-1 text-sm text-muted-foreground">
-                        Kelola review dan review tokoh yang tampil pada
-                        halaman home.
+                        Kelola review dan review tokoh yang tampil pada halaman
+                        home.
                     </p>
                 </div>
                 <div className="flex gap-2">
@@ -163,25 +155,17 @@ export function ReviewForm({ dataId }: { dataId?: number }) {
 
             <Card className="space-y-5 p-5">
                 <h2 className="text-lg font-semibold">Foto dan penilaian</h2>
-                <div className="grid gap-5 md:grid-cols-2">
+                <div className="max-w-xl">
                     <Field label="Upload avatar" error={error('avatar_file')}>
                         <Input
                             type="file"
                             accept="image/jpeg,image/png,image/webp"
+                            required={!dataId}
                             onChange={(event) =>
                                 form.setData(
                                     'avatar_file',
                                     event.target.files?.[0] ?? null,
                                 )
-                            }
-                        />
-                    </Field>
-                    <Field label="Atau URL avatar" error={error('avatar_url')}>
-                        <Input
-                            type="url"
-                            value={form.data.avatar_url}
-                            onChange={(event) =>
-                                form.setData('avatar_url', event.target.value)
                             }
                         />
                     </Field>

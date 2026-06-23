@@ -1,10 +1,10 @@
-import { TestimonialForm } from '@/components/forms/admin/company/review-form';
+import { ReviewForm } from '@/components/forms/admin/company/review-form';
 import { usePage } from '@inertiajs/react';
 export default function EditPage() {
-    const { testimonial } = usePage<{ testimonial: { id: number } }>().props;
+    const { review } = usePage<{ review: { id: number } }>().props;
     return (
         <div className="flex flex-1 flex-col p-4">
-            <TestimonialForm dataId={testimonial.id} />
+            <ReviewForm dataId={review.id} />
         </div>
     );
 }

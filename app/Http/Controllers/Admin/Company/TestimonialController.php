@@ -122,7 +122,7 @@ class TestimonialController extends Controller
             ->type(data_get($filterValue, 'type'))
             ->when(
                 data_get($filterValue, 'status') !== null,
-                fn($query) => $query->where('status', filter_var(data_get($filterValue, 'status'), FILTER_VALIDATE_BOOL)),
+                fn ($query) => $query->where('status', filter_var(data_get($filterValue, 'status'), FILTER_VALIDATE_BOOL)),
             )
             ->orderBy($orderBy, $direction)
             ->orderBy('id');
@@ -136,7 +136,7 @@ class TestimonialController extends Controller
 
     private function payload(StoreTestimonialRequest|UpdateTestimonialRequest $request, ?Testimonial $testimonial = null): array
     {
-        $data = $request->safe()->except(['avatar_file', 'avatar_url']);
+        $data = $request->safe()->except(['avatar_file']);
 
         if ($request->hasFile('avatar_file')) {
             $oldPath = $testimonial?->avatar;
@@ -145,11 +145,6 @@ class TestimonialController extends Controller
                 $request->file('avatar_file'),
                 'uploads/testimonials',
             );
-        } elseif ($request->filled('avatar_url')) {
-            if ($testimonial?->avatar && ! Str::startsWith($testimonial->avatar, ['http://', 'https://'])) {
-                $this->deleteFile($testimonial->avatar);
-            }
-            $data['avatar'] = $request->string('avatar_url')->toString();
         }
 
         $data['status'] = $request->has('status') ? $request->boolean('status') : true;

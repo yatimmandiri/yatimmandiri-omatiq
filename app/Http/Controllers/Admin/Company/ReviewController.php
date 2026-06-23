@@ -5,8 +5,6 @@ namespace App\Http\Controllers\Admin\Company;
 use App\Concerns\Traits\LogActivity;
 use App\Concerns\Traits\UploadFiles;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Admin\Company\StoreReviewRequest;
-use App\Http\Requests\Admin\Company\UpdateReviewRequest;
 use App\Http\Requests\Company\StoreReviewRequest as CompanyStoreReviewRequest;
 use App\Http\Requests\Company\UpdateReviewRequest as CompanyUpdateReviewRequest;
 use App\Models\Company\Review;
@@ -24,7 +22,7 @@ class ReviewController extends Controller
         $this->authorize('viewAny', Review::class);
 
         $data = [
-            'reviews' => Review::get()
+            'reviews' => Review::get(),
         ];
 
         return Inertia::render('admin/company/review/list', $data);
@@ -118,7 +116,7 @@ class ReviewController extends Controller
             ->type(data_get($filterValue, 'type'))
             ->when(
                 data_get($filterValue, 'status') !== null,
-                fn($query) => $query->where('status', filter_var(data_get($filterValue, 'status'), FILTER_VALIDATE_BOOL)),
+                fn ($query) => $query->where('status', filter_var(data_get($filterValue, 'status'), FILTER_VALIDATE_BOOL)),
             )
             ->orderBy($orderBy, $direction)
             ->orderBy('id');
@@ -132,7 +130,7 @@ class ReviewController extends Controller
 
     private function payload(CompanyStoreReviewRequest|CompanyUpdateReviewRequest $request, ?Review $review = null): array
     {
-        $data = $request->safe()->except(['avatar_file', 'avatar_url']);
+        $data = $request->safe()->except(['avatar_file']);
 
         if ($request->hasFile('avatar_file')) {
             $oldPath = $review?->avatar;
@@ -141,11 +139,6 @@ class ReviewController extends Controller
                 $request->file('avatar_file'),
                 'uploads/reviews',
             );
-        } elseif ($request->filled('avatar_url')) {
-            if ($review?->avatar && ! Str::startsWith($review->avatar, ['http://', 'https://'])) {
-                $this->deleteFile($review->avatar);
-            }
-            $data['avatar'] = $request->string('avatar_url')->toString();
         }
 
         $data['status'] = $request->has('status') ? $request->boolean('status') : true;

@@ -1,6 +1,10 @@
-import { SectionHeader, TestimonialCard } from "@/components/marketing/marketing-components";
-import { getVisibleItems, useResponsiveVisibleCount } from "@/utils/uiResposive";
-import { PointerEvent, useEffect, useState } from "react";
+import {
+    SectionHeader,
+    TestimonialCard,
+} from '@/components/marketing/marketing-components';
+import { Autoplay } from 'swiper/modules';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import 'swiper/css';
 
 type Testimonial = {
     id: number;
@@ -9,6 +13,7 @@ type Testimonial = {
     quote: string;
     rating: number;
     avatar: string;
+    avatar_url?: string | null;
 };
 
 export const TestimonialSection = ({ data }: { data: Testimonial[] }) => {
@@ -23,67 +28,44 @@ export const TestimonialSection = ({ data }: { data: Testimonial[] }) => {
                 <TestimonialSlider items={data} />
             </div>
         </section>
-    )
+    );
 };
 
 const TestimonialSlider = ({ items }: { items: Testimonial[] }) => {
-    const [activeIndex, setActiveIndex] = useState(0);
-    const [touchStartX, setTouchStartX] = useState<number | null>(null);
-    const visibleCount = useResponsiveVisibleCount(3);
-    const visibleItems = getVisibleItems(items, activeIndex, visibleCount);
-
-    const moveSlide = (direction: 1 | -1) => {
-        setActiveIndex(
-            (current) => (current + direction + items.length) % items.length,
-        );
-    };
-
-    const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
-        setTouchStartX(event.clientX);
-    };
-
-    const handlePointerUp = (event: PointerEvent<HTMLDivElement>) => {
-        if (touchStartX === null) {
-            return;
-        }
-
-        const diff = event.clientX - touchStartX;
-        setTouchStartX(null);
-
-        if (Math.abs(diff) < 40) {
-            return;
-        }
-
-        moveSlide(diff < 0 ? 1 : -1);
-    };
-
-    useEffect(() => {
-        if (items.length <= visibleCount) {
-            return;
-        }
-
-        const interval = window.setInterval(() => {
-            moveSlide(1);
-        }, 4800);
-
-        return () => window.clearInterval(interval);
-    }, [items.length, visibleCount]);
-
     return (
-        <div
-            className="mt-10 touch-pan-y"
-            onPointerDown={handlePointerDown}
-            onPointerUp={handlePointerUp}
-            onPointerCancel={() => setTouchStartX(null)}
+        <Swiper
+            modules={[Autoplay]}
+            spaceBetween={24}
+            speed={750}
+            grabCursor
+            watchOverflow
+            rewind={items.length > 1}
+            autoplay={{
+                delay: 4800,
+                disableOnInteraction: false,
+                pauseOnMouseEnter: true,
+            }}
+            breakpoints={{
+                0: { slidesPerView: 1 },
+                768: { slidesPerView: 2 },
+                1024: { slidesPerView: 3 },
+            }}
+            className="mt-10"
         >
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {visibleItems.map((testimonial) => (
-                    <TestimonialCard
-                        key={`${testimonial.id}-${activeIndex}`}
-                        testimonial={testimonial}
-                    />
-                ))}
-            </div>
-        </div>
+            {items.map((testimonial) => (
+                <SwiperSlide key={testimonial.id} className="h-auto py-2">
+                    <div className="h-full">
+                        <TestimonialCard
+                            testimonial={{
+                                ...testimonial,
+                                avatar:
+                                    testimonial.avatar_url ||
+                                    testimonial.avatar,
+                            }}
+                        />
+                    </div>
+                </SwiperSlide>
+            ))}
+        </Swiper>
     );
 };

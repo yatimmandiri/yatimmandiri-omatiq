@@ -1,8 +1,8 @@
-import { SectionHeader } from "@/components/marketing/marketing-components";
-import { getVisibleItems, useResponsiveVisibleCount } from "@/utils/uiResposive";
-import { Building2, Handshake } from "lucide-react";
-import { PointerEvent, useEffect, useState } from "react";
-
+import { SectionHeader } from '@/components/marketing/marketing-components';
+import { Building2, Handshake } from 'lucide-react';
+import { Autoplay } from 'swiper/modules';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import 'swiper/css';
 
 export const PartnerSection = ({ data }: { data: any }) => {
     return (
@@ -16,68 +16,36 @@ export const PartnerSection = ({ data }: { data: any }) => {
                 <PartnerSlider items={data} />
             </div>
         </section>
-    )
+    );
 };
 
 const PartnerSlider = ({ items }: { items: string[] }) => {
-    const [activeIndex, setActiveIndex] = useState(0);
-    const [touchStartX, setTouchStartX] = useState<number | null>(null);
-    const visibleCount = useResponsiveVisibleCount(4);
-    const visibleItems = getVisibleItems(items, activeIndex, visibleCount);
-
-    const moveSlide = (direction: 1 | -1) => {
-        setActiveIndex(
-            (current) => (current + direction + items.length) % items.length,
-        );
-    };
-
-    const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
-        setTouchStartX(event.clientX);
-    };
-
-    const handlePointerUp = (event: PointerEvent<HTMLDivElement>) => {
-        if (touchStartX === null) {
-            return;
-        }
-
-        const diff = event.clientX - touchStartX;
-        setTouchStartX(null);
-
-        if (Math.abs(diff) < 36) {
-            return;
-        }
-
-        moveSlide(diff < 0 ? 1 : -1);
-    };
-
-    useEffect(() => {
-        if (items.length <= visibleCount) {
-            return;
-        }
-
-        const interval = window.setInterval(() => {
-            moveSlide(1);
-        }, 3600);
-
-        return () => window.clearInterval(interval);
-    }, [items.length, visibleCount]);
-
     return (
-        <div
-            className="mt-10 touch-pan-y"
-            onPointerDown={handlePointerDown}
-            onPointerUp={handlePointerUp}
-            onPointerCancel={() => setTouchStartX(null)}
+        <Swiper
+            modules={[Autoplay]}
+            spaceBetween={16}
+            speed={700}
+            grabCursor
+            watchOverflow
+            rewind={items.length > 1}
+            autoplay={{
+                delay: 3600,
+                disableOnInteraction: false,
+                pauseOnMouseEnter: true,
+            }}
+            breakpoints={{
+                0: { slidesPerView: 1 },
+                640: { slidesPerView: 2 },
+                1024: { slidesPerView: 4 },
+            }}
+            className="mt-10"
         >
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                {visibleItems.map((partner, index) => (
-                    <div
-                        key={`${partner}-${activeIndex}`}
-                        className={`group relative min-h-44 overflow-hidden rounded-3xl border border-slate-100 bg-[#F8FAFC] p-5 shadow-sm transition-all duration-700 ease-out hover:-translate-y-2 hover:bg-white hover:shadow-xl hover:shadow-[#0F60AC]/10 ${index % 2 === 0
-                            ? 'animate-in fade-in slide-in-from-bottom-4'
-                            : 'animate-in fade-in slide-in-from-top-4'
-                            }`}
-                    >
+            {items.map((partner, index) => (
+                <SwiperSlide
+                    key={`${partner}-${index}`}
+                    className="h-auto py-2"
+                >
+                    <div className="group relative h-full min-h-44 overflow-hidden rounded-3xl border border-slate-100 bg-[#F8FAFC] p-5 shadow-sm transition-all duration-500 ease-out hover:-translate-y-1 hover:bg-white hover:shadow-xl hover:shadow-[#0F60AC]/10">
                         <div className="absolute -top-6 -right-6 h-24 w-24 rounded-full bg-[#F15F23]/10 transition duration-500 group-hover:scale-125" />
                         <div className="absolute -bottom-8 left-6 h-24 w-24 rounded-full bg-[#56CCF2]/15 transition duration-500 group-hover:scale-125" />
                         <div className="relative flex h-full flex-col justify-between">
@@ -105,8 +73,8 @@ const PartnerSlider = ({ items }: { items: string[] }) => {
                             </div>
                         </div>
                     </div>
-                ))}
-            </div>
-        </div>
+                </SwiperSlide>
+            ))}
+        </Swiper>
     );
 };

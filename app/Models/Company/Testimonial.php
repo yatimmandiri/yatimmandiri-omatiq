@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
@@ -43,10 +42,7 @@ class Testimonial extends Model
             return $this->avatar;
         }
 
-        /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
-        $disk = Storage::disk('public');
-
-        return $disk->url($this->avatar);
+        return '/storage/'.ltrim($this->avatar, '/');
     }
 
     public function scopeActive(Builder $query): Builder
@@ -56,7 +52,7 @@ class Testimonial extends Model
 
     public function scopeType(Builder $query, ?string $type): Builder
     {
-        return $query->when($type, fn(Builder $query, string $type) => $query->where('type', $type));
+        return $query->when($type, fn (Builder $query, string $type) => $query->where('type', $type));
     }
 
     public function scopeOrdered(Builder $query): Builder
@@ -66,8 +62,8 @@ class Testimonial extends Model
 
     public function scopeSearch(Builder $query, ?string $search): Builder
     {
-        return $query->when($search, fn(Builder $query, string $search) => $query
-            ->where(fn(Builder $query) => $query->where('name', 'like', "%{$search}%")
+        return $query->when($search, fn (Builder $query, string $search) => $query
+            ->where(fn (Builder $query) => $query->where('name', 'like', "%{$search}%")
                 ->orWhere('role', 'like', "%{$search}%")
                 ->orWhere('quote', 'like', "%{$search}%")));
     }

@@ -3,7 +3,6 @@
 namespace App\Http\Requests\Company;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class StoreReviewRequest extends FormRequest
 {
@@ -18,8 +17,7 @@ class StoreReviewRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'role' => ['required', 'string', 'max:255'],
             'quote' => ['required', 'string', 'max:2000'],
-            'avatar_file' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
-            'avatar_url' => ['nullable', 'url:http,https', 'max:2048'],
+            'avatar_file' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             'rating' => ['required', 'integer', 'between:1,5'],
             'focus' => ['nullable', 'required_if:type,public_figure', 'string', 'max:255'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
