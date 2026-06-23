@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Home;
 
 use App\Http\Controllers\Controller;
 use App\Models\Company\Olimpiade;
+use App\Models\Company\Review;
 use App\Models\Company\Testimonial;
 use Inertia\Inertia;
 
@@ -14,27 +15,15 @@ class MainController extends Controller
         $data = [
             'pageTitle' => 'OMATIQ',
             'olimpiade' => Olimpiade::query()
-                ->with(['objectiveItems' => fn ($query) => $query->active(), 'galleries' => fn ($query) => $query->active(), 'videoItems' => fn ($query) => $query->active()])
+                ->with(['objectiveItems' => fn($query) => $query->active(), 'galleries' => fn($query) => $query->active(), 'videoItems' => fn($query) => $query->active()])
                 ->active()
                 ->ordered()
                 ->take(2)
                 ->get()
-                ->map(fn (Olimpiade $olimpiade) => $this->toFrontendOlimpiade($olimpiade))
+                ->map(fn(Olimpiade $olimpiade) => $this->toFrontendOlimpiade($olimpiade))
                 ->values(),
-            'testimonials' => Testimonial::query()
-                ->active()
-                ->type('testimonial')
-                ->ordered()
-                ->get()
-                ->map(fn (Testimonial $testimonial) => $this->toFrontendTestimonial($testimonial))
-                ->values(),
-            'publicFigureReviews' => Testimonial::query()
-                ->active()
-                ->type('public_figure')
-                ->ordered()
-                ->get()
-                ->map(fn (Testimonial $testimonial) => $this->toFrontendTestimonial($testimonial))
-                ->values(),
+            'testimonials' => Testimonial::get(),
+            'reviews' => Review::get(),
             'meta' => [
                 'title' => 'OMATIQ',
                 'description' => 'OMATIQ adalah olimpiade nasional Al-Quran dan Matematika untuk anak Indonesia.',
@@ -62,11 +51,11 @@ class MainController extends Controller
     public function olimpiade()
     {
         $olimpiade = Olimpiade::query()
-            ->with(['objectiveItems' => fn ($query) => $query->active(), 'galleries' => fn ($query) => $query->active(), 'videoItems' => fn ($query) => $query->active()])
+            ->with(['objectiveItems' => fn($query) => $query->active(), 'galleries' => fn($query) => $query->active(), 'videoItems' => fn($query) => $query->active()])
             ->active()
             ->ordered()
             ->get()
-            ->map(fn (Olimpiade $olimpiade) => $this->toFrontendOlimpiade($olimpiade))
+            ->map(fn(Olimpiade $olimpiade) => $this->toFrontendOlimpiade($olimpiade))
             ->values();
 
         $data = [
@@ -85,19 +74,19 @@ class MainController extends Controller
     public function olimpiadeShow(string $slug)
     {
         $olimpiade = Olimpiade::query()
-            ->with(['objectiveItems' => fn ($query) => $query->active(), 'galleries' => fn ($query) => $query->active(), 'videoItems' => fn ($query) => $query->active()])
+            ->with(['objectiveItems' => fn($query) => $query->active(), 'galleries' => fn($query) => $query->active(), 'videoItems' => fn($query) => $query->active()])
             ->active()
             ->where('slug', $slug)
             ->firstOrFail();
 
         $relatedOlimpiade = Olimpiade::query()
-            ->with(['objectiveItems' => fn ($query) => $query->active(), 'galleries' => fn ($query) => $query->active(), 'videoItems' => fn ($query) => $query->active()])
+            ->with(['objectiveItems' => fn($query) => $query->active(), 'galleries' => fn($query) => $query->active(), 'videoItems' => fn($query) => $query->active()])
             ->active()
             ->whereKeyNot($olimpiade->getKey())
             ->ordered()
             ->take(3)
             ->get()
-            ->map(fn (Olimpiade $item) => $this->toFrontendOlimpiade($item))
+            ->map(fn(Olimpiade $item) => $this->toFrontendOlimpiade($item))
             ->values();
 
         $data = [
@@ -106,7 +95,7 @@ class MainController extends Controller
             'olimpiade' => $this->toFrontendOlimpiade($olimpiade),
             'relatedOlimpiade' => $relatedOlimpiade,
             'meta' => [
-                'title' => $olimpiade->name.' | OMATIQ',
+                'title' => $olimpiade->name . ' | OMATIQ',
                 'description' => $olimpiade->excerpt ?: $olimpiade->description,
                 'keywords' => implode(', ', [
                     $olimpiade->name,
@@ -178,13 +167,13 @@ class MainController extends Controller
             'benefits' => $olimpiade->benefits ?? [],
             'overviewTitle' => $olimpiade->overview_title,
             'overviewDescription' => $olimpiade->overview_description,
-            'objectives' => $olimpiade->objectiveItems->map(fn ($objective) => [
+            'objectives' => $olimpiade->objectiveItems->map(fn($objective) => [
                 'icon' => $objective->icon,
                 'title' => $objective->title,
                 'text' => $objective->text,
             ])->values(),
             'gallery' => $olimpiade->galleries->pluck('image_src')->values(),
-            'videos' => $olimpiade->videoItems->map(fn ($video) => [
+            'videos' => $olimpiade->videoItems->map(fn($video) => [
                 'title' => $video->title,
                 'description' => $video->description,
                 'embedUrl' => $video->embed_url,
@@ -194,19 +183,6 @@ class MainController extends Controller
             ])->values(),
             'ctaDescription' => $olimpiade->cta_description,
             'registrationUrl' => $olimpiade->registration_url,
-        ];
-    }
-
-    private function toFrontendTestimonial(Testimonial $testimonial): array
-    {
-        return [
-            'id' => $testimonial->id,
-            'name' => $testimonial->name,
-            'role' => $testimonial->role,
-            'quote' => $testimonial->quote,
-            'avatar' => $testimonial->avatar_url ?: 'https://ui-avatars.com/api/?name='.urlencode($testimonial->name).'&background=0F60AC&color=fff',
-            'rating' => $testimonial->rating,
-            'focus' => $testimonial->focus,
         ];
     }
 }

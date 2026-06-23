@@ -131,7 +131,7 @@ export const SliderSection = () => {
                             <div>
                                 <h2 className="text-xl font-black sm:text-2xl">
                                     {selectedSlider.title}
-                                </h2> 
+                                </h2>
                                 <p className="mt-1 text-sm leading-relaxed text-white/70">
                                     {selectedSlider.subtitle}
                                 </p>
@@ -182,16 +182,14 @@ const SliderItemSection = ({
 
     return (
         <div
-            className={`absolute inset-0 overflow-hidden transition-opacity duration-1000 ${
-                active ? 'opacity-100' : 'pointer-events-none opacity-0'
-            }`}
+            className={`absolute inset-0 overflow-hidden transition-opacity duration-1000 ${active ? 'opacity-100' : 'pointer-events-none opacity-0'
+                }`}
         >
             <img
                 src={featuredImage}
                 alt={item.title}
-                className={`absolute inset-0 h-full w-full object-cover transition duration-[6500ms] ${
-                    active ? 'scale-105' : 'scale-100'
-                }`}
+                className={`absolute inset-0 h-full w-full object-cover transition duration-[6500ms] ${active ? 'scale-105' : 'scale-100'
+                    }`}
             />
             <div className="absolute inset-0 bg-linear-to-r from-black/85 via-black/60 to-black/25" />
             <div className="absolute top-0 -left-20 h-72 w-72 rounded-full bg-[#F15F23]/25 blur-3xl" />

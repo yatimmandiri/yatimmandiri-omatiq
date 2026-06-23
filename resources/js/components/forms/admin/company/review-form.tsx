@@ -11,12 +11,12 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import testimonials from '@/routes/admin/companies/testimonials';
+import reviews from '@/routes/admin/companies/reviews';
 import { useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, Save, Star } from 'lucide-react';
 import { FormEvent } from 'react';
 
-type TestimonialRecord = {
+type ReviewRecord = {
     id: number;
     name: string;
     role: string;
@@ -31,20 +31,20 @@ type TestimonialRecord = {
 
 
 export function ReviewForm({ dataId }: { dataId?: number }) {
-    const { testimonial } = usePage<{ testimonial?: TestimonialRecord }>()
+    const { review } = usePage<{ review?: ReviewRecord }>()
         .props;
     const form = useForm<any>({
-        name: testimonial?.name ?? '',
-        role: testimonial?.role ?? '',
-        quote: testimonial?.quote ?? '',
+        name: review?.name ?? '',
+        role: review?.role ?? '',
+        quote: review?.quote ?? '',
         avatar_file: null,
-        avatar_url: testimonial?.avatar?.startsWith('http')
-            ? testimonial.avatar
+        avatar_url: review?.avatar?.startsWith('http')
+            ? review.avatar
             : '',
-        rating: testimonial?.rating ?? 5,
-        focus: testimonial?.focus ?? '',
-        sort_order: testimonial?.sort_order ?? 0,
-        status: testimonial?.status ?? true,
+        rating: review?.rating ?? 5,
+        focus: review?.focus ?? '',
+        sort_order: review?.sort_order ?? 0,
+        status: review?.status ?? true,
     });
 
     form.transform((data: any) => ({
@@ -56,7 +56,7 @@ export function ReviewForm({ dataId }: { dataId?: number }) {
     const submit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         form.post(
-            dataId ? testimonials.update(dataId).url : testimonials.store().url,
+            dataId ? reviews.update(dataId).url : reviews.store().url,
             {
                 forceFormData: true,
                 preserveScroll: true,
@@ -79,7 +79,7 @@ export function ReviewForm({ dataId }: { dataId?: number }) {
                         {dataId ? 'Edit' : 'Tambah'} Review
                     </h1>
                     <p className="mt-1 text-sm text-muted-foreground">
-                        Kelola testimonial dan review tokoh yang tampil pada
+                        Kelola review dan review tokoh yang tampil pada
                         halaman home.
                     </p>
                 </div>
@@ -186,10 +186,10 @@ export function ReviewForm({ dataId }: { dataId?: number }) {
                         />
                     </Field>
                 </div>
-                {testimonial?.avatar_url && (
+                {review?.avatar_url && (
                     <img
-                        src={testimonial.avatar_url}
-                        alt={testimonial.name}
+                        src={review.avatar_url}
+                        alt={review.name}
                         className="h-28 w-28 rounded-2xl object-cover"
                     />
                 )}
