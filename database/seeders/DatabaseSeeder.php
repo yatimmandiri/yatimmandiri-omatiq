@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
             IndoRegionSeeder::class,
             UserRolePermissionSeeder::class,
             OlimpiadeSeeder::class,
+            SliderSeeder::class,
             TestimonialSeeder::class,
         ]);
     }
