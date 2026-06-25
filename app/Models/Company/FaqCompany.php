@@ -14,39 +14,22 @@ use Spatie\Activitylog\Support\LogOptions;
     'question',
     'answer',
     'olimpiade_id',
-    'sort_order',
-    'status',
 ])]
 
 class FaqCompany extends Model
 {
-    use LogsActivity, SoftDeletes;
-
-    protected function casts(): array
-    {
-        return ['status' => 'boolean', 'sort_order' => 'integer'];
-    }
+    use SoftDeletes, LogsActivity;
 
     public function olimpiade(): BelongsTo
     {
         return $this->belongsTo(Olimpiade::class, 'olimpiade_id');
     }
 
-    public function scopeActive(Builder $query): Builder
+    public function scopeSearch(Builder $query, ?string $search)
     {
-        return $query->where('status', true);
-    }
-
-    public function scopeOrdered(Builder $query): Builder
-    {
-        return $query->orderBy('sort_order')->orderBy('id');
-    }
-
-    public function scopeSearch(Builder $query, ?string $search): Builder
-    {
-        return $query->when($search, fn (Builder $query, string $search) => $query
-            ->where(fn (Builder $query) => $query->where('question', 'like', "%{$search}%")
-                ->orWhere('answer', 'like', "%{$search}%")));
+        return $query->when($search, function ($q, $search) {
+            $q->where('name', 'like', "%{$search}%");
+        });
     }
 
     public function getActivitylogOptions(): LogOptions

@@ -98,9 +98,9 @@ class MainController extends Controller
             'olimpiade' => $this->toFrontendOlimpiade($olimpiade),
             'relatedOlimpiade' => $relatedOlimpiade,
             'faqs' => FaqCompany::query()
-                ->active()
+                // ->active()
                 ->where('olimpiade_id', $olimpiade->id)
-                ->ordered()
+                // ->ordered()
                 ->get(['id', 'question', 'answer']),
             'meta' => [
                 'title' => $olimpiade->name.' | OMATIQ',
@@ -152,8 +152,8 @@ class MainController extends Controller
             'pageTitle' => 'Contact Us',
             'faqs' => FaqCompany::query()
                 ->with('olimpiade:id,name')
-                ->active()
-                ->ordered()
+                // ->active()
+                // ->ordered()
                 ->get(['id', 'question', 'answer', 'olimpiade_id']),
             'meta' => [
                 'title' => 'Contact Us',
