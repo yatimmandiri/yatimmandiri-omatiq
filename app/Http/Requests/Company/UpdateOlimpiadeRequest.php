@@ -27,7 +27,6 @@ class UpdateOlimpiadeRequest extends FormRequest
             'excerpt' => ['nullable', 'string', 'max:1000'],
             'description' => ['required', 'string'],
             'featured_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
-            'featured_image_url' => ['nullable', 'url:http,https', 'max:2048'],
             'duration' => ['nullable', 'string', 'max:100'],
             'level' => ['nullable', 'string', 'max:100'],
             'benefits' => ['required', 'array', 'min:1'],

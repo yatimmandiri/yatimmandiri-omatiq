@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
             UserRolePermissionSeeder::class,
             OlimpiadeSeeder::class,
             SliderSeeder::class,
+            FaqCompanySeeder::class,
             TestimonialSeeder::class,
         ]);
     }

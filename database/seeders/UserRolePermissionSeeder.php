@@ -25,7 +25,7 @@ class UserRolePermissionSeeder extends Seeder
         collect([
             ['name' => 'Administrators', 'guard_name' => 'web'],
             ['name' => 'Users', 'guard_name' => 'web'],
-        ])->each(fn($role) => Role::create($role));
+        ])->each(fn ($role) => Role::create($role));
 
         collect([
             ['name' => 'view-permission', 'guard_name' => 'web'],
@@ -105,7 +105,12 @@ class UserRolePermissionSeeder extends Seeder
             ['name' => 'update-review', 'guard_name' => 'web'],
             ['name' => 'delete-review', 'guard_name' => 'web'],
             ['name' => 'data-review', 'guard_name' => 'web'],
-        ])->each(fn($permission) => Permission::create($permission)->assignRole('Administrators'));
+            ['name' => 'view-faq-company', 'guard_name' => 'web'],
+            ['name' => 'create-faq-company', 'guard_name' => 'web'],
+            ['name' => 'update-faq-company', 'guard_name' => 'web'],
+            ['name' => 'delete-faq-company', 'guard_name' => 'web'],
+            ['name' => 'data-faq-company', 'guard_name' => 'web'],
+        ])->each(fn ($permission) => Permission::create($permission)->assignRole('Administrators'));
 
         User::create([
             'name' => 'Administrator',

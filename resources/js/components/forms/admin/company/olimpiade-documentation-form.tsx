@@ -45,12 +45,11 @@ export function OlimpiadeDocumentationForm({
         icon: item?.icon ?? '',
         text: item?.text ?? '',
         image: null,
-        image_url: item?.image_url?.startsWith('http') ? item.image_url : '',
         alt_text: item?.alt_text ?? '',
         caption: item?.caption ?? '',
         description: item?.description ?? '',
         embed_url: item?.embed_url ?? '',
-        thumbnail_url: item?.thumbnail_url ?? '',
+        thumbnail: null,
         duration: item?.duration ?? '',
         tag: item?.tag ?? '',
         sort_order: item?.sort_order ?? 0,
@@ -71,7 +70,7 @@ export function OlimpiadeDocumentationForm({
                 ? config.routes.update(dataId).url
                 : config.routes.store().url,
             {
-                forceFormData: kind === 'gallery',
+                forceFormData: kind === 'gallery' || kind === 'video',
                 preserveScroll: true,
             },
         );
@@ -207,30 +206,16 @@ export function OlimpiadeDocumentationForm({
 
                 {kind === 'gallery' && (
                     <>
-                        <div className="grid gap-5 md:grid-cols-2">
+                        <div className="max-w-xl">
                             <Field label="Upload gambar" error={error('image')}>
                                 <Input
                                     type="file"
                                     accept="image/jpeg,image/png,image/webp"
+                                    required={!dataId}
                                     onChange={(event) =>
                                         form.setData(
                                             'image',
                                             event.target.files?.[0] ?? null,
-                                        )
-                                    }
-                                />
-                            </Field>
-                            <Field
-                                label="Atau URL gambar"
-                                error={error('image_url')}
-                            >
-                                <Input
-                                    type="url"
-                                    value={form.data.image_url}
-                                    onChange={(event) =>
-                                        form.setData(
-                                            'image_url',
-                                            event.target.value,
                                         )
                                     }
                                 />
@@ -283,20 +268,27 @@ export function OlimpiadeDocumentationForm({
                             />
                         </Field>
                         <Field
-                            label="Thumbnail URL"
-                            error={error('thumbnail_url')}
+                            label="Upload thumbnail"
+                            error={error('thumbnail')}
                         >
                             <Input
-                                type="url"
-                                value={form.data.thumbnail_url}
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp"
                                 onChange={(event) =>
                                     form.setData(
-                                        'thumbnail_url',
-                                        event.target.value,
+                                        'thumbnail',
+                                        event.target.files?.[0] ?? null,
                                     )
                                 }
                             />
                         </Field>
+                        {item?.thumbnail_src && (
+                            <img
+                                src={item.thumbnail_src}
+                                alt={item.title}
+                                className="h-40 w-full max-w-sm rounded-md object-cover"
+                            />
+                        )}
                         <div className="grid gap-5 md:grid-cols-2">
                             <Field label="Durasi" error={error('duration')}>
                                 <Input

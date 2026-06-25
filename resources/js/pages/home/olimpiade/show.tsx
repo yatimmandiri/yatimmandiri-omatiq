@@ -16,6 +16,7 @@ import {
     Calculator,
     Camera,
     CheckCircle2,
+    ChevronDown,
     Compass,
     Film,
     GalleryHorizontalEnd,
@@ -34,6 +35,7 @@ type OlimpiadeDetailProps = {
     slug?: string;
     olimpiade?: OlimpiadeItem;
     relatedOlimpiade?: OlimpiadeItem[];
+    faqs?: Array<{ id: number; question: string; answer: string }>;
 };
 
 type DetailContent = {
@@ -88,9 +90,9 @@ const detailContents: Record<string, DetailContent> = {
         ],
         videos: [
             {
-                title: "Suasana tilawah peserta OMATIQ",
+                title: 'Suasana tilawah peserta OMATIQ',
                 description:
-                    "Cuplikan panggung, ruang tunggu, dan momen peserta menampilkan bacaan terbaiknya.",
+                    'Cuplikan panggung, ruang tunggu, dan momen peserta menampilkan bacaan terbaiknya.',
                 embedUrl: 'https://www.youtube.com/embed/ysz5S6PUM-U',
                 duration: '03:18',
                 tag: 'Highlight',
@@ -251,12 +253,14 @@ export default function OlimpiadeDetailPage() {
             ? currentOlimpiade.videos
             : fallbackDetail.videos,
         ctaDescription:
-            currentOlimpiade.ctaDescription ??
-            fallbackDetail.ctaDescription,
+            currentOlimpiade.ctaDescription ?? fallbackDetail.ctaDescription,
     };
-    const relatedOlimpiade = props.relatedOlimpiade ?? fallbackOlimpiade
-              .filter((item) => item.id !== currentOlimpiade.id)
-              .slice(0, 3);
+    const relatedOlimpiade =
+        props.relatedOlimpiade ??
+        fallbackOlimpiade
+            .filter((item) => item.id !== currentOlimpiade.id)
+            .slice(0, 3);
+    const faqs = props.faqs ?? [];
     return (
         <>
             <section className="px-5 pt-28 pb-12 sm:pt-32 md:pb-20 lg:px-8">
@@ -513,6 +517,33 @@ export default function OlimpiadeDetailPage() {
                     </div>
                 </div>
             </section>
+
+            {faqs.length > 0 && (
+                <section className="px-5 py-16 lg:px-8">
+                    <div className="mx-auto max-w-4xl">
+                        <SectionHeader
+                            eyebrow="FAQ"
+                            title={`Pertanyaan tentang ${currentOlimpiade.title}`}
+                        />
+                        <div className="mt-10 space-y-4">
+                            {faqs.map((faq) => (
+                                <details
+                                    key={faq.id}
+                                    className="group rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-100 open:shadow-xl"
+                                >
+                                    <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-lg font-black text-[#1E293B]">
+                                        {faq.question}
+                                        <ChevronDown className="h-5 w-5 shrink-0 text-[#F15F23] transition group-open:rotate-180" />
+                                    </summary>
+                                    <p className="mt-4 text-sm leading-7 text-[#64748B]">
+                                        {faq.answer}
+                                    </p>
+                                </details>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+            )}
 
             <section className="bg-white px-5 py-16 lg:px-8">
                 <div className="mx-auto max-w-7xl">

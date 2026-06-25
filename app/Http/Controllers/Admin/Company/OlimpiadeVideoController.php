@@ -3,18 +3,20 @@
 namespace App\Http\Controllers\Admin\Company;
 
 use App\Concerns\Traits\LogActivity;
+use App\Concerns\Traits\UploadFiles;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Company\StoreOlimpiadeVideoRequest;
 use App\Http\Requests\Company\UpdateOlimpiadeVideoRequest;
 use App\Models\Company\Olimpiade;
 use App\Models\Company\OlimpiadeVideo;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class OlimpiadeVideoController extends Controller
 {
-    use LogActivity;
+    use LogActivity, UploadFiles;
 
     public function index(): Response
     {
@@ -56,7 +58,7 @@ class OlimpiadeVideoController extends Controller
     public function update(UpdateOlimpiadeVideoRequest $request, OlimpiadeVideo $olimpiadeVideo)
     {
         $this->authorize('update', $olimpiadeVideo);
-        $olimpiadeVideo->update($this->payload($request));
+        $olimpiadeVideo->update($this->payload($request, $olimpiadeVideo));
         $this->logSuccess('update-olimpiade-video', "Updated video: {$olimpiadeVideo->title}", ['video_id' => $olimpiadeVideo->id]);
 
         return redirect()->route('admin.companies.olimpiade-videos.index')->with('success', 'Video Updated Successfully');
@@ -66,6 +68,7 @@ class OlimpiadeVideoController extends Controller
     {
         $this->authorize('delete', $olimpiadeVideo);
         $title = $olimpiadeVideo->title;
+        $this->deleteThumbnail($olimpiadeVideo->thumbnail_url);
         $olimpiadeVideo->delete();
         $this->logSuccess('delete-olimpiade-video', "Deleted video: {$title}");
 
@@ -92,12 +95,31 @@ class OlimpiadeVideoController extends Controller
         return response()->json($data);
     }
 
-    private function payload(StoreOlimpiadeVideoRequest|UpdateOlimpiadeVideoRequest $request): array
-    {
-        $data = $request->validated();
+    private function payload(
+        StoreOlimpiadeVideoRequest|UpdateOlimpiadeVideoRequest $request,
+        ?OlimpiadeVideo $video = null,
+    ): array {
+        $data = $request->safe()->except(['thumbnail']);
+
+        if ($request->hasFile('thumbnail')) {
+            $oldPath = $video?->thumbnail_url;
+            $data['thumbnail_url'] = $this->uploadFile(
+                $oldPath && ! Str::startsWith($oldPath, ['http://', 'https://']) ? $oldPath : null,
+                $request->file('thumbnail'),
+                'uploads/olimpiade/videos',
+            );
+        }
+
         $data['status'] = $request->has('status') ? $request->boolean('status') : true;
 
         return $data;
+    }
+
+    private function deleteThumbnail(?string $path): void
+    {
+        if ($path && ! Str::startsWith($path, ['http://', 'https://'])) {
+            $this->deleteFile($path);
+        }
     }
 
     private function formOptions(): array

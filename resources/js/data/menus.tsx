@@ -14,6 +14,8 @@ import activities from '@/routes/admin/logs/activities';
 import site from '@/routes/admin/settings/site';
 import { ChevronRight, CogIcon, CpuIcon, MapIcon, Trophy } from 'lucide-react';
 import reviews from '@/routes/admin/companies/reviews';
+import sliders from '@/routes/admin/companies/sliders';
+import faqCompanies from '@/routes/admin/companies/faq-companies';
 
 export const NavigationList = [
     {
@@ -115,6 +117,18 @@ export const NavigationList = [
                         title: 'Reviews',
                         href: reviews.index().url,
                         permission: 'view-review',
+                        icon: ChevronRight,
+                    },
+                    {
+                        title: 'Sliders',
+                        href: sliders.index().url,
+                        permission: 'view-slider',
+                        icon: ChevronRight,
+                    },
+                    {
+                        title: 'FAQ Company',
+                        href: faqCompanies.index().url,
+                        permission: 'view-faq-company',
                         icon: ChevronRight,
                     },
                 ],

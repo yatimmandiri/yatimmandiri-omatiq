@@ -47,8 +47,6 @@ class OlimpiadeController extends Controller
                 $request->file('featured_image'),
                 'uploads/olimpiade',
             );
-        } elseif ($request->filled('featured_image_url')) {
-            $data['featured_image'] = $request->string('featured_image_url')->toString();
         }
 
         $olimpiade = DB::transaction(function () use ($data, $request) {
@@ -107,9 +105,6 @@ class OlimpiadeController extends Controller
                 $request->file('featured_image'),
                 'uploads/olimpiade',
             );
-        } elseif ($request->filled('featured_image_url')) {
-            $this->deleteFeaturedImage($olimpiade->featured_image);
-            $data['featured_image'] = $request->string('featured_image_url')->toString();
         }
 
         DB::transaction(function () use ($olimpiade, $data, $request) {
@@ -259,7 +254,6 @@ class OlimpiadeController extends Controller
     ): array {
         $data = $request->safe()->except([
             'featured_image',
-            'featured_image_url',
             'objective_ids',
             'gallery_ids',
             'video_ids',

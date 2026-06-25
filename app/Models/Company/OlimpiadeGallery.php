@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
@@ -33,7 +32,7 @@ class OlimpiadeGallery extends Model
     {
         return Str::startsWith($this->image_url, ['http://', 'https://'])
             ? $this->image_url
-            : Storage::disk('public')->url($this->image_url);
+            : '/storage/'.ltrim($this->image_url, '/');
     }
 
     public function scopeActive(Builder $query): Builder

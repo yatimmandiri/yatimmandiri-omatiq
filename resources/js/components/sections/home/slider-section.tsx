@@ -54,10 +54,7 @@ const fallbackSliders: SliderItem[] = [
 export const SliderSection = () => {
     const { sliders, heroStats } = usePage<any>().props;
     const sliderItems = useMemo(
-        () =>
-            Array.isArray(sliders) && sliders.length > 0
-                ? sliders
-                : fallbackSliders,
+        () => (Array.isArray(sliders) ? sliders : fallbackSliders),
         [sliders],
     );
     const [activeIndex, setActiveIndex] = useState(0);
@@ -67,6 +64,10 @@ export const SliderSection = () => {
     const [touchStartX, setTouchStartX] = useState<number | null>(null);
 
     useEffect(() => {
+        if (sliderItems.length === 0) {
+            return;
+        }
+
         const interval = window.setInterval(() => {
             setActiveIndex((current) => (current + 1) % sliderItems.length);
         }, 5500);
@@ -103,6 +104,10 @@ export const SliderSection = () => {
 
         moveSlide(diff < 0 ? 1 : -1);
     };
+
+    if (sliderItems.length === 0) {
+        return null;
+    }
 
     return (
         <section
@@ -182,14 +187,16 @@ const SliderItemSection = ({
 
     return (
         <div
-            className={`absolute inset-0 overflow-hidden transition-opacity duration-1000 ${active ? 'opacity-100' : 'pointer-events-none opacity-0'
-                }`}
+            className={`absolute inset-0 overflow-hidden transition-opacity duration-1000 ${
+                active ? 'opacity-100' : 'pointer-events-none opacity-0'
+            }`}
         >
             <img
                 src={featuredImage}
                 alt={item.title}
-                className={`absolute inset-0 h-full w-full object-cover transition duration-[6500ms] ${active ? 'scale-105' : 'scale-100'
-                    }`}
+                className={`absolute inset-0 h-full w-full object-cover transition duration-[6500ms] ${
+                    active ? 'scale-105' : 'scale-100'
+                }`}
             />
             <div className="absolute inset-0 bg-linear-to-r from-black/85 via-black/60 to-black/25" />
             <div className="absolute top-0 -left-20 h-72 w-72 rounded-full bg-[#F15F23]/25 blur-3xl" />

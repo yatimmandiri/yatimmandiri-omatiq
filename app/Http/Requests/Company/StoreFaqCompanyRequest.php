@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Company;
 
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreFaqCompanyRequest extends FormRequest
@@ -17,7 +18,7 @@ class StoreFaqCompanyRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
@@ -25,6 +26,8 @@ class StoreFaqCompanyRequest extends FormRequest
             'question' => ['required', 'string', 'max:255'],
             'answer' => ['required', 'string'],
             'olimpiade_id' => ['required', 'exists:olimpiades,id'],
+            'sort_order' => ['nullable', 'integer', 'min:0'],
+            'status' => ['sometimes', 'boolean'],
         ];
     }
 }

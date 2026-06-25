@@ -19,7 +19,10 @@ return new class extends Migration
             $table->string('url')->nullable();
             $table->string('video_url')->nullable();
             $table->foreignId('olimpiade_id')->constrained('olimpiades')->cascadeOnUpdate()->cascadeOnDelete();
+            $table->unsignedInteger('sort_order')->default(0);
+            $table->boolean('status')->default(true)->index();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

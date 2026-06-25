@@ -18,7 +18,7 @@ class StoreOlimpiadeVideoRequest extends FormRequest
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'embed_url' => ['required', 'url:http,https', 'max:2048'],
-            'thumbnail_url' => ['nullable', 'url:http,https', 'max:2048'],
+            'thumbnail' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             'duration' => ['nullable', 'string', 'max:30'],
             'tag' => ['nullable', 'string', 'max:255'],
             'sort_order' => ['nullable', 'integer', 'min:0'],

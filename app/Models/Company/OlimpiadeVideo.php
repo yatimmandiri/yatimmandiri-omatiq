@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 
@@ -14,6 +15,19 @@ use Spatie\Activitylog\Support\LogOptions;
 class OlimpiadeVideo extends Model
 {
     use LogsActivity, SoftDeletes;
+
+    protected $appends = ['thumbnail_src'];
+
+    public function getThumbnailSrcAttribute(): ?string
+    {
+        if (! $this->thumbnail_url) {
+            return null;
+        }
+
+        return Str::startsWith($this->thumbnail_url, ['http://', 'https://'])
+            ? $this->thumbnail_url
+            : '/storage/'.ltrim($this->thumbnail_url, '/');
+    }
 
     protected function casts(): array
     {

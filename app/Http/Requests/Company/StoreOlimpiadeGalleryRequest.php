@@ -16,8 +16,7 @@ class StoreOlimpiadeGalleryRequest extends FormRequest
         return [
             'olimpiade_id' => ['nullable', 'integer', 'exists:olimpiades,id'],
             'title' => ['nullable', 'string', 'max:255'],
-            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120', 'required_without:image_url'],
-            'image_url' => ['nullable', 'url:http,https', 'max:2048', 'required_without:image'],
+            'image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             'alt_text' => ['nullable', 'string', 'max:255'],
             'caption' => ['nullable', 'string'],
             'sort_order' => ['nullable', 'integer', 'min:0'],

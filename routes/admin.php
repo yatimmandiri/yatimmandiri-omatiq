@@ -1,10 +1,12 @@
 <?php
 
+use App\Http\Controllers\Admin\Company\FaqCompanyController;
 use App\Http\Controllers\Admin\Company\OlimpiadeController;
 use App\Http\Controllers\Admin\Company\OlimpiadeGalleryController;
 use App\Http\Controllers\Admin\Company\OlimpiadeObjectiveController;
 use App\Http\Controllers\Admin\Company\OlimpiadeVideoController;
 use App\Http\Controllers\Admin\Company\ReviewController;
+use App\Http\Controllers\Admin\Company\SliderController;
 use App\Http\Controllers\Admin\Company\TestimonialController;
 use App\Http\Controllers\Admin\Core\PermissionController;
 use App\Http\Controllers\Admin\Core\Region\DistrictController;
@@ -60,6 +62,14 @@ Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'auth.admi
         Route::put('reviews/{review}/status', [ReviewController::class, 'status'])->name('reviews.status');
         Route::get('reviews/data', [ReviewController::class, 'getData'])->name('reviews.data');
         Route::resource('reviews', ReviewController::class);
+
+        Route::put('sliders/{slider}/status', [SliderController::class, 'status'])->name('sliders.status');
+        Route::get('sliders/data', [SliderController::class, 'getData'])->name('sliders.data');
+        Route::resource('sliders', SliderController::class);
+
+        Route::put('faq-companies/{faqCompany}/status', [FaqCompanyController::class, 'status'])->name('faq-companies.status');
+        Route::get('faq-companies/data', [FaqCompanyController::class, 'getData'])->name('faq-companies.data');
+        Route::resource('faq-companies', FaqCompanyController::class);
     });
 
     Route::prefix('core')->as('core.')->group(function () {

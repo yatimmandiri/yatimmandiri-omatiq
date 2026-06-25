@@ -61,7 +61,6 @@ function TiptapImage(props: NodeViewProps) {
   const [caption, setCaption] = useState(node.attrs.caption || "");
   const [editingCaption, setEditingCaption] = useState(false);
   const [openedMore, setOpenedMore] = useState(false);
-  const [imageUrl, setImageUrl] = useState("");
   const [altText, setAltText] = useState(node.attrs.alt || "");
 
   const { fileInputRef, handleFileChange, handleRemove, uploading, error } =
@@ -167,15 +166,6 @@ function TiptapImage(props: NodeViewProps) {
       });
     }
     deleteNode();
-  };
-
-  /** =============== Replace via URL =============== */
-  const handleReplaceByUrl = () => {
-    if (imageUrl) {
-      updateAttributes({ src: imageUrl, alt: altText });
-      setImageUrl("");
-      setOpenedMore(false);
-    }
   };
 
   /** =============== Render =============== */
@@ -335,25 +325,6 @@ function TiptapImage(props: NodeViewProps) {
                         )}
                       </div>
 
-                      <div>
-                        <p className="mb-2 text-xs font-medium">Or use URL</p>
-                        <div className="space-y-2">
-                          <Input
-                            value={imageUrl}
-                            onChange={(e) => setImageUrl(e.target.value)}
-                            placeholder="Enter image URL..."
-                            className="text-xs"
-                          />
-                          <Button
-                            onClick={handleReplaceByUrl}
-                            className="w-full"
-                            disabled={!imageUrl}
-                            size="sm"
-                          >
-                            Replace with URL
-                          </Button>
-                        </div>
-                      </div>
                     </div>
                   </DropdownMenuSubContent>
                 </DropdownMenuSub>

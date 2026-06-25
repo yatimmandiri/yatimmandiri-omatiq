@@ -2,38 +2,49 @@
 
 namespace Database\Seeders;
 
+use App\Models\Company\Olimpiade;
 use App\Models\Company\Slider;
 use Illuminate\Database\Seeder;
 
 class SliderSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        collect([
+        $alquran = Olimpiade::query()->where('slug', 'olimpiade-alquran')->firstOrFail();
+        $matematika = Olimpiade::query()->where('slug', 'olimpiade-matematika')->firstOrFail();
+
+        $items = [
             [
-                'title' => 'Panen Harapan, Menuai Kesejahteraan',
-                'subtitle' => 'Mengembangkan sektor pertanian yang produktif dan berkelanjutan.',
-                'olimpiade_id' => 1,
-                'url' => route('home.olimpiades.detail', ['olimpiade' => 'pertanian-dan-perkebunan']),
-                'video_url' => 'https://www.youtube.com/watch?v=jX5FV-786cI'
+                'title' => 'Olimpiade nasional untuk generasi cerdas dan berakhlak.',
+                'subtitle' => 'OMATIQ menjadi ruang kompetisi nasional untuk anak Indonesia dengan pengalaman lomba yang seru, terarah, dan inspiratif.',
+                'featured_image' => 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&w=1920&q=85',
+                'url' => '/olimpiade/'.$alquran->slug,
+                'video_url' => 'https://www.youtube.com/watch?v=ysz5S6PUM-U',
+                'olimpiade_id' => $alquran->id,
             ],
             [
-                'title' => 'Ternak Berkembang, Ekonomi Gemilang',
-                'subtitle' => 'Menciptakan peluang usaha peternakan yang mandiri dan menguntungkan.',
-                'olimpiade_id' => 2,
-                'url' => route('home.olimpiades.detail', ['olimpiade' => 'peternakan']),
-                'video_url' => 'https://www.youtube.com/watch?v=jX5FV-786cI'
+                'title' => 'Tajwid, cara baca, dan kecintaan pada Al-Quran.',
+                'subtitle' => 'Anak berlatih memahami tajwid, membaca dengan tepat, dan tampil percaya diri dalam kompetisi yang positif.',
+                'featured_image' => 'https://images.unsplash.com/photo-1609599006353-e629aaabfeae?auto=format&fit=crop&w=1920&q=85',
+                'url' => '/olimpiade/'.$alquran->slug,
+                'video_url' => 'https://www.youtube.com/watch?v=ysz5S6PUM-U',
+                'olimpiade_id' => $alquran->id,
             ],
             [
-                'title' => 'Berdaya Bersama, Maju Bersama',
-                'subtitle' => 'Menggerakkan potensi masyarakat menuju kesejahteraan.',
-                'olimpiade_id' => 3,
-                'url' => route('home.olimpiades.detail', ['olimpiade' => 'pemberdayaan-masyarakat']),
-                'video_url' => 'https://www.youtube.com/watch?v=jX5FV-786cI'
+                'title' => 'Berani bernalar di Olimpiade Matematika.',
+                'subtitle' => 'Tantangan nasional yang mengasah logika, ketelitian, strategi berhitung, dan keberanian memecahkan masalah.',
+                'featured_image' => 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=1920&q=85',
+                'url' => '/olimpiade/'.$matematika->slug,
+                'video_url' => 'https://www.youtube.com/watch?v=ysz5S6PUM-U',
+                'olimpiade_id' => $matematika->id,
             ],
-        ])->each(fn($data) => Slider::create($data));
+        ];
+
+        foreach ($items as $index => $item) {
+            Slider::query()->updateOrCreate(
+                ['title' => $item['title']],
+                [...$item, 'sort_order' => $index + 1, 'status' => true],
+            );
+        }
     }
 }

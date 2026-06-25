@@ -71,10 +71,6 @@ export const OlimpiadeForm = ({ dataId }: { dataId?: number }) => {
         excerpt: olimpiade?.excerpt ?? '',
         description: olimpiade?.description ?? '',
         featured_image: null,
-        featured_image_url:
-            olimpiade?.featured_image?.startsWith('http') === true
-                ? olimpiade.featured_image
-                : '',
         duration: olimpiade?.duration ?? 'Nasional',
         level: olimpiade?.level ?? 'SD - SMP',
         benefitsText: linesValue(olimpiade?.benefits),
@@ -260,25 +256,11 @@ export const OlimpiadeForm = ({ dataId }: { dataId?: number }) => {
                         <Input
                             type="file"
                             accept="image/jpeg,image/png,image/webp"
+                            required={!dataId}
                             onChange={(event) =>
                                 form.setData(
                                     'featured_image',
                                     event.target.files?.[0] ?? null,
-                                )
-                            }
-                        />
-                    </Field>
-                    <Field
-                        label="Atau URL gambar"
-                        error={error('featured_image_url')}
-                    >
-                        <Input
-                            type="url"
-                            value={form.data.featured_image_url}
-                            onChange={(event) =>
-                                form.setData(
-                                    'featured_image_url',
-                                    event.target.value,
                                 )
                             }
                         />

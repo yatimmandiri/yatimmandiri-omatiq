@@ -99,14 +99,14 @@ class OlimpiadeGalleryController extends Controller
 
     private function payload(StoreOlimpiadeGalleryRequest|UpdateOlimpiadeGalleryRequest $request, ?OlimpiadeGallery $gallery = null): array
     {
-        $data = $request->safe()->except(['image', 'image_url']);
+        $data = $request->safe()->except(['image']);
         if ($request->hasFile('image')) {
-            $data['image_url'] = $this->uploadFile($gallery?->image_url, $request->file('image'), 'uploads/olimpiade/gallery');
-        } elseif ($request->filled('image_url')) {
-            if ($gallery && ! Str::startsWith($gallery->image_url, ['http://', 'https://'])) {
-                $this->deleteFile($gallery->image_url);
-            }
-            $data['image_url'] = $request->string('image_url')->toString();
+            $oldPath = $gallery?->image_url;
+            $data['image_url'] = $this->uploadFile(
+                $oldPath && ! Str::startsWith($oldPath, ['http://', 'https://']) ? $oldPath : null,
+                $request->file('image'),
+                'uploads/olimpiade/gallery',
+            );
         }
         $data['status'] = $request->has('status') ? $request->boolean('status') : true;
 
