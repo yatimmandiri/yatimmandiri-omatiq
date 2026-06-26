@@ -37,8 +37,8 @@ const normalizeOlimpiade = (value: OlimpiadeProps['olimpiade']) => {
     const items = Array.isArray(value)
         ? value
         : value?.data && Array.isArray(value.data)
-          ? value.data
-          : olimpiade;
+            ? value.data
+            : olimpiade;
 
     const olympiads = items.filter((item) => {
         const content = `${item.title} ${item.category}`.toLowerCase();
@@ -210,7 +210,6 @@ export default function OlimpiadePage() {
                                             <p className="mt-5 text-base leading-8 text-[#64748B] md:text-lg">
                                                 {olimpiade.description}
                                             </p>
-
                                             <div className="mt-8 grid gap-3 sm:grid-cols-3">
                                                 {theme.highlights.map(
                                                     (highlight) => (
@@ -229,7 +228,19 @@ export default function OlimpiadePage() {
                                                     ),
                                                 )}
                                             </div>
-
+                                            <div className="mt-8 flex items-center gap-3 rounded-2xl p-4 md:p-5" style={{ backgroundColor: theme.soft }}>
+                                                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: theme.accent }}>
+                                                    <Target className="h-5 w-5 text-white" />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <p className="text-xs font-black tracking-wide uppercase" style={{ color: theme.dark }}>
+                                                        Jadwal Pelaksanaan
+                                                    </p>
+                                                    <p className="mt-1 text-sm font-black text-[#1E293B] md:text-base">
+                                                        16 Juni - 30 Juni 2024
+                                                    </p>
+                                                </div>
+                                            </div>
                                             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
                                                 <Link
                                                     href={`/olimpiade/${olimpiade.slug}`}

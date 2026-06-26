@@ -119,7 +119,7 @@ export const HomeFooterComponent = () => {
                                 <input
                                     type="email"
                                     placeholder="Email Anda"
-                                    className="w-full bg-transparent px-4 py-3 text-sm outline-none placeholder:text-white/50"
+                                    className="w-full bg-white px-4 py-3 text-sm outline-none placeholder:text-black/40"
                                 />
                                 <button className="bg-[#F15F23] px-5 text-sm font-semibold text-white transition hover:opacity-90">
                                     Kirim
