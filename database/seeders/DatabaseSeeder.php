@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
             OlimpiadeSeeder::class,
             SliderSeeder::class,
             FaqCompanySeeder::class,
+            OlimpiadeScheduleSeeder::class,
             TestimonialSeeder::class,
         ]);
     }

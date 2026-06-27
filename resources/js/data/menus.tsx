@@ -1,6 +1,7 @@
 import olimpiades from '@/routes/admin/companies/olimpiades';
 import olimpiadeGalleries from '@/routes/admin/companies/olimpiade-galleries';
 import olimpiadeObjectives from '@/routes/admin/companies/olimpiade-objectives';
+import olimpiadeSchedules from '@/routes/admin/companies/olimpiade-schedules';
 import olimpiadeVideos from '@/routes/admin/companies/olimpiade-videos';
 import testimonials from '@/routes/admin/companies/testimonials';
 import permissions from '@/routes/admin/core/permissions';
@@ -105,6 +106,12 @@ export const NavigationList = [
                         title: 'Video',
                         href: olimpiadeVideos.index().url,
                         permission: 'view-olimpiade-video',
+                        icon: ChevronRight,
+                    },
+                    {
+                        title: 'Jadwal Olimpiade',
+                        href: olimpiadeSchedules.index().url,
+                        permission: 'view-olimpiade-schedule',
                         icon: ChevronRight,
                     },
                     {

@@ -476,7 +476,7 @@ export const OlimpiadeCard = ({ olimpiade }: { olimpiade: OlimpiadeItem }) => (
             <div className="flex flex-wrap gap-2 text-xs font-bold text-[#64748B]">
                 <span className="inline-flex items-center gap-1 rounded-full bg-[#F8FAFC] px-3 py-1">
                     <Clock3 className="h-3.5 w-3.5" />
-                    {olimpiade.duration}
+                    {olimpiade.nextSchedule?.dateLabel ?? olimpiade.duration}
                 </span>
                 <span className="inline-flex items-center gap-1 rounded-full bg-[#F8FAFC] px-3 py-1">
                     <Users className="h-3.5 w-3.5" />
@@ -667,7 +667,7 @@ export const CTASection = ({
                             <ArrowRight className="h-4 w-4" />
                         </Link>
                         <Link
-                            href="/olimpiade"
+                            href="/jadwal"
                             className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#0F60AC]/15 bg-white px-6 py-4 text-sm font-black text-[#0F60AC] shadow-sm transition hover:-translate-y-1 hover:border-[#0F60AC]/30 hover:bg-[#0F60AC]/5"
                         >
                             Lihat Jadwal

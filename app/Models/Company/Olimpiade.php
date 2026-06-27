@@ -112,4 +112,9 @@ class Olimpiade extends Model
     {
         return $this->hasMany(OlimpiadeVideo::class)->ordered();
     }
+
+    public function schedules(): HasMany
+    {
+        return $this->hasMany(OlimpiadeSchedule::class)->ordered();
+    }
 }

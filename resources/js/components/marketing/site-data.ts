@@ -12,6 +12,21 @@ export type OlimpiadeVideo = {
     tag: string;
 };
 
+export type OlimpiadeSchedule = {
+    id: number;
+    title: string;
+    phase: string;
+    phaseLabel: string;
+    startDate: string;
+    endDate?: string | null;
+    dateLabel: string;
+    location?: string | null;
+    description?: string | null;
+    actionLabel?: string | null;
+    actionUrl?: string | null;
+    color?: string | null;
+};
+
 export type OlimpiadeItem = {
     id: number;
     title: string;
@@ -28,6 +43,8 @@ export type OlimpiadeItem = {
     objectives?: OlimpiadeObjective[];
     gallery?: string[];
     videos?: OlimpiadeVideo[];
+    schedules?: OlimpiadeSchedule[];
+    nextSchedule?: OlimpiadeSchedule | null;
     ctaDescription?: string | null;
     registrationUrl?: string | null;
 };
@@ -58,6 +75,7 @@ export const navItems = [
     { label: 'Home', href: '/' },
     { label: 'About Us', href: '/about' },
     { label: 'Olimpiade', href: '/olimpiade' },
+    { label: 'Jadwal', href: '/jadwal' },
     { label: 'News', href: '/berita' },
     { label: 'Contact', href: '/kontak' },
 ];

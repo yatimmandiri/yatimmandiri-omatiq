@@ -14,14 +14,17 @@ import {
     BookOpenCheck,
     Brain,
     Calculator,
+    CalendarDays,
     Camera,
     CheckCircle2,
     ChevronDown,
+    Clock3,
     Compass,
     Film,
     GalleryHorizontalEnd,
     Goal,
     Images,
+    MapPin,
     PlayCircle,
     Sparkles,
     Target,
@@ -261,6 +264,7 @@ export default function OlimpiadeDetailPage() {
             .filter((item) => item.id !== currentOlimpiade.id)
             .slice(0, 3);
     const faqs = props.faqs ?? [];
+    const schedules = currentOlimpiade.schedules ?? [];
     return (
         <>
             <section className="px-5 pt-28 pb-12 sm:pt-32 md:pb-20 lg:px-8">
@@ -517,6 +521,80 @@ export default function OlimpiadeDetailPage() {
                     </div>
                 </div>
             </section>
+
+            {schedules.length > 0 && (
+                <section className="bg-white px-5 py-16 lg:px-8">
+                    <div className="mx-auto max-w-7xl">
+                        <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
+                            <SectionHeader
+                                eyebrow="Jadwal Pelaksanaan"
+                                title={`Timeline ${currentOlimpiade.title}`}
+                                description="Ikuti alur pelaksanaan dari registrasi, technical meeting, babak seleksi, sampai final nasional."
+                                align="left"
+                            />
+                            <div className="space-y-4">
+                                {schedules.map((schedule, index) => (
+                                    <article
+                                        key={schedule.id}
+                                        className="group grid gap-4 rounded-3xl bg-[#F8FAFC] p-4 ring-1 ring-slate-100 transition hover:-translate-y-1 hover:bg-white hover:shadow-xl hover:shadow-[#0F60AC]/10 sm:grid-cols-[auto_1fr]"
+                                    >
+                                        <div
+                                            className="flex h-12 w-12 items-center justify-center rounded-2xl text-white shadow-lg"
+                                            style={{
+                                                backgroundColor:
+                                                    schedule.color ?? '#F15F23',
+                                            }}
+                                        >
+                                            <CalendarDays className="h-6 w-6" />
+                                        </div>
+                                        <div>
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <span className="rounded-full bg-[#F15F23]/10 px-3 py-1 text-xs font-black text-[#F15F23]">
+                                                    {schedule.phaseLabel}
+                                                </span>
+                                                <span className="text-xs font-black text-[#64748B]">
+                                                    Step{' '}
+                                                    {String(index + 1).padStart(
+                                                        2,
+                                                        '0',
+                                                    )}
+                                                </span>
+                                            </div>
+                                            <h3 className="mt-3 text-xl font-black text-[#1E293B]">
+                                                {schedule.title}
+                                            </h3>
+                                            <div className="mt-3 flex flex-wrap gap-3 text-sm font-bold text-[#64748B]">
+                                                <span className="inline-flex items-center gap-2">
+                                                    <Clock3 className="h-4 w-4 text-[#F15F23]" />
+                                                    {schedule.dateLabel}
+                                                </span>
+                                                {schedule.location && (
+                                                    <span className="inline-flex items-center gap-2">
+                                                        <MapPin className="h-4 w-4 text-[#0F60AC]" />
+                                                        {schedule.location}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            {schedule.description && (
+                                                <p className="mt-3 text-sm leading-7 text-[#64748B]">
+                                                    {schedule.description}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </article>
+                                ))}
+                                <Link
+                                    href="/jadwal"
+                                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0F60AC] px-6 py-4 text-sm font-black text-white shadow-lg shadow-[#0F60AC]/20 transition hover:-translate-y-1"
+                                >
+                                    Lihat Kalender Lengkap
+                                    <CalendarDays className="h-4 w-4" />
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            )}
 
             {faqs.length > 0 && (
                 <section className="px-5 py-16 lg:px-8">

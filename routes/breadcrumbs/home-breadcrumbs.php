@@ -15,6 +15,10 @@ Breadcrumbs::for('home.olimpiade', function (BreadcrumbTrail $trail) {
     $trail->parent('home.index')->push('Olimpiade', route('home.olimpiade'));
 });
 
+Breadcrumbs::for('home.schedule', function (BreadcrumbTrail $trail) {
+    $trail->parent('home.index')->push('Jadwal', route('home.schedule'));
+});
+
 Breadcrumbs::for('home.olimpiade.show', function (BreadcrumbTrail $trail, $slug) {
     $trail->parent('home.olimpiade')->push('Detail Olimpiade', route('home.olimpiade.show', $slug));
 });

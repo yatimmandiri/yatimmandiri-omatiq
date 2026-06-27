@@ -8,6 +8,7 @@ import {
     ArrowRight,
     BookOpenCheck,
     Brain,
+    CalendarDays,
     Calculator,
     CheckCircle2,
     Medal,
@@ -237,8 +238,14 @@ export default function OlimpiadePage() {
                                                         Jadwal Pelaksanaan
                                                     </p>
                                                     <p className="mt-1 text-sm font-black text-[#1E293B] md:text-base">
-                                                        16 Juni - 30 Juni 2024
+                                                        {olimpiade.nextSchedule?.dateLabel ??
+                                                            'Jadwal segera diumumkan'}
                                                     </p>
+                                                    {olimpiade.nextSchedule?.title && (
+                                                        <p className="mt-1 text-xs font-bold text-[#64748B]">
+                                                            {olimpiade.nextSchedule.title}
+                                                        </p>
+                                                    )}
                                                 </div>
                                             </div>
                                             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
@@ -252,6 +259,13 @@ export default function OlimpiadePage() {
                                                 >
                                                     Lihat Detail
                                                     <ArrowRight className="h-4 w-4" />
+                                                </Link>
+                                                <Link
+                                                    href="/jadwal"
+                                                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-6 py-4 text-sm font-black text-[#0F60AC] shadow-sm transition hover:-translate-y-1 hover:border-[#0F60AC]/25"
+                                                >
+                                                    Kalender
+                                                    <CalendarDays className="h-4 w-4" />
                                                 </Link>
                                             </div>
                                         </div>

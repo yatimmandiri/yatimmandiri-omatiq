@@ -15,6 +15,7 @@ foreach (
         'olimpiade-objectives' => 'Objectives',
         'olimpiade-galleries' => 'Gallery',
         'olimpiade-videos' => 'Video',
+        'olimpiade-schedules' => 'Jadwal Olimpiade',
     ] as $resource => $label
 ) {
     Breadcrumbs::for(

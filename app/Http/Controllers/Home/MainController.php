@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Home;
 use App\Http\Controllers\Controller;
 use App\Models\Company\FaqCompany;
 use App\Models\Company\Olimpiade;
+use App\Models\Company\OlimpiadeSchedule;
 use App\Models\Company\Review;
 use App\Models\Company\Slider;
 use App\Models\Company\Testimonial;
@@ -17,7 +18,7 @@ class MainController extends Controller
         $data = [
             'pageTitle' => 'OMATIQ',
             'olimpiade' => Olimpiade::query()
-                ->with(['objectiveItems' => fn ($query) => $query->active(), 'galleries' => fn ($query) => $query->active(), 'videoItems' => fn ($query) => $query->active()])
+                ->with($this->olimpiadeRelations())
                 ->active()
                 ->ordered()
                 ->take(2)
@@ -54,7 +55,7 @@ class MainController extends Controller
     public function olimpiade()
     {
         $olimpiade = Olimpiade::query()
-            ->with(['objectiveItems' => fn ($query) => $query->active(), 'galleries' => fn ($query) => $query->active(), 'videoItems' => fn ($query) => $query->active()])
+            ->with($this->olimpiadeRelations())
             ->active()
             ->ordered()
             ->get()
@@ -77,13 +78,13 @@ class MainController extends Controller
     public function olimpiadeShow(string $slug)
     {
         $olimpiade = Olimpiade::query()
-            ->with(['objectiveItems' => fn ($query) => $query->active(), 'galleries' => fn ($query) => $query->active(), 'videoItems' => fn ($query) => $query->active()])
+            ->with($this->olimpiadeRelations())
             ->active()
             ->where('slug', $slug)
             ->firstOrFail();
 
         $relatedOlimpiade = Olimpiade::query()
-            ->with(['objectiveItems' => fn ($query) => $query->active(), 'galleries' => fn ($query) => $query->active(), 'videoItems' => fn ($query) => $query->active()])
+            ->with($this->olimpiadeRelations())
             ->active()
             ->whereKeyNot($olimpiade->getKey())
             ->ordered()
@@ -115,6 +116,29 @@ class MainController extends Controller
         ];
 
         return Inertia::render('home/olimpiade/show', $data);
+    }
+
+    public function schedule()
+    {
+        $schedules = OlimpiadeSchedule::query()
+            ->with('olimpiade:id,name,slug,category,featured_image')
+            ->active()
+            ->ordered()
+            ->get()
+            ->map(fn (OlimpiadeSchedule $schedule) => $this->toFrontendSchedule($schedule))
+            ->values();
+
+        $data = [
+            'pageTitle' => 'Jadwal OMATIQ',
+            'schedules' => $schedules,
+            'meta' => [
+                'title' => 'Jadwal OMATIQ',
+                'description' => 'Kalender tahunan OMATIQ dari registrasi, penyisihan, knockout, sampai final nasional.',
+                'keywords' => 'jadwal OMATIQ, kalender olimpiade, registrasi olimpiade, final OMATIQ',
+            ],
+        ];
+
+        return Inertia::render('home/schedule/index', $data);
     }
 
     public function news()
@@ -167,6 +191,10 @@ class MainController extends Controller
 
     private function toFrontendOlimpiade(Olimpiade $olimpiade): array
     {
+        $schedules = $olimpiade->relationLoaded('schedules')
+            ? $olimpiade->schedules->map(fn (OlimpiadeSchedule $schedule) => $this->toFrontendSchedule($schedule))->values()
+            : collect();
+
         return [
             'id' => $olimpiade->id,
             'title' => $olimpiade->name,
@@ -194,8 +222,94 @@ class MainController extends Controller
                 'duration' => $video->duration,
                 'tag' => $video->tag,
             ])->values(),
+            'schedules' => $schedules,
+            'nextSchedule' => $schedules->first(),
             'ctaDescription' => $olimpiade->cta_description,
             'registrationUrl' => $olimpiade->registration_url,
         ];
+    }
+
+    private function olimpiadeRelations(): array
+    {
+        return [
+            'objectiveItems' => fn ($query) => $query->active(),
+            'galleries' => fn ($query) => $query->active(),
+            'videoItems' => fn ($query) => $query->active(),
+            'schedules' => fn ($query) => $query->active(),
+        ];
+    }
+
+    private function toFrontendSchedule(OlimpiadeSchedule $schedule): array
+    {
+        return [
+            'id' => $schedule->id,
+            'title' => $schedule->title,
+            'phase' => $schedule->phase,
+            'phaseLabel' => $this->phaseLabel($schedule->phase),
+            'startDate' => optional($schedule->start_date)->toDateString(),
+            'endDate' => optional($schedule->end_date)->toDateString(),
+            'dateLabel' => $this->dateRangeLabel($schedule),
+            'location' => $schedule->location,
+            'description' => $schedule->description,
+            'actionLabel' => $schedule->action_label,
+            'actionUrl' => $schedule->action_url,
+            'color' => $schedule->color,
+            'olimpiade' => $schedule->relationLoaded('olimpiade') && $schedule->olimpiade ? [
+                'id' => $schedule->olimpiade->id,
+                'title' => $schedule->olimpiade->name,
+                'slug' => $schedule->olimpiade->slug,
+                'category' => $schedule->olimpiade->category,
+                'image' => $schedule->olimpiade->featured_image_url,
+            ] : null,
+        ];
+    }
+
+    private function dateRangeLabel(OlimpiadeSchedule $schedule): string
+    {
+        $start = $this->shortDateLabel($schedule->start_date);
+        $end = $this->shortDateLabel($schedule->end_date);
+
+        if (! $end || $end === $start) {
+            return $start ?: '-';
+        }
+
+        return "{$start} - {$end}";
+    }
+
+    private function shortDateLabel($date): ?string
+    {
+        if (! $date) {
+            return null;
+        }
+
+        $months = [
+            1 => 'Jan',
+            2 => 'Feb',
+            3 => 'Mar',
+            4 => 'Apr',
+            5 => 'Mei',
+            6 => 'Jun',
+            7 => 'Jul',
+            8 => 'Agu',
+            9 => 'Sep',
+            10 => 'Okt',
+            11 => 'Nov',
+            12 => 'Des',
+        ];
+
+        return sprintf('%02d %s %s', $date->day, $months[$date->month], $date->year);
+    }
+
+    private function phaseLabel(string $phase): string
+    {
+        return [
+            'registration' => 'Registrasi',
+            'technical_meeting' => 'Technical Meeting',
+            'preliminary' => 'Babak Penyisihan',
+            'knockout' => 'Fase Knockout',
+            'semifinal' => 'Semifinal',
+            'final' => 'Final Nasional',
+            'announcement' => 'Pengumuman',
+        ][$phase] ?? str($phase)->headline()->toString();
     }
 }

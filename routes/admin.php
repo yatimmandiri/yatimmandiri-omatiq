@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\Company\FaqCompanyController;
 use App\Http\Controllers\Admin\Company\OlimpiadeController;
 use App\Http\Controllers\Admin\Company\OlimpiadeGalleryController;
 use App\Http\Controllers\Admin\Company\OlimpiadeObjectiveController;
+use App\Http\Controllers\Admin\Company\OlimpiadeScheduleController;
 use App\Http\Controllers\Admin\Company\OlimpiadeVideoController;
 use App\Http\Controllers\Admin\Company\ReviewController;
 use App\Http\Controllers\Admin\Company\SliderController;
@@ -54,6 +55,11 @@ Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'auth.admi
         Route::put('olimpiade-videos/{olimpiadeVideo}/status', [OlimpiadeVideoController::class, 'status'])->name('olimpiade-videos.status');
         Route::get('olimpiade-videos/data', [OlimpiadeVideoController::class, 'getData'])->name('olimpiade-videos.data');
         Route::resource('olimpiade-videos', OlimpiadeVideoController::class);
+
+        Route::put('olimpiade-schedules/{olimpiadeSchedule}/status', [OlimpiadeScheduleController::class, 'status'])->name('olimpiade-schedules.status');
+        Route::get('olimpiade-schedules/data', [OlimpiadeScheduleController::class, 'getData'])->name('olimpiade-schedules.data');
+        Route::resource('olimpiade-schedules', OlimpiadeScheduleController::class)
+            ->parameters(['olimpiade-schedules' => 'olimpiadeSchedule']);
 
         Route::put('testimonials/{testimonial}/status', [TestimonialController::class, 'status'])->name('testimonials.status');
         Route::get('testimonials/data', [TestimonialController::class, 'getData'])->name('testimonials.data');
