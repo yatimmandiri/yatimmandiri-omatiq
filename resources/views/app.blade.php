@@ -32,16 +32,15 @@
         }
     </style>
 
-    <link rel="icon" href="{{ $settings['favicon'] ? $settings['favicon'] : '/favicon.ico' }}" sizes="any">
-    <link rel="icon" href="{{ $settings['favicon'] ? $settings['favicon'] : '/favicon.svg' }}" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="{{ $settings['favicon'] ? $settings['favicon'] : '/apple-touch-icon.png' }}">
+    <link rel="icon" href="{{ $settings['favicon'] ? $settings['favicon'] : '/assets/images/LOGO OMATIQ.png' }}" type="image/png">
+    <link rel="apple-touch-icon" href="{{ $settings['favicon'] ? $settings['favicon'] : '/assets/images/LOGO OMATIQ.png' }}">
 
     @fonts
 
     @viteReactRefresh
     @vite(['resources/css/app.css', 'resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])
     <x-inertia::head>
-        <title>{{ config('app.name', 'Laravel') }}</title>
+        <title>{{ config('app.name', 'OMATIQ') }}</title>
     </x-inertia::head>
 </head>
 
