@@ -1,5 +1,14 @@
 <?php
 
+use App\Http\Controllers\Admin\Company\FaqCompanyController;
+use App\Http\Controllers\Admin\Company\OlimpiadeController;
+use App\Http\Controllers\Admin\Company\OlimpiadeGalleryController;
+use App\Http\Controllers\Admin\Company\OlimpiadeObjectiveController;
+use App\Http\Controllers\Admin\Company\OlimpiadeScheduleController;
+use App\Http\Controllers\Admin\Company\OlimpiadeVideoController;
+use App\Http\Controllers\Admin\Company\ReviewController;
+use App\Http\Controllers\Admin\Company\SliderController;
+use App\Http\Controllers\Admin\Company\TestimonialController;
 use App\Http\Controllers\Admin\Core\PermissionController;
 use App\Http\Controllers\Admin\Core\Region\DistrictController;
 use App\Http\Controllers\Admin\Core\Region\ProvinceController;
@@ -27,6 +36,46 @@ Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'auth.admi
     Route::prefix('logs')->as('logs.')->group(function () {
         Route::get('activities/data', [LogActivityController::class, 'getData'])->name('activities.data');
         Route::get('activities', [LogActivityController::class, 'index'])->name('activities.index');
+    });
+
+    Route::prefix('companies')->as('companies.')->group(function () {
+        Route::put('olimpiades/{olimpiade}/recommended', [OlimpiadeController::class, 'recommended'])->name('olimpiades.recommended');
+        Route::put('olimpiades/{olimpiade}/status', [OlimpiadeController::class, 'status'])->name('olimpiades.status');
+        Route::get('olimpiades/data', [OlimpiadeController::class, 'getData'])->name('olimpiades.data');
+        Route::resource('olimpiades', OlimpiadeController::class);
+
+        Route::put('olimpiade-objectives/{olimpiadeObjective}/status', [OlimpiadeObjectiveController::class, 'status'])->name('olimpiade-objectives.status');
+        Route::get('olimpiade-objectives/data', [OlimpiadeObjectiveController::class, 'getData'])->name('olimpiade-objectives.data');
+        Route::resource('olimpiade-objectives', OlimpiadeObjectiveController::class);
+
+        Route::put('olimpiade-galleries/{olimpiadeGallery}/status', [OlimpiadeGalleryController::class, 'status'])->name('olimpiade-galleries.status');
+        Route::get('olimpiade-galleries/data', [OlimpiadeGalleryController::class, 'getData'])->name('olimpiade-galleries.data');
+        Route::resource('olimpiade-galleries', OlimpiadeGalleryController::class);
+
+        Route::put('olimpiade-videos/{olimpiadeVideo}/status', [OlimpiadeVideoController::class, 'status'])->name('olimpiade-videos.status');
+        Route::get('olimpiade-videos/data', [OlimpiadeVideoController::class, 'getData'])->name('olimpiade-videos.data');
+        Route::resource('olimpiade-videos', OlimpiadeVideoController::class);
+
+        Route::put('olimpiade-schedules/{olimpiadeSchedule}/status', [OlimpiadeScheduleController::class, 'status'])->name('olimpiade-schedules.status');
+        Route::get('olimpiade-schedules/data', [OlimpiadeScheduleController::class, 'getData'])->name('olimpiade-schedules.data');
+        Route::resource('olimpiade-schedules', OlimpiadeScheduleController::class)
+            ->parameters(['olimpiade-schedules' => 'olimpiadeSchedule']);
+
+        Route::put('testimonials/{testimonial}/status', [TestimonialController::class, 'status'])->name('testimonials.status');
+        Route::get('testimonials/data', [TestimonialController::class, 'getData'])->name('testimonials.data');
+        Route::resource('testimonials', TestimonialController::class);
+
+        Route::put('reviews/{review}/status', [ReviewController::class, 'status'])->name('reviews.status');
+        Route::get('reviews/data', [ReviewController::class, 'getData'])->name('reviews.data');
+        Route::resource('reviews', ReviewController::class);
+
+        Route::put('sliders/{slider}/status', [SliderController::class, 'status'])->name('sliders.status');
+        Route::get('sliders/data', [SliderController::class, 'getData'])->name('sliders.data');
+        Route::resource('sliders', SliderController::class);
+
+        Route::put('faq-companies/{faqCompany}/status', [FaqCompanyController::class, 'status'])->name('faq-companies.status');
+        Route::get('faq-companies/data', [FaqCompanyController::class, 'getData'])->name('faq-companies.data');
+        Route::resource('faq-companies', FaqCompanyController::class);
     });
 
     Route::prefix('core')->as('core.')->group(function () {

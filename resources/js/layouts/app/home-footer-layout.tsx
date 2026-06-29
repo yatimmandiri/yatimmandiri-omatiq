@@ -1,4 +1,4 @@
-﻿import { ArrowUp, Mail, MapPin, MessageCircleMore, Phone } from 'lucide-react';
+import { ArrowUp, Mail, MapPin, MessageCircleMore, Phone } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
     FaFacebook,
@@ -51,7 +51,7 @@ export const HomeFooterComponent = () => {
                             {[
                                 ['Home', '/'],
                                 ['About Us', '/about'],
-                                ['Olimpiade', '/programs'],
+                                ['Olimpiade', '/olimpiade'],
                                 ['News', '/berita'],
                                 ['Contact', '/kontak'],
                             ].map(([label, href]) => (
@@ -69,7 +69,7 @@ export const HomeFooterComponent = () => {
 
                     <div>
                         <h3 className="mb-5 text-lg font-bold">
-                            Cabang Olimpiade
+                            Olimpiade
                         </h3>
                         <ul className="space-y-3 text-sm text-white/75">
                             {[
@@ -81,7 +81,7 @@ export const HomeFooterComponent = () => {
                             ].map((item) => (
                                 <li key={item}>
                                     <a
-                                        href="/programs"
+                                        href="/olimpiade"
                                         className="transition hover:text-white"
                                     >
                                         {item}
@@ -119,7 +119,7 @@ export const HomeFooterComponent = () => {
                                 <input
                                     type="email"
                                     placeholder="Email Anda"
-                                    className="w-full bg-transparent px-4 py-3 text-sm outline-none placeholder:text-white/50"
+                                    className="w-full bg-white px-4 py-3 text-sm outline-none placeholder:text-black/40"
                                 />
                                 <button className="bg-[#F15F23] px-5 text-sm font-semibold text-white transition hover:opacity-90">
                                     Kirim
