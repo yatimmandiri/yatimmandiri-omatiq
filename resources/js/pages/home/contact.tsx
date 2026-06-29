@@ -1,30 +1,42 @@
-﻿import {
+import {
     ContactForm,
     ContactInfoGrid,
     SectionHeader,
 } from '@/components/marketing/marketing-components';
 import { ChevronDown, MapPin } from 'lucide-react';
+import { usePage } from '@inertiajs/react';
 
-const faqs = [
+const fallbackFaqs = [
     [
-        'Bagaimana cara mendaftar program OMATIQ?',
-        'Kamu bisa mengirim pesan melalui form kontak. Tim kami akan membantu memilih program yang paling sesuai dengan kebutuhanmu.',
+        'Bagaimana cara mendaftar olimpiade OMATIQ?',
+        'Kamu bisa mengirim pesan melalui form kontak. Tim kami akan membantu memilih olimpiade yang paling sesuai dengan kebutuhanmu.',
     ],
     [
         'Apakah OMATIQ bisa bekerja sama dengan sekolah atau komunitas?',
-        'Bisa. Kami terbuka untuk kolaborasi program, kelas khusus, workshop, dan pengembangan komunitas.',
+        'Bisa. Kami terbuka untuk kolaborasi olimpiade, kelas khusus, workshop, dan pengembangan komunitas.',
     ],
     [
-        'Apakah tersedia program online?',
-        'Ya. Beberapa program dapat dijalankan online, hybrid, maupun offline sesuai format dan kebutuhan peserta.',
+        'Apakah tersedia olimpiade online?',
+        'Ya. Beberapa olimpiade dapat dijalankan online, hybrid, maupun offline sesuai format dan kebutuhan peserta.',
     ],
     [
-        'Apakah program bisa disesuaikan?',
+        'Apakah olimpiade bisa disesuaikan?',
         'Bisa. Kami dapat menyesuaikan topik, durasi, dan pendekatan pembelajaran untuk mitra tertentu.',
     ],
 ];
 
 export default function ContactPage() {
+    const { faqs } = usePage<{
+        faqs?: { id: number; question: string; answer: string }[];
+    }>().props;
+    const faqItems =
+        faqs ??
+        fallbackFaqs.map(([question, answer], index) => ({
+            id: index,
+            question,
+            answer,
+        }));
+
     return (
         <>
             <section className="px-5 pt-28 pb-14 sm:pt-32 sm:pb-16 md:pb-24 lg:px-8">
@@ -37,9 +49,8 @@ export default function ContactPage() {
                             Mari mulai percakapan yang baik.
                         </h1>
                         <p className="mt-5 text-base leading-8 text-[#64748B] sm:text-lg">
-                            Punya pertanyaan tentang pendaftaran, cabang
-                            olimpiade, atau kerja sama sekolah? Tim OMATIQ siap
-                            membantu.
+                            Punya pertanyaan tentang pendaftaran, olimpiade atau
+                            kerja sama sekolah? Tim OMATIQ siap membantu.
                         </p>
                     </div>
                     <ContactInfoGrid />
@@ -75,7 +86,7 @@ export default function ContactPage() {
                                 </h2>
                                 <p className="mt-3 text-sm leading-7 text-[#64748B]">
                                     Jakarta, Indonesia. Open for education
-                                    programs, community partnerships, and
+                                    olimpiade, community partnerships, and
                                     creative collaborations.
                                 </p>
                             </div>
@@ -84,30 +95,32 @@ export default function ContactPage() {
                 </div>
             </section>
 
-            <section className="px-5 py-16 lg:px-8">
-                <div className="mx-auto max-w-4xl">
-                    <SectionHeader
-                        eyebrow="FAQ"
-                        title="Pertanyaan yang sering muncul"
-                    />
-                    <div className="mt-10 space-y-4">
-                        {faqs.map(([question, answer]) => (
-                            <details
-                                key={question}
-                                className="group rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-100 open:shadow-xl"
-                            >
-                                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-lg font-black text-[#1E293B]">
-                                    {question}
-                                    <ChevronDown className="h-5 w-5 shrink-0 text-[#F15F23] transition group-open:rotate-180" />
-                                </summary>
-                                <p className="mt-4 text-sm leading-7 text-[#64748B]">
-                                    {answer}
-                                </p>
-                            </details>
-                        ))}
+            {faqItems.length > 0 && (
+                <section className="px-5 py-16 lg:px-8">
+                    <div className="mx-auto max-w-4xl">
+                        <SectionHeader
+                            eyebrow="FAQ"
+                            title="Pertanyaan yang sering muncul"
+                        />
+                        <div className="mt-10 space-y-4">
+                            {faqItems.map((item) => (
+                                <details
+                                    key={item.id}
+                                    className="group rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-100 open:shadow-xl"
+                                >
+                                    <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-lg font-black text-[#1E293B]">
+                                        {item.question}
+                                        <ChevronDown className="h-5 w-5 shrink-0 text-[#F15F23] transition group-open:rotate-180" />
+                                    </summary>
+                                    <p className="mt-4 text-sm leading-7 text-[#64748B]">
+                                        {item.answer}
+                                    </p>
+                                </details>
+                            ))}
+                        </div>
                     </div>
-                </div>
-            </section>
+                </section>
+            )}
         </>
     );
 }

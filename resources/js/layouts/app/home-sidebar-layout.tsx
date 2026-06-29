@@ -1,4 +1,4 @@
-﻿import {
+import {
     Disclosure,
     DisclosureButton,
     DisclosurePanel,
@@ -14,7 +14,7 @@ export const UseSidebar = () => useContext(SidebarContext);
 export const SidebarProvider = ({ children }: { children: ReactNode }) => {
     const menus = [
         { label: 'Tentang Kami', href: '/about' },
-        { label: 'Olimpiade', href: '/programs' },
+        { label: 'Olimpiade', href: '/olimpiade' },
         { label: 'Artikel', href: '/berita' },
         { label: 'Kontak', href: '/kontak' },
     ];

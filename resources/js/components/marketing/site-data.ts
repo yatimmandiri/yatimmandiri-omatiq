@@ -1,13 +1,52 @@
-﻿export type ProgramItem = {
+export type OlimpiadeObjective = {
+    icon: string;
+    title: string;
+    text: string;
+};
+
+export type OlimpiadeVideo = {
+    title: string;
+    description: string;
+    embedUrl: string;
+    duration: string;
+    tag: string;
+};
+
+export type OlimpiadeSchedule = {
+    id: number;
+    title: string;
+    phase: string;
+    phaseLabel: string;
+    startDate: string;
+    endDate?: string | null;
+    dateLabel: string;
+    location?: string | null;
+    description?: string | null;
+    actionLabel?: string | null;
+    actionUrl?: string | null;
+    color?: string | null;
+};
+
+export type OlimpiadeItem = {
     id: number;
     title: string;
     slug: string;
     category: string;
+    excerpt?: string | null;
     description: string;
     image: string;
     duration: string;
     level: string;
     benefits: string[];
+    overviewTitle?: string | null;
+    overviewDescription?: string | null;
+    objectives?: OlimpiadeObjective[];
+    gallery?: string[];
+    videos?: OlimpiadeVideo[];
+    schedules?: OlimpiadeSchedule[];
+    nextSchedule?: OlimpiadeSchedule | null;
+    ctaDescription?: string | null;
+    registrationUrl?: string | null;
 };
 
 export type NewsItem = {
@@ -35,12 +74,13 @@ export type TestimonialItem = {
 export const navItems = [
     { label: 'Home', href: '/' },
     { label: 'About Us', href: '/about' },
-    { label: 'Olimpiade', href: '/programs' },
+    { label: 'Olimpiade', href: '/olimpiade' },
+    { label: 'Jadwal', href: '/jadwal' },
     { label: 'News', href: '/berita' },
     { label: 'Contact', href: '/kontak' },
 ];
 
-export const programs: ProgramItem[] = [
+export const olimpiade: OlimpiadeItem[] = [
     {
         id: 1,
         title: "Olimpiade Al-Qur'an",

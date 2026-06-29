@@ -25,7 +25,7 @@ class UserRolePermissionSeeder extends Seeder
         collect([
             ['name' => 'Administrators', 'guard_name' => 'web'],
             ['name' => 'Users', 'guard_name' => 'web'],
-        ])->each(fn($role) => Role::create($role));
+        ])->each(fn ($role) => Role::create($role));
 
         collect([
             ['name' => 'view-permission', 'guard_name' => 'web'],
@@ -68,13 +68,60 @@ class UserRolePermissionSeeder extends Seeder
             ['name' => 'data-village', 'guard_name' => 'web'],
             ['name' => 'view-log-activity', 'guard_name' => 'web'],
             ['name' => 'data-log-activity', 'guard_name' => 'web'],
-        ])->each(fn($permission) => Permission::create($permission)->assignRole('Administrators'));
+            ['name' => 'view-olimpiade', 'guard_name' => 'web'],
+            ['name' => 'create-olimpiade', 'guard_name' => 'web'],
+            ['name' => 'update-olimpiade', 'guard_name' => 'web'],
+            ['name' => 'delete-olimpiade', 'guard_name' => 'web'],
+            ['name' => 'restore-olimpiade', 'guard_name' => 'web'],
+            ['name' => 'force-delete-olimpiade', 'guard_name' => 'web'],
+            ['name' => 'data-olimpiade', 'guard_name' => 'web'],
+            ['name' => 'view-olimpiade-objective', 'guard_name' => 'web'],
+            ['name' => 'create-olimpiade-objective', 'guard_name' => 'web'],
+            ['name' => 'update-olimpiade-objective', 'guard_name' => 'web'],
+            ['name' => 'delete-olimpiade-objective', 'guard_name' => 'web'],
+            ['name' => 'data-olimpiade-objective', 'guard_name' => 'web'],
+            ['name' => 'view-olimpiade-gallery', 'guard_name' => 'web'],
+            ['name' => 'create-olimpiade-gallery', 'guard_name' => 'web'],
+            ['name' => 'update-olimpiade-gallery', 'guard_name' => 'web'],
+            ['name' => 'delete-olimpiade-gallery', 'guard_name' => 'web'],
+            ['name' => 'data-olimpiade-gallery', 'guard_name' => 'web'],
+            ['name' => 'view-olimpiade-video', 'guard_name' => 'web'],
+            ['name' => 'create-olimpiade-video', 'guard_name' => 'web'],
+            ['name' => 'update-olimpiade-video', 'guard_name' => 'web'],
+            ['name' => 'delete-olimpiade-video', 'guard_name' => 'web'],
+            ['name' => 'data-olimpiade-video', 'guard_name' => 'web'],
+            ['name' => 'view-olimpiade-schedule', 'guard_name' => 'web'],
+            ['name' => 'create-olimpiade-schedule', 'guard_name' => 'web'],
+            ['name' => 'update-olimpiade-schedule', 'guard_name' => 'web'],
+            ['name' => 'delete-olimpiade-schedule', 'guard_name' => 'web'],
+            ['name' => 'data-olimpiade-schedule', 'guard_name' => 'web'],
+            ['name' => 'view-slider', 'guard_name' => 'web'],
+            ['name' => 'create-slider', 'guard_name' => 'web'],
+            ['name' => 'update-slider', 'guard_name' => 'web'],
+            ['name' => 'delete-slider', 'guard_name' => 'web'],
+            ['name' => 'data-slider', 'guard_name' => 'web'],
+            ['name' => 'view-testimonial', 'guard_name' => 'web'],
+            ['name' => 'create-testimonial', 'guard_name' => 'web'],
+            ['name' => 'update-testimonial', 'guard_name' => 'web'],
+            ['name' => 'delete-testimonial', 'guard_name' => 'web'],
+            ['name' => 'data-testimonial', 'guard_name' => 'web'],
+            ['name' => 'view-review', 'guard_name' => 'web'],
+            ['name' => 'create-review', 'guard_name' => 'web'],
+            ['name' => 'update-review', 'guard_name' => 'web'],
+            ['name' => 'delete-review', 'guard_name' => 'web'],
+            ['name' => 'data-review', 'guard_name' => 'web'],
+            ['name' => 'view-faq-company', 'guard_name' => 'web'],
+            ['name' => 'create-faq-company', 'guard_name' => 'web'],
+            ['name' => 'update-faq-company', 'guard_name' => 'web'],
+            ['name' => 'delete-faq-company', 'guard_name' => 'web'],
+            ['name' => 'data-faq-company', 'guard_name' => 'web'],
+        ])->each(fn ($permission) => Permission::create($permission)->assignRole('Administrators'));
 
         User::create([
             'name' => 'Administrator',
             'email' => 'scrum@yatimmandiri.org',
             'email_verified_at' => now(),
-            'password' => Hash::make(uniqid()),
+            'password' => Hash::make('password'),
         ])->assignRole('Administrators');
 
         Province::query()->update([

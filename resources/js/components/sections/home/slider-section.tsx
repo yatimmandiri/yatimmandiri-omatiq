@@ -1,4 +1,4 @@
-﻿import { Link, usePage } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { ArrowRight, PlayCircle, X } from 'lucide-react';
 import { PointerEvent, useEffect, useMemo, useState } from 'react';
 
@@ -13,7 +13,7 @@ type SliderItem = {
 
 type HeroStats = {
     participants?: number;
-    activePrograms?: number;
+    activeOlimpiade?: number;
     communities?: number;
     partners?: number;
 };
@@ -25,7 +25,7 @@ const fallbackSliders: SliderItem[] = [
             'OMATIQ menjadi ruang kompetisi nasional untuk anak-anak Indonesia dalam bidang Al-Quran dan Matematika, dengan pengalaman lomba yang seru, terarah, dan inspiratif.',
         featured_image:
             'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&w=1920&q=80',
-        url: '/programs',
+        url: '/olimpiade',
         video_url: 'https://www.youtube.com/watch?v=ysz5S6PUM-U',
         badge: 'Olimpiade Nasional Anak Indonesia',
     },
@@ -35,7 +35,7 @@ const fallbackSliders: SliderItem[] = [
             'Cabang awal OMATIQ fokus pada Olimpiade Al-Quran dan Olimpiade Matematika, lalu akan berkembang ke bidang lain di masa depan.',
         featured_image:
             'https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1920&q=80',
-        url: '/programs',
+        url: '/olimpiade',
         video_url: 'https://www.youtube.com/watch?v=ysz5S6PUM-U',
         badge: 'Al-Quran & Matematika',
     },
@@ -54,10 +54,7 @@ const fallbackSliders: SliderItem[] = [
 export const SliderSection = () => {
     const { sliders, heroStats } = usePage<any>().props;
     const sliderItems = useMemo(
-        () =>
-            Array.isArray(sliders) && sliders.length > 0
-                ? sliders
-                : fallbackSliders,
+        () => (Array.isArray(sliders) ? sliders : fallbackSliders),
         [sliders],
     );
     const [activeIndex, setActiveIndex] = useState(0);
@@ -67,6 +64,10 @@ export const SliderSection = () => {
     const [touchStartX, setTouchStartX] = useState<number | null>(null);
 
     useEffect(() => {
+        if (sliderItems.length === 0) {
+            return;
+        }
+
         const interval = window.setInterval(() => {
             setActiveIndex((current) => (current + 1) % sliderItems.length);
         }, 5500);
@@ -104,6 +105,10 @@ export const SliderSection = () => {
         moveSlide(diff < 0 ? 1 : -1);
     };
 
+    if (sliderItems.length === 0) {
+        return null;
+    }
+
     return (
         <section
             className="relative touch-pan-y overflow-hidden bg-slate-950"
@@ -131,7 +136,7 @@ export const SliderSection = () => {
                             <div>
                                 <h2 className="text-xl font-black sm:text-2xl">
                                     {selectedSlider.title}
-                                </h2> 
+                                </h2>
                                 <p className="mt-1 text-sm leading-relaxed text-white/70">
                                     {selectedSlider.subtitle}
                                 </p>
@@ -212,7 +217,7 @@ const SliderItemSection = ({
                         </p>
                         <div className="mt-6 flex flex-col gap-3 sm:mt-8 sm:flex-row sm:flex-wrap">
                             <Link
-                                href={item.url || '/programs'}
+                                href={item.url || '/olimpiade'}
                                 className="group inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#F15F23] px-5 py-3 text-sm font-black text-white shadow-xl shadow-[#F15F23]/25 transition hover:scale-[1.02] hover:bg-[#d94f18] sm:w-auto sm:px-6 sm:py-4 sm:text-base"
                             >
                                 <span>Lihat Olimpiade</span>
@@ -255,7 +260,7 @@ const SliderItemSection = ({
 
 const getHeroStats = (stats: HeroStats) => [
     { label: 'Peserta Belajar', value: stats.participants ?? 12000 },
-    { label: 'Cabang Olimpiade', value: stats.activePrograms ?? 2 },
+    { label: 'Cabang Olimpiade', value: stats.activeOlimpiade ?? 2 },
     { label: 'Komunitas', value: stats.communities ?? 120 },
     { label: 'Mitra Kolaborasi', value: stats.partners ?? 36 },
 ];

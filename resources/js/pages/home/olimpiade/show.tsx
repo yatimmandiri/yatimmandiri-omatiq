@@ -1,41 +1,50 @@
-﻿import {
+import {
     CTASection,
     FeatureIcon,
-    ProgramCard,
+    OlimpiadeCard,
     SectionHeader,
 } from '@/components/marketing/marketing-components';
-import { ProgramItem, programs } from '@/components/marketing/site-data';
+import {
+    OlimpiadeItem,
+    olimpiade as fallbackOlimpiade,
+} from '@/components/marketing/site-data';
 import { Link, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
     BookOpenCheck,
     Brain,
     Calculator,
+    CalendarDays,
     Camera,
     CheckCircle2,
+    ChevronDown,
+    Clock3,
     Compass,
     Film,
     GalleryHorizontalEnd,
     Goal,
     Images,
+    MapPin,
     PlayCircle,
     Sparkles,
+    Target,
     Trophy,
     UsersRound,
     Video,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
-type ProgramDetailProps = {
+type OlimpiadeDetailProps = {
     slug?: string;
-    program?: ProgramItem;
-    relatedPrograms?: ProgramItem[];
+    olimpiade?: OlimpiadeItem;
+    relatedOlimpiade?: OlimpiadeItem[];
+    faqs?: Array<{ id: number; question: string; answer: string }>;
 };
 
 type DetailContent = {
     overviewTitle: string;
     overviewDescription: string;
-    objectives: Array<{ icon: LucideIcon; title: string; text: string }>;
+    objectives: Array<{ icon: string; title: string; text: string }>;
     gallery: string[];
     videos: Array<{
         title: string;
@@ -56,20 +65,20 @@ const detailContents: Record<string, DetailContent> = {
     'olimpiade-alquran': {
         overviewTitle: "Apa yang akan dialami peserta Al-Qur'an?",
         overviewDescription:
-            "Cabang Al-Qur'an membantu anak menguatkan pemahaman tajwid, ketepatan pelafalan, adab membaca, dan keberanian tampil di panggung lomba yang positif.",
+            "Olimpiade Al-Qur'an membantu anak menguatkan pemahaman tajwid, ketepatan pelafalan, adab membaca, dan keberanian tampil di panggung lomba yang positif.",
         objectives: [
             {
-                icon: BookOpenCheck,
+                icon: 'book-open-check',
                 title: 'Memahami tajwid',
                 text: 'Peserta berlatih mengenali hukum bacaan dan menerapkannya dengan lebih teliti.',
             },
             {
-                icon: Compass,
+                icon: 'compass',
                 title: 'Merapikan cara baca',
                 text: "Anak didorong membaca Al-Qur'an dengan pelafalan yang lebih jelas, tenang, dan percaya diri.",
             },
             {
-                icon: Sparkles,
+                icon: 'sparkles',
                 title: 'Menumbuhkan adab',
                 text: 'Kompetisi tetap dibangun dengan suasana ramah agar anak belajar disiplin, hormat, dan rendah hati.',
             },
@@ -84,9 +93,9 @@ const detailContents: Record<string, DetailContent> = {
         ],
         videos: [
             {
-                title: "Suasana tilawah peserta OMATIQ",
+                title: 'Suasana tilawah peserta OMATIQ',
                 description:
-                    "Cuplikan panggung, ruang tunggu, dan momen peserta menampilkan bacaan terbaiknya.",
+                    'Cuplikan panggung, ruang tunggu, dan momen peserta menampilkan bacaan terbaiknya.',
                 embedUrl: 'https://www.youtube.com/embed/ysz5S6PUM-U',
                 duration: '03:18',
                 tag: 'Highlight',
@@ -106,20 +115,20 @@ const detailContents: Record<string, DetailContent> = {
     'olimpiade-matematika': {
         overviewTitle: 'Apa yang akan dialami peserta Matematika?',
         overviewDescription:
-            'Cabang Matematika dirancang untuk melatih logika, ketelitian, strategi menyelesaikan soal, dan mental berani mencoba tantangan baru.',
+            'Olimpiade Matematika dirancang untuk melatih logika, ketelitian, strategi menyelesaikan soal, dan mental berani mencoba tantangan baru.',
         objectives: [
             {
-                icon: Calculator,
+                icon: 'calculator',
                 title: 'Mengasah logika',
                 text: 'Peserta belajar membaca pola, memahami konsep dasar, dan memilih strategi pengerjaan yang tepat.',
             },
             {
-                icon: Brain,
+                icon: 'brain',
                 title: 'Melatih problem solving',
                 text: 'Soal dibuat menantang agar anak terbiasa berpikir runtut, teliti, dan tidak mudah menyerah.',
             },
             {
-                icon: Trophy,
+                icon: 'trophy',
                 title: 'Berani berkompetisi',
                 text: 'Anak mendapatkan pengalaman tampil dalam ajang nasional yang rapi, sehat, dan membangun percaya diri.',
             },
@@ -159,17 +168,17 @@ const detailContents: Record<string, DetailContent> = {
             'Try Out membantu peserta mengenali format soal, mengukur kesiapan, dan memahami ritme lomba sebelum mengikuti olimpiade utama.',
         objectives: [
             {
-                icon: Goal,
+                icon: 'goal',
                 title: 'Simulasi lomba',
                 text: 'Peserta mendapat gambaran alur pengerjaan soal dan suasana kompetisi.',
             },
             {
-                icon: CheckCircle2,
+                icon: 'check-circle-2',
                 title: 'Evaluasi kesiapan',
                 text: 'Hasil latihan membantu anak, orang tua, dan pendamping mengetahui bagian yang perlu diperkuat.',
             },
             {
-                icon: UsersRound,
+                icon: 'users-round',
                 title: 'Pendampingan terarah',
                 text: 'Anak lebih siap karena memahami target latihan dan strategi belajar menjelang lomba.',
             },
@@ -204,58 +213,92 @@ const detailContents: Record<string, DetailContent> = {
     },
 };
 
-export default function ProgramDetailPage() {
-    const props = usePage<ProgramDetailProps>().props;
+const objectiveIcons: Record<string, LucideIcon> = {
+    'book-open-check': BookOpenCheck,
+    brain: Brain,
+    calculator: Calculator,
+    'check-circle-2': CheckCircle2,
+    compass: Compass,
+    goal: Goal,
+    sparkles: Sparkles,
+    trophy: Trophy,
+    'users-round': UsersRound,
+};
+
+export default function OlimpiadeDetailPage() {
+    const props = usePage<OlimpiadeDetailProps>().props;
     const currentSlug =
-        props.program?.slug ??
+        props.olimpiade?.slug ??
         props.slug ??
         (typeof window === 'undefined'
             ? ''
             : window.location.pathname.split('/').filter(Boolean).at(-1));
-    const program =
-        props.program ??
-        programs.find((item) => item.slug === currentSlug) ??
-        programs[0];
-    const detail =
-        detailContents[program.slug] ?? detailContents[programs[0].slug];
-    const relatedPrograms = props.relatedPrograms?.length
-        ? props.relatedPrograms
-        : programs.filter((item) => item.id !== program.id).slice(0, 3);
-
+    const currentOlimpiade =
+        props.olimpiade ??
+        fallbackOlimpiade.find((item) => item.slug === currentSlug) ??
+        fallbackOlimpiade[0];
+    const fallbackDetail =
+        detailContents[currentOlimpiade.slug] ??
+        detailContents[fallbackOlimpiade[0].slug];
+    const detail: DetailContent = {
+        overviewTitle:
+            currentOlimpiade.overviewTitle ?? fallbackDetail.overviewTitle,
+        overviewDescription:
+            currentOlimpiade.overviewDescription ??
+            fallbackDetail.overviewDescription,
+        objectives: currentOlimpiade.objectives?.length
+            ? currentOlimpiade.objectives
+            : fallbackDetail.objectives,
+        gallery: currentOlimpiade.gallery?.length
+            ? currentOlimpiade.gallery
+            : fallbackDetail.gallery,
+        videos: currentOlimpiade.videos?.length
+            ? currentOlimpiade.videos
+            : fallbackDetail.videos,
+        ctaDescription:
+            currentOlimpiade.ctaDescription ?? fallbackDetail.ctaDescription,
+    };
+    const relatedOlimpiade =
+        props.relatedOlimpiade ??
+        fallbackOlimpiade
+            .filter((item) => item.id !== currentOlimpiade.id)
+            .slice(0, 3);
+    const faqs = props.faqs ?? [];
+    const schedules = currentOlimpiade.schedules ?? [];
     return (
         <>
             <section className="px-5 pt-28 pb-12 sm:pt-32 md:pb-20 lg:px-8">
                 <div className="mx-auto max-w-7xl">
                     <Link
-                        href="/programs"
+                        href="/olimpiade"
                         className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-black text-[#0F60AC] shadow-sm ring-1 ring-slate-100 transition hover:-translate-y-1"
                     >
                         <ArrowLeft className="h-4 w-4" />
-                        Back to Programs
+                        Kembali ke Olimpiade
                     </Link>
                     <div className="mt-8 grid overflow-hidden rounded-[28px] bg-white shadow-2xl ring-1 shadow-[#0F60AC]/10 ring-slate-100 sm:rounded-[32px] lg:grid-cols-[1fr_0.9fr]">
                         <div className="p-5 sm:p-8 md:p-12">
                             <span className="inline-flex rounded-full bg-[#F15F23]/10 px-4 py-2 text-sm font-black text-[#F15F23]">
-                                {program.category}
+                                {currentOlimpiade.category}
                             </span>
                             <h1 className="mt-5 text-3xl leading-tight font-black tracking-tight text-[#1E293B] sm:text-4xl md:mt-6 md:text-6xl">
-                                {program.title}
+                                {currentOlimpiade.title}
                             </h1>
                             <p className="mt-5 text-base leading-8 text-[#64748B] sm:mt-6 sm:text-lg">
-                                {program.description}
+                                {currentOlimpiade.description}
                             </p>
                             <div className="mt-8 flex flex-wrap gap-3">
                                 <span className="rounded-xl bg-[#0F60AC]/10 px-4 py-3 text-sm font-black text-[#0F60AC]">
-                                    {program.duration}
+                                    {currentOlimpiade.duration}
                                 </span>
                                 <span className="rounded-xl bg-[#5DD39E]/15 px-4 py-3 text-sm font-black text-[#12885b]">
-                                    {program.level}
+                                    {currentOlimpiade.level}
                                 </span>
                             </div>
                         </div>
                         <img
-                            src={program.image}
-                            alt={program.title}
+                            src={currentOlimpiade.image}
+                            alt={currentOlimpiade.title}
                             className="h-72 w-full object-cover sm:h-96 lg:h-full lg:min-h-96"
                         />
                     </div>
@@ -271,7 +314,7 @@ export default function ProgramDetailPage() {
                         align="left"
                     />
                     <div className="grid gap-4 md:grid-cols-3">
-                        {program.benefits.map((benefit) => (
+                        {currentOlimpiade.benefits.map((benefit) => (
                             <div
                                 key={benefit}
                                 className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-100"
@@ -301,7 +344,10 @@ export default function ProgramDetailPage() {
                                 key={item.title}
                                 className="rounded-3xl bg-[#F8FAFC] p-6"
                             >
-                                <FeatureIcon icon={item.icon} color="blue" />
+                                <FeatureIcon
+                                    icon={objectiveIcons[item.icon] ?? Target}
+                                    color="blue"
+                                />
                                 <h3 className="mt-5 text-xl font-black text-[#1E293B]">
                                     {item.title}
                                 </h3>
@@ -322,7 +368,7 @@ export default function ProgramDetailPage() {
                         <SectionHeader
                             eyebrow="Dokumentasi"
                             title="Galeri suasana dan video kegiatan"
-                            description={`Lihat gambaran suasana ${program.title}: momen peserta, pendamping, ruang lomba, sampai cerita kecil di balik persiapan olimpiade.`}
+                            description={`Lihat gambaran suasana ${currentOlimpiade.title}: momen peserta, pendamping, ruang lomba, sampai cerita kecil di balik persiapan olimpiade.`}
                             align="left"
                         />
                         <div className="grid gap-3 sm:grid-cols-3">
@@ -364,8 +410,8 @@ export default function ProgramDetailPage() {
                     <div className="mt-10 grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
                         <div className="group relative min-h-80 overflow-hidden rounded-[32px] bg-white shadow-2xl ring-1 shadow-[#0F60AC]/10 ring-slate-100">
                             <img
-                                src={program.image}
-                                alt={`Dokumentasi utama ${program.title}`}
+                                src={currentOlimpiade.image}
+                                alt={`Dokumentasi utama ${currentOlimpiade.title}`}
                                 className="h-full min-h-80 w-full object-cover transition duration-700 group-hover:scale-105 sm:min-h-[460px]"
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-[#1E293B]/80 via-[#1E293B]/10 to-transparent" />
@@ -393,7 +439,7 @@ export default function ProgramDetailPage() {
                                 >
                                     <img
                                         src={image}
-                                        alt={`Galeri suasana ${program.title} ${index + 1}`}
+                                        alt={`Galeri suasana ${currentOlimpiade.title} ${index + 1}`}
                                         className={`w-full object-cover transition duration-700 group-hover:scale-110 ${index === 0 ? 'h-full min-h-64' : 'h-48 sm:h-full'}`}
                                     />
                                     <div className="absolute inset-0 bg-gradient-to-t from-[#1E293B]/55 via-transparent to-transparent opacity-0 transition group-hover:opacity-100" />
@@ -413,7 +459,7 @@ export default function ProgramDetailPage() {
                             >
                                 <img
                                     src={image}
-                                    alt={`Dokumentasi tambahan ${program.title} ${index + 1}`}
+                                    alt={`Dokumentasi tambahan ${currentOlimpiade.title} ${index + 1}`}
                                     className="h-48 w-full object-cover transition duration-700 group-hover:scale-110"
                                 />
                             </div>
@@ -476,23 +522,125 @@ export default function ProgramDetailPage() {
                 </div>
             </section>
 
+            {schedules.length > 0 && (
+                <section className="bg-white px-5 py-16 lg:px-8">
+                    <div className="mx-auto max-w-7xl">
+                        <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
+                            <SectionHeader
+                                eyebrow="Jadwal Pelaksanaan"
+                                title={`Timeline ${currentOlimpiade.title}`}
+                                description="Ikuti alur pelaksanaan dari registrasi, technical meeting, babak seleksi, sampai final nasional."
+                                align="left"
+                            />
+                            <div className="space-y-4">
+                                {schedules.map((schedule, index) => (
+                                    <article
+                                        key={schedule.id}
+                                        className="group grid gap-4 rounded-3xl bg-[#F8FAFC] p-4 ring-1 ring-slate-100 transition hover:-translate-y-1 hover:bg-white hover:shadow-xl hover:shadow-[#0F60AC]/10 sm:grid-cols-[auto_1fr]"
+                                    >
+                                        <div
+                                            className="flex h-12 w-12 items-center justify-center rounded-2xl text-white shadow-lg"
+                                            style={{
+                                                backgroundColor:
+                                                    schedule.color ?? '#F15F23',
+                                            }}
+                                        >
+                                            <CalendarDays className="h-6 w-6" />
+                                        </div>
+                                        <div>
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <span className="rounded-full bg-[#F15F23]/10 px-3 py-1 text-xs font-black text-[#F15F23]">
+                                                    {schedule.phaseLabel}
+                                                </span>
+                                                <span className="text-xs font-black text-[#64748B]">
+                                                    Step{' '}
+                                                    {String(index + 1).padStart(
+                                                        2,
+                                                        '0',
+                                                    )}
+                                                </span>
+                                            </div>
+                                            <h3 className="mt-3 text-xl font-black text-[#1E293B]">
+                                                {schedule.title}
+                                            </h3>
+                                            <div className="mt-3 flex flex-wrap gap-3 text-sm font-bold text-[#64748B]">
+                                                <span className="inline-flex items-center gap-2">
+                                                    <Clock3 className="h-4 w-4 text-[#F15F23]" />
+                                                    {schedule.dateLabel}
+                                                </span>
+                                                {schedule.location && (
+                                                    <span className="inline-flex items-center gap-2">
+                                                        <MapPin className="h-4 w-4 text-[#0F60AC]" />
+                                                        {schedule.location}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            {schedule.description && (
+                                                <p className="mt-3 text-sm leading-7 text-[#64748B]">
+                                                    {schedule.description}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </article>
+                                ))}
+                                <Link
+                                    href="/jadwal"
+                                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0F60AC] px-6 py-4 text-sm font-black text-white shadow-lg shadow-[#0F60AC]/20 transition hover:-translate-y-1"
+                                >
+                                    Lihat Kalender Lengkap
+                                    <CalendarDays className="h-4 w-4" />
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            )}
+
+            {faqs.length > 0 && (
+                <section className="px-5 py-16 lg:px-8">
+                    <div className="mx-auto max-w-4xl">
+                        <SectionHeader
+                            eyebrow="FAQ"
+                            title={`Pertanyaan tentang ${currentOlimpiade.title}`}
+                        />
+                        <div className="mt-10 space-y-4">
+                            {faqs.map((faq) => (
+                                <details
+                                    key={faq.id}
+                                    className="group rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-100 open:shadow-xl"
+                                >
+                                    <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-lg font-black text-[#1E293B]">
+                                        {faq.question}
+                                        <ChevronDown className="h-5 w-5 shrink-0 text-[#F15F23] transition group-open:rotate-180" />
+                                    </summary>
+                                    <p className="mt-4 text-sm leading-7 text-[#64748B]">
+                                        {faq.answer}
+                                    </p>
+                                </details>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+            )}
+
             <section className="bg-white px-5 py-16 lg:px-8">
                 <div className="mx-auto max-w-7xl">
                     <SectionHeader
-                        eyebrow="Related Programs"
-                        title="Program lain yang mungkin cocok"
+                        eyebrow="Olimpiade Terkait"
+                        title="Olimpiade lain yang mungkin cocok"
                     />
                     <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                        {relatedPrograms.map((item) => (
-                            <ProgramCard key={item.id} program={item} />
+                        {relatedOlimpiade.map((item) => (
+                            <OlimpiadeCard key={item.id} olimpiade={item} />
                         ))}
                     </div>
                 </div>
             </section>
 
             <CTASection
-                title={`Daftar minat untuk ${program.title}`}
+                title={`Daftar minat untuk ${currentOlimpiade.title}`}
                 description={detail.ctaDescription}
+                primaryHref={currentOlimpiade.registrationUrl ?? '/kontak'}
             />
         </>
     );

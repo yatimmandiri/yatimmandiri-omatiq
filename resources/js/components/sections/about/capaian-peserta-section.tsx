@@ -126,7 +126,7 @@ export function CapaianPesertaSection() {
                             : 'bg-[#F8FAFC] text-[#1E293B] ring-1 ring-slate-200 hover:ring-[#0F60AC] hover:text-[#0F60AC]'
                             }`}
                     >
-                        Semua Cabang
+                        Semua Olimpiade
                     </button>
                     {capaianData.map((item) => {
                         const Icon = item.icon;

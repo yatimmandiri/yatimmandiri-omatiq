@@ -2,10 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useImageUpload } from "@/hooks/use-image-upload";
-import {
-	NODE_HANDLES_SELECTED_STYLE_CLASSNAME,
-	isValidUrl,
-} from "@/lib/tiptap-utils";
+import { NODE_HANDLES_SELECTED_STYLE_CLASSNAME } from "@/lib/tiptap-utils";
 import { cn } from "@/lib/utils";
 import {
 	type CommandProps,
@@ -15,8 +12,8 @@ import {
 	ReactNodeViewRenderer,
 	mergeAttributes,
 } from "@tiptap/react";
-import { Image, Link, Loader2, Upload, X } from "lucide-react";
-import { type FormEvent, useState } from "react";
+import { Image, Loader2, Upload, X } from "lucide-react";
+import { useState } from "react";
 
 export interface ImagePlaceholderOptions {
 	HTMLAttributes: Record<string, any>;
@@ -76,10 +73,7 @@ export const ImagePlaceholder = Node.create<ImagePlaceholderOptions>({
 function ImagePlaceholderComponent(props: NodeViewProps) {
 	const { editor, extension, selected } = props;
 	const [isExpanded, setIsExpanded] = useState(false);
-	const [activeTab, setActiveTab] = useState<'upload' | 'url'>('upload');
-	const [url, setUrl] = useState("");
 	const [altText, setAltText] = useState("");
-	const [urlError, setUrlError] = useState(false);
 	const [isDragActive, setIsDragActive] = useState(false);
 
 	const {
@@ -134,21 +128,6 @@ function ImagePlaceholderComponent(props: NodeViewProps) {
 		}
 	};
 
-	const handleInsertEmbed = (e: FormEvent) => {
-		e.preventDefault();
-		const valid = isValidUrl(url);
-		if (!valid) {
-			setUrlError(true);
-			return;
-		}
-		if (url) {
-			editor.chain().focus().setImage({ src: url, alt: altText }).run();
-			setIsExpanded(false);
-			setUrl("");
-			setAltText("");
-		}
-	};
-
 	return (
 		<NodeViewWrapper className="w-full">
 			<div className="relative">
@@ -186,15 +165,11 @@ function ImagePlaceholderComponent(props: NodeViewProps) {
 							</Button>
 						</div>
 
-						<Tabs value={activeTab} onValueChange={(v: any) => setActiveTab(v)} className="w-full">
-							<TabsList className="grid w-full grid-cols-2">
+						<Tabs defaultValue="upload" className="w-full">
+							<TabsList className="grid w-full grid-cols-1">
 								<TabsTrigger value="upload">
 									<Upload className="mr-2 h-4 w-4" />
 									Upload
-								</TabsTrigger>
-								<TabsTrigger value="url">
-									<Link className="mr-2 h-4 w-4" />
-									URL
 								</TabsTrigger>
 							</TabsList>
 
@@ -270,41 +245,6 @@ function ImagePlaceholderComponent(props: NodeViewProps) {
 									{error && (
 										<p className="mt-2 text-sm text-destructive">{error}</p>
 									)}
-								</div>
-							</TabsContent>
-
-							<TabsContent value="url">
-								<div className="space-y-4 py-4">
-									<div className="space-y-2">
-										<Input
-											value={url}
-											onChange={(e) => {
-												setUrl(e.target.value);
-												if (urlError) setUrlError(false);
-											}}
-											placeholder="Enter image URL..."
-										/>
-										{urlError && (
-											<p className="text-xs text-destructive">
-												Please enter a valid URL
-											</p>
-										)}
-									</div>
-									<div className="space-y-2">
-										<Input
-											value={altText}
-											onChange={(e) => setAltText(e.target.value)}
-											placeholder="Alt text (optional)"
-										/>
-									</div>
-									<Button
-										type="button"
-										onClick={handleInsertEmbed}
-										className="w-full"
-										disabled={!url}
-									>
-										Add Image
-									</Button>
 								</div>
 							</TabsContent>
 						</Tabs>

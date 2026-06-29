@@ -2,12 +2,13 @@ import {
     CTASection,
     SectionHeader,
 } from '@/components/marketing/marketing-components';
-import { ProgramItem, programs } from '@/components/marketing/site-data';
+import { OlimpiadeItem, olimpiade } from '@/components/marketing/site-data';
 import { Link, usePage } from '@inertiajs/react';
 import {
     ArrowRight,
     BookOpenCheck,
     Brain,
+    CalendarDays,
     Calculator,
     CheckCircle2,
     Medal,
@@ -18,8 +19,8 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
-type ProgramsProps = {
-    programs?: typeof programs | { data?: typeof programs };
+type OlimpiadeProps = {
+    olimpiade?: typeof olimpiade | { data?: typeof olimpiade };
 };
 
 type OlympiadTheme = {
@@ -33,12 +34,12 @@ type OlympiadTheme = {
     image: string;
 };
 
-const normalizePrograms = (value: ProgramsProps['programs']) => {
+const normalizeOlimpiade = (value: OlimpiadeProps['olimpiade']) => {
     const items = Array.isArray(value)
         ? value
         : value?.data && Array.isArray(value.data)
-          ? value.data
-          : programs;
+            ? value.data
+            : olimpiade;
 
     const olympiads = items.filter((item) => {
         const content = `${item.title} ${item.category}`.toLowerCase();
@@ -50,14 +51,11 @@ const normalizePrograms = (value: ProgramsProps['programs']) => {
         );
     });
 
-    return (olympiads.length >= 2 ? olympiads : programs.slice(0, 2)).slice(
-        0,
-        2,
-    );
+    return olympiads.slice(0, 2);
 };
 
-const getTheme = (program: ProgramItem): OlympiadTheme => {
-    const isQuran = `${program.title} ${program.category}`
+const getTheme = (olimpiade: OlimpiadeItem): OlympiadTheme => {
+    const isQuran = `${olimpiade.title} ${olimpiade.category}`
         .toLowerCase()
         .includes('qur');
 
@@ -70,7 +68,7 @@ const getTheme = (program: ProgramItem): OlympiadTheme => {
             dark: '#9A3412',
             number: '01',
             highlights: ['Tajwid', 'Cara baca', 'Adab & percaya diri'],
-            image: program.image,
+            image: olimpiade.image,
         };
     }
 
@@ -82,13 +80,13 @@ const getTheme = (program: ProgramItem): OlympiadTheme => {
         dark: '#083B6B',
         number: '02',
         highlights: ['Logika dasar', 'Problem solving', 'Strategi soal'],
-        image: program.image,
+        image: olimpiade.image,
     };
 };
 
-export default function ProgramsPage() {
-    const props = usePage<ProgramsProps>().props;
-    const olympiads = normalizePrograms(props.programs);
+export default function OlimpiadePage() {
+    const props = usePage<OlimpiadeProps>().props;
+    const olympiads = normalizeOlimpiade(props.olimpiade);
 
     return (
         <>
@@ -99,7 +97,7 @@ export default function ProgramsPage() {
                 <div className="relative mx-auto max-w-7xl text-center">
                     <span className="inline-flex items-center gap-2 rounded-full bg-[#F15F23]/10 px-4 py-2 text-sm font-black text-[#F15F23]">
                         <Medal className="h-4 w-4" />
-                        Cabang Olimpiade OMATIQ
+                        Olimpiade OMATIQ
                     </span>
                     <h1 className="mx-auto mt-6 max-w-5xl text-3xl leading-tight font-black text-[#1E293B] sm:text-4xl md:text-6xl lg:text-7xl">
                         Dua bidang utama untuk membentuk anak berakhlak dan
@@ -107,7 +105,7 @@ export default function ProgramsPage() {
                     </h1>
                     <p className="mx-auto mt-5 max-w-3xl text-base leading-8 text-[#64748B] sm:mt-6 sm:text-lg">
                         OMATIQ memusatkan pengalaman lomba pada Al-Qur'an dan
-                        Matematika. Setiap cabang dirancang serius, ramah untuk
+                        Matematika. Setiap olimpiade dirancang serius, ramah untuk
                         anak, dan relevan dengan proses tumbuh mereka.
                     </p>
 
@@ -120,7 +118,7 @@ export default function ProgramsPage() {
                             },
                             {
                                 icon: Target,
-                                value: '2 Program',
+                                value: '2 Olimpiade',
                                 label: 'Fokus yang terarah',
                             },
                             {
@@ -153,19 +151,19 @@ export default function ProgramsPage() {
             <section className="bg-white px-5 py-14 sm:py-20 lg:px-8">
                 <div className="mx-auto max-w-7xl">
                     <SectionHeader
-                        eyebrow="Pilih Programmu"
+                        eyebrow="Pilih Olimpiademu"
                         title="Kenali dua panggung utama OMATIQ"
-                        description="Bukan sekadar memilih mata lomba. Setiap program membawa pengalaman, tantangan, dan kemampuan yang berbeda untuk dikembangkan."
+                        description="Bukan sekadar memilih mata lomba. Setiap olimpiade membawa pengalaman, tantangan, dan kemampuan yang berbeda untuk dikembangkan."
                     />
 
                     <div className="mt-14 space-y-10">
-                        {olympiads.map((program, index) => {
-                            const theme = getTheme(program);
+                        {olympiads.map((olimpiade, index) => {
+                            const theme = getTheme(olimpiade);
                             const Icon = theme.icon;
 
                             return (
                                 <article
-                                    key={program.id}
+                                    key={olimpiade.id}
                                     className="group overflow-hidden rounded-[28px] border border-slate-100 bg-[#F8FAFC] shadow-sm transition duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-[#0F60AC]/10 sm:rounded-[32px]"
                                 >
                                     <div
@@ -174,7 +172,7 @@ export default function ProgramsPage() {
                                         <div className="relative min-h-72 overflow-hidden sm:min-h-80 lg:min-h-[560px]">
                                             <img
                                                 src={theme.image}
-                                                alt={program.title}
+                                                alt={olimpiade.title}
                                                 className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105"
                                             />
                                             <div className="absolute inset-0 bg-gradient-to-t from-slate-950/65 via-transparent to-transparent" />
@@ -187,7 +185,7 @@ export default function ProgramsPage() {
                                                         OMATIQ National Olympiad
                                                     </p>
                                                     <p className="mt-2 text-xl font-black">
-                                                        {program.level}
+                                                        {olimpiade.level}
                                                     </p>
                                                 </div>
                                                 <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/15 backdrop-blur-md">
@@ -208,12 +206,11 @@ export default function ProgramsPage() {
                                                 {theme.eyebrow}
                                             </span>
                                             <h2 className="mt-5 text-3xl leading-tight font-black text-[#1E293B] sm:mt-6 sm:text-4xl md:text-5xl">
-                                                {program.title}
+                                                {olimpiade.title}
                                             </h2>
                                             <p className="mt-5 text-base leading-8 text-[#64748B] md:text-lg">
-                                                {program.description}
+                                                {olimpiade.description}
                                             </p>
-
                                             <div className="mt-8 grid gap-3 sm:grid-cols-3">
                                                 {theme.highlights.map(
                                                     (highlight) => (
@@ -232,10 +229,28 @@ export default function ProgramsPage() {
                                                     ),
                                                 )}
                                             </div>
-
+                                            <div className="mt-8 flex items-center gap-3 rounded-2xl p-4 md:p-5" style={{ backgroundColor: theme.soft }}>
+                                                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: theme.accent }}>
+                                                    <Target className="h-5 w-5 text-white" />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <p className="text-xs font-black tracking-wide uppercase" style={{ color: theme.dark }}>
+                                                        Jadwal Pelaksanaan
+                                                    </p>
+                                                    <p className="mt-1 text-sm font-black text-[#1E293B] md:text-base">
+                                                        {olimpiade.nextSchedule?.dateLabel ??
+                                                            'Jadwal segera diumumkan'}
+                                                    </p>
+                                                    {olimpiade.nextSchedule?.title && (
+                                                        <p className="mt-1 text-xs font-bold text-[#64748B]">
+                                                            {olimpiade.nextSchedule.title}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
                                             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
                                                 <Link
-                                                    href={`/programs/${program.slug}`}
+                                                    href={`/olimpiade/${olimpiade.slug}`}
                                                     className="inline-flex items-center justify-center gap-2 rounded-xl px-6 py-4 text-sm font-black text-white shadow-lg transition hover:-translate-y-1"
                                                     style={{
                                                         backgroundColor:
@@ -244,6 +259,13 @@ export default function ProgramsPage() {
                                                 >
                                                     Lihat Detail
                                                     <ArrowRight className="h-4 w-4" />
+                                                </Link>
+                                                <Link
+                                                    href="/jadwal"
+                                                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-6 py-4 text-sm font-black text-[#0F60AC] shadow-sm transition hover:-translate-y-1 hover:border-[#0F60AC]/25"
+                                                >
+                                                    Kalender
+                                                    <CalendarDays className="h-4 w-4" />
                                                 </Link>
                                             </div>
                                         </div>
@@ -289,7 +311,7 @@ export default function ProgramsPage() {
             </section>
 
             <CTASection
-                title="Sudah tahu program yang paling cocok?"
+                title="Sudah tahu olimpiade yang paling cocok?"
                 description="Daftarkan anak untuk mengikuti Olimpiade Al-Qur'an atau Matematika dan berikan pengalaman berkompetisi yang positif di tingkat nasional."
             />
         </>
