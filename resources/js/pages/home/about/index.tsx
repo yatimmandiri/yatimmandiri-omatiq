@@ -139,15 +139,12 @@ export default function AboutPage() {
                             Tentang OMATIQ
                         </span>
                         <h1 className="mt-6 text-3xl leading-tight font-black tracking-tight text-[#1E293B] sm:text-4xl md:text-6xl">
-                            Olimpiade nasional untuk anak Indonesia yang cerdas,
-                            berani, dan berakhlak.
+                            Setiap anak berhak memiliki mimpi besar, termasuk anak yatim dan dhuafa.
                         </h1>
                         <p className="mt-5 text-base leading-8 text-[#64748B] sm:mt-6 sm:text-lg">
-                            OMATIQ adalah ajang olimpiade berbasis nasional
-                            untuk anak-anak Indonesia. Pada tahap awal, OMATIQ
-                            berfokus pada dua olimpiade utama: Al-Qur'an melalui
-                            tajwid dan cara baca, serta Matematika untuk melatih
-                            logika, ketelitian, dan keberanian bernalar.
+                            OMATIQ   hadir sebagai panggung prestasi dan harapan bagi ribuan anak yatim dan dhuafa di seluruh Indonesia. Diselenggarakan oleh Yatim Mandiri, OMATIQ menjadi ruang bagi mereka untuk belajar, bertumbuh, berprestasi, dan percaya bahwa mereka mampu menjadi generasi masa depan bangsa.
+                            Selama 10 tahun perjalanan, OMATIQ telah menjadi lebih dari sekadar olimpiade. Ia adalah pengalaman hidup yang membentuk mental juara, mempertemukan anak-anak dengan inspirasi besar, serta menghadirkan pendidikan yang memuliakan manusia.
+                            Melalui kompetisi Matematika dan Al-Qur’an, edutour, pembinaan karakter, hingga pengalaman inspiratif bersama tokoh masyarakat, OMATIQ terus menyalakan mimpi dan semangat belajar anak-anak Indonesia.
                         </p>
                         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                             <Link
@@ -157,13 +154,13 @@ export default function AboutPage() {
                                 Lihat Olimpiade
                                 <ArrowRight className="h-4 w-4" />
                             </Link>
-                            {/* <Link
+                            <Link
                                 href="/kontak"
                                 className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#0F60AC]/15 bg-white px-6 py-4 text-sm font-black text-[#0F60AC] shadow-sm transition hover:-translate-y-1 hover:bg-[#0F60AC]/5"
                             >
-                                Daftarkan Anak
+                                Daftar Yuk
                                 <Medal className="h-4 w-4" />
-                            </Link> */}
+                            </Link>
                         </div>
                     </div>
 
@@ -208,24 +205,22 @@ export default function AboutPage() {
                 <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[0.8fr_1.2fr]">
                     <SectionHeader
                         eyebrow="Our Story"
-                        title="Dari semangat belajar menuju panggung nasional"
-                        description="OMATIQ hadir karena banyak anak punya potensi besar, tetapi membutuhkan ruang lomba yang tertata, positif, dan mudah diakses dari berbagai daerah."
+                        title="Sejarah singkat OMATIQ"
+                        description="OMATIQ   pertama kali diselenggarakan pada tahun 2016 dengan nama Olimpiade Genius Nasional (OGN). Program ini lahir dari komitmen Yatim Mandiri dalam menghadirkan akses pendidikan berkualitas bagi anak yatim dan dhuafa di Indonesia."
                         align="left"
                     />
                     <div className="rounded-[28px] bg-[#F8FAFC] p-5 text-base leading-8 text-[#64748B] sm:p-8">
                         <p>
-                            Kami percaya olimpiade bukan hanya soal menang.
-                            Untuk anak-anak, olimpiade adalah pengalaman berani
-                            mencoba, disiplin berlatih, belajar dari tantangan,
-                            dan merasakan kebanggaan ketika tampil membawa usaha
-                            terbaiknya.
+                            Pada tahun 2018, OGN resmi melakukan rebranding menjadi OMATIQ (Olimpiade Matematika dan Al-Qur’an). Perubahan ini menjadi langkah penting dalam memperkuat identitas program sebagai ajang kompetisi akademik dan keagamaan yang mengedepankan prestasi, karakter, dan nilai spiritual.
                         </p>
                         <p className="mt-5">
-                            Karena itu OMATIQ dibangun dengan pendekatan yang
-                            ramah untuk anak, jelas untuk orang tua, mudah
-                            didampingi guru, dan terbuka untuk kerja sama
-                            sekolah, TPQ, komunitas pendidikan, serta mitra
-                            daerah.
+                            Selama satu dekade, OMATIQ terus berkembang menjadi salah satu ajang olimpiade anak yatim dan dhuafa terbesar di Indonesia, dengan peserta mencapai lebih dari 3.500 anak setiap tahunnya dari puluhan kota dan kabupaten di seluruh Indonesia.
+                        </p>
+                        <p className="mt-5">
+                            OMATIQ telah melewati berbagai fase perjalanan, mulai dari pelaksanaan di kementerian dan institusi nasional, adaptasi virtual saat pandemi Covid-19, hingga berkembang menjadi event pendidikan berbasis pengalaman yang menghadirkan kompetisi, edutour, inspirasi tokoh masyarakat, dan pembentukan mental juara.
+                        </p>
+                        <p className="mt-5">
+                            Tahun 2026 menjadi momentum istimewa karena OMATIQ memasuki 1 Dekade penyelenggaraan — sebuah perjalanan panjang dalam melahirkan generasi Qurani, cerdas, santun, dan mandiri.
                         </p>
                     </div>
                 </div>
@@ -235,24 +230,35 @@ export default function AboutPage() {
                 <div className="mx-auto grid max-w-7xl gap-6 md:grid-cols-2">
                     <div className="rounded-3xl bg-[#0F60AC] p-6 text-white shadow-xl shadow-[#0F60AC]/20 sm:p-8">
                         <FeatureIcon icon={Target} color="orange" />
-                        <h2 className="mt-6 text-3xl font-black">Vision</h2>
+                        <h2 className="mt-6 text-3xl font-black">Visi</h2>
                         <p className="mt-4 leading-8 text-white/80">
-                            Menjadi olimpiade nasional yang menginspirasi anak
-                            Indonesia untuk mencintai Al-Qur'an, berani
-                            bernalar, dan tumbuh sebagai generasi berprestasi
-                            serta berakhlak.
+                            Menjadi platform pendidikan dan pengembangan talenta anak yatim dan dhuafa terbesar di Indonesia yang melahirkan generasi pemimpin masa depan bangsa.
                         </p>
                     </div>
                     <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-100 sm:p-8">
                         <FeatureIcon icon={Flag} color="blue" />
                         <h2 className="mt-6 text-3xl font-black text-[#1E293B]">
-                            Mission
+                            Misi
                         </h2>
                         <p className="mt-4 leading-8 text-[#64748B]">
-                            Menyelenggarakan olimpiade Al-Qur'an dan Matematika
-                            yang terarah, menyenangkan, transparan, serta mampu
-                            melibatkan sekolah, TPQ, orang tua, guru, dan mitra
-                            pendidikan dari berbagai wilayah.
+                            <ul>
+                                <li className="mb-2 flex items-start gap-2">
+                                    <span>Memberikan akses ruang prestasi bagi anak yatim dan dhuafa di seluruh Indonesia
+                                    </span>
+                                </li>
+                                <li className="mb-2 flex items-start gap-2">
+                                    <span>Menanamkan nilai Qurani, akhlak mulia, dan semangat belajar</span>
+                                </li>
+                                <li className="mb-2 flex items-start gap-2">
+                                    <span>Menghadirkan pembelajaran berbasis pengalaman dan inspirasi</span>
+                                </li>
+                                <li className="mb-2 flex items-start gap-2">
+                                    <span>Menjadi sarana evaluasi dan penguatan program pendidikan binaan</span>
+                                </li>
+                                <li className="mb-2 flex items-start gap-2">
+                                    <span>Membangun ekosistem pendidikan yang inklusif, humanis, dan berdampak</span>
+                                </li>
+                            </ul>
                         </p>
                     </div>
                 </div>
