@@ -19,6 +19,14 @@ Breadcrumbs::for('home.schedule', function (BreadcrumbTrail $trail) {
     $trail->parent('home.index')->push('Jadwal', route('home.schedule'));
 });
 
+Breadcrumbs::for('home.registration.create', function (BreadcrumbTrail $trail) {
+    $trail->parent('home.index')->push('Pendaftaran', route('home.registration.create'));
+});
+
+Breadcrumbs::for('home.registration.success', function (BreadcrumbTrail $trail, $registrationNumber) {
+    $trail->parent('home.registration.create')->push('Berhasil', route('home.registration.success', $registrationNumber));
+});
+
 Breadcrumbs::for('home.olimpiade.show', function (BreadcrumbTrail $trail, $slug) {
     $trail->parent('home.olimpiade')->push('Detail Olimpiade', route('home.olimpiade.show', $slug));
 });
