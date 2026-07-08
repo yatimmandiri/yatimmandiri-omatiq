@@ -86,7 +86,11 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
     }));
 
     const filteredRegencies = useMemo(
-        () => regencies.filter((regency) => regency.province_id === form.data.province_id),
+        () =>
+            regencies.filter(
+                (regency) =>
+                    String(regency.province_id) === String(form.data.province_id),
+            ),
         [form.data.province_id, regencies],
     );
 

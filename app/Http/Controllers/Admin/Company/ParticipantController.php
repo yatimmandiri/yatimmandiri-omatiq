@@ -154,7 +154,14 @@ class ParticipantController extends Controller
         return [
             'olimpiades' => Olimpiade::query()->active()->ordered()->get(['id', 'name', 'category', 'slug']),
             'provinces' => Province::query()->orderBy('name')->get(['id', 'name']),
-            'regencies' => Regency::query()->orderBy('name')->get(['id', 'province_id', 'name']),
+            'regencies' => Regency::query()
+                ->orderBy('name')
+                ->get(['id', 'province_id', 'name'])
+                ->map(fn (Regency $regency) => [
+                    'id' => $regency->id,
+                    'province_id' => $regency->province_id,
+                    'name' => $regency->name,
+                ]),
         ];
     }
 
