@@ -6,7 +6,7 @@ import {
 import { ChevronDown, MapPin } from 'lucide-react';
 import { usePage } from '@inertiajs/react';
 
-const fallbackFaqs = [
+const fallbackFaqs = [ 
     [
         'Bagaimana cara mendaftar olimpiade OMATIQ?',
         'Kamu bisa mengirim pesan melalui form kontak. Tim kami akan membantu memilih olimpiade yang paling sesuai dengan kebutuhanmu.',
