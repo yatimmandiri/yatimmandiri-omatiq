@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\Company\OlimpiadeGalleryController;
 use App\Http\Controllers\Admin\Company\OlimpiadeObjectiveController;
 use App\Http\Controllers\Admin\Company\OlimpiadeScheduleController;
 use App\Http\Controllers\Admin\Company\OlimpiadeVideoController;
+use App\Http\Controllers\Admin\Company\ParticipantController;
 use App\Http\Controllers\Admin\Company\ReviewController;
 use App\Http\Controllers\Admin\Company\SliderController;
 use App\Http\Controllers\Admin\Company\TestimonialController;
@@ -60,6 +61,10 @@ Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'auth.admi
         Route::get('olimpiade-schedules/data', [OlimpiadeScheduleController::class, 'getData'])->name('olimpiade-schedules.data');
         Route::resource('olimpiade-schedules', OlimpiadeScheduleController::class)
             ->parameters(['olimpiade-schedules' => 'olimpiadeSchedule']);
+
+        Route::put('participants/{participant}/status', [ParticipantController::class, 'status'])->name('participants.status');
+        Route::get('participants/data', [ParticipantController::class, 'getData'])->name('participants.data');
+        Route::resource('participants', ParticipantController::class)->except(['create', 'store']);
 
         Route::put('testimonials/{testimonial}/status', [TestimonialController::class, 'status'])->name('testimonials.status');
         Route::get('testimonials/data', [TestimonialController::class, 'getData'])->name('testimonials.data');

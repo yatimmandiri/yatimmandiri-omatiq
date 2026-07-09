@@ -3,6 +3,7 @@ import olimpiadeGalleries from '@/routes/admin/companies/olimpiade-galleries';
 import olimpiadeObjectives from '@/routes/admin/companies/olimpiade-objectives';
 import olimpiadeSchedules from '@/routes/admin/companies/olimpiade-schedules';
 import olimpiadeVideos from '@/routes/admin/companies/olimpiade-videos';
+import participants from '@/routes/admin/companies/participants';
 import testimonials from '@/routes/admin/companies/testimonials';
 import permissions from '@/routes/admin/core/permissions';
 import districts from '@/routes/admin/core/regions/districts';
@@ -112,6 +113,12 @@ export const NavigationList = [
                         title: 'Jadwal Olimpiade',
                         href: olimpiadeSchedules.index().url,
                         permission: 'view-olimpiade-schedule',
+                        icon: ChevronRight,
+                    },
+                    {
+                        title: 'Peserta',
+                        href: participants.index().url,
+                        permission: 'view-participant',
                         icon: ChevronRight,
                     },
                     {

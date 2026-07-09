@@ -607,7 +607,7 @@ export const TestimonialCard = ({
 export const CTASection = ({
     title = 'Yuk daftarkan anak hebatmu ke OMATIQ!',
     description = "Beri anak kesempatan merasakan olimpiade nasional yang seru, terarah, dan membangun percaya diri melalui cabang Al-Qur'an dan Matematika.",
-    primaryHref = '/kontak',
+    primaryHref = '/pendaftaran',
 }: {
     title?: string;
     description?: string;

@@ -1,5 +1,6 @@
 import {
     CTASection,
+    OlimpiadeCard,
     SectionHeader,
 } from '@/components/marketing/marketing-components';
 import { OlimpiadeItem, olimpiade } from '@/components/marketing/site-data';
@@ -11,6 +12,7 @@ import {
     CalendarDays,
     Calculator,
     CheckCircle2,
+    GraduationCap,
     Medal,
     Sparkles,
     Star,
@@ -35,29 +37,27 @@ type OlympiadTheme = {
 };
 
 const normalizeOlimpiade = (value: OlimpiadeProps['olimpiade']) => {
-    const items = Array.isArray(value)
+    return Array.isArray(value)
         ? value
         : value?.data && Array.isArray(value.data)
             ? value.data
             : olimpiade;
-
-    const olympiads = items.filter((item) => {
-        const content = `${item.title} ${item.category}`.toLowerCase();
-
-        return (
-            content.includes('qur') ||
-            content.includes('matematika') ||
-            content.includes('math')
-        );
-    });
-
-    return olympiads.slice(0, 2);
 };
 
-const getTheme = (olimpiade: OlimpiadeItem): OlympiadTheme => {
-    const isQuran = `${olimpiade.title} ${olimpiade.category}`
-        .toLowerCase()
-        .includes('qur');
+const isMainOlimpiade = (item: OlimpiadeItem) => {
+    const content = `${item.title} ${item.category}`.toLowerCase();
+
+    return (
+        content.includes('qur') ||
+        content.includes('matematika') ||
+        content.includes('math')
+    );
+};
+
+const getTheme = (olimpiade: OlimpiadeItem, index: number): OlympiadTheme => {
+    const content = `${olimpiade.title} ${olimpiade.category}`.toLowerCase();
+    const isQuran = content.includes('qur');
+    const isMath = content.includes('matematika') || content.includes('math');
 
     if (isQuran) {
         return {
@@ -68,6 +68,23 @@ const getTheme = (olimpiade: OlimpiadeItem): OlympiadTheme => {
             dark: '#9A3412',
             number: '01',
             highlights: ['Tajwid', 'Cara baca', 'Adab & percaya diri'],
+            image: olimpiade.image,
+        };
+    }
+
+    if (!isMath) {
+        return {
+            icon: GraduationCap,
+            eyebrow: 'Ruang tumbuh prestasi & karakter',
+            accent: '#8B5CF6',
+            soft: '#F3E8FF',
+            dark: '#6D28D9',
+            number: String(index + 1).padStart(2, '0'),
+            highlights: [
+                olimpiade.category,
+                olimpiade.level,
+                'Pengalaman nasional',
+            ],
             image: olimpiade.image,
         };
     }
@@ -87,6 +104,13 @@ const getTheme = (olimpiade: OlimpiadeItem): OlympiadTheme => {
 export default function OlimpiadePage() {
     const props = usePage<OlimpiadeProps>().props;
     const olympiads = normalizeOlimpiade(props.olimpiade);
+    const mainOlimpiads = olympiads.filter(isMainOlimpiade).slice(0, 2);
+    const featuredOlimpiads = mainOlimpiads.length
+        ? mainOlimpiads
+        : olympiads.slice(0, 2);
+    const otherOlimpiads = olympiads.filter(
+        (item) => !featuredOlimpiads.some((featured) => featured.id === item.id),
+    );
 
     return (
         <>
@@ -100,13 +124,13 @@ export default function OlimpiadePage() {
                         Olimpiade OMATIQ
                     </span>
                     <h1 className="mx-auto mt-6 max-w-5xl text-3xl leading-tight font-black text-[#1E293B] sm:text-4xl md:text-6xl lg:text-7xl">
-                        Dua bidang utama untuk membentuk anak berakhlak dan
-                        bernalar.
+                        Dua bidang utama, banyak ruang prestasi untuk anak Indonesia.
                     </h1>
                     <p className="mx-auto mt-5 max-w-3xl text-base leading-8 text-[#64748B] sm:mt-6 sm:text-lg">
                         OMATIQ memusatkan pengalaman lomba pada Al-Qur'an dan
-                        Matematika. Setiap olimpiade dirancang serius, ramah untuk
-                        anak, dan relevan dengan proses tumbuh mereka.
+                        Matematika sebagai cabang utama, sekaligus membuka ruang
+                        bagi cabang olimpiade lain yang mendukung proses tumbuh
+                        anak secara utuh.
                     </p>
 
                     <div className="mx-auto mt-10 grid max-w-3xl gap-4 sm:grid-cols-3">
@@ -118,8 +142,8 @@ export default function OlimpiadePage() {
                             },
                             {
                                 icon: Target,
-                                value: '2 Olimpiade',
-                                label: 'Fokus yang terarah',
+                                value: `${olympiads.length} Olimpiade`,
+                                label: 'Cabang tersedia',
                             },
                             {
                                 icon: Star,
@@ -153,12 +177,12 @@ export default function OlimpiadePage() {
                     <SectionHeader
                         eyebrow="Pilih Olimpiademu"
                         title="Kenali dua panggung utama OMATIQ"
-                        description="Bukan sekadar memilih mata lomba. Setiap olimpiade membawa pengalaman, tantangan, dan kemampuan yang berbeda untuk dikembangkan."
+                        description="Al-Qur'an dan Matematika menjadi cabang utama OMATIQ. Keduanya membawa pengalaman, tantangan, dan kemampuan yang berbeda untuk dikembangkan."
                     />
 
                     <div className="mt-14 space-y-10">
-                        {olympiads.map((olimpiade, index) => {
-                            const theme = getTheme(olimpiade);
+                        {featuredOlimpiads.map((olimpiade, index) => {
+                            const theme = getTheme(olimpiade, index);
                             const Icon = theme.icon;
 
                             return (
@@ -277,12 +301,67 @@ export default function OlimpiadePage() {
                 </div>
             </section>
 
-            <section className="px-5 py-14 sm:py-20 lg:px-8">
+            {otherOlimpiads.length > 0 && (
+                <section className="px-5 py-14 sm:py-20 lg:px-8">
+                    <div className="mx-auto max-w-7xl">
+                        <div className="grid gap-8 lg:grid-cols-[0.72fr_1.28fr] lg:items-end">
+                            <SectionHeader
+                                eyebrow="Olimpiade Lainnya"
+                                title="Cabang tambahan untuk pengalaman belajar yang lebih luas"
+                                description="Jika OMATIQ menambah cabang baru, bagian ini otomatis menampilkan katalog olimpiade dari data terbaru."
+                                align="left"
+                            />
+                            <div className="grid gap-4 sm:grid-cols-3">
+                                {[
+                                    {
+                                        icon: Sparkles,
+                                        value: `${otherOlimpiads.length}`,
+                                        label: 'Cabang tambahan',
+                                    },
+                                    {
+                                        icon: CalendarDays,
+                                        value: 'Terjadwal',
+                                        label: 'Mengikuti kalender',
+                                    },
+                                    {
+                                        icon: Trophy,
+                                        value: 'Nasional',
+                                        label: 'Panggung prestasi',
+                                    },
+                                ].map((item) => (
+                                    <div
+                                        key={item.label}
+                                        className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-100"
+                                    >
+                                        <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#F15F23]/10 text-[#F15F23]">
+                                            <item.icon className="h-5 w-5" />
+                                        </span>
+                                        <p className="mt-4 text-xl font-black text-[#1E293B]">
+                                            {item.value}
+                                        </p>
+                                        <p className="text-sm font-bold text-[#64748B]">
+                                            {item.label}
+                                        </p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                            {otherOlimpiads.map((item) => (
+                                <OlimpiadeCard key={item.id} olimpiade={item} />
+                            ))}
+                        </div>
+                    </div>
+                </section>
+            )}
+
+            <section className="bg-white px-5 py-14 sm:py-20 lg:px-8">
                 <div className="mx-auto grid max-w-7xl items-center gap-10 lg:grid-cols-[0.8fr_1.2fr]">
                     <SectionHeader
                         eyebrow="Satu Semangat"
-                        title="Berbeda bidang, bertemu dalam karakter yang sama"
-                        description="Al-Qur'an menguatkan ketepatan, adab, dan kecintaan pada bacaan. Matematika melatih logika, strategi, dan ketekunan. Keduanya bertemu dalam keberanian anak untuk memberikan usaha terbaik."
+                        title="Setiap cabang bertemu dalam karakter yang sama"
+                        description="Al-Qur'an menguatkan adab dan ketepatan. Matematika melatih logika dan ketekunan. Cabang lain dapat memperluas minat, tetapi semuanya tetap bermuara pada keberanian anak untuk bertumbuh."
                         align="left"
                     />
                     <div className="grid gap-4 sm:grid-cols-2">
@@ -312,7 +391,7 @@ export default function OlimpiadePage() {
 
             <CTASection
                 title="Sudah tahu olimpiade yang paling cocok?"
-                description="Daftarkan anak untuk mengikuti Olimpiade Al-Qur'an atau Matematika dan berikan pengalaman berkompetisi yang positif di tingkat nasional."
+                description="Daftarkan anak untuk mengikuti cabang OMATIQ yang sesuai dan berikan pengalaman berkompetisi yang positif di tingkat nasional."
             />
         </>
     );
