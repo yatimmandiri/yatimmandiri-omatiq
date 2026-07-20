@@ -59,7 +59,7 @@ export const HomeHeaderComponent = () => {
                         ) : (
                             <Fragment>
                                 <img
-                                    src={'assets/images/LOGO OMATIQ.png'}
+                                    src={'assets/images/LOGO OMATIQ-new.png'}
                                     className="h-12 w-28 rounded-2xl object-contain"
                                     alt="OMATIQ Logo"
                                 />
