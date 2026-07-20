@@ -32,8 +32,8 @@
         }
     </style>
 
-    <link rel="icon" href="{{ $settings['favicon'] ? $settings['favicon'] : '/assets/images/LOGO OMATIQ.png' }}" type="image/png">
-    <link rel="apple-touch-icon" href="{{ $settings['favicon'] ? $settings['favicon'] : '/assets/images/LOGO OMATIQ.png' }}">
+    <link rel="icon" href="{{ $settings['favicon'] ? $settings['favicon'] : '/assets/images/LOGO OMATIQ-Fav.png' }}" type="image/png">
+    <link rel="apple-touch-icon" href="{{ $settings['favicon'] ? $settings['favicon'] : '/assets/images/LOGO OMATIQ-Fav.png' }}">
 
     @fonts
 
