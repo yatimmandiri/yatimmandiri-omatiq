@@ -10,7 +10,11 @@ return new class extends Migration
     {
         Schema::create('participants', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
+            $table->char('nik', 16)->nullable()->unique();
             $table->string('registration_number')->unique();
+            $table->string('registration_type', 20)->default('public');
+            $table->foreignId('mentor_id')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignId('olimpiade_id')->constrained('olimpiades')->restrictOnDelete();
             $table->string('full_name');
             $table->string('nickname')->nullable();

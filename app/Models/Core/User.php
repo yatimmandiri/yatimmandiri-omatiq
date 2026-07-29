@@ -2,12 +2,14 @@
 
 namespace App\Models\Core;
 
+use App\Models\Company\Participant;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
@@ -20,7 +22,7 @@ use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
-    use HasFactory, Notifiable, TwoFactorAuthenticatable, LogsActivity, HasRoles;
+    use HasFactory, HasRoles, LogsActivity, Notifiable, TwoFactorAuthenticatable;
 
     protected function casts(): array
     {
@@ -29,6 +31,11 @@ class User extends Authenticatable implements MustVerifyEmail
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
         ];
+    }
+
+    public function participant(): HasOne
+    {
+        return $this->hasOne(Participant::class);
     }
 
     public function socials(): HasMany
@@ -41,7 +48,7 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->roles()
             ->with('permissions')
             ->get()
-            ->flatMap(fn($role) => $role->permissions)
+            ->flatMap(fn ($role) => $role->permissions)
             ->pluck('name')
             ->unique()
             ->values();

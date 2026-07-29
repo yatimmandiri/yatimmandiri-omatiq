@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\Company\OlimpiadeVideoController;
 use App\Http\Controllers\Admin\Company\ParticipantController;
 use App\Http\Controllers\Admin\Company\ReviewController;
 use App\Http\Controllers\Admin\Company\SliderController;
+use App\Http\Controllers\Admin\Company\TeacherController;
 use App\Http\Controllers\Admin\Company\TestimonialController;
 use App\Http\Controllers\Admin\Core\PermissionController;
 use App\Http\Controllers\Admin\Core\Region\DistrictController;
@@ -81,6 +82,14 @@ Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'auth.admi
         Route::put('faq-companies/{faqCompany}/status', [FaqCompanyController::class, 'status'])->name('faq-companies.status');
         Route::get('faq-companies/data', [FaqCompanyController::class, 'getData'])->name('faq-companies.data');
         Route::resource('faq-companies', FaqCompanyController::class);
+
+        Route::get('teachers/data', [TeacherController::class, 'getData'])->name('teachers.data');
+        Route::resource('teachers', TeacherController::class)->parameters(['teachers' => 'teacher']);
+    });
+
+    Route::prefix('teacher')->as('teacher.')->group(function () {
+        Route::get('students/data', [\App\Http\Controllers\Admin\Teacher\TeacherStudentController::class, 'getData'])->name('students.data');
+        Route::resource('students', \App\Http\Controllers\Admin\Teacher\TeacherStudentController::class)->parameters(['students' => 'participant']);
     });
 
     Route::prefix('core')->as('core.')->group(function () {

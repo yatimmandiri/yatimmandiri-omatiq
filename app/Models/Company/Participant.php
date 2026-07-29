@@ -4,6 +4,7 @@ namespace App\Models\Company;
 
 use App\Models\Core\Region\Province;
 use App\Models\Core\Region\Regency;
+use App\Models\Core\User;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -49,6 +50,10 @@ use Spatie\Activitylog\Support\LogOptions;
     'guardian_signature_name',
     'status',
     'notes',
+    'user_id',
+    'nik',
+    'registration_type',
+    'mentor_id',
 ])]
 class Participant extends Model
 {
@@ -79,6 +84,16 @@ class Participant extends Model
     public function regency(): BelongsTo
     {
         return $this->belongsTo(Regency::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function mentor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'mentor_id');
     }
 
     public function scopeSearch(Builder $query, ?string $search): Builder
