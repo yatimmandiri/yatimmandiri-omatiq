@@ -11,6 +11,7 @@ uses(RefreshDatabase::class);
 beforeEach(function () {
     Role::create(['name' => 'Administrators', 'guard_name' => 'web']);
     Role::create(['name' => 'Participant', 'guard_name' => 'web']);
+    Role::create(['name' => 'Teacher', 'guard_name' => 'web']);
     Role::create(['name' => 'Users', 'guard_name' => 'web']);
 
     Permission::create(['name' => 'view-participant', 'guard_name' => 'web'])->assignRole('Participant');

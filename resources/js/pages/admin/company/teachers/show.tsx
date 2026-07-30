@@ -1,4 +1,6 @@
 import { Card } from '@/components/ui/card';
+import { dashboard } from '@/routes/admin';
+import teachers from '@/routes/admin/companies/teachers';
 import { formatDate } from '@/utils/formatDate';
 import { usePage } from '@inertiajs/react';
 import { InfoIcon } from 'lucide-react';
@@ -53,3 +55,20 @@ export default function DetailPage() {
         </div>
     );
 }
+
+DetailPage.layout = {
+    breadcrumbs: [
+        {
+            title: 'Dashboard',
+            href: dashboard(),
+        },
+        {
+            title: 'Guru',
+            href: teachers.index().url,
+        },
+        {
+            title: 'Detail Guru',
+            href: '#',
+        },
+    ],
+};

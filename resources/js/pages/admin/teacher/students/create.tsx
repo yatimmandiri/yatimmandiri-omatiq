@@ -3,6 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { dashboard } from '@/routes/admin';
 import teacherStudents from '@/routes/admin/teacher/students';
 import { useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, Save } from 'lucide-react';
@@ -15,13 +16,6 @@ type Option = {
     slug?: string;
 };
 type Regency = { id: string; province_id: string; name: string };
-
-const programOptions = [
-    { value: 'sanggar_genius', label: 'Sanggar Genius' },
-    { value: 'sanggar_alquran', label: "Sanggar Al-Qur'an" },
-    { value: 'asrama_yatim_mandiri', label: 'Asrama Yatim Mandiri' },
-    { value: 'other', label: 'Program Lainnya' },
-];
 
 const educationOptions = [
     { value: 'SD/MI', label: 'SD/MI' },
@@ -55,13 +49,12 @@ export default function CreatePage() {
         province_id: '',
         regency_id: '',
         parent_phone: '',
-        development_program: '',
-        development_program_other: '',
-        institution_name: '',
-        branch_office: '',
         mentor_name: '',
         mentor_phone: '',
         achievements: '',
+        photo: null,
+        identity_card: null,
+        family_card: null,
     });
 
     const filteredRegencies = useMemo(
@@ -77,6 +70,7 @@ export default function CreatePage() {
     const submit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         form.post(teacherStudents.store().url, {
+            forceFormData: true,
             preserveScroll: true,
         });
     };
@@ -270,56 +264,18 @@ export default function CreatePage() {
             </Card>
 
             <Card className="space-y-5 p-5">
-                <h2 className="text-lg font-bold">Program dan Kategori</h2>
+                <h2 className="text-lg font-bold">Kategori dan Dokumen</h2>
                 <div className="grid gap-5 md:grid-cols-2">
-                    <Field
-                        label="Program Binaan"
-                        error={error('development_program')}
-                    >
+                    <Field label="Kategori Lomba" error={error('olimpiade_id')}>
                         <Select
-                            value={form.data.development_program}
+                            value={form.data.olimpiade_id}
                             onChange={(value) =>
-                                form.setData('development_program', value)
+                                form.setData('olimpiade_id', value)
                             }
-                            options={programOptions}
-                        />
-                    </Field>
-                    {form.data.development_program === 'other' && (
-                        <Field
-                            label="Program Lainnya"
-                            error={error('development_program_other')}
-                        >
-                            <Input
-                                value={form.data.development_program_other}
-                                onChange={(e) =>
-                                    form.setData(
-                                        'development_program_other',
-                                        e.target.value,
-                                    )
-                                }
-                            />
-                        </Field>
-                    )}
-                    <Field
-                        label="Nama Sanggar / Asrama"
-                        error={error('institution_name')}
-                    >
-                        <Input
-                            value={form.data.institution_name}
-                            onChange={(e) =>
-                                form.setData('institution_name', e.target.value)
-                            }
-                        />
-                    </Field>
-                    <Field
-                        label="Kantor Layanan / Cabang"
-                        error={error('branch_office')}
-                    >
-                        <Input
-                            value={form.data.branch_office}
-                            onChange={(e) =>
-                                form.setData('branch_office', e.target.value)
-                            }
+                            options={olimpiades.map((item) => ({
+                                value: String(item.id),
+                                label: item.name,
+                            }))}
                         />
                     </Field>
                     <Field label="Nama Pendamping" error={error('mentor_name')}>
@@ -338,16 +294,34 @@ export default function CreatePage() {
                             }
                         />
                     </Field>
-                    <Field label="Kategori Lomba" error={error('olimpiade_id')}>
-                        <Select
-                            value={form.data.olimpiade_id}
-                            onChange={(value) =>
-                                form.setData('olimpiade_id', value)
+                    <Field label="Foto" error={error('photo')}>
+                        <Input
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            required
+                            onChange={(e) =>
+                                form.setData('photo', e.target.files?.[0] ?? null)
                             }
-                            options={olimpiades.map((item) => ({
-                                value: String(item.id),
-                                label: item.name,
-                            }))}
+                        />
+                    </Field>
+                    <Field label="Kartu Identitas (KTP/Akta)" error={error('identity_card')}>
+                        <Input
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp,application/pdf"
+                            required
+                            onChange={(e) =>
+                                form.setData('identity_card', e.target.files?.[0] ?? null)
+                            }
+                        />
+                    </Field>
+                    <Field label="Kartu Keluarga (KK)" error={error('family_card')}>
+                        <Input
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp,application/pdf"
+                            required
+                            onChange={(e) =>
+                                form.setData('family_card', e.target.files?.[0] ?? null)
+                            }
                         />
                     </Field>
                 </div>
@@ -404,3 +378,20 @@ const Select = ({
         ))}
     </select>
 );
+
+CreatePage.layout = {
+    breadcrumbs: [
+        {
+            title: 'Dashboard',
+            href: dashboard(),
+        },
+        {
+            title: 'Siswa',
+            href: teacherStudents.index().url,
+        },
+        {
+            title: 'Daftarkan Siswa',
+            href: teacherStudents.create().url,
+        },
+    ],
+};

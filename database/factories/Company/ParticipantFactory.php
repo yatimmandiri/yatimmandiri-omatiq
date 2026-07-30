@@ -19,7 +19,7 @@ class ParticipantFactory extends Factory
             'birth_place' => fake()->city(),
             'birth_date' => fake()->date(),
             'age' => fake()->numberBetween(6, 18),
-            'education_level' => fake()->randomElement(['sd', 'smp', 'sma', 'mahasiswa']),
+            'education_level' => fake()->randomElement(['SD/MI', 'SMP/MTs']),
             'school_name' => fake()->company(),
             'grade' => fake()->randomElement(['1', '2', '3', '4', '5', '6']),
             'status' => 'submitted',

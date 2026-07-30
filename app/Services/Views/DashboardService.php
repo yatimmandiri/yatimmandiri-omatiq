@@ -2,6 +2,7 @@
 
 namespace App\Services\Views;
 
+use App\Models\Company\Participant;
 use App\Models\Core\User;
 
 class DashboardService
@@ -12,6 +13,7 @@ class DashboardService
 
         return match ($role) {
             'Administrators' => self::admin(),
+            'Teacher' => self::teacher($user),
             'Participant' => self::participant($user),
             default => self::user(),
         };
@@ -23,6 +25,19 @@ class DashboardService
             'view' => 'admin/dashboard/admin',
             'data' => [
                 'pageTitle' => 'Dashboard Admin',
+            ],
+        ];
+    }
+
+    private static function teacher(User $user): array
+    {
+        $studentCount = Participant::where('mentor_id', $user->id)->count();
+
+        return [
+            'view' => 'admin/dashboard/teacher',
+            'data' => [
+                'pageTitle' => 'Dashboard Guru',
+                'studentCount' => $studentCount,
             ],
         ];
     }

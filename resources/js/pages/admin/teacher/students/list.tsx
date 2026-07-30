@@ -2,6 +2,7 @@ import { DataTableComponent } from '@/components/partials/dataTables';
 import { DataTableProvider } from '@/components/partials/dataTables/hooks/useDataTables';
 import { renderRowHeader } from '@/components/partials/dataTables/utils/dataTable-utils';
 import { Badge } from '@/components/ui/badge';
+import { dashboard } from '@/routes/admin';
 import teacherStudents from '@/routes/admin/teacher/students';
 import { CheckCircle2, Clock3, XCircle } from 'lucide-react';
 import { useState } from 'react';
@@ -90,3 +91,16 @@ export default function ListPage() {
         </div>
     );
 }
+
+ListPage.layout = {
+    breadcrumbs: [
+        {
+            title: 'Dashboard',
+            href: dashboard(),
+        },
+        {
+            title: 'Siswa',
+            href: teacherStudents.index().url,
+        },
+    ],
+};

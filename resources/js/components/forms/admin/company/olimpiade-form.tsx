@@ -34,6 +34,7 @@ type OlimpiadeRecord = {
     registration_url?: string | null;
     status: boolean;
     recommended: boolean;
+    show_on_registration: boolean;
     sort_order: number;
 };
 
@@ -83,6 +84,7 @@ export const OlimpiadeForm = ({ dataId }: { dataId?: number }) => {
         registration_url: olimpiade?.registration_url ?? '/kontak',
         status: olimpiade?.status ?? true,
         recommended: olimpiade?.recommended ?? false,
+        show_on_registration: olimpiade?.show_on_registration ?? false,
         sort_order: olimpiade?.sort_order ?? 0,
     });
 
@@ -95,6 +97,7 @@ export const OlimpiadeForm = ({ dataId }: { dataId?: number }) => {
             benefits: parseLines(benefitsText),
             status: current.status ? 1 : 0,
             recommended: current.recommended ? 1 : 0,
+            show_on_registration: current.show_on_registration ? 1 : 0,
         };
     });
 
@@ -241,6 +244,13 @@ export const OlimpiadeForm = ({ dataId }: { dataId?: number }) => {
                         checked={form.data.recommended}
                         onChange={(checked) =>
                             form.setData('recommended', checked)
+                        }
+                    />
+                    <ToggleField
+                        label="Tampilkan di Form Pendaftaran"
+                        checked={form.data.show_on_registration}
+                        onChange={(checked) =>
+                            form.setData('show_on_registration', checked)
                         }
                     />
                 </div>

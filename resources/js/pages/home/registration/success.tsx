@@ -1,11 +1,12 @@
 import { Link, usePage } from '@inertiajs/react';
-import { ArrowRight, CheckCircle2, ClipboardCheck, Home, Trophy } from 'lucide-react';
+import { ArrowRight, CheckCircle2, ClipboardCheck, Home, Mail, Trophy } from 'lucide-react';
 
 type SuccessProps = {
     participant?: {
         registration_number: string;
         full_name: string;
         olimpiade?: string | null;
+        email?: string | null;
     };
 };
 
@@ -27,7 +28,7 @@ export default function RegistrationSuccessPage() {
                     Terima kasih, {participant?.full_name ?? 'peserta'}. Tim OMATIQ
                     akan meninjau data dan dokumen pendaftaran kamu.
                 </p>
-                <div className="mt-8 grid gap-4 sm:grid-cols-2">
+                <div className="mt-8 grid gap-4 sm:grid-cols-3">
                     <div className="rounded-3xl bg-[#F8FAFC] p-5">
                         <ClipboardCheck className="mx-auto h-7 w-7 text-[#F15F23]" />
                         <p className="mt-3 text-sm font-black text-[#64748B]">
@@ -46,7 +47,25 @@ export default function RegistrationSuccessPage() {
                             {participant?.olimpiade ?? '-'}
                         </p>
                     </div>
+                    <div className="rounded-3xl bg-[#F8FAFC] p-5">
+                        <Mail className="mx-auto h-7 w-7 text-[#22C55E]" />
+                        <p className="mt-3 text-sm font-black text-[#64748B]">
+                            Email Akun
+                        </p>
+                        <p className="mt-1 text-base font-black text-[#1E293B] break-all">
+                            {participant?.email ?? '-'}
+                        </p>
+                    </div>
                 </div>
+                {participant?.email && (
+                    <div className="mt-6 rounded-3xl bg-[#0F60AC]/5 p-5 ring-1 ring-[#0F60AC]/10">
+                        <p className="text-sm font-semibold text-[#64748B]">
+                            Akun kamu sudah dibuat. Gunakan email di atas dan
+                            password yang kamu daftarkan untuk login ke akun
+                            peserta.
+                        </p>
+                    </div>
+                )}
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
                     <Link
                         href="/"

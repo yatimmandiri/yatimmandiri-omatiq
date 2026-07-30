@@ -3,6 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { dashboard } from '@/routes/admin';
 import teacherStudents from '@/routes/admin/teacher/students';
 import { useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, Save } from 'lucide-react';
@@ -15,13 +16,6 @@ type Option = {
     slug?: string;
 };
 type Regency = { id: string; province_id: string; name: string };
-
-const programOptions = [
-    { value: 'sanggar_genius', label: 'Sanggar Genius' },
-    { value: 'sanggar_alquran', label: "Sanggar Al-Qur'an" },
-    { value: 'asrama_yatim_mandiri', label: 'Asrama Yatim Mandiri' },
-    { value: 'other', label: 'Program Lainnya' },
-];
 
 const educationOptions = [
     { value: 'SD/MI', label: 'SD/MI' },
@@ -43,31 +37,31 @@ export default function EditPage() {
         regencies?: Regency[];
     }>().props;
 
+    const student = participant?.student;
     const form = useForm<any>({
-        nik: participant?.nik ?? '',
+        nik: student?.nik ?? '',
         olimpiade_id: participant?.olimpiade_id
             ? String(participant.olimpiade_id)
             : '',
-        full_name: participant?.full_name ?? '',
-        nickname: participant?.nickname ?? '',
-        gender: participant?.gender ?? '',
-        birth_place: participant?.birth_place ?? '',
-        birth_date: dateValue(participant?.birth_date),
-        age: participant?.age ?? '',
-        education_level: participant?.education_level ?? '',
-        school_name: participant?.school_name ?? '',
-        grade: participant?.grade ?? '',
-        address: participant?.address ?? '',
-        province_id: participant?.province_id ?? '',
-        regency_id: participant?.regency_id ?? '',
-        parent_phone: participant?.parent_phone ?? '',
-        development_program: participant?.development_program ?? '',
-        development_program_other: participant?.development_program_other ?? '',
-        institution_name: participant?.institution_name ?? '',
-        branch_office: participant?.branch_office ?? '',
-        mentor_name: participant?.mentor_name ?? '',
-        mentor_phone: participant?.mentor_phone ?? '',
+        full_name: student?.full_name ?? '',
+        nickname: student?.nickname ?? '',
+        gender: student?.gender ?? '',
+        birth_place: student?.birth_place ?? '',
+        birth_date: dateValue(student?.birth_date),
+        age: student?.age ?? '',
+        education_level: student?.education_level ?? '',
+        school_name: student?.school_name ?? '',
+        grade: student?.grade ?? '',
+        address: student?.address ?? '',
+        province_id: student?.province_id ?? '',
+        regency_id: student?.regency_id ?? '',
+        parent_phone: student?.parent_phone ?? '',
+        mentor_name: student?.mentor_name ?? '',
+        mentor_phone: student?.mentor_phone ?? '',
         achievements: participant?.achievements ?? '',
+        photo: null,
+        identity_card: null,
+        family_card: null,
     });
 
     const filteredRegencies = useMemo(
@@ -88,6 +82,7 @@ export default function EditPage() {
     const submit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         form.post(teacherStudents.update(participant.id).url, {
+            forceFormData: true,
             preserveScroll: true,
         });
     };
@@ -106,7 +101,7 @@ export default function EditPage() {
                     <h1 className="text-2xl font-bold">Edit Siswa</h1>
                     <p className="mt-1 text-sm text-muted-foreground">
                         {participant.registration_number} -{' '}
-                        {participant.full_name}
+                        {student?.full_name ?? participant.nik}
                     </p>
                 </div>
                 <div className="flex gap-2">
@@ -282,56 +277,18 @@ export default function EditPage() {
             </Card>
 
             <Card className="space-y-5 p-5">
-                <h2 className="text-lg font-bold">Program dan Kategori</h2>
+                <h2 className="text-lg font-bold">Kategori dan Dokumen</h2>
                 <div className="grid gap-5 md:grid-cols-2">
-                    <Field
-                        label="Program Binaan"
-                        error={error('development_program')}
-                    >
+                    <Field label="Kategori Lomba" error={error('olimpiade_id')}>
                         <Select
-                            value={form.data.development_program}
+                            value={form.data.olimpiade_id}
                             onChange={(value) =>
-                                form.setData('development_program', value)
+                                form.setData('olimpiade_id', value)
                             }
-                            options={programOptions}
-                        />
-                    </Field>
-                    {form.data.development_program === 'other' && (
-                        <Field
-                            label="Program Lainnya"
-                            error={error('development_program_other')}
-                        >
-                            <Input
-                                value={form.data.development_program_other}
-                                onChange={(e) =>
-                                    form.setData(
-                                        'development_program_other',
-                                        e.target.value,
-                                    )
-                                }
-                            />
-                        </Field>
-                    )}
-                    <Field
-                        label="Nama Sanggar / Asrama"
-                        error={error('institution_name')}
-                    >
-                        <Input
-                            value={form.data.institution_name}
-                            onChange={(e) =>
-                                form.setData('institution_name', e.target.value)
-                            }
-                        />
-                    </Field>
-                    <Field
-                        label="Kantor Layanan / Cabang"
-                        error={error('branch_office')}
-                    >
-                        <Input
-                            value={form.data.branch_office}
-                            onChange={(e) =>
-                                form.setData('branch_office', e.target.value)
-                            }
+                            options={olimpiades.map((item) => ({
+                                value: String(item.id),
+                                label: item.name,
+                            }))}
                         />
                     </Field>
                     <Field label="Nama Pendamping" error={error('mentor_name')}>
@@ -350,17 +307,47 @@ export default function EditPage() {
                             }
                         />
                     </Field>
-                    <Field label="Kategori Lomba" error={error('olimpiade_id')}>
-                        <Select
-                            value={form.data.olimpiade_id}
-                            onChange={(value) =>
-                                form.setData('olimpiade_id', value)
+                    <Field label="Foto" error={error('photo')}>
+                        <Input
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            onChange={(e) =>
+                                form.setData('photo', e.target.files?.[0] ?? null)
                             }
-                            options={olimpiades.map((item) => ({
-                                value: String(item.id),
-                                label: item.name,
-                            }))}
                         />
+                        {student?.photo_url && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                                File saat ini: <a href={student.photo_url} target="_blank" rel="noopener noreferrer" className="underline">lihat</a>. Biarkan kosong jika tidak diganti.
+                            </p>
+                        )}
+                    </Field>
+                    <Field label="Kartu Identitas (KTP/Akta)" error={error('identity_card')}>
+                        <Input
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp,application/pdf"
+                            onChange={(e) =>
+                                form.setData('identity_card', e.target.files?.[0] ?? null)
+                            }
+                        />
+                        {student?.identity_card_url && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                                File saat ini: <a href={student.identity_card_url} target="_blank" rel="noopener noreferrer" className="underline">lihat</a>. Biarkan kosong jika tidak diganti.
+                            </p>
+                        )}
+                    </Field>
+                    <Field label="Kartu Keluarga (KK)" error={error('family_card')}>
+                        <Input
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp,application/pdf"
+                            onChange={(e) =>
+                                form.setData('family_card', e.target.files?.[0] ?? null)
+                            }
+                        />
+                        {student?.family_card_url && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                                File saat ini: <a href={student.family_card_url} target="_blank" rel="noopener noreferrer" className="underline">lihat</a>. Biarkan kosong jika tidak diganti.
+                            </p>
+                        )}
                     </Field>
                 </div>
                 <Field label="Prestasi" error={error('achievements')}>
@@ -416,3 +403,20 @@ const Select = ({
         ))}
     </select>
 );
+
+EditPage.layout = {
+    breadcrumbs: [
+        {
+            title: 'Dashboard',
+            href: dashboard(),
+        },
+        {
+            title: 'Siswa',
+            href: teacherStudents.index().url,
+        },
+        {
+            title: 'Edit Siswa',
+            href: '#',
+        },
+    ],
+};

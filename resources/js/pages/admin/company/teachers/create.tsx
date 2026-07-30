@@ -1,5 +1,6 @@
 import { ButtonComponent } from '@/components/partials/button-component';
 import { InputTextComponent } from '@/components/partials/input-component';
+import { dashboard } from '@/routes/admin';
 import teachers from '@/routes/admin/companies/teachers';
 import { Fieldset } from '@headlessui/react';
 import { useForm } from '@inertiajs/react';
@@ -111,3 +112,20 @@ export default function CreatePage() {
         </div>
     );
 }
+
+CreatePage.layout = {
+    breadcrumbs: [
+        {
+            title: 'Dashboard',
+            href: dashboard(),
+        },
+        {
+            title: 'Guru',
+            href: teachers.index().url,
+        },
+        {
+            title: 'Tambah Guru',
+            href: teachers.create().url,
+        },
+    ],
+};

@@ -40,12 +40,13 @@ Two model namespaces:
 
 ## Conventions
 
+- **Migrations**: Do NOT create separate migration files for schema changes. Always edit the existing `create_*` table migration directly, since we use `migrate:fresh --seed`. This applies to every feature — modify the original table creation file, not a new `update_*` file.
 - Use `php artisan make:*` with `--no-interaction` for all new files.
 - New models should ship with factories and seeders.
 - Controllers use Admin/Home/Settings namespace split matching route files.
 - Regions (province/regency/district/village) use `azishapidin/indoregion`.
 - Site settings via `spatie/laravel-settings` — see `app/Settings/SiteSettings.php`.
-- Breadcrumbs via `diglactic/laravel-breadcrumbs` — defined in `routes/breadcrumbs/`.
+- Breadcrumbs via `diglactic/laravel-breadcrumbs` — defined in `routes/breadcrumbs/` for Blade; every Inertia page component **must** define a static `.layout` property with `breadcrumbs` array: `{ title: string, href: routeHelper().url }`. Last item = current page (plain text). Import `dashboard` from `@/routes/admin` for the root breadcrumb.
 - Rich text uses TipTap — see `resources/js/components/ui/tiptap/`.
 - Media via Spatie media-library (conversions for images, PDF, video, SVG).
 - ESLint ignores: `resources/js/actions/**`, `resources/js/routes/**`, `resources/js/wayfinder/**`, `resources/js/components/ui/*` (generated/third-party).

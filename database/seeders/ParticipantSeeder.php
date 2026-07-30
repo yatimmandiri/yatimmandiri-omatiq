@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Company\Olimpiade;
 use App\Models\Company\Participant;
+use App\Models\Company\Student;
 use App\Models\Core\Region\Province;
 use App\Models\Core\Region\Regency;
 use App\Models\Core\User;
@@ -20,30 +21,33 @@ class ParticipantSeeder extends Seeder
         $user = User::where('email', 'partisipan@test.dev')->first();
         $teacher = User::where('email', 'guru@test.dev')->first();
 
-        Participant::create([
-            'user_id' => $user?->id,
+        $student = Student::create([
             'nik' => '3525011505120001',
-            'registration_number' => 'OMQ-'.now()->format('Ymd').'-0001',
-            'registration_type' => 'teacher',
-            'mentor_id' => $teacher?->id,
-            'olimpiade_id' => $olimpiade?->id ?? 1,
             'full_name' => 'Ahmad Fauzi',
             'nickname' => 'Ahmad',
             'gender' => 'male',
             'birth_place' => 'Surabaya',
             'birth_date' => Carbon::parse('2012-05-15'),
             'age' => 14,
-            'education_level' => 'smp',
+            'education_level' => 'SMP/MTs',
             'school_name' => 'SMP Negeri 1 Surabaya',
             'grade' => '8',
             'address' => 'Jl. Raya Darmo Permai No. 123, Surabaya',
             'province_id' => $province?->id,
             'regency_id' => $regency?->id,
             'parent_phone' => '081234567890',
-            'development_program' => 'sanggar_genius',
-            'institution_name' => 'Sanggar Genius Al-Falah',
             'mentor_name' => 'Ustadz Abdul Rahman',
             'mentor_phone' => '081234567891',
+            'is_binaan' => true,
+        ]);
+
+        Participant::create([
+            'user_id' => $user?->id,
+            'student_id' => $student->id,
+            'registration_number' => 'OMQ-'.now()->format('Ymd').'-0001',
+            'registration_type' => 'teacher',
+            'mentor_id' => $teacher?->id,
+            'olimpiade_id' => $olimpiade?->id ?? 1,
             'achievements' => 'Juara 1 Matematika tingkat Kota 2025',
             'has_joined_before' => false,
             'data_truth_consent' => true,

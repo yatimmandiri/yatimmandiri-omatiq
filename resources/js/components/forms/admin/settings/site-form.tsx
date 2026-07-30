@@ -4,6 +4,8 @@ import {
     InputTextComponent,
 } from '@/components/partials/input-component';
 import { Card, CardContent } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { router, useForm, usePage } from '@inertiajs/react';
 
 import { useState } from 'react';
@@ -27,6 +29,8 @@ export const SiteForm = () => {
         linkedin: settings?.linkedin || '',
         whatsapp: settings?.whatsapp || '',
         tiktok: settings?.tiktok || '',
+        registration_public_open: settings?.registration_public_open ?? false,
+        registration_binaan_open: settings?.registration_binaan_open ?? false,
         _method: 'PUT',
     });
 
@@ -245,6 +249,27 @@ export const SiteForm = () => {
                     </CardContent>
                 </Card>
             </div>
+            <Card>
+                <CardContent className="p-4">
+                    <h3 className="mb-4 text-lg font-semibold">Pendaftaran</h3>
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between rounded-md border p-4">
+                            <Label>Buka Pendaftaran Umum</Label>
+                            <Switch
+                                checked={data.registration_public_open}
+                                onCheckedChange={(checked) => setData('registration_public_open', checked)}
+                            />
+                        </div>
+                        <div className="flex items-center justify-between rounded-md border p-4">
+                            <Label>Buka Pendaftaran Binaan (Guru)</Label>
+                            <Switch
+                                checked={data.registration_binaan_open}
+                                onCheckedChange={(checked) => setData('registration_binaan_open', checked)}
+                            />
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
             <div className="flex justify-end">
                 <ButtonComponent
                     buttonText={processing ? 'Saving...' : 'Save'}

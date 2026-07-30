@@ -3,9 +3,9 @@
 namespace App\Http\Middleware;
 
 use App\Settings\SiteSettings;
+use Diglactic\Breadcrumbs\Breadcrumbs;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
-use Diglactic\Breadcrumbs\Breadcrumbs;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -53,13 +53,13 @@ class HandleInertiaRequests extends Middleware
             ],
             'flash' => [
                 'success' => $request->session()->get('success'),
-                'error'   => $request->session()->get('error'),
+                'error' => $request->session()->get('error'),
             ],
             'settings' => [
                 'site_name' => $settings->site_name,
                 'site_description' => $settings->site_description,
-                'logo' => $settings->logo ? asset('storage/' . $settings->logo) : null,
-                'favicon' => $settings->favicon ? asset('storage/' . $settings->favicon) : null,
+                'logo' => $settings->logo ? asset('storage/'.$settings->logo) : null,
+                'favicon' => $settings->favicon ? asset('storage/'.$settings->favicon) : null,
                 'email' => $settings->email,
                 'phone' => $settings->phone,
                 'address' => $settings->address,
@@ -72,6 +72,8 @@ class HandleInertiaRequests extends Middleware
                     'whatsapp' => $settings->whatsapp,
                 ],
                 'maintenance_mode' => $settings->maintenance_mode,
+                'registration_public_open' => $settings->registration_public_open,
+                'registration_binaan_open' => $settings->registration_binaan_open,
             ],
             'breadcrumbs' => $request->isMethod('get') && $request->route()
                 ? Breadcrumbs::generate(

@@ -1,4 +1,6 @@
 import { ParticipantForm } from '@/components/forms/admin/company/participant-form';
+import { dashboard } from '@/routes/admin';
+import participants from '@/routes/admin/companies/participants';
 import { usePage } from '@inertiajs/react';
 
 export default function EditPage() {
@@ -10,3 +12,20 @@ export default function EditPage() {
         </div>
     );
 }
+
+EditPage.layout = {
+    breadcrumbs: [
+        {
+            title: 'Dashboard',
+            href: dashboard(),
+        },
+        {
+            title: 'Peserta',
+            href: participants.index().url,
+        },
+        {
+            title: 'Edit Peserta',
+            href: '#',
+        },
+    ],
+};

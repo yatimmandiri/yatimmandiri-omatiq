@@ -15,11 +15,12 @@ import roles from '@/routes/admin/core/roles';
 import users from '@/routes/admin/core/users';
 import activities from '@/routes/admin/logs/activities';
 import site from '@/routes/admin/settings/site';
-import { ChevronRight, CogIcon, CpuIcon, LayoutDashboard, MapIcon, Trophy } from 'lucide-react';
+import { ChevronRight, CogIcon, CpuIcon, GraduationCap, Handshake, LayoutDashboard, MapIcon, Trophy, UserCheck, Users } from 'lucide-react';
 import reviews from '@/routes/admin/companies/reviews';
 import sliders from '@/routes/admin/companies/sliders';
 import teachers from '@/routes/admin/companies/teachers';
 import faqCompanies from '@/routes/admin/companies/faq-companies';
+import teacherStudents from '@/routes/admin/teacher/students';
 
 export const NavigationList = [
     {
@@ -30,6 +31,34 @@ export const NavigationList = [
                 href: dashboard().url,
                 permission: 'view-participant',
                 icon: LayoutDashboard,
+            },
+        ],
+    },
+    {
+        title: 'Partisipasi',
+        roles: ['Administrators', 'Teacher'],
+        icon: Handshake,
+        children: [
+            {
+                title: 'Data Guru',
+                href: teachers.index().url,
+                permission: 'view-user',
+                roles: ['Administrators'],
+                icon: UserCheck,
+            },
+            {
+                title: 'Data Peserta',
+                href: participants.index().url,
+                permission: 'view-participant',
+                roles: ['Administrators'],
+                icon: Users,
+            },
+            {
+                title: 'Kelola Murid',
+                href: teacherStudents.index().url,
+                permission: 'view-participant',
+                roles: ['Teacher'],
+                icon: GraduationCap,
             },
         ],
     },
@@ -126,18 +155,6 @@ export const NavigationList = [
                         title: 'Jadwal Olimpiade',
                         href: olimpiadeSchedules.index().url,
                         permission: 'view-olimpiade-schedule',
-                        icon: ChevronRight,
-                    },
-                    {
-                        title: 'Guru',
-                        href: teachers.index().url,
-                        permission: 'view-user',
-                        icon: ChevronRight,
-                    },
-                    {
-                        title: 'Peserta',
-                        href: participants.index().url,
-                        permission: 'view-participant',
                         icon: ChevronRight,
                     },
                     {

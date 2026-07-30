@@ -46,7 +46,7 @@ class TeacherController extends Controller
             'new_data' => $teacher->toArray(),
         ]);
 
-        return redirect()->route('admin.company.teachers.index')->with('success', "Guru {$teacher->name} berhasil ditambahkan.");
+        return redirect()->route('admin.companies.teachers.index')->with('success', "Guru {$teacher->name} berhasil ditambahkan.");
     }
 
     public function show(User $teacher)
@@ -94,7 +94,7 @@ class TeacherController extends Controller
             'new_data' => $teacher->toArray(),
         ]);
 
-        return redirect()->route('admin.company.teachers.index')->with('success', "Guru {$teacher->name} berhasil diupdate.");
+        return redirect()->route('admin.companies.teachers.index')->with('success', "Guru {$teacher->name} berhasil diupdate.");
     }
 
     public function destroy(User $teacher)
@@ -106,7 +106,7 @@ class TeacherController extends Controller
 
         $this->logSuccess('delete-teacher', "Delete Teacher: {$name}", ['user_id' => $teacher->id]);
 
-        return redirect()->route('admin.company.teachers.index')->with('success', "Guru {$name} berhasil dihapus.");
+        return redirect()->route('admin.companies.teachers.index')->with('success', "Guru {$name} berhasil dihapus.");
     }
 
     public function getData(Request $request)
