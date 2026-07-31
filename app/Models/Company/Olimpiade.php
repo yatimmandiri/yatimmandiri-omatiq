@@ -4,6 +4,7 @@ namespace App\Models\Company;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -37,7 +38,14 @@ use Spatie\Sluggable\Attributes\Sluggable;
 #[Sluggable(from: 'name', to: 'slug')]
 class Olimpiade extends Model
 {
-    use LogsActivity, SoftDeletes;
+    use HasFactory, LogsActivity, SoftDeletes;
+
+    protected $attributes = [
+        'status' => true,
+        'recommended' => false,
+        'show_on_registration' => false,
+        'sort_order' => 0,
+    ];
 
     public function getFeaturedImageUrlAttribute(): ?string
     {

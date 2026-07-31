@@ -16,7 +16,7 @@ import objectives from '@/routes/admin/companies/olimpiade-objectives';
 import videos from '@/routes/admin/companies/olimpiade-videos';
 import { useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, Save } from 'lucide-react';
-import { FormEvent } from 'react';
+import type { FormEvent } from 'react';
 
 type Kind = 'objective' | 'gallery' | 'video';
 type Item = Record<string, any> & { id: number };

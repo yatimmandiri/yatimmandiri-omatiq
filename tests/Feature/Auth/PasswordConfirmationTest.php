@@ -1,7 +1,10 @@
 <?php
 
 use App\Models\Core\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
+
+uses(RefreshDatabase::class);
 
 test('confirm password screen can be rendered', function () {
     $user = User::factory()->create();
@@ -11,7 +14,7 @@ test('confirm password screen can be rendered', function () {
     $response->assertOk();
 
     $response->assertInertia(
-        fn(Assert $page) => $page
+        fn (Assert $page) => $page
             ->component('auth/confirm-password'),
     );
 });

@@ -7,6 +7,7 @@ use App\Models\Core\Region\Regency;
 use App\Models\Core\User;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -23,7 +24,6 @@ use Spatie\Activitylog\Support\LogOptions;
     'birth_place',
     'birth_date',
     'age',
-    'education_level',
     'school_name',
     'grade',
     'address',
@@ -40,7 +40,7 @@ use Spatie\Activitylog\Support\LogOptions;
 ])]
 class Student extends Model
 {
-    use LogsActivity, SoftDeletes;
+    use HasFactory, LogsActivity, SoftDeletes;
 
     protected function casts(): array
     {

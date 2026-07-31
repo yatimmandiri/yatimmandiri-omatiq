@@ -23,7 +23,6 @@ class UpdateParticipantRequest extends FormRequest
             'birth_place' => ['nullable', 'string', 'max:120'],
             'birth_date' => ['nullable', 'date', 'before:today'],
             'age' => ['nullable', 'integer', 'min:5', 'max:20'],
-            'education_level' => ['nullable', 'string', 'max:30'],
             'school_name' => ['nullable', 'string', 'max:255'],
             'grade' => ['nullable', 'string', 'max:30'],
             'address' => ['nullable', 'string'],

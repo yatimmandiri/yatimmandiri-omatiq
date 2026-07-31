@@ -18,7 +18,8 @@ import {
     Trophy,
     UserRound,
 } from 'lucide-react';
-import { FormEvent, ReactNode, useEffect, useMemo, useState } from 'react';
+import type { FormEvent, ReactNode} from 'react';
+import { useMemo, useState } from 'react';
 
 type Option = { id: number | string; name: string; category?: string; slug?: string };
 type Regency = { id: number | string; province_id: number | string; name: string };
@@ -82,36 +83,6 @@ export default function RegistrationPage() {
     const { olimpiades = [], provinces = [], regencies = [], registration_closed } =
         usePage<RegistrationProps>().props;
 
-    if (registration_closed) {
-        return (
-            <section className="relative overflow-hidden px-5 pt-32 pb-20 lg:px-8">
-                <div className="absolute top-20 left-0 h-56 w-56 rounded-[56px] bg-[#5DD39E]/20 blur-3xl" />
-                <div className="absolute right-0 bottom-0 h-64 w-64 rounded-[64px] bg-[#F15F23]/15 blur-3xl" />
-                <div className="relative mx-auto max-w-2xl rounded-[32px] bg-white p-8 text-center shadow-2xl ring-1 shadow-[#0F60AC]/10 ring-slate-100">
-                    <span className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-[#F15F23]/10 text-[#F15F23]">
-                        <BookOpenCheck className="h-10 w-10" />
-                    </span>
-                    <h1 className="mt-6 text-3xl font-black text-[#1E293B] sm:text-4xl">
-                        Pendaftaran Sedang Ditutup
-                    </h1>
-                    <p className="mx-auto mt-4 max-w-lg text-base leading-8 text-[#64748B]">
-                        Saat ini belum ada sesi pendaftaran yang dibuka. Pantau
-                        terus website dan media sosial OMATIQ untuk informasi
-                        pendaftaran berikutnya.
-                    </p>
-                    <div className="mt-8">
-                        <Link
-                            href="/"
-                            className="inline-flex items-center gap-2 rounded-xl bg-[#F15F23] px-6 py-4 text-sm font-black text-white shadow-lg shadow-[#F15F23]/25 transition hover:-translate-y-1"
-                        >
-                            Kembali ke Beranda
-                        </Link>
-                    </div>
-                </div>
-            </section>
-        );
-    }
-
     const [currentStep, setCurrentStep] = useState(0);
     const [localErrors, setLocalErrors] = useState<RegistrationErrors>({});
 
@@ -159,23 +130,6 @@ export default function RegistrationPage() {
     const mergedErrors = { ...localErrors, ...(form.errors as RegistrationErrors) };
     const isLastStep = currentStep === steps.length - 1;
 
-    useEffect(() => {
-        const serverErrorKeys = Object.keys(form.errors);
-
-        if (!serverErrorKeys.length) {
-            return;
-        }
-
-        const targetStep = steps.findIndex((step) =>
-            step.fields.some((field) => serverErrorKeys.includes(field)),
-        );
-
-        if (targetStep >= 0) {
-            setCurrentStep(targetStep);
-            scrollToForm();
-        }
-    }, [form.errors]);
-
     const scrollToForm = () => {
         window.requestAnimationFrame(() => {
             document
@@ -183,6 +137,22 @@ export default function RegistrationPage() {
                 ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
     };
+
+    const errorsKey = Object.keys(form.errors).join(',');
+    const [prevErrorsKey, setPrevErrorsKey] = useState('');
+
+    if (errorsKey && errorsKey !== prevErrorsKey) {
+        setPrevErrorsKey(errorsKey);
+
+        const targetStep = steps.findIndex((step) =>
+            step.fields.some((field) => form.errors[field]),
+        );
+
+        if (targetStep >= 0) {
+            setCurrentStep(targetStep);
+            scrollToForm();
+        }
+    }
 
     const setFile = (name: string, file?: File | null) => {
         form.setData(name, file ?? null);
@@ -206,9 +176,11 @@ export default function RegistrationPage() {
 
         if (step === 0) {
             required('nik', 'NIK (16 digit) wajib diisi.');
+
             if (form.data.nik && form.data.nik.length !== 16) {
                 errors.nik = 'NIK harus 16 digit.';
             }
+
             required('full_name', 'Nama lengkap wajib diisi.');
             required('gender', 'Jenis kelamin wajib dipilih.');
             required('birth_place', 'Tempat lahir wajib diisi.');
@@ -221,6 +193,7 @@ export default function RegistrationPage() {
             required('regency_id', 'Kota/kabupaten wajib dipilih.');
             required('parent_phone', 'Nomor HP orang tua/wali wajib diisi.');
             required('referral_source', 'Sumber informasi wajib dipilih.');
+
             if (form.data.referral_source === 'Lainnya') {
                 required('referral_source_other', 'Sumber informasi lainnya wajib diisi.');
             }
@@ -240,12 +213,15 @@ export default function RegistrationPage() {
             required('email', 'Email wajib diisi.');
             required('password', 'Password wajib diisi.');
             required('password_confirmation', 'Konfirmasi password wajib diisi.');
+
             if (form.data.password && form.data.password_confirmation && form.data.password !== form.data.password_confirmation) {
                 errors.password_confirmation = 'Konfirmasi password tidak cocok.';
             }
+
             if (form.data.password && form.data.password.length < 8) {
                 errors.password = 'Password minimal 8 karakter.';
             }
+
             required('participant_signature_name', 'Nama tanda tangan peserta wajib diisi.');
             required('guardian_signature_name', 'Nama tanda tangan wali wajib diisi.');
 
@@ -272,6 +248,7 @@ export default function RegistrationPage() {
             setCurrentStep(targetStep);
             setLocalErrors({});
             scrollToForm();
+
             return;
         }
 
@@ -310,6 +287,7 @@ export default function RegistrationPage() {
 
         if (!isLastStep) {
             nextStep();
+
             return;
         }
 
@@ -321,6 +299,36 @@ export default function RegistrationPage() {
 
     const currentStepData = steps[currentStep];
     const StepIcon = currentStepData.icon;
+
+    if (registration_closed) {
+        return (
+            <section className="relative overflow-hidden px-5 pt-32 pb-20 lg:px-8">
+                <div className="absolute top-20 left-0 h-56 w-56 rounded-[56px] bg-[#5DD39E]/20 blur-3xl" />
+                <div className="absolute right-0 bottom-0 h-64 w-64 rounded-[64px] bg-[#F15F23]/15 blur-3xl" />
+                <div className="relative mx-auto max-w-2xl rounded-[32px] bg-white p-8 text-center shadow-2xl ring-1 shadow-[#0F60AC]/10 ring-slate-100">
+                    <span className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-[#F15F23]/10 text-[#F15F23]">
+                        <BookOpenCheck className="h-10 w-10" />
+                    </span>
+                    <h1 className="mt-6 text-3xl font-black text-[#1E293B] sm:text-4xl">
+                        Pendaftaran Sedang Ditutup
+                    </h1>
+                    <p className="mx-auto mt-4 max-w-lg text-base leading-8 text-[#64748B]">
+                        Saat ini belum ada sesi pendaftaran yang dibuka. Pantau
+                        terus website dan media sosial OMATIQ untuk informasi
+                        pendaftaran berikutnya.
+                    </p>
+                    <div className="mt-8">
+                        <Link
+                            href="/"
+                            className="inline-flex items-center gap-2 rounded-xl bg-[#F15F23] px-6 py-4 text-sm font-black text-white shadow-lg shadow-[#F15F23]/25 transition hover:-translate-y-1"
+                        >
+                            Kembali ke Beranda
+                        </Link>
+                    </div>
+                </div>
+            </section>
+        );
+    }
 
     return (
         <>

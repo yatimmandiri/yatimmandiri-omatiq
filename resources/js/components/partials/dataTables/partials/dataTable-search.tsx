@@ -4,8 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { UseDataTable } from '../hooks/useDataTables';
 
 export const DataTableGlobalSearch = () => {
-    const { setPagination, globalFilter, setGlobalFilter, table }: any =
-        UseDataTable();
+    const { setPagination, setGlobalFilter, table }: any = UseDataTable();
 
     const [search, setSearch] = useState('');
 

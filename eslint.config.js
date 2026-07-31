@@ -70,7 +70,7 @@ export default [
                     fixStyle: 'separate-type-imports',
                 },
             ],
-            'import/order': false,
+            'import/order': 'off',
             'import/consistent-type-specifier-style': [
                 'error',
                 'prefer-top-level',

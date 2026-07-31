@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Admin\Teacher;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Company\JoinOlimpiadeRequest;
 use App\Http\Requests\Company\StoreTeacherParticipantRequest;
 use App\Http\Requests\Company\UpdateTeacherParticipantRequest;
+use App\Models\Company\Olimpiade;
 use App\Models\Company\Participant;
 use App\Services\TeacherService;
 use App\Settings\SiteSettings;
@@ -23,7 +25,9 @@ class TeacherStudentController extends Controller
     {
         $this->authorize('viewAny', Participant::class);
 
-        return Inertia::render('admin/teacher/students/list');
+        return Inertia::render('admin/teacher/students/list', [
+            'olimpiades' => Olimpiade::query()->active()->ordered()->get(['id', 'name', 'category', 'slug']),
+        ]);
     }
 
     public function create(): Response
@@ -64,7 +68,7 @@ class TeacherStudentController extends Controller
         $this->authorize('view', $participant);
 
         return Inertia::render('admin/teacher/students/show', [
-            'participant' => $participant->load(['olimpiade:id,name', 'student:id,full_name,school_name,grade,gender,photo_path,province_id,regency_id,parent_phone,nik,birth_place,birth_date,nickname,address,identity_card_path,family_card_path,education_level', 'student.province:id,name', 'student.regency:id,name']),
+            'participant' => $participant->load(['olimpiade:id,name', 'student:id,full_name,school_name,grade,gender,photo_path,province_id,regency_id,parent_phone,nik,birth_place,birth_date,nickname,address,identity_card_path,family_card_path', 'student.province:id,name', 'student.regency:id,name']),
         ]);
     }
 
@@ -73,7 +77,7 @@ class TeacherStudentController extends Controller
         $this->authorize('update', $participant);
 
         return Inertia::render('admin/teacher/students/edit', [
-            'participant' => $participant->load(['student:id,full_name,nickname,gender,birth_place,birth_date,age,school_name,grade,address,province_id,regency_id,parent_phone,nik,photo_path,identity_card_path,family_card_path,education_level', 'student.province:id,name', 'student.regency:id,name']),
+            'participant' => $participant->load(['student:id,full_name,nickname,gender,birth_place,birth_date,age,school_name,grade,address,province_id,regency_id,parent_phone,nik,photo_path,identity_card_path,family_card_path', 'student.province:id,name', 'student.regency:id,name']),
             ...$this->service->getFormOptions(),
         ]);
     }
@@ -103,18 +107,39 @@ class TeacherStudentController extends Controller
             ->with('success', "Data siswa {$name} berhasil dihapus.");
     }
 
+    public function joinOlimpiade(JoinOlimpiadeRequest $request, Participant $participant)
+    {
+        $this->authorize('update', $participant);
+
+        $settings = app(SiteSettings::class);
+
+        if (! $settings->registration_binaan_open) {
+            abort(403, 'Pendaftaran binaan sedang ditutup.');
+        }
+
+        $this->service->joinOlimpiade(Auth::user(), $participant, $request->integer('olimpiade_id'));
+
+        $name = $participant->student?->full_name ?? 'Unknown';
+
+        return redirect()
+            ->route('admin.teacher.students.index')
+            ->with('success', "Siswa {$name} berhasil didaftarkan ke lomba.");
+    }
+
     public function getData(Request $request)
     {
         $this->authorize('data-participant', Participant::class);
 
         $query = Participant::query()
-            ->with(['olimpiade:id,name', 'student:id,full_name,school_name,gender'])
+            ->with(['olimpiade:id,name', 'student:id,full_name,school_name,gender,nik,province_id,regency_id'])
             ->where('mentor_id', Auth::id())
             ->search($request->string('globalSearch')->toString())
             ->orderBy('created_at', 'desc');
 
+        $perPage = min($request->integer('perPage') ?: 10, 100);
+
         $data = $request->integer('perPage')
-            ? $query->paginate($request->integer('perPage'), ['*'], 'page', $request->integer('page') ?: null)
+            ? $query->paginate($perPage, ['*'], 'page', $request->integer('page') ?: null)
             : $query->get();
 
         return response()->json($data);

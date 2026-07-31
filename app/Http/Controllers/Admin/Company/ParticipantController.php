@@ -43,7 +43,7 @@ class ParticipantController extends Controller
 
         return Inertia::render('admin/company/participant/edit', [
             'participant' => $this->participantPayload(
-                $participant->load(['student:id,full_name,school_name,grade,gender,photo_path,identity_card_path,family_card_path,province_id,regency_id,parent_phone,nik,birth_place,birth_date,nickname,address,education_level', 'student.province:id,name', 'student.regency:id,name,province_id']),
+                $participant->load(['student:id,full_name,school_name,grade,gender,photo_path,identity_card_path,family_card_path,province_id,regency_id,parent_phone,nik,birth_place,birth_date,nickname,address', 'student.province:id,name', 'student.regency:id,name,province_id']),
             ),
             ...$this->formOptions(),
         ]);
@@ -99,9 +99,6 @@ class ParticipantController extends Controller
         $name = $participant->student?->full_name ?? $participant->user?->name ?? 'Unknown';
 
         DB::transaction(function () use ($participant) {
-            foreach ($this->studentFileMap() as $column) {
-                $this->deleteFile($participant->student?->{$column});
-            }
             foreach ($this->fileMap() as $column) {
                 $this->deleteFile($participant->{$column});
             }
@@ -141,15 +138,21 @@ class ParticipantController extends Controller
         $direction = strtolower((string) $request->input('orderDirection')) === 'asc' ? 'asc' : 'desc';
 
         $query = Participant::query()
-            ->with(['olimpiade:id,name', 'student:id,full_name,school_name,gender'])
+            ->with([
+                'olimpiade:id,name',
+                'student:id,full_name,school_name,gender,province_id,regency_id',
+                'student.regency:id,name',
+            ])
             ->search($request->string('globalSearch')->toString())
             ->when($request->input('filterValue.status'), fn ($query, $status) => $query->where('status', $status))
             ->when($request->input('filterValue.olimpiade_id'), fn ($query, $id) => $query->where('olimpiade_id', $id))
             ->orderBy($orderBy, $direction)
             ->orderBy('id', 'desc');
 
+        $perPage = min($request->integer('perPage') ?: 10, 100);
+
         $data = $request->integer('perPage')
-            ? $query->paginate($request->integer('perPage'), ['*'], 'page', $request->integer('page') ?: null)
+            ? $query->paginate($perPage, ['*'], 'page', $request->integer('page') ?: null)
             : $query->get();
 
         return response()->json($data);
@@ -165,7 +168,6 @@ class ParticipantController extends Controller
             'birth_place',
             'birth_date',
             'age',
-            'education_level',
             'school_name',
             'grade',
             'address',
@@ -194,7 +196,7 @@ class ParticipantController extends Controller
     {
         return $request->safe()->only([
             'full_name', 'nickname', 'gender', 'birth_place', 'birth_date', 'age',
-            'education_level', 'school_name', 'grade', 'address', 'province_id',
+            'school_name', 'grade', 'address', 'province_id',
             'regency_id', 'parent_phone', 'nik',
         ]);
     }

@@ -1,11 +1,13 @@
+import type {
+    SortingState} from '@tanstack/react-table';
 import {
     getCoreRowModel,
-    SortingState,
     useReactTable,
 } from '@tanstack/react-table';
+import type {
+    ReactNode} from 'react';
 import {
     createContext,
-    ReactNode,
     useCallback,
     useContext,
     useEffect,
@@ -16,7 +18,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import axios from 'axios';
 import {
-    renderRowActions,
+    RowActions,
     renderRowDate,
     renderRowHeader,
 } from '../utils/dataTable-utils';
@@ -39,9 +41,11 @@ export const DataTableContext = createContext({});
 
 export const UseDataTable = () => {
     const context = useContext(DataTableContext);
+
     if (!context) {
         throw new Error('useDataTable must be used within DataTableProvider');
     }
+
     return context;
 };
 
@@ -54,7 +58,6 @@ export const DataTableProvider = ({
     withActions = true,
     formatDataExport,
     customButtons,
-    rowSelection,
     setRowSelection,
     children,
 }: DataTableProps) => {
@@ -205,8 +208,12 @@ export const DataTableProvider = ({
                 ? {
                       id: 'actions',
                       header: () => <span>Action</span>,
-                      cell: (info: any) =>
-                          renderRowActions(info, setRefreshData),
+                      cell: (info: any) => (
+                          <RowActions
+                              info={info}
+                              setRefreshData={setRefreshData}
+                          />
+                      ),
                       enableSorting: false,
                       enableHiding: false,
                   }
@@ -227,6 +234,7 @@ export const DataTableProvider = ({
 
         tempColumns.forEach((col) => {
             const key = col.accessorKey || col.id;
+
             if (!seen.has(key)) {
                 seen.add(key);
                 mergedColumns.push(col);
@@ -284,7 +292,6 @@ export const DataTableProvider = ({
                 perPage: next.pageSize,
             }));
         },
-        debugTable: true,
     });
 
     const selectedRows = useMemo(

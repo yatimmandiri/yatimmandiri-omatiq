@@ -14,16 +14,14 @@ beforeEach(function () {
     Role::create(['name' => 'Teacher', 'guard_name' => 'web']);
     Role::create(['name' => 'Users', 'guard_name' => 'web']);
 
-    Permission::create(['name' => 'view-participant', 'guard_name' => 'web'])->assignRole('Participant');
-    Permission::create(['name' => 'data-participant', 'guard_name' => 'web'])->assignRole('Participant');
-    Permission::create(['name' => 'view-participant', 'guard_name' => 'web'])->assignRole('Administrators');
-    Permission::create(['name' => 'data-participant', 'guard_name' => 'web'])->assignRole('Administrators');
+    Permission::create(['name' => 'view-participant', 'guard_name' => 'web'])->assignRole(['Participant', 'Administrators']);
+    Permission::create(['name' => 'data-participant', 'guard_name' => 'web'])->assignRole(['Participant', 'Administrators']);
     Permission::create(['name' => 'update-participant', 'guard_name' => 'web'])->assignRole('Administrators');
     Permission::create(['name' => 'delete-participant', 'guard_name' => 'web'])->assignRole('Administrators');
 });
 
 test('guest cannot access participant dashboard', function () {
-    $response = $this->get(route('dashboard'));
+    $response = $this->get(route('admin.dashboard'));
     $response->assertRedirect(route('login'));
 });
 
@@ -35,7 +33,7 @@ test('participant can view their own dashboard', function () {
         'user_id' => $user->id,
     ]);
 
-    $response = $this->actingAs($user)->get(route('dashboard'));
+    $response = $this->actingAs($user)->get(route('admin.dashboard'));
     $response->assertOk();
 });
 
@@ -43,7 +41,7 @@ test('participant without linked participant record sees empty state', function 
     $user = User::factory()->create();
     $user->assignRole('Participant');
 
-    $response = $this->actingAs($user)->get(route('dashboard'));
+    $response = $this->actingAs($user)->get(route('admin.dashboard'));
     $response->assertOk();
 });
 

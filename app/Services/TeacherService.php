@@ -12,6 +12,7 @@ use App\Models\Core\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use RuntimeException;
 
 class TeacherService
 {
@@ -62,7 +63,7 @@ class TeacherService
     public function getStudents(User $teacher): LengthAwarePaginator
     {
         return Participant::query()
-            ->with(['olimpiade:id,name', 'student:id,full_name,school_name,province_id,regency_id'])
+            ->with(['olimpiade:id,name', 'student:id,full_name,school_name,nik,province_id,regency_id'])
             ->where('mentor_id', $teacher->id)
             ->orderBy('created_at', 'desc')
             ->paginate(10);
@@ -116,6 +117,28 @@ class TeacherService
         });
     }
 
+    public function joinOlimpiade(User $teacher, Participant $participant, int $olimpiadeId): Participant
+    {
+        return DB::transaction(function () use ($teacher, $participant, $olimpiadeId) {
+            $student = $participant->student;
+
+            throw_unless($student, RuntimeException::class, 'Data siswa tidak ditemukan.');
+
+            return Participant::create([
+                'student_id' => $student->id,
+                'mentor_id' => $teacher->id,
+                'olimpiade_id' => $olimpiadeId,
+                'registration_type' => 'teacher',
+                'registration_number' => $this->generateRegistrationNumber(),
+                'status' => 'submitted',
+                'achievements' => $participant->achievements,
+                'data_truth_consent' => true,
+                'documentation_consent' => true,
+                'rules_consent' => true,
+            ]);
+        });
+    }
+
     public function checkNik(string $nik): ?Student
     {
         return Student::query()->where('nik', $nik)->first();
@@ -126,7 +149,14 @@ class TeacherService
         return [
             'olimpiades' => Olimpiade::query()->active()->ordered()->get(['id', 'name', 'category', 'slug']),
             'provinces' => Province::query()->orderBy('name')->get(['id', 'name']),
-            'regencies' => Regency::query()->orderBy('name')->get(['id', 'province_id', 'name']),
+            'regencies' => Regency::query()
+                ->orderBy('name')
+                ->get(['id', 'province_id', 'name'])
+                ->map(fn (Regency $regency) => [
+                    'id' => $regency->id,
+                    'province_id' => $regency->province_id,
+                    'name' => $regency->name,
+                ]),
         ];
     }
 

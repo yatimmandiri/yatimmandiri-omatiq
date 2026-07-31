@@ -37,15 +37,11 @@ export default function ListPage() {
         },
         {
             header: 'Sekolah',
-            accessorKey: 'school_name',
-        },
-        {
-            header: 'Jenjang',
-            accessorKey: 'education_level',
+            accessorKey: 'student.school_name',
         },
         {
             header: 'Wilayah',
-            accessorKey: 'regency',
+            accessorKey: 'student.regency',
             cell: (info: any) => info.getValue()?.name ?? '-',
         },
         {
@@ -54,6 +50,7 @@ export default function ListPage() {
             cell: (info: any) => {
                 const status = info.getValue();
                 const Icon = status === 'verified' ? CheckCircle2 : status === 'rejected' ? XCircle : Clock3;
+
                 return (
                     <Badge variant={statusVariant(status) as any}>
                         <Icon />
@@ -79,7 +76,7 @@ export default function ListPage() {
                             Registrasi: item.registration_number,
                             Nama: item.full_name,
                             Olimpiade: item.olimpiade?.name || '-',
-                            Sekolah: item.school_name,
+                            Sekolah: item.student?.school_name,
                             Status: statusLabels[item.status] ?? item.status,
                         }))
                     }

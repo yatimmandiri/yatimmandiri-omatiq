@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import olimpiades from '@/routes/admin/companies/olimpiades';
 import { useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, ChevronsUpDown, Save } from 'lucide-react';
-import { FormEvent } from 'react';
+import type { FormEvent } from 'react';
 
 type OlimpiadeRecord = {
     id: number;
@@ -47,7 +47,10 @@ const parseLines = (value: string) =>
         .filter(Boolean);
 
 const imageUrl = (value?: string | null) => {
-    if (!value) return null;
+    if (!value) {
+return null;
+}
+
     return value.startsWith('http://') || value.startsWith('https://')
         ? value
         : '/storage/' + value;
@@ -116,6 +119,7 @@ export const OlimpiadeForm = ({ dataId }: { dataId?: number }) => {
 
     const error = (name: string) => {
         const message = form.errors[name];
+
         return message ? (
             <p className="text-sm font-medium text-destructive">{message}</p>
         ) : null;

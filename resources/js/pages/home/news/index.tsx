@@ -4,7 +4,8 @@ import {
     NewsCard,
     SectionHeader,
 } from '@/components/marketing/marketing-components';
-import { NewsItem, news } from '@/components/marketing/site-data';
+import type { NewsItem} from '@/components/marketing/site-data';
+import { news } from '@/components/marketing/site-data';
 import axios from 'axios';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -113,8 +114,10 @@ export default function NewsPage() {
     }, []);
 
     useEffect(() => {
-        fetchArticles();
-        fetchBlogs();
+        queueMicrotask(() => {
+            void fetchArticles();
+            void fetchBlogs();
+        });
     }, [fetchArticles, fetchBlogs]);
 
     const featured = articles[0];

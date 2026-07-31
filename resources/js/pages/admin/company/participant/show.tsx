@@ -46,7 +46,6 @@ export default function ShowPage() {
                         <Detail label="Jenis Kelamin" value={labels[participant.student?.gender]} />
                         <Detail label="Tempat, Tanggal Lahir" value={`${participant.student?.birth_place ?? ''}, ${participant.student?.birth_date?.slice(0, 10) ?? ''}`} />
                         <Detail label="Usia" value={`${participant.student?.age ?? ''} tahun`} />
-                        <Detail label="Jenjang" value={participant.student?.education_level} />
                         <Detail label="Sekolah" value={participant.student?.school_name} />
                         <Detail label="Kelas" value={participant.student?.grade} />
                         <Detail label="Provinsi" value={participant.student?.province?.name} />

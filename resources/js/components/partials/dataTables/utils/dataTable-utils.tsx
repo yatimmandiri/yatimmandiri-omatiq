@@ -32,8 +32,13 @@ export const renderRowHeader = (info: any, title: string) => {
     const columnId = info.column.id;
 
     const renderSortIcon = () => {
-        if (isSorted === 'asc') return <ChevronUpIcon className="h-5 w-5" />;
-        if (isSorted === 'desc') return <ChevronDownIcon className="h-5 w-5" />;
+        if (isSorted === 'asc') {
+return <ChevronUpIcon className="h-5 w-5" />;
+}
+
+        if (isSorted === 'desc') {
+return <ChevronDownIcon className="h-5 w-5" />;
+}
 
         if (!isSorted && columnId === 'id') {
             return (
@@ -56,7 +61,9 @@ export const renderRowHeader = (info: any, title: string) => {
 };
 
 export const renderRowDate = (value: any) => {
-    if (!value) return '-';
+    if (!value) {
+return '-';
+}
 
     return formatDate(value);
 };
@@ -109,7 +116,13 @@ export const renderRowImage = (
     );
 };
 
-export const renderRowActions = (info: any, setRefreshData: any) => {
+export const RowActions = ({
+    info,
+    setRefreshData,
+}: {
+    info: any;
+    setRefreshData: any;
+}) => {
     const { currentUrl } = useCurrentUrl();
 
     const [openModal, setOpenModal] = useState(false);

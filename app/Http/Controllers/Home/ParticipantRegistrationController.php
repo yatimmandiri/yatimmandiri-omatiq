@@ -138,7 +138,6 @@ class ParticipantRegistrationController extends Controller
             'birth_place' => $request->birth_place,
             'birth_date' => $request->birth_date,
             'age' => $request->age,
-            'education_level' => 'SD/MI',
             'school_name' => $request->school_name,
             'grade' => $request->grade,
             'address' => $request->address,

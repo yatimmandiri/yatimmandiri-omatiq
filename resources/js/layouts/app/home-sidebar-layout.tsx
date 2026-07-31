@@ -4,7 +4,8 @@ import {
     DisclosurePanel,
 } from '@headlessui/react';
 import { ChevronDown, X } from 'lucide-react';
-import { createContext, ReactNode, useContext, useMemo } from 'react';
+import type { ReactNode} from 'react';
+import { createContext, useContext, useMemo } from 'react';
 import { BsFacebook, BsInstagram, BsTiktok, BsYoutube } from 'react-icons/bs';
 
 export const SidebarContext = createContext({});

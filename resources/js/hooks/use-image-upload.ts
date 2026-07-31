@@ -1,5 +1,6 @@
 import { deletefiles, uploadfiles } from '@/routes/admin';
-import { ChangeEvent, useCallback, useEffect, useRef, useState } from 'react';
+import type { ChangeEvent} from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface UseImageUploadProps {
     onUpload?: (url: string) => void;
@@ -38,6 +39,7 @@ export function useImageUpload({ onUpload }: UseImageUploadProps = {}) {
             if (!response.ok) {
                 const errorText = await response.text();
                 console.error('UPLOAD ERROR:', errorText);
+
                 throw new Error('Upload failed');
             }
 
@@ -46,17 +48,20 @@ export function useImageUpload({ onUpload }: UseImageUploadProps = {}) {
             if (!contentType?.includes('application/json')) {
                 const text = await response.text();
                 console.error('NOT JSON RESPONSE:', text);
+
                 throw new Error('Invalid server response');
             }
 
             const data = await response.json();
             setError(null);
+
             return data.url; // pastikan ini adalah URL gambar di storage
         } catch (err) {
             const errorMessage =
                 err instanceof Error ? err.message : 'Upload failed';
             setError(errorMessage);
-            throw new Error(errorMessage);
+
+            throw new Error(errorMessage, { cause: err });
         } finally {
             setUploading(false);
         }
@@ -69,6 +74,7 @@ export function useImageUpload({ onUpload }: UseImageUploadProps = {}) {
     const handleFileChange = useCallback(
         async (event: ChangeEvent<HTMLInputElement>) => {
             const file = event.target.files?.[0];
+
             if (file) {
                 setFileName(file.name);
                 const localUrl = URL.createObjectURL(file);
@@ -118,9 +124,11 @@ export function useImageUpload({ onUpload }: UseImageUploadProps = {}) {
         setPreviewUrl(null);
         setFileName(null);
         previewRef.current = null;
+
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
         }
+
         setError(null);
     }, [previewUrl, uploadedUrl]);
 

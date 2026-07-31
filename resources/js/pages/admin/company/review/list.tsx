@@ -6,7 +6,7 @@ import {
 } from '@/components/partials/dataTables/utils/dataTable-utils';
 import { Badge } from '@/components/ui/badge';
 import reviews from '@/routes/admin/companies/reviews';
-import { router, usePage } from '@inertiajs/react';
+import { router } from '@inertiajs/react';
 import { CheckCircle2, Star, XCircle } from 'lucide-react';
 import { useState } from 'react';
 

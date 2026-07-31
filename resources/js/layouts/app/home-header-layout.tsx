@@ -1,5 +1,5 @@
 ﻿import { usePage } from '@inertiajs/react';
-import { Menu, Sparkles } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import { Fragment, useEffect, useState } from 'react';
 import {
     NavigationComponent,

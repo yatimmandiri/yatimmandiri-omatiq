@@ -9,15 +9,55 @@ import { useCurrentUrl } from '@/hooks/use-current-url';
 import { cn } from '@/lib/utils';
 import { Link, usePage } from '@inertiajs/react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Fragment } from 'react/jsx-runtime';
+
+const filterMenuByPermissions = (
+    menus: any[],
+    hasRole: (requiredRoles: string[]) => boolean,
+    hasPermission: (permission: string) => boolean,
+): any[] => {
+    return menus
+        .map((item) => {
+            const requiredRoles: string[] = item.roles ?? [];
+
+            if (requiredRoles.length > 0 && !hasRole(requiredRoles)) {
+return null;
+}
+
+            if (item.permission && !hasPermission(item.permission)) {
+return null;
+}
+
+            const filteredChildren = Array.isArray(item.children)
+                ? filterMenuByPermissions(
+                      item.children,
+                      hasRole,
+                      hasPermission,
+                  )
+                : [];
+
+            if (!item.href && filteredChildren.length === 0) {
+return null;
+}
+
+            return {
+                ...item,
+                children: filteredChildren,
+            };
+        })
+        .filter(Boolean);
+};
 
 export const MainNav = ({ items }: any) => {
     const { auth } = usePage<any>().props;
     const { currentUrl } = useCurrentUrl();
 
-    const roles = auth.user.roles || [];
-    const permissions = auth.user.permissions || [];
+    const roles = useMemo(() => auth.user.roles || [], [auth.user.roles]);
+    const permissions = useMemo(
+        () => auth.user.permissions || [],
+        [auth.user.permissions],
+    );
 
     const [openMenus, setOpenMenus] = useState<{ [key: string]: boolean }>({});
 
@@ -27,7 +67,10 @@ export const MainNav = ({ items }: any) => {
     const currentPath = normalizePath(currentUrl);
 
     const getPathname = (href: string) => {
-        if (!href) return '';
+        if (!href) {
+return '';
+}
+
         try {
             return normalizePath(
                 new URL(href, window.location.origin).pathname,
@@ -37,40 +80,21 @@ export const MainNav = ({ items }: any) => {
         }
     };
 
-    const hasPermission = (permission: string) =>
-        permissions.includes(permission);
+    const hasPermission = useCallback(
+        (permission: string) => permissions.includes(permission),
+        [permissions],
+    );
 
-    const hasRole = (requiredRoles: string[]) =>
-        requiredRoles.length === 0 ||
-        requiredRoles.some((role) => roles.includes(role));
-
-    const filterMenuByPermissions = (menus: any[]): any[] => {
-        return menus
-            .map((item) => {
-                const requiredRoles: string[] = item.roles ?? [];
-
-                if (requiredRoles.length > 0 && !hasRole(requiredRoles))
-                    return null;
-                if (item.permission && !hasPermission(item.permission))
-                    return null;
-
-                const filteredChildren = Array.isArray(item.children)
-                    ? filterMenuByPermissions(item.children)
-                    : [];
-
-                if (!item.href && filteredChildren.length === 0) return null;
-
-                return {
-                    ...item,
-                    children: filteredChildren,
-                };
-            })
-            .filter(Boolean);
-    };
+    const hasRole = useCallback(
+        (requiredRoles: string[]) =>
+            requiredRoles.length === 0 ||
+            requiredRoles.some((role) => roles.includes(role)),
+        [roles],
+    );
 
     const filteredItems = useMemo(() => {
-        return filterMenuByPermissions(items);
-    }, [items, permissions, roles]);
+        return filterMenuByPermissions(items, hasRole, hasPermission);
+    }, [items, hasRole, hasPermission]);
 
     const getMenuKey = (item: any, parents: string[] = []) => {
         return [...parents, item.title].join(' > ');
@@ -96,39 +120,42 @@ export const MainNav = ({ items }: any) => {
     const isDashboard =
         currentPath === '/admin' || currentPath === '/admin/dashboard';
 
-    useEffect(() => {
+    const [prevPath, setPrevPath] = useState(currentPath);
+
+    if (prevPath !== currentPath) {
+        setPrevPath(currentPath);
+
         if (isDashboard) {
             setOpenMenus({});
-            return;
+        } else {
+            const newOpenMenus: { [key: string]: boolean } = {};
+
+            const traverse = (menus: any[], parents: string[] = []) => {
+                menus.forEach((item) => {
+                    const hasMatchChild = hasExactMatchingChild(
+                        item.children || [],
+                    );
+
+                    if (hasMatchChild) {
+                        [...parents, item.title].forEach((_, idx, arr) => {
+                            const key = getMenuKey(
+                                { title: arr[idx] },
+                                arr.slice(0, idx),
+                            );
+                            newOpenMenus[key] = true;
+                        });
+                    }
+
+                    if (item.children?.length) {
+                        traverse(item.children, [...parents, item.title]);
+                    }
+                });
+            };
+
+            traverse(filteredItems);
+            setOpenMenus(newOpenMenus);
         }
-
-        const newOpenMenus: { [key: string]: boolean } = {};
-
-        const traverse = (menus: any[], parents: string[] = []) => {
-            menus.forEach((item) => {
-                const hasMatchChild = hasExactMatchingChild(
-                    item.children || [],
-                );
-
-                if (hasMatchChild) {
-                    [...parents, item.title].forEach((_, idx, arr) => {
-                        const key = getMenuKey(
-                            { title: arr[idx] },
-                            arr.slice(0, idx),
-                        );
-                        newOpenMenus[key] = true;
-                    });
-                }
-
-                if (item.children?.length) {
-                    traverse(item.children, [...parents, item.title]);
-                }
-            });
-        };
-
-        traverse(filteredItems);
-        setOpenMenus(newOpenMenus);
-    }, [currentPath, filteredItems]);
+    }
 
     const toggleMenu = (key: string) => {
         setOpenMenus((prev: any) => ({

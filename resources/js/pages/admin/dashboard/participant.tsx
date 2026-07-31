@@ -1,9 +1,7 @@
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { dashboard } from '@/routes/admin';
-import participants from '@/routes/admin/companies/participants';
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import { ExternalLink } from 'lucide-react';
 
 const labels: Record<string, string> = {
@@ -66,7 +64,6 @@ export default function Dashboard() {
                                 value={`${participant.student?.birth_place ?? ''}, ${participant.student?.birth_date?.slice(0, 10) ?? ''}`}
                             />
                             <Detail label="Usia" value={participant.student?.age ? `${participant.student.age} tahun` : null} />
-                            <Detail label="Jenjang" value={participant.student?.education_level} />
                             <Detail label="Sekolah" value={participant.student?.school_name} />
                             <Detail label="Kelas" value={participant.student?.grade} />
                             <Detail label="Provinsi" value={participant.student?.province?.name} />

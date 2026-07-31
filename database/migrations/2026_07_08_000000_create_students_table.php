@@ -17,7 +17,6 @@ return new class extends Migration
             $table->string('birth_place');
             $table->date('birth_date');
             $table->unsignedTinyInteger('age');
-            $table->string('education_level', 20);
             $table->string('school_name');
             $table->string('grade', 30);
             $table->text('address');
@@ -31,6 +30,8 @@ return new class extends Migration
             $table->string('identity_card_path')->nullable();
             $table->string('family_card_path')->nullable();
             $table->boolean('is_binaan')->default(false);
+            $table->index('province_id');
+            $table->index('regency_id');
             $table->timestamps();
             $table->softDeletes();
 

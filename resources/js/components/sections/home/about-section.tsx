@@ -17,6 +17,7 @@ export const AboutSection = () => {
             color: 'blue' as const,
         },
     ];
+
     return (
         <>
             <section className="relative overflow-hidden px-5 py-14 sm:py-16 lg:px-8 lg:py-20">

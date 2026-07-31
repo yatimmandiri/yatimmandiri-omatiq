@@ -8,7 +8,6 @@ import { SistemLombaSection } from '@/components/sections/about/sistem-lomba-sec
 import { Link } from '@inertiajs/react';
 import {
     ArrowRight,
-    Award,
     BookOpenCheck,
     Brain,
     CalendarDays,
@@ -17,7 +16,6 @@ import {
     Flag,
     GraduationCap,
     Heart,
-    MapPin,
     Medal,
     Sparkles,
     Star,
@@ -389,6 +387,7 @@ export default function AboutPage() {
                     <div className="mt-12 space-y-6">
                         {historyItems.map((item, index) => {
                             const Icon = item.icon;
+
                             return (
                                 <article
                                     key={item.year}

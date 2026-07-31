@@ -23,13 +23,15 @@ import {
     X,
     Calendar,
 } from 'lucide-react';
-import { FormEvent, ReactNode, useMemo, useState } from 'react';
+import type { FormEvent, ReactNode} from 'react';
+import { useMemo, useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { toast } from 'sonner';
-import {
+import type {
     NewsItem,
     OlimpiadeItem,
-    TestimonialItem,
+    TestimonialItem} from './site-data';
+import {
     navItems,
 } from './site-data';
 
@@ -49,7 +51,7 @@ type PageProps = {
     settings?: SharedSettings;
 };
 
-const getSettings = () => usePage<PageProps>().props.settings ?? {};
+const useSettings = () => usePage<PageProps>().props.settings ?? {};
 
 export const MarketingShell = ({ children }: { children: ReactNode }) => {
     return (
@@ -69,7 +71,7 @@ export const MarketingShell = ({ children }: { children: ReactNode }) => {
 
 export const Navbar = () => {
     const [open, setOpen] = useState(false);
-    const settings = getSettings();
+    const settings = useSettings();
     const currentPath =
         typeof window === 'undefined' ? '/' : window.location.pathname;
 
@@ -175,7 +177,7 @@ export const Navbar = () => {
 };
 
 export const Footer = () => {
-    const settings = getSettings();
+    const settings = useSettings();
 
     return (
         <footer className="bg-[#0F60AC] text-white">
@@ -834,7 +836,7 @@ export const FeatureIcon = ({
 };
 
 export const ContactInfoGrid = () => {
-    const settings = getSettings();
+    const settings = useSettings();
     const items = useMemo(
         () => [
             {

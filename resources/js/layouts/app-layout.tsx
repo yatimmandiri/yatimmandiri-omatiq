@@ -1,7 +1,7 @@
 import { Toaster } from '@/components/ui/sonner';
 import AppLayoutTemplate from '@/layouts/app/app-sidebar-layout';
 import type { BreadcrumbItem } from '@/types';
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 export default function AppLayout({
     breadcrumbs = [],

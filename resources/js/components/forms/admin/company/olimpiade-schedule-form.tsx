@@ -14,7 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import olimpiadeSchedules from '@/routes/admin/companies/olimpiade-schedules';
 import { useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, Save } from 'lucide-react';
-import { FormEvent } from 'react';
+import type { FormEvent } from 'react';
 
 type ScheduleRecord = {
     id: number;

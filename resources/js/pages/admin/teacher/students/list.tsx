@@ -1,11 +1,20 @@
 import { DataTableComponent } from '@/components/partials/dataTables';
 import { DataTableProvider } from '@/components/partials/dataTables/hooks/useDataTables';
-import { renderRowHeader } from '@/components/partials/dataTables/utils/dataTable-utils';
+import { renderRowHeader, RowActions } from '@/components/partials/dataTables/utils/dataTable-utils';
 import { Badge } from '@/components/ui/badge';
 import { dashboard } from '@/routes/admin';
 import teacherStudents from '@/routes/admin/teacher/students';
+import { usePage } from '@inertiajs/react';
 import { CheckCircle2, Clock3, XCircle } from 'lucide-react';
 import { useState } from 'react';
+import JoinOlimpiadeModal from './partials/join-olimpiade-modal';
+
+type OlimpiadeOption = {
+    id: number | string;
+    name: string;
+    category?: string;
+    slug?: string;
+};
 
 const statusLabels: Record<string, string> = {
     submitted: 'Submitted',
@@ -17,6 +26,7 @@ const statusVariant = (status: string) =>
     status === 'verified' ? 'default' : status === 'rejected' ? 'destructive' : 'secondary';
 
 export default function ListPage() {
+    const { olimpiades = [] } = usePage<{ olimpiades?: OlimpiadeOption[] }>().props;
     const [refreshData, setRefreshData] = useState(false);
     const columns = [
         {
@@ -38,15 +48,11 @@ export default function ListPage() {
         },
         {
             header: 'NIK',
-            accessorKey: 'nik',
+            accessorKey: 'student.nik',
         },
         {
             header: 'Sekolah',
-            accessorKey: 'school_name',
-        },
-        {
-            header: 'Jenjang',
-            accessorKey: 'education_level',
+            accessorKey: 'student.school_name',
         },
         {
             header: 'Status',
@@ -54,6 +60,7 @@ export default function ListPage() {
             cell: (info: any) => {
                 const status = info.getValue();
                 const Icon = status === 'verified' ? CheckCircle2 : status === 'rejected' ? XCircle : Clock3;
+
                 return (
                     <Badge variant={statusVariant(status) as any}>
                         <Icon />
@@ -62,7 +69,24 @@ export default function ListPage() {
                 );
             },
         },
+        {
+            id: 'actions',
+            header: 'Aksi',
+            cell: (info: any) => (
+                <div className="flex items-center gap-2">
+                    <JoinOlimpiadeModal
+                        participant={info.row.original}
+                        olimpiades={olimpiades}
+                        setRefreshData={setRefreshData}
+                    />
+                    <RowActions info={info} setRefreshData={setRefreshData} />
+                </div>
+            ),
+            enableSorting: false,
+            enableHiding: false,
+        },
     ];
+    console.log(teacherStudents.data());
 
     return (
         <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
@@ -77,10 +101,10 @@ export default function ListPage() {
                         items.map((item, index) => ({
                             No: index + 1,
                             Registrasi: item.registration_number,
-                            NIK: item.nik,
+                            NIK: item.student?.nik,
                             Nama: item.full_name,
                             Olimpiade: item.olimpiade?.name || '-',
-                            Sekolah: item.school_name,
+                            Sekolah: item.student?.school_name,
                             Status: statusLabels[item.status] ?? item.status,
                         }))
                     }

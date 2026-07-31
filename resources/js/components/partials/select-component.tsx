@@ -50,18 +50,16 @@ export const SelectComponent = ({
     handleOnChange,
     fetchDataUrl,
     color = 'default',
-    ...props
 }: SelectComponentProps) => {
     const [isLoading, setIsLoading] = useState(false);
     const [searchValue, setSearchValue] = useState('');
     const [resultData, setResultData] = useState(data ?? []);
     const [open, setOpen] = useState(false);
 
-    useEffect(() => {
-        if (!fetchDataUrl) {
-            setResultData(data ?? []);
-        }
-    }, [data, fetchDataUrl]);
+    const listItems = useMemo(
+        () => (!fetchDataUrl ? (data ?? []) : resultData),
+        [data, fetchDataUrl, resultData],
+    );
 
     const isSelected = (value: string) => {
         return Array.isArray(dataSelected)
@@ -92,7 +90,7 @@ export const SelectComponent = ({
 
     const renderPlaceholder = useMemo(() => {
         if (multiple) {
-            const selectedLabels = resultData
+            const selectedLabels = listItems
                 .filter((item: any) =>
                     Array.isArray(dataSelected)
                         ? dataSelected.includes(item.value)
@@ -104,19 +102,23 @@ export const SelectComponent = ({
                 ? selectedLabels.join(', ')
                 : placeholder;
         } else {
-            const selectedLabel = resultData.find(
+            const selectedLabel = listItems.find(
                 (item: any) => item.value === dataSelected,
             )?.label;
 
             return selectedLabel || placeholder;
         }
-    }, [dataSelected, resultData, multiple, placeholder]);
+    }, [dataSelected, listItems, multiple, placeholder]);
 
     // ✅ fetch data (API mode)
     const fetchData = useCallback(async () => {
-        if (!fetchDataUrl) return;
+        if (!fetchDataUrl) {
+return;
+}
 
-        if (searchValue.length < 3) return;
+        if (searchValue.length < 3) {
+return;
+}
 
         setIsLoading(true);
 
@@ -142,7 +144,9 @@ export const SelectComponent = ({
     }, [fetchDataUrl, searchValue]);
 
     useEffect(() => {
-        if (!fetchDataUrl) return;
+        if (!fetchDataUrl) {
+return;
+}
 
         const delay = setTimeout(() => {
             fetchData();
@@ -199,14 +203,14 @@ export const SelectComponent = ({
                                 </div>
                             )}
 
-                            {!isLoading && resultData.length === 0 && (
+                            {!isLoading && listItems.length === 0 && (
                                 <CommandEmpty>No results found.</CommandEmpty>
                             )}
                             <CommandGroup>
                                 <CommandItem onSelect={() => toggleSelect('')}>
                                     Clear Selection
                                 </CommandItem>
-                                {resultData.map((item: any, i: number) => (
+                                {listItems.map((item: any, i: number) => (
                                     <CommandItem
                                         key={i}
                                         value={item.label}

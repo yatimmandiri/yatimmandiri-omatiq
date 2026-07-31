@@ -40,6 +40,7 @@ export const DataTableButtons = ({
             onClick: () => {
                 if (selectedRows.length === 0) {
                     toast.error('Tidak ada data yang dipilih');
+
                     return;
                 }
 
@@ -80,6 +81,7 @@ export const DataTableButtons = ({
                     onClick: () => {
                         if (selectedRows.length === 0) {
                             toast.error('Tidak ada data yang dipilih');
+
                             return;
                         }
 
@@ -96,6 +98,7 @@ export const DataTableButtons = ({
                     onClick: () => {
                         if (selectedRows.length === 0) {
                             toast.error('Tidak ada data yang dipilih');
+
                             return;
                         }
 

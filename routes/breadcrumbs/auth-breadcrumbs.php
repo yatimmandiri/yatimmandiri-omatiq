@@ -19,12 +19,28 @@ Breadcrumbs::for('register', function (BreadcrumbTrail $trail) {
     $trail->push('Register', route('register'));
 });
 
+Breadcrumbs::for('two-factor.login', function (BreadcrumbTrail $trail) {
+    $trail->parent('login')->push('Two-Factor Authentication', route('two-factor.login'));
+});
+
 Breadcrumbs::for('password.request', function (BreadcrumbTrail $trail) {
     $trail->push('Forgot Password', route('password.request'));
 });
 
+Breadcrumbs::for('password.reset', function (BreadcrumbTrail $trail, string $token) {
+    $trail->parent('password.request')->push('Reset Password', route('password.reset', $token));
+});
+
+Breadcrumbs::for('password.confirm', function (BreadcrumbTrail $trail) {
+    $trail->push('Confirm Password', route('password.confirm'));
+});
+
 Breadcrumbs::for('verification.notice', function (BreadcrumbTrail $trail) {
     $trail->push('Verify Email', route('verification.notice'));
+});
+
+Breadcrumbs::for('verification.verify', function (BreadcrumbTrail $trail, string $id, string $hash) {
+    $trail->parent('verification.notice')->push('Verify Email', route('verification.verify', ['id' => $id, 'hash' => $hash]));
 });
 
 Breadcrumbs::for('admin.profile.edit', function (BreadcrumbTrail $trail) {

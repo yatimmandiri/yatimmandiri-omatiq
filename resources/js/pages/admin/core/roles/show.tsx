@@ -12,7 +12,9 @@ export default function DetailPage() {
             const parts = permission.name.split('-');
 
             // minimal harus ada action + subject
-            if (parts.length < 2) return acc;
+            if (parts.length < 2) {
+return acc;
+}
 
             const subject = parts.slice(1).join('-'); // handle "force-delete-user"
 
@@ -67,15 +69,6 @@ export default function DetailPage() {
                         </label>
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                             {groupedPermissions.map((group: any) => {
-                                const groupIds = group.permissions.map(
-                                    (p: any) => p.id,
-                                );
-                                const allChecked = groupIds.every((id: any) =>
-                                    role.permissions.some(
-                                        (p: any) => p.id === id,
-                                    ),
-                                );
-
                                 return (
                                     <div
                                         key={group.group}

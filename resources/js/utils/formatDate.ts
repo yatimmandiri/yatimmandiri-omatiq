@@ -15,7 +15,9 @@ export const formatDate = (
         | 'custom'
         | string = 'date',
 ) => {
-    if (!value) return '-';
+    if (!value) {
+return '-';
+}
 
     const m = moment(value).tz(TZ);
 

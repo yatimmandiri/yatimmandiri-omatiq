@@ -12,7 +12,10 @@ import { CheckCircle2, XCircle } from 'lucide-react';
 import { useState } from 'react';
 
 const imageUrl = (value?: string | null) => {
-    if (!value) return null;
+    if (!value) {
+return null;
+}
+
     return value.startsWith('http://') || value.startsWith('https://')
         ? value
         : '/storage/' + value;
@@ -47,6 +50,7 @@ export default function ListPage() {
             accessorKey: 'featured_image',
             cell: (info: any) => {
                 const url = imageUrl(info.getValue());
+
                 return url ? (
                     <img
                         src={url}

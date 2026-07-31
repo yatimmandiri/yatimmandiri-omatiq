@@ -7,7 +7,6 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { dashboard } from '@/routes/admin';
 import teachers from '@/routes/admin/companies/teachers';
-import { usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
 export default function ListPage() {

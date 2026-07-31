@@ -1,6 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
 import { ArrowRight, PlayCircle, X } from 'lucide-react';
-import { PointerEvent, useEffect, useMemo, useState } from 'react';
+import type { PointerEvent} from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 type SliderItem = {
     title: string;

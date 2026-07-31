@@ -7,6 +7,7 @@ import { ArrowLeft, Pencil, Quote, Star } from 'lucide-react';
 export default function ShowPage() {
     const { testimonial } = usePage<{ testimonial: Record<string, any> }>()
         .props;
+
     return (
         <div className="flex flex-1 flex-col gap-6 p-4">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

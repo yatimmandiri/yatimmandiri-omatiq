@@ -3,7 +3,8 @@ import {
     OlimpiadeCard,
     SectionHeader,
 } from '@/components/marketing/marketing-components';
-import { OlimpiadeItem, olimpiade } from '@/components/marketing/site-data';
+import type { OlimpiadeItem} from '@/components/marketing/site-data';
+import { olimpiade } from '@/components/marketing/site-data';
 import { Link, usePage } from '@inertiajs/react';
 import {
     ArrowRight,

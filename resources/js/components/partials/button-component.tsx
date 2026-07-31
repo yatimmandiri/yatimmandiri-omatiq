@@ -86,7 +86,6 @@ export const ButtonIconComponent = ({
     iconsClass = 'w-5 h-5',
     variant = 'solid',
     color = 'default',
-    pill = false,
     ...props
 }: ButtonProps) => {
     return (

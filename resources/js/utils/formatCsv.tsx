@@ -1,5 +1,7 @@
 export const arrayToCSV = (data: any[]) => {
-    if (!data.length) return '';
+    if (!data.length) {
+return '';
+}
 
     const headers = Object.keys(data[0]);
 
@@ -7,6 +9,7 @@ export const arrayToCSV = (data: any[]) => {
         headers
             .map((key) => {
                 const value = row[key] ?? '';
+
                 return `"${String(value).replace(/"/g, '""')}"`;
             })
             .join(','),

@@ -33,6 +33,9 @@ return new class extends Migration
             $table->string('guardian_signature_name')->nullable();
             $table->string('status', 30)->default('submitted');
             $table->text('notes')->nullable();
+            $table->index('status');
+            $table->index(['mentor_id', 'created_at']);
+            $table->index('created_at');
             $table->timestamps();
             $table->softDeletes();
         });

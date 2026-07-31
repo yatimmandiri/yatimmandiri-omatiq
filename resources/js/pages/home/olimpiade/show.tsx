@@ -4,8 +4,9 @@ import {
     OlimpiadeCard,
     SectionHeader,
 } from '@/components/marketing/marketing-components';
+import type {
+    OlimpiadeItem} from '@/components/marketing/site-data';
 import {
-    OlimpiadeItem,
     olimpiade as fallbackOlimpiade,
 } from '@/components/marketing/site-data';
 import { Link, usePage } from '@inertiajs/react';
@@ -265,6 +266,7 @@ export default function OlimpiadeDetailPage() {
             .slice(0, 3);
     const faqs = props.faqs ?? [];
     const schedules = currentOlimpiade.schedules ?? [];
+
     return (
         <>
             <section className="px-5 pt-28 pb-12 sm:pt-32 md:pb-20 lg:px-8">

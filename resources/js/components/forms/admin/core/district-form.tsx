@@ -5,7 +5,7 @@ import districts from '@/routes/admin/core/regions/districts';
 import { Fieldset } from '@headlessui/react';
 import { useForm, usePage } from '@inertiajs/react';
 import { SaveIcon } from 'lucide-react';
-import { FormEvent } from 'react';
+import type { FormEvent } from 'react';
 import { toast } from 'sonner';
 
 export const DistrictForm = ({ dataId }: { dataId?: string }) => {

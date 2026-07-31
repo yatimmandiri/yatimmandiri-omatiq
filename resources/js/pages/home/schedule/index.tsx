@@ -1,5 +1,5 @@
 import { CTASection, SectionHeader } from '@/components/marketing/marketing-components';
-import { OlimpiadeSchedule } from '@/components/marketing/site-data';
+import type { OlimpiadeSchedule } from '@/components/marketing/site-data';
 import { Link, usePage } from '@inertiajs/react';
 import {
     ArrowRight,

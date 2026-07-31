@@ -7,7 +7,8 @@ import { dashboard } from '@/routes/admin';
 import teacherStudents from '@/routes/admin/teacher/students';
 import { useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, Save } from 'lucide-react';
-import { FormEvent, ReactNode, useMemo } from 'react';
+import type { FormEvent, ReactNode} from 'react';
+import { useMemo } from 'react';
 
 type Option = {
     id: number | string;
@@ -16,11 +17,6 @@ type Option = {
     slug?: string;
 };
 type Regency = { id: string; province_id: string; name: string };
-
-const educationOptions = [
-    { value: 'SD/MI', label: 'SD/MI' },
-    { value: 'SMP/MTs', label: 'SMP/MTs' },
-];
 
 const dateValue = (value?: string | null) => value?.slice(0, 10) ?? '';
 
@@ -49,7 +45,6 @@ export default function EditPage() {
         birth_place: student?.birth_place ?? '',
         birth_date: dateValue(student?.birth_date),
         age: student?.age ?? '',
-        education_level: student?.education_level ?? '',
         school_name: student?.school_name ?? '',
         grade: student?.grade ?? '',
         address: student?.address ?? '',
@@ -195,15 +190,6 @@ export default function EditPage() {
                             required
                             min={5}
                             max={20}
-                        />
-                    </Field>
-                    <Field label="Jenjang" error={error('education_level')}>
-                        <Select
-                            value={form.data.education_level}
-                            onChange={(value) =>
-                                form.setData('education_level', value)
-                            }
-                            options={educationOptions}
                         />
                     </Field>
                     <Field label="Kelas" error={error('grade')}>

@@ -74,10 +74,6 @@ export default function ShowPage() {
                             value={`${participant.student?.age ?? ''} tahun`}
                         />
                         <Detail
-                            label="Jenjang"
-                            value={participant.student?.education_level}
-                        />
-                        <Detail
                             label="Sekolah"
                             value={participant.student?.school_name}
                         />

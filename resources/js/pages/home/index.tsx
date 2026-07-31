@@ -1,37 +1,11 @@
-import {
-    CTASection,
-    FeatureIcon,
-    NewsCard,
-    SectionHeader,
-    TestimonialCard,
-} from '@/components/marketing/marketing-components';
+import { CTASection, SectionHeader } from '@/components/marketing/marketing-components';
 import { SliderSection } from '@/components/sections/home/slider-section';
-import {
-    NewsItem,
-    OlimpiadeItem,
-    news,
-    partners,
-    olimpiade,
-    testimonials,
-} from '@/components/marketing/site-data';
+import type { NewsItem } from '@/components/marketing/site-data';
+import { partners } from '@/components/marketing/site-data';
 import { Link, usePage } from '@inertiajs/react';
 import axios from 'axios';
-import { PointerEvent, useEffect, useState } from 'react';
-import {
-    ArrowRight,
-    BookOpenCheck,
-    Building2,
-    Brain,
-    Calculator,
-    Handshake,
-    Medal,
-    Quote,
-    Star,
-    Sparkles,
-    Trophy,
-    UsersRound,
-} from 'lucide-react';
-import { useMediaQuery } from '@/hooks/use-media-query';
+import { useEffect, useState } from 'react';
+import { ArrowRight } from 'lucide-react';
 import { ReviewSection } from '@/components/sections/home/review-section';
 import { TestimonialSection } from '@/components/sections/home/testimonial-section';
 import { PartnerSection } from '@/components/sections/home/partner-section';
@@ -57,7 +31,7 @@ type ExternalNewsPost = {
 };
 
 export default function HomePage() {
-    const { reviews, testimonials, olimpiade, news } = usePage<any>().props;
+    const { reviews, testimonials, olimpiade } = usePage<any>().props;
 
     const [latestNews, setLatestNews] = useState<NewsItem[]>([]);
     const [newsLoading, setNewsLoading] = useState(true);

@@ -1,8 +1,11 @@
 <?php
 
 use App\Models\Core\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
 use Laravel\Fortify\Features;
+
+uses(RefreshDatabase::class);
 
 beforeEach(function () {
     $this->skipUnlessFortifyHas(Features::twoFactorAuthentication());
@@ -36,7 +39,7 @@ test('two factor challenge can be rendered', function () {
     $this->get(route('two-factor.login'))
         ->assertOk()
         ->assertInertia(
-            fn(Assert $page) => $page
+            fn (Assert $page) => $page
                 ->component('auth/two-factor-challenge'),
         );
 });

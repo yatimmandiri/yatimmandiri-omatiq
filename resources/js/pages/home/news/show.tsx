@@ -2,7 +2,8 @@ import {
     CTASection,
     NewsCard,
 } from '@/components/marketing/marketing-components';
-import { NewsItem, news } from '@/components/marketing/site-data';
+import type { NewsItem} from '@/components/marketing/site-data';
+import { news } from '@/components/marketing/site-data';
 import { Link, usePage } from '@inertiajs/react';
 import { ArrowLeft, Globe2, Link2, Mail, Share2 } from 'lucide-react';
 

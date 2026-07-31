@@ -22,11 +22,6 @@ export const DataTableComponent = ({
 }) => {
     const { columns, table, isLoading }: any = UseDataTable();
 
-    const rows = table.getRowModel().rows;
-
-    const hasData = rows.length > 0;
-    const isEmpty = !isLoading && !hasData;
-
     return (
         <div className="flex flex-col space-y-4 p-4 md:p-6">
             <DataTableButtons buttonsActive={buttonActive} />

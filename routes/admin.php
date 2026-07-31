@@ -21,6 +21,7 @@ use App\Http\Controllers\Admin\Core\UserController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\Settings\LogActivityController;
 use App\Http\Controllers\Admin\Settings\SiteSettingsController;
+use App\Http\Controllers\Admin\Teacher\TeacherStudentController;
 use App\Http\Controllers\Auth\AuthController;
 use Illuminate\Support\Facades\Route;
 
@@ -88,8 +89,9 @@ Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'auth.admi
     });
 
     Route::prefix('teacher')->as('teacher.')->group(function () {
-        Route::get('students/data', [\App\Http\Controllers\Admin\Teacher\TeacherStudentController::class, 'getData'])->name('students.data');
-        Route::resource('students', \App\Http\Controllers\Admin\Teacher\TeacherStudentController::class)->parameters(['students' => 'participant']);
+        Route::get('students/data', [TeacherStudentController::class, 'getData'])->name('students.data');
+        Route::post('students/{participant}/join-olimpiade', [TeacherStudentController::class, 'joinOlimpiade'])->name('students.join-olimpiade');
+        Route::resource('students', TeacherStudentController::class)->parameters(['students' => 'participant']);
     });
 
     Route::prefix('core')->as('core.')->group(function () {

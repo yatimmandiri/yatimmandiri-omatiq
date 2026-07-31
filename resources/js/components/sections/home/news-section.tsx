@@ -1,6 +1,5 @@
 import { NewsCard, SectionHeader } from "@/components/marketing/marketing-components"
-import { NewsItem } from "@/components/marketing/site-data";
-import { useState } from "react";
+import type { NewsItem } from "@/components/marketing/site-data";
 
 export const NewsSection = ({ data, newsLoading }: { data: NewsItem[]; newsLoading: boolean }) => {
 
