@@ -15,14 +15,14 @@ const stats = [
         value: '3.500+',
         label: 'Peserta setiap tahun',
         text: 'Anak yatim dan dhuafa mengikuti OMATIQ dari berbagai daerah di Indonesia.',
-        color: '#F15F23',
+        color: '#17524A',
     },
     {
         icon: MapPin,
         value: '50+',
         label: 'Kota dan kabupaten',
         text: 'Jangkauan peserta berasal dari puluhan wilayah binaan dan mitra Yatim Mandiri.',
-        color: '#0F60AC',
+        color: '#17524A',
     },
     {
         icon: Trophy,
@@ -81,7 +81,7 @@ export function CapaianPesertaSection() {
                             <p className="mt-6 text-4xl font-black text-[#1E293B]">
                                 {item.value}
                             </p>
-                            <p className="mt-2 text-sm font-black text-[#0F60AC]">
+                            <p className="mt-2 text-sm font-black text-[#17524A]">
                                 {item.label}
                             </p>
                             <p className="mt-3 text-sm leading-7 text-[#64748B]">
@@ -97,7 +97,7 @@ export function CapaianPesertaSection() {
                             key={item.title}
                             className="flex gap-4 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-100"
                         >
-                            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#F15F23]/10 text-[#F15F23]">
+                            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#17524A]/10 text-[#17524A]">
                                 <item.icon className="h-5 w-5" />
                             </span>
                             <div>

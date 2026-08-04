@@ -12,7 +12,6 @@ use App\Models\Core\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
-use RuntimeException;
 
 class TeacherService
 {
@@ -81,11 +80,20 @@ class TeacherService
     {
         return DB::transaction(function () use ($teacher, &$data) {
             $studentData = $this->extractStudentData($data);
-            $this->handleStudentFiles(null, $studentData);
+            $nik = $studentData['nik'] ?? null;
+
+            $student = $nik ? Student::where('nik', $nik)->first() : null;
 
             $studentData['mentor_id'] = $teacher->id;
             $studentData['is_binaan'] = true;
-            $student = Student::create($studentData);
+
+            if ($student) {
+                $this->handleStudentFiles($student, $studentData);
+                $student->update($studentData);
+            } else {
+                $this->handleStudentFiles(null, $studentData);
+                $student = Student::create($studentData);
+            }
 
             $data['student_id'] = $student->id;
             $data['mentor_id'] = $teacher->id;
@@ -114,28 +122,6 @@ class TeacherService
             $participant->update($data);
 
             return $participant->fresh()->load('student');
-        });
-    }
-
-    public function joinOlimpiade(User $teacher, Participant $participant, int $olimpiadeId): Participant
-    {
-        return DB::transaction(function () use ($teacher, $participant, $olimpiadeId) {
-            $student = $participant->student;
-
-            throw_unless($student, RuntimeException::class, 'Data siswa tidak ditemukan.');
-
-            return Participant::create([
-                'student_id' => $student->id,
-                'mentor_id' => $teacher->id,
-                'olimpiade_id' => $olimpiadeId,
-                'registration_type' => 'teacher',
-                'registration_number' => $this->generateRegistrationNumber(),
-                'status' => 'submitted',
-                'achievements' => $participant->achievements,
-                'data_truth_consent' => true,
-                'documentation_consent' => true,
-                'rules_consent' => true,
-            ]);
         });
     }
 

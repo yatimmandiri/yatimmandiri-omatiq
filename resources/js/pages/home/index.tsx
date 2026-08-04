@@ -1,4 +1,7 @@
-import { CTASection, SectionHeader } from '@/components/marketing/marketing-components';
+import {
+    CTASection,
+    SectionHeader,
+} from '@/components/marketing/marketing-components';
 import { SliderSection } from '@/components/sections/home/slider-section';
 import type { NewsItem } from '@/components/marketing/site-data';
 import { partners } from '@/components/marketing/site-data';
@@ -107,7 +110,7 @@ export default function HomePage() {
                                     <p className="mt-3 text-sm leading-7 text-[#64748B]">
                                         {item.description}
                                     </p>
-                                    <span className="mt-5 inline-flex items-center gap-2 text-sm font-black text-[#F15F23]">
+                                    <span className="mt-5 inline-flex items-center gap-2 text-sm font-black text-[#17524A]">
                                         Detail Olimpiade
                                         <ArrowRight className="h-4 w-4" />
                                     </span>
@@ -120,9 +123,7 @@ export default function HomePage() {
 
             <NewsSection data={latestNews} newsLoading={newsLoading} />
 
-            {reviews.length > 0 && (
-                <ReviewSection data={reviews} />
-            )}
+            {reviews.length > 0 && <ReviewSection data={reviews} />}
 
             {testimonials.length > 0 && (
                 <TestimonialSection data={testimonials} />

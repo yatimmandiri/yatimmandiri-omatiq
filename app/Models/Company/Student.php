@@ -98,6 +98,23 @@ class Student extends Model
         );
     }
 
+    public const ACTIVE_STATUSES = ['submitted', 'verified'];
+
+    public function hasActiveRegistration(): bool
+    {
+        return $this->participants()
+            ->whereIn('status', self::ACTIVE_STATUSES)
+            ->exists();
+    }
+
+    public static function hasActiveRegistrationFor(string $nik): bool
+    {
+        return static::query()
+            ->where('nik', $nik)
+            ->whereHas('participants', fn (Builder $query) => $query->whereIn('status', self::ACTIVE_STATUSES))
+            ->exists();
+    }
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()

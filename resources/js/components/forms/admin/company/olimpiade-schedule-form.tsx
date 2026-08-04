@@ -42,7 +42,14 @@ const phases = [
     { value: 'announcement', label: 'Pengumuman' },
 ];
 
-const colors = ['#F15F23', '#0F60AC', '#FFC857', '#5DD39E', '#56CCF2', '#8B5CF6'];
+const colors = [
+    '#17524A',
+    '#E5BE1E',
+    '#0F4038',
+    '#5DD39E',
+    '#56CCF2',
+    '#8B5CF6',
+];
 
 const inputDate = (value?: string | null) => value?.slice(0, 10) ?? '';
 
@@ -53,7 +60,9 @@ export function OlimpiadeScheduleForm({ dataId }: { dataId?: number }) {
     }>().props;
 
     const form = useForm<any>({
-        olimpiade_id: schedule?.olimpiade_id ? String(schedule.olimpiade_id) : '',
+        olimpiade_id: schedule?.olimpiade_id
+            ? String(schedule.olimpiade_id)
+            : '',
         title: schedule?.title ?? '',
         phase: schedule?.phase ?? 'registration',
         start_date: inputDate(schedule?.start_date),
@@ -62,7 +71,7 @@ export function OlimpiadeScheduleForm({ dataId }: { dataId?: number }) {
         description: schedule?.description ?? '',
         action_label: schedule?.action_label ?? '',
         action_url: schedule?.action_url ?? '',
-        color: schedule?.color ?? '#F15F23',
+        color: schedule?.color ?? '#17524A',
         sort_order: schedule?.sort_order ?? 0,
         status: schedule?.status ?? true,
     });
@@ -103,7 +112,11 @@ export function OlimpiadeScheduleForm({ dataId }: { dataId?: number }) {
                     </p>
                 </div>
                 <div className="flex gap-2">
-                    <Button type="button" variant="outline" onClick={() => window.history.back()}>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => window.history.back()}
+                    >
                         <ArrowLeft />
                         Kembali
                     </Button>
@@ -119,14 +132,19 @@ export function OlimpiadeScheduleForm({ dataId }: { dataId?: number }) {
                     <Field label="Olimpiade" error={error('olimpiade_id')}>
                         <Select
                             value={form.data.olimpiade_id}
-                            onValueChange={(value) => form.setData('olimpiade_id', value)}
+                            onValueChange={(value) =>
+                                form.setData('olimpiade_id', value)
+                            }
                         >
                             <SelectTrigger className="w-full">
                                 <SelectValue placeholder="Pilih olimpiade" />
                             </SelectTrigger>
                             <SelectContent>
                                 {olimpiades.map((item) => (
-                                    <SelectItem key={item.id} value={String(item.id)}>
+                                    <SelectItem
+                                        key={item.id}
+                                        value={String(item.id)}
+                                    >
                                         {item.name}
                                     </SelectItem>
                                 ))}
@@ -136,14 +154,19 @@ export function OlimpiadeScheduleForm({ dataId }: { dataId?: number }) {
                     <Field label="Fase" error={error('phase')}>
                         <Select
                             value={form.data.phase}
-                            onValueChange={(value) => form.setData('phase', value)}
+                            onValueChange={(value) =>
+                                form.setData('phase', value)
+                            }
                         >
                             <SelectTrigger className="w-full">
                                 <SelectValue placeholder="Pilih fase" />
                             </SelectTrigger>
                             <SelectContent>
                                 {phases.map((item) => (
-                                    <SelectItem key={item.value} value={item.value}>
+                                    <SelectItem
+                                        key={item.value}
+                                        value={item.value}
+                                    >
                                         {item.label}
                                     </SelectItem>
                                 ))}
@@ -155,7 +178,9 @@ export function OlimpiadeScheduleForm({ dataId }: { dataId?: number }) {
                 <Field label="Judul Jadwal" error={error('title')}>
                     <Input
                         value={form.data.title}
-                        onChange={(event) => form.setData('title', event.target.value)}
+                        onChange={(event) =>
+                            form.setData('title', event.target.value)
+                        }
                         placeholder="Registrasi Gelombang Nasional"
                         required
                     />
@@ -166,7 +191,9 @@ export function OlimpiadeScheduleForm({ dataId }: { dataId?: number }) {
                         <Input
                             type="date"
                             value={form.data.start_date}
-                            onChange={(event) => form.setData('start_date', event.target.value)}
+                            onChange={(event) =>
+                                form.setData('start_date', event.target.value)
+                            }
                             required
                         />
                     </Field>
@@ -174,7 +201,9 @@ export function OlimpiadeScheduleForm({ dataId }: { dataId?: number }) {
                         <Input
                             type="date"
                             value={form.data.end_date}
-                            onChange={(event) => form.setData('end_date', event.target.value)}
+                            onChange={(event) =>
+                                form.setData('end_date', event.target.value)
+                            }
                         />
                     </Field>
                     <Field label="Urutan" error={error('sort_order')}>
@@ -182,7 +211,12 @@ export function OlimpiadeScheduleForm({ dataId }: { dataId?: number }) {
                             type="number"
                             min={0}
                             value={form.data.sort_order}
-                            onChange={(event) => form.setData('sort_order', Number(event.target.value))}
+                            onChange={(event) =>
+                                form.setData(
+                                    'sort_order',
+                                    Number(event.target.value),
+                                )
+                            }
                         />
                     </Field>
                 </div>
@@ -190,7 +224,9 @@ export function OlimpiadeScheduleForm({ dataId }: { dataId?: number }) {
                 <Field label="Lokasi / Mode" error={error('location')}>
                     <Input
                         value={form.data.location}
-                        onChange={(event) => form.setData('location', event.target.value)}
+                        onChange={(event) =>
+                            form.setData('location', event.target.value)
+                        }
                         placeholder="Online Nasional / Kota Final"
                     />
                 </Field>
@@ -199,7 +235,9 @@ export function OlimpiadeScheduleForm({ dataId }: { dataId?: number }) {
                     <Textarea
                         rows={5}
                         value={form.data.description}
-                        onChange={(event) => form.setData('description', event.target.value)}
+                        onChange={(event) =>
+                            form.setData('description', event.target.value)
+                        }
                         placeholder="Ringkasan aktivitas dan hal yang perlu disiapkan peserta."
                     />
                 </Field>
@@ -208,14 +246,18 @@ export function OlimpiadeScheduleForm({ dataId }: { dataId?: number }) {
                     <Field label="Label CTA" error={error('action_label')}>
                         <Input
                             value={form.data.action_label}
-                            onChange={(event) => form.setData('action_label', event.target.value)}
+                            onChange={(event) =>
+                                form.setData('action_label', event.target.value)
+                            }
                             placeholder="Daftar Sekarang"
                         />
                     </Field>
                     <Field label="URL CTA" error={error('action_url')}>
                         <Input
                             value={form.data.action_url}
-                            onChange={(event) => form.setData('action_url', event.target.value)}
+                            onChange={(event) =>
+                                form.setData('action_url', event.target.value)
+                            }
                             placeholder="/kontak"
                         />
                     </Field>
@@ -240,7 +282,9 @@ export function OlimpiadeScheduleForm({ dataId }: { dataId?: number }) {
                     <Label>Status aktif</Label>
                     <Switch
                         checked={form.data.status}
-                        onCheckedChange={(checked) => form.setData('status', checked)}
+                        onCheckedChange={(checked) =>
+                            form.setData('status', checked)
+                        }
                     />
                 </div>
             </Card>

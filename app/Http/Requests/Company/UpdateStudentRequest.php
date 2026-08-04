@@ -2,12 +2,10 @@
 
 namespace App\Http\Requests\Company;
 
-use App\Models\Company\Student;
-use Closure;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class StoreTeacherParticipantRequest extends FormRequest
+class UpdateStudentRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -16,18 +14,10 @@ class StoreTeacherParticipantRequest extends FormRequest
 
     public function rules(): array
     {
+        $studentId = $this->route('student')?->id;
+
         return [
-            'nik' => [
-                'required',
-                'string',
-                'size:16',
-                function (string $attribute, mixed $value, Closure $fail) {
-                    if (Student::hasActiveRegistrationFor($value)) {
-                        $fail('NIK ini sudah memiliki pendaftaran aktif pada OMATIQ.');
-                    }
-                },
-            ],
-            'olimpiade_id' => ['required', 'integer', 'exists:olimpiades,id'],
+            'nik' => ['required', 'string', 'size:16', Rule::unique('students', 'nik')->ignore($studentId)],
             'full_name' => ['required', 'string', 'max:255'],
             'nickname' => ['nullable', 'string', 'max:120'],
             'gender' => ['required', Rule::in(['male', 'female'])],
@@ -40,11 +30,13 @@ class StoreTeacherParticipantRequest extends FormRequest
             'province_id' => ['required', 'exists:provinces,id'],
             'regency_id' => ['required', 'exists:regencies,id'],
             'parent_phone' => ['required', 'string', 'max:30'],
+            'mentor_id' => ['nullable', 'integer', 'exists:users,id'],
             'mentor_name' => ['nullable', 'string', 'max:255'],
             'mentor_phone' => ['nullable', 'string', 'max:30'],
-            'photo' => ['required', 'file', 'image', 'max:2048'],
-            'identity_card' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:4096'],
-            'family_card' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:4096'],
+            'is_binaan' => ['nullable', 'boolean'],
+            'photo' => ['nullable', 'file', 'image', 'max:2048'],
+            'identity_card' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:4096'],
+            'family_card' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:4096'],
         ];
     }
 }

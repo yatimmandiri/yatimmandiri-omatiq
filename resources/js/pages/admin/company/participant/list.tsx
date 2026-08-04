@@ -20,10 +20,10 @@ export default function ListPage() {
     const columns = [
         {
             header: (info: any) => renderRowHeader(info, 'Peserta'),
-            accessorKey: 'full_name',
+            accessorKey: 'student.full_name',
             cell: (info: any) => (
                 <div className="space-y-1">
-                    <p className="font-semibold">{info.getValue()}</p>
+                    <p className="font-semibold">{info.getValue() ?? '-'}</p>
                     <p className="text-xs text-muted-foreground">
                         {info.row.original.registration_number}
                     </p>

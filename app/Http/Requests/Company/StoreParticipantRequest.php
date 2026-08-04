@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\Company;
 
+use App\Models\Company\Student;
+use Closure;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -15,7 +17,16 @@ class StoreParticipantRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'nik' => ['required', 'string', 'size:16', 'unique:students,nik'],
+            'nik' => [
+                'required',
+                'string',
+                'size:16',
+                function (string $attribute, mixed $value, Closure $fail) {
+                    if (Student::hasActiveRegistrationFor($value)) {
+                        $fail('NIK ini sudah memiliki pendaftaran aktif pada OMATIQ.');
+                    }
+                },
+            ],
             'olimpiade_id' => ['required', 'integer', 'exists:olimpiades,id'],
             'full_name' => ['required', 'string', 'max:255'],
             'nickname' => ['nullable', 'string', 'max:120'],

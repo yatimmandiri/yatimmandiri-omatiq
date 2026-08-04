@@ -4,7 +4,7 @@ import {
     DisclosurePanel,
 } from '@headlessui/react';
 import { ChevronDown, X } from 'lucide-react';
-import type { ReactNode} from 'react';
+import type { ReactNode } from 'react';
 import { createContext, useContext, useMemo } from 'react';
 import { BsFacebook, BsInstagram, BsTiktok, BsYoutube } from 'react-icons/bs';
 
@@ -14,7 +14,14 @@ export const UseSidebar = () => useContext(SidebarContext);
 
 export const SidebarProvider = ({ children }: { children: ReactNode }) => {
     const menus = [
-        { label: 'Tentang Kami', href: '/about' },
+        {
+            label: 'Tentang Kami',
+            href: '/about',
+            children: [
+                { label: 'Tentang Kami', href: '/about' },
+                { label: 'Perjalanan', href: '/about/milestone' },
+            ],
+        },
         { label: 'Olimpiade', href: '/olimpiade' },
         { label: 'Artikel', href: '/berita' },
         { label: 'Kontak', href: '/kontak' },
@@ -48,7 +55,7 @@ export const NavigationComponent = ({ solid = false }: { solid?: boolean }) => {
                         href={menu.href}
                         className={`flex items-center gap-1 rounded-xl px-4 py-2 text-sm font-bold transition ${
                             solid
-                                ? 'text-[#1E293B] hover:bg-[#0F60AC]/10 hover:text-[#0F60AC] dark:text-white/85 dark:hover:bg-white/10 dark:hover:text-white'
+                                ? 'text-[#1E293B] hover:bg-[#17524A]/10 hover:text-[#17524A] dark:text-white/85 dark:hover:bg-white/10 dark:hover:text-white'
                                 : 'text-white/85 hover:bg-white/10 hover:text-white'
                         }`}
                     >
@@ -57,16 +64,18 @@ export const NavigationComponent = ({ solid = false }: { solid?: boolean }) => {
                     </a>
 
                     {menu.children && (
-                        <div className="pointer-events-none absolute top-full left-0 mt-3 min-w-56 translate-y-3 rounded-2xl border border-slate-200/70 bg-white/95 p-2 opacity-0 shadow-2xl backdrop-blur-xl transition-all duration-300 group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100 dark:border-white/10 dark:bg-slate-950/95">
-                            {menu.children.map((child: any) => (
-                                <a
-                                    key={child.href}
-                                    href={child.href}
-                                    className="block rounded-xl px-4 py-3 text-sm font-semibold text-[#1E293B] transition hover:bg-[#0F60AC]/10 hover:text-[#0F60AC] dark:text-white/70 dark:hover:bg-white/10 dark:hover:text-white"
-                                >
-                                    {child.label}
-                                </a>
-                            ))}
+                        <div className="pointer-events-none absolute top-full left-0 min-w-56 pt-3 opacity-0 transition-all duration-300 group-hover:pointer-events-auto group-hover:opacity-100">
+                            <div className="rounded-2xl border border-slate-200/70 bg-white/95 p-2 shadow-2xl backdrop-blur-xl transition-transform duration-300 group-hover:-translate-y-1 dark:border-white/10 dark:bg-slate-950/95">
+                                {menu.children.map((child: any) => (
+                                    <a
+                                        key={child.href}
+                                        href={child.href}
+                                        className="block rounded-xl px-4 py-3 text-sm font-semibold text-[#1E293B] transition hover:bg-[#17524A]/10 hover:text-[#17524A] dark:text-white/70 dark:hover:bg-white/10 dark:hover:text-white"
+                                    >
+                                        {child.label}
+                                    </a>
+                                ))}
+                            </div>
                         </div>
                     )}
                 </div>
@@ -138,16 +147,22 @@ export const NavigationSidebarComponent = ({
                                                     />
                                                 </DisclosureButton>
                                                 <DisclosurePanel className="border-t border-white/5">
-                                                    {menu.children.map((child: any) => (
-                                                        <a
-                                                            key={child.href}
-                                                            href={child.href}
-                                                            className="block px-6 py-3 text-sm text-white/70 transition hover:bg-white/5 hover:text-white"
-                                                            onClick={onClose}
-                                                        >
-                                                            {child.label}
-                                                        </a>
-                                                    ))}
+                                                    {menu.children.map(
+                                                        (child: any) => (
+                                                            <a
+                                                                key={child.href}
+                                                                href={
+                                                                    child.href
+                                                                }
+                                                                className="block px-6 py-3 text-sm text-white/70 transition hover:bg-white/5 hover:text-white"
+                                                                onClick={
+                                                                    onClose
+                                                                }
+                                                            >
+                                                                {child.label}
+                                                            </a>
+                                                        ),
+                                                    )}
                                                 </DisclosurePanel>
                                             </>
                                         )}
@@ -176,7 +191,7 @@ export const NavigationSidebarComponent = ({
                                     href={social.url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#F15F23] text-white transition hover:scale-105"
+                                    className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#17524A] text-white transition hover:scale-105"
                                 >
                                     <social.icon size={18} />
                                 </a>

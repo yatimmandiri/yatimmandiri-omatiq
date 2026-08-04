@@ -11,6 +11,10 @@ Breadcrumbs::for('home.about', function (BreadcrumbTrail $trail) {
     $trail->parent('home.index')->push('Tentang Kami', route('home.about'));
 });
 
+Breadcrumbs::for('home.milestone', function (BreadcrumbTrail $trail) {
+    $trail->parent('home.about')->push('Perjalanan', route('home.milestone'));
+});
+
 Breadcrumbs::for('home.olimpiade', function (BreadcrumbTrail $trail) {
     $trail->parent('home.index')->push('Olimpiade', route('home.olimpiade'));
 });

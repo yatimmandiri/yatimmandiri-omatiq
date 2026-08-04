@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('students', function (Blueprint $table) {
             $table->id();
-            $table->char('nik', 16)->unique();
+            $table->char('nik', 16);
             $table->string('full_name');
             $table->string('nickname')->nullable();
             $table->string('gender', 20);
@@ -32,8 +32,13 @@ return new class extends Migration
             $table->boolean('is_binaan')->default(false);
             $table->index('province_id');
             $table->index('regency_id');
+            $table->index('school_name');
+            $table->index('is_binaan');
+            $table->index(['mentor_id', 'created_at']);
             $table->timestamps();
             $table->softDeletes();
+
+            $table->unique(['nik', 'deleted_at']);
 
             $table->foreign('province_id')->references('id')->on('provinces')->nullOnDelete();
             $table->foreign('regency_id')->references('id')->on('regencies')->nullOnDelete();

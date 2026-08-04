@@ -3,10 +3,8 @@
 namespace App\Http\Controllers\Admin\Teacher;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Company\JoinOlimpiadeRequest;
 use App\Http\Requests\Company\StoreTeacherParticipantRequest;
 use App\Http\Requests\Company\UpdateTeacherParticipantRequest;
-use App\Models\Company\Olimpiade;
 use App\Models\Company\Participant;
 use App\Services\TeacherService;
 use App\Settings\SiteSettings;
@@ -25,9 +23,7 @@ class TeacherStudentController extends Controller
     {
         $this->authorize('viewAny', Participant::class);
 
-        return Inertia::render('admin/teacher/students/list', [
-            'olimpiades' => Olimpiade::query()->active()->ordered()->get(['id', 'name', 'category', 'slug']),
-        ]);
+        return Inertia::render('admin/teacher/students/list');
     }
 
     public function create(): Response
@@ -105,25 +101,6 @@ class TeacherStudentController extends Controller
         return redirect()
             ->route('admin.teacher.students.index')
             ->with('success', "Data siswa {$name} berhasil dihapus.");
-    }
-
-    public function joinOlimpiade(JoinOlimpiadeRequest $request, Participant $participant)
-    {
-        $this->authorize('update', $participant);
-
-        $settings = app(SiteSettings::class);
-
-        if (! $settings->registration_binaan_open) {
-            abort(403, 'Pendaftaran binaan sedang ditutup.');
-        }
-
-        $this->service->joinOlimpiade(Auth::user(), $participant, $request->integer('olimpiade_id'));
-
-        $name = $participant->student?->full_name ?? 'Unknown';
-
-        return redirect()
-            ->route('admin.teacher.students.index')
-            ->with('success', "Siswa {$name} berhasil didaftarkan ke lomba.");
     }
 
     public function getData(Request $request)

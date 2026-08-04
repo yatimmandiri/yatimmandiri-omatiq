@@ -45,19 +45,19 @@ const PartnerSlider = ({ items }: { items: string[] }) => {
                     key={`${partner}-${index}`}
                     className="h-auto py-2"
                 >
-                    <div className="group relative h-full min-h-44 overflow-hidden rounded-3xl border border-slate-100 bg-[#F8FAFC] p-5 shadow-sm transition-all duration-500 ease-out hover:-translate-y-1 hover:bg-white hover:shadow-xl hover:shadow-[#0F60AC]/10">
-                        <div className="absolute -top-6 -right-6 h-24 w-24 rounded-full bg-[#F15F23]/10 transition duration-500 group-hover:scale-125" />
+                    <div className="group relative h-full min-h-44 overflow-hidden rounded-3xl border border-slate-100 bg-[#F8FAFC] p-5 shadow-sm transition-all duration-500 ease-out hover:-translate-y-1 hover:bg-white hover:shadow-xl hover:shadow-[#17524A]/10">
+                        <div className="absolute -top-6 -right-6 h-24 w-24 rounded-full bg-[#17524A]/10 transition duration-500 group-hover:scale-125" />
                         <div className="absolute -bottom-8 left-6 h-24 w-24 rounded-full bg-[#56CCF2]/15 transition duration-500 group-hover:scale-125" />
                         <div className="relative flex h-full flex-col justify-between">
                             <div className="flex items-start justify-between gap-4">
-                                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-[#0F60AC] shadow-sm ring-1 ring-slate-100 transition duration-500 group-hover:scale-110 group-hover:rotate-3 group-hover:bg-[#0F60AC] group-hover:text-white">
+                                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-[#17524A] shadow-sm ring-1 ring-slate-100 transition duration-500 group-hover:scale-110 group-hover:rotate-3 group-hover:bg-[#17524A] group-hover:text-white">
                                     {index % 2 === 0 ? (
                                         <Building2 className="h-7 w-7" />
                                     ) : (
                                         <Handshake className="h-7 w-7" />
                                     )}
                                 </div>
-                                <span className="rounded-full bg-white px-3 py-1 text-xs font-black tracking-wide text-[#F15F23] uppercase shadow-sm">
+                                <span className="rounded-full bg-white px-3 py-1 text-xs font-black tracking-wide text-[#17524A] uppercase shadow-sm">
                                     Partner
                                 </span>
                             </div>

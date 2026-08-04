@@ -4,17 +4,8 @@ import { renderRowHeader, RowActions } from '@/components/partials/dataTables/ut
 import { Badge } from '@/components/ui/badge';
 import { dashboard } from '@/routes/admin';
 import teacherStudents from '@/routes/admin/teacher/students';
-import { usePage } from '@inertiajs/react';
 import { CheckCircle2, Clock3, XCircle } from 'lucide-react';
 import { useState } from 'react';
-import JoinOlimpiadeModal from './partials/join-olimpiade-modal';
-
-type OlimpiadeOption = {
-    id: number | string;
-    name: string;
-    category?: string;
-    slug?: string;
-};
 
 const statusLabels: Record<string, string> = {
     submitted: 'Submitted',
@@ -26,12 +17,11 @@ const statusVariant = (status: string) =>
     status === 'verified' ? 'default' : status === 'rejected' ? 'destructive' : 'secondary';
 
 export default function ListPage() {
-    const { olimpiades = [] } = usePage<{ olimpiades?: OlimpiadeOption[] }>().props;
     const [refreshData, setRefreshData] = useState(false);
     const columns = [
         {
             header: (info: any) => renderRowHeader(info, 'Siswa'),
-            accessorKey: 'full_name',
+            accessorKey: 'student.full_name',
             cell: (info: any) => (
                 <div className="space-y-1">
                     <p className="font-semibold">{info.getValue()}</p>
@@ -74,11 +64,6 @@ export default function ListPage() {
             header: 'Aksi',
             cell: (info: any) => (
                 <div className="flex items-center gap-2">
-                    <JoinOlimpiadeModal
-                        participant={info.row.original}
-                        olimpiades={olimpiades}
-                        setRefreshData={setRefreshData}
-                    />
                     <RowActions info={info} setRefreshData={setRefreshData} />
                 </div>
             ),
@@ -86,7 +71,6 @@ export default function ListPage() {
             enableHiding: false,
         },
     ];
-    console.log(teacherStudents.data());
 
     return (
         <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">

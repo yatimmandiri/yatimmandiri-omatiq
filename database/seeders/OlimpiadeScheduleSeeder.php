@@ -24,7 +24,7 @@ class OlimpiadeScheduleSeeder extends Seeder
                 'description' => "Pendaftaran peserta cabang Al-Qur'an untuk sekolah, TPQ, orang tua, dan pendamping daerah.",
                 'action_label' => "Daftar Al-Qur'an",
                 'action_url' => '/kontak',
-                'color' => '#F15F23',
+                'color' => '#17524A',
                 'sort_order' => 1,
             ],
             [
@@ -37,7 +37,7 @@ class OlimpiadeScheduleSeeder extends Seeder
                 'description' => 'Pendaftaran peserta cabang Matematika untuk anak yang siap mengasah logika dan strategi soal.',
                 'action_label' => 'Daftar Matematika',
                 'action_url' => '/kontak',
-                'color' => '#0F60AC',
+                'color' => '#E5BE1E',
                 'sort_order' => 2,
             ],
             [
@@ -70,7 +70,7 @@ class OlimpiadeScheduleSeeder extends Seeder
                 'end_date' => '2026-08-25',
                 'location' => 'Online Terjadwal',
                 'description' => 'Peserta mengikuti seleksi awal tajwid dan ketepatan cara baca.',
-                'color' => '#FFC857',
+                'color' => '#E5BE1E',
                 'sort_order' => 5,
             ],
             [
@@ -81,7 +81,7 @@ class OlimpiadeScheduleSeeder extends Seeder
                 'end_date' => '2026-08-27',
                 'location' => 'Online Terjadwal',
                 'description' => 'Peserta mengerjakan soal seleksi awal untuk menentukan peserta fase gugur.',
-                'color' => '#FFC857',
+                'color' => '#E5BE1E',
                 'sort_order' => 6,
             ],
             [

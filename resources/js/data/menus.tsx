@@ -18,6 +18,7 @@ import site from '@/routes/admin/settings/site';
 import { ChevronRight, CogIcon, CpuIcon, GraduationCap, Handshake, LayoutDashboard, MapIcon, Trophy, UserCheck, Users } from 'lucide-react';
 import reviews from '@/routes/admin/companies/reviews';
 import sliders from '@/routes/admin/companies/sliders';
+import students from '@/routes/admin/companies/students';
 import teachers from '@/routes/admin/companies/teachers';
 import faqCompanies from '@/routes/admin/companies/faq-companies';
 import teacherStudents from '@/routes/admin/teacher/students';
@@ -52,6 +53,13 @@ export const NavigationList = [
                 permission: 'view-participant',
                 roles: ['Administrators'],
                 icon: Users,
+            },
+            {
+                title: 'Data Murid',
+                href: students.index().url,
+                permission: 'view-student',
+                roles: ['Administrators'],
+                icon: GraduationCap,
             },
             {
                 title: 'Kelola Murid',

@@ -1,5 +1,12 @@
 import { Link, usePage } from '@inertiajs/react';
-import { ArrowRight, CheckCircle2, ClipboardCheck, Home, Mail, Trophy } from 'lucide-react';
+import {
+    ArrowRight,
+    CheckCircle2,
+    ClipboardCheck,
+    Home,
+    Mail,
+    Trophy,
+} from 'lucide-react';
 
 type SuccessProps = {
     participant?: {
@@ -16,8 +23,8 @@ export default function RegistrationSuccessPage() {
     return (
         <section className="relative overflow-hidden px-5 pt-32 pb-20 lg:px-8">
             <div className="absolute top-20 left-0 h-56 w-56 rounded-[56px] bg-[#5DD39E]/20 blur-3xl" />
-            <div className="absolute right-0 bottom-0 h-64 w-64 rounded-[64px] bg-[#F15F23]/15 blur-3xl" />
-            <div className="relative mx-auto max-w-3xl rounded-[32px] bg-white p-6 text-center shadow-2xl ring-1 shadow-[#0F60AC]/10 ring-slate-100 sm:p-10">
+            <div className="absolute right-0 bottom-0 h-64 w-64 rounded-[64px] bg-[#17524A]/15 blur-3xl" />
+            <div className="relative mx-auto max-w-3xl rounded-[32px] bg-white p-6 text-center shadow-2xl ring-1 shadow-[#17524A]/10 ring-slate-100 sm:p-10">
                 <span className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-[#22C55E]/10 text-[#22C55E]">
                     <CheckCircle2 className="h-10 w-10" />
                 </span>
@@ -25,12 +32,12 @@ export default function RegistrationSuccessPage() {
                     Pendaftaran berhasil dikirim!
                 </h1>
                 <p className="mx-auto mt-4 max-w-xl text-base leading-8 text-[#64748B]">
-                    Terima kasih, {participant?.full_name ?? 'peserta'}. Tim OMATIQ
-                    akan meninjau data dan dokumen pendaftaran kamu.
+                    Terima kasih, {participant?.full_name ?? 'peserta'}. Tim
+                    OMATIQ akan meninjau data dan dokumen pendaftaran kamu.
                 </p>
                 <div className="mt-8 grid gap-4 sm:grid-cols-3">
                     <div className="rounded-3xl bg-[#F8FAFC] p-5">
-                        <ClipboardCheck className="mx-auto h-7 w-7 text-[#F15F23]" />
+                        <ClipboardCheck className="mx-auto h-7 w-7 text-[#17524A]" />
                         <p className="mt-3 text-sm font-black text-[#64748B]">
                             Nomor Registrasi
                         </p>
@@ -39,7 +46,7 @@ export default function RegistrationSuccessPage() {
                         </p>
                     </div>
                     <div className="rounded-3xl bg-[#F8FAFC] p-5">
-                        <Trophy className="mx-auto h-7 w-7 text-[#0F60AC]" />
+                        <Trophy className="mx-auto h-7 w-7 text-[#17524A]" />
                         <p className="mt-3 text-sm font-black text-[#64748B]">
                             Kategori
                         </p>
@@ -52,13 +59,13 @@ export default function RegistrationSuccessPage() {
                         <p className="mt-3 text-sm font-black text-[#64748B]">
                             Email Akun
                         </p>
-                        <p className="mt-1 text-base font-black text-[#1E293B] break-all">
+                        <p className="mt-1 text-base font-black break-all text-[#1E293B]">
                             {participant?.email ?? '-'}
                         </p>
                     </div>
                 </div>
                 {participant?.email && (
-                    <div className="mt-6 rounded-3xl bg-[#0F60AC]/5 p-5 ring-1 ring-[#0F60AC]/10">
+                    <div className="mt-6 rounded-3xl bg-[#17524A]/5 p-5 ring-1 ring-[#17524A]/10">
                         <p className="text-sm font-semibold text-[#64748B]">
                             Akun kamu sudah dibuat. Gunakan email di atas dan
                             password yang kamu daftarkan untuk login ke akun
@@ -69,14 +76,14 @@ export default function RegistrationSuccessPage() {
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
                     <Link
                         href="/"
-                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-6 py-4 text-sm font-black text-[#0F60AC] transition hover:-translate-y-1"
+                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-6 py-4 text-sm font-black text-[#17524A] transition hover:-translate-y-1"
                     >
                         <Home className="h-4 w-4" />
                         Kembali ke Home
                     </Link>
                     <Link
                         href="/jadwal"
-                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#F15F23] px-6 py-4 text-sm font-black text-white shadow-lg shadow-[#F15F23]/25 transition hover:-translate-y-1"
+                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#17524A] px-6 py-4 text-sm font-black text-white shadow-lg shadow-[#17524A]/25 transition hover:-translate-y-1"
                     >
                         Lihat Jadwal
                         <ArrowRight className="h-4 w-4" />

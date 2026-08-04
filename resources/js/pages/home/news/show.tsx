@@ -2,7 +2,7 @@ import {
     CTASection,
     NewsCard,
 } from '@/components/marketing/marketing-components';
-import type { NewsItem} from '@/components/marketing/site-data';
+import type { NewsItem } from '@/components/marketing/site-data';
 import { news } from '@/components/marketing/site-data';
 import { Link, usePage } from '@inertiajs/react';
 import { ArrowLeft, Globe2, Link2, Mail, Share2 } from 'lucide-react';
@@ -27,13 +27,13 @@ export default function NewsDetailPage() {
                     <div className="mx-auto max-w-4xl">
                         <Link
                             href="/berita"
-                            className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-black text-[#0F60AC] shadow-sm ring-1 ring-slate-100 transition hover:-translate-y-1"
+                            className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-black text-[#17524A] shadow-sm ring-1 ring-slate-100 transition hover:-translate-y-1"
                         >
                             <ArrowLeft className="h-4 w-4" />
                             Back to News
                         </Link>
                         <div className="mt-8 flex flex-wrap items-center gap-3 text-xs font-black tracking-wide uppercase">
-                            <span className="rounded-full bg-[#F15F23]/10 px-3 py-1 text-[#F15F23]">
+                            <span className="rounded-full bg-[#17524A]/10 px-3 py-1 text-[#17524A]">
                                 {article.category}
                             </span>
                             <span className="text-[#64748B]">
@@ -64,7 +64,7 @@ export default function NewsDetailPage() {
                                         <button
                                             key={index}
                                             type="button"
-                                            className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[#F8FAFC] text-[#0F60AC] transition hover:bg-[#0F60AC] hover:text-white"
+                                            className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[#F8FAFC] text-[#17524A] transition hover:bg-[#17524A] hover:text-white"
                                             aria-label="Share article"
                                         >
                                             <Icon className="h-4 w-4" />
@@ -77,7 +77,7 @@ export default function NewsDetailPage() {
                 </section>
 
                 <section className="px-5 pb-16 lg:px-8">
-                    <div className="mx-auto max-w-6xl overflow-hidden rounded-[28px] bg-white shadow-2xl ring-1 shadow-[#0F60AC]/10 ring-slate-100 sm:rounded-[32px]">
+                    <div className="mx-auto max-w-6xl overflow-hidden rounded-[28px] bg-white shadow-2xl ring-1 shadow-[#17524A]/10 ring-slate-100 sm:rounded-[32px]">
                         <img
                             src={article.image}
                             alt={article.title}

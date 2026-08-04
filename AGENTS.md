@@ -27,16 +27,19 @@ Order for full check: `npm run lint:check` → `npm run types:check` → `compos
 ## Architecture
 
 - **Auth**: Fortify handles login/register/reset-password/2FA/email-verification. Inertia views defined in `FortifyServiceProvider`. Socialite OAuth in `routes/auth.php`.
-- **Admin**: All admin routes at `/admin/*`, guarded by `auth`, `verified`, `auth.admin` middleware. Uses Spatie roles/permissions.
-- **Public**: Public routes in `routes/home.php` — homepage, about, olimpiade listing, registration, news.
-- **Layouts**: AppLayout (admin/user), AuthLayout, HomeLayout. Selected in `app.tsx` based on page name prefix.
-- **Route types**: Use Wayfinder generated imports — `@/routes/` for named routes, `@/actions/` for controller actions.
+- **Routing**: `routes/web.php` only requires the others: `auth.php`, `settings.php`, `admin.php`, `home.php`. Controllers split by namespace (`App\Http\Controllers\Admin`, `Home`, `Auth`, `Settings`) matching route files. Settings routes are grouped with prefix `admin.` under a `auth` guard.
+- **Admin**: All admin routes at `/admin/*`, guarded by `auth`, `verified`, `auth.admin` (`App\Http\Middleware\AdminMiddleware`). Uses Spatie roles/permissions. Middleware aliases defined in `bootstrap/app.php`.
+- **Public**: Public routes in `routes/home.php` — home page, about, olimpiade listing, schedule, registration, news, contact.
+- **Layouts**: Selected in `resources/js/app.tsx` by page name prefix: `home/*` → HomeLayout, `auth/*` → AuthLayout, `settings/*` → [AppLayout, SettingsLayout], `welcome` → null, default → AppLayout.
+- **Route types**: Use Wayfinder generated imports — `@/routes/` for named routes, `@/actions/` for controller actions. Regenerate when routes change via the Vite plugin / `wayfinder:generate` if TS errors appear.
 
 ## Domain
 
 Two model namespaces:
-- `App\Models\Core` — User, Role, Permission, Social, LogActivity
-- `App\Models\Company` — Olimpiade, OlimpiadeGallery, OlimpiadeObjective, OlimpiadeSchedule, OlimpiadeVideo, Participant, Slider, Testimonial, Review, FaqCompany
+- `App\Models\Core` — User, Role, Permission, Social, LogActivity; plus `App\Models\Core\Region` (Province, Regency, District, Village from `azishapidin/indoregion`)
+- `App\Models\Company` — Olimpiade, OlimpiadeGallery, OlimpiadeObjective, OlimpiadeSchedule, OlimpiadeVideo, Participant, Student, Slider, Testimonial, Review, FaqCompany
+
+Note: "Teacher" is **not** an Eloquent model — mentor/teacher roles are `User` rows with a Spatie role. `Admin\Teacher\TeacherStudentController` manages participants from the mentor's perspective.
 
 ## Conventions
 
@@ -47,6 +50,9 @@ Two model namespaces:
 - Regions (province/regency/district/village) use `azishapidin/indoregion`.
 - Site settings via `spatie/laravel-settings` — see `app/Settings/SiteSettings.php`.
 - Breadcrumbs via `diglactic/laravel-breadcrumbs` — defined in `routes/breadcrumbs/` for Blade; every Inertia page component **must** define a static `.layout` property with `breadcrumbs` array: `{ title: string, href: routeHelper().url }`. Last item = current page (plain text). Import `dashboard` from `@/routes/admin` for the root breadcrumb.
+- **New routes**: every new page/route (public `routes/home.php`, `routes/settings.php`, `routes/admin.php`) must add its own page component with a `.layout` breadcrumbs array — this is how the current page shows in the AppLayout header. Public (`home/*`) pages use HomeLayout and don't need breadcrumbs; admin/settings pages do.
+- **Breadcrumb bug to avoid**: the breadcrumb link field is `href` (per `BreadcrumbItem` in `resources/js/types/navigation.ts`), NOT `url`. `resources/js/components/breadcrumbs.tsx` renders `item.href`; the last item is rendered as plain text regardless of its `href`.
+- **Header dropdowns** (public `home-sidebar-layout.tsx`): desktop dropdown must bridge the hover gap — wrap the panel in a `pt-3` container inside the `group-hover` wrapper so the cursor doesn't leave the hover zone while moving to the dropdown (a bare `mt-3` gap makes the panel disappear before click). Mobile dropdown already uses `Disclosure` via `menu.children`.
 - Rich text uses TipTap — see `resources/js/components/ui/tiptap/`.
 - Media via Spatie media-library (conversions for images, PDF, video, SVG).
 - ESLint ignores: `resources/js/actions/**`, `resources/js/routes/**`, `resources/js/wayfinder/**`, `resources/js/components/ui/*` (generated/third-party).
