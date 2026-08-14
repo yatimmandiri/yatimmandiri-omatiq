@@ -6,16 +6,21 @@ import {
     BreadcrumbPage,
     BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
+import type { BreadcrumbItem as BreadcrumbItemType } from '@/types';
 import { Link } from '@inertiajs/react';
 import { Fragment } from 'react';
 
-export function Breadcrumbs({ breadcrumbs }: { breadcrumbs: any }) {
+export function Breadcrumbs({
+    breadcrumbs,
+}: {
+    breadcrumbs: BreadcrumbItemType[];
+}) {
     return (
         <Fragment>
             {breadcrumbs.length > 0 && (
                 <Breadcrumb>
                     <BreadcrumbList>
-                        {breadcrumbs.map((item: any, index: number) => {
+                        {breadcrumbs.map((item, index) => {
                             const isLast = index === breadcrumbs.length - 1;
 
                             return (
@@ -27,7 +32,7 @@ export function Breadcrumbs({ breadcrumbs }: { breadcrumbs: any }) {
                                             </BreadcrumbPage>
                                         ) : (
                                             <BreadcrumbLink asChild>
-                                                <Link href={item.url}>
+                                                <Link href={item.href}>
                                                     {item.title}
                                                 </Link>
                                             </BreadcrumbLink>

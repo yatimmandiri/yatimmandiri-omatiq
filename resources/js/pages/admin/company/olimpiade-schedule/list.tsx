@@ -59,6 +59,7 @@ export default function ListPage() {
             accessorKey: 'start_date',
             cell: (info: any) => {
                 const row = info.row.original;
+
                 return (
                     <span className="text-sm font-medium">
                         {formatDate(row.start_date)}

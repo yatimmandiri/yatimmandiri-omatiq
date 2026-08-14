@@ -52,6 +52,20 @@ class MainController extends Controller
         return Inertia::render('home/about/index', $data);
     }
 
+    public function milestone()
+    {
+        $data = [
+            'pageTitle' => 'Perjalanan OMATIQ',
+            'meta' => [
+                'title' => 'Perjalanan OMATIQ',
+                'description' => 'Sejarah dan perjalanan OMATIQ dari tahun ke tahun: dari OGN hingga satu dekade menyalakan mimpi anak Indonesia.',
+                'keywords' => 'perjalanan OMATIQ, sejarah OMATIQ, milestone OMATIQ, OGN, olimpiade nasional',
+            ],
+        ];
+
+        return Inertia::render('home/milestone/index', $data);
+    }
+
     public function olimpiade()
     {
         $olimpiade = Olimpiade::query()

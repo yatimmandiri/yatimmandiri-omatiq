@@ -3,7 +3,8 @@ import {
     OlimpiadeCard,
     SectionHeader,
 } from '@/components/marketing/marketing-components';
-import { OlimpiadeItem, olimpiade } from '@/components/marketing/site-data';
+import type { OlimpiadeItem } from '@/components/marketing/site-data';
+import { olimpiade } from '@/components/marketing/site-data';
 import { Link, usePage } from '@inertiajs/react';
 import {
     ArrowRight,
@@ -40,8 +41,8 @@ const normalizeOlimpiade = (value: OlimpiadeProps['olimpiade']) => {
     return Array.isArray(value)
         ? value
         : value?.data && Array.isArray(value.data)
-            ? value.data
-            : olimpiade;
+          ? value.data
+          : olimpiade;
 };
 
 const isMainOlimpiade = (item: OlimpiadeItem) => {
@@ -63,9 +64,9 @@ const getTheme = (olimpiade: OlimpiadeItem, index: number): OlympiadTheme => {
         return {
             icon: BookOpenCheck,
             eyebrow: "Ketepatan bacaan & kecintaan Al-Qur'an",
-            accent: '#F15F23',
-            soft: '#FFF1EA',
-            dark: '#9A3412',
+            accent: '#17524A',
+            soft: '#E7F0ED',
+            dark: '#0F4038',
             number: '01',
             highlights: ['Tajwid', 'Cara baca', 'Adab & percaya diri'],
             image: olimpiade.image,
@@ -92,9 +93,9 @@ const getTheme = (olimpiade: OlimpiadeItem, index: number): OlympiadTheme => {
     return {
         icon: Calculator,
         eyebrow: 'Logika, strategi & keberanian bernalar',
-        accent: '#0F60AC',
-        soft: '#EAF5FF',
-        dark: '#083B6B',
+        accent: '#E5BE1E',
+        soft: '#FBF4DC',
+        dark: '#9C7A0A',
         number: '02',
         highlights: ['Logika dasar', 'Problem solving', 'Strategi soal'],
         image: olimpiade.image,
@@ -109,22 +110,24 @@ export default function OlimpiadePage() {
         ? mainOlimpiads
         : olympiads.slice(0, 2);
     const otherOlimpiads = olympiads.filter(
-        (item) => !featuredOlimpiads.some((featured) => featured.id === item.id),
+        (item) =>
+            !featuredOlimpiads.some((featured) => featured.id === item.id),
     );
 
     return (
         <>
             <section className="relative overflow-hidden px-5 pt-28 pb-14 sm:pt-32 sm:pb-20 lg:px-8">
-                <div className="absolute top-28 left-0 h-48 w-48 rounded-[48px] bg-[#FFC857]/20 blur-3xl" />
+                <div className="absolute top-28 left-0 h-48 w-48 rounded-[48px] bg-[#E5BE1E]/20 blur-3xl" />
                 <div className="absolute right-0 bottom-0 h-56 w-56 rounded-[56px] bg-[#56CCF2]/15 blur-3xl" />
 
                 <div className="relative mx-auto max-w-7xl text-center">
-                    <span className="inline-flex items-center gap-2 rounded-full bg-[#F15F23]/10 px-4 py-2 text-sm font-black text-[#F15F23]">
+                    <span className="inline-flex items-center gap-2 rounded-full bg-[#17524A]/10 px-4 py-2 text-sm font-black text-[#17524A]">
                         <Medal className="h-4 w-4" />
                         Olimpiade OMATIQ
                     </span>
                     <h1 className="mx-auto mt-6 max-w-5xl text-3xl leading-tight font-black text-[#1E293B] sm:text-4xl md:text-6xl lg:text-7xl">
-                        Dua bidang utama, banyak ruang prestasi untuk anak Indonesia.
+                        Dua bidang utama, banyak ruang prestasi untuk anak
+                        Indonesia.
                     </h1>
                     <p className="mx-auto mt-5 max-w-3xl text-base leading-8 text-[#64748B] sm:mt-6 sm:text-lg">
                         OMATIQ memusatkan pengalaman lomba pada Al-Qur'an dan
@@ -155,7 +158,7 @@ export default function OlimpiadePage() {
                                 key={item.label}
                                 className="flex items-center gap-3 rounded-2xl bg-white p-4 text-left shadow-sm ring-1 ring-slate-100"
                             >
-                                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#0F60AC]/10 text-[#0F60AC]">
+                                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#17524A]/10 text-[#17524A]">
                                     <item.icon className="h-5 w-5" />
                                 </span>
                                 <span>
@@ -188,7 +191,7 @@ export default function OlimpiadePage() {
                             return (
                                 <article
                                     key={olimpiade.id}
-                                    className="group overflow-hidden rounded-[28px] border border-slate-100 bg-[#F8FAFC] shadow-sm transition duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-[#0F60AC]/10 sm:rounded-[32px]"
+                                    className="group overflow-hidden rounded-[28px] border border-slate-100 bg-[#F8FAFC] shadow-sm transition duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-[#17524A]/10 sm:rounded-[32px]"
                                 >
                                     <div
                                         className={`grid lg:grid-cols-2 ${index % 2 === 1 ? 'lg:[&>*:first-child]:order-2' : ''}`}
@@ -253,21 +256,43 @@ export default function OlimpiadePage() {
                                                     ),
                                                 )}
                                             </div>
-                                            <div className="mt-8 flex items-center gap-3 rounded-2xl p-4 md:p-5" style={{ backgroundColor: theme.soft }}>
-                                                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: theme.accent }}>
+                                            <div
+                                                className="mt-8 flex items-center gap-3 rounded-2xl p-4 md:p-5"
+                                                style={{
+                                                    backgroundColor: theme.soft,
+                                                }}
+                                            >
+                                                <div
+                                                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
+                                                    style={{
+                                                        backgroundColor:
+                                                            theme.accent,
+                                                    }}
+                                                >
                                                     <Target className="h-5 w-5 text-white" />
                                                 </div>
                                                 <div className="flex-1">
-                                                    <p className="text-xs font-black tracking-wide uppercase" style={{ color: theme.dark }}>
+                                                    <p
+                                                        className="text-xs font-black tracking-wide uppercase"
+                                                        style={{
+                                                            color: theme.dark,
+                                                        }}
+                                                    >
                                                         Jadwal Pelaksanaan
                                                     </p>
                                                     <p className="mt-1 text-sm font-black text-[#1E293B] md:text-base">
-                                                        {olimpiade.nextSchedule?.dateLabel ??
+                                                        {olimpiade.nextSchedule
+                                                            ?.dateLabel ??
                                                             'Jadwal segera diumumkan'}
                                                     </p>
-                                                    {olimpiade.nextSchedule?.title && (
+                                                    {olimpiade.nextSchedule
+                                                        ?.title && (
                                                         <p className="mt-1 text-xs font-bold text-[#64748B]">
-                                                            {olimpiade.nextSchedule.title}
+                                                            {
+                                                                olimpiade
+                                                                    .nextSchedule
+                                                                    .title
+                                                            }
                                                         </p>
                                                     )}
                                                 </div>
@@ -286,7 +311,7 @@ export default function OlimpiadePage() {
                                                 </Link>
                                                 <Link
                                                     href="/jadwal"
-                                                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-6 py-4 text-sm font-black text-[#0F60AC] shadow-sm transition hover:-translate-y-1 hover:border-[#0F60AC]/25"
+                                                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-6 py-4 text-sm font-black text-[#17524A] shadow-sm transition hover:-translate-y-1 hover:border-[#17524A]/25"
                                                 >
                                                     Kalender
                                                     <CalendarDays className="h-4 w-4" />
@@ -333,7 +358,7 @@ export default function OlimpiadePage() {
                                         key={item.label}
                                         className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-100"
                                     >
-                                        <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#F15F23]/10 text-[#F15F23]">
+                                        <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#17524A]/10 text-[#17524A]">
                                             <item.icon className="h-5 w-5" />
                                         </span>
                                         <p className="mt-4 text-xl font-black text-[#1E293B]">
@@ -365,8 +390,8 @@ export default function OlimpiadePage() {
                         align="left"
                     />
                     <div className="grid gap-4 sm:grid-cols-2">
-                        <div className="rounded-3xl bg-[#F15F23] p-7 text-white shadow-xl shadow-[#F15F23]/20">
-                            <BookOpenCheck className="h-9 w-9 text-[#FFC857]" />
+                        <div className="rounded-3xl bg-[#17524A] p-7 text-white shadow-xl shadow-[#17524A]/20">
+                            <BookOpenCheck className="h-9 w-9 text-[#E5BE1E]" />
                             <p className="mt-8 text-2xl font-black">
                                 Berakhlak dalam proses
                             </p>
@@ -375,7 +400,7 @@ export default function OlimpiadePage() {
                                 dengan adab terbaik.
                             </p>
                         </div>
-                        <div className="rounded-3xl bg-[#0F60AC] p-7 text-white shadow-xl shadow-[#0F60AC]/20 sm:mt-10">
+                        <div className="rounded-3xl bg-[#17524A] p-7 text-white shadow-xl shadow-[#17524A]/20 sm:mt-10">
                             <Brain className="h-9 w-9 text-[#56CCF2]" />
                             <p className="mt-8 text-2xl font-black">
                                 Berani menghadapi tantangan

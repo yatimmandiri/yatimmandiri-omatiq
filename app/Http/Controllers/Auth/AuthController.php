@@ -25,7 +25,7 @@ class AuthController extends Controller
             'password' => ['required'],
         ]);
 
-        if (!Auth::attempt($credentials, $request->boolean('remember'))) {
+        if (! Auth::attempt($credentials, $request->boolean('remember'))) {
             throw ValidationException::withMessages([
                 'email' => 'Email atau password salah.',
             ]);
@@ -106,7 +106,7 @@ class AuthController extends Controller
 
         $request->user()->save();
 
-        return to_route('profile.edit')->with('success', 'Update Profile Successfully.');
+        return to_route('admin.profile.edit')->with('success', 'Update Profile Successfully.');
     }
 
     public function logout(Request $request)

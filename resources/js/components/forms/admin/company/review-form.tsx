@@ -2,19 +2,12 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import reviews from '@/routes/admin/companies/reviews';
 import { useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, Save, Star } from 'lucide-react';
-import { FormEvent } from 'react';
+import type { FormEvent } from 'react';
 
 type ReviewRecord = {
     id: number;

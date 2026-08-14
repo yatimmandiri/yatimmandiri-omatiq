@@ -1,6 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
 import { ArrowRight, PlayCircle, X } from 'lucide-react';
-import { PointerEvent, useEffect, useMemo, useState } from 'react';
+import type { PointerEvent } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 type SliderItem = {
     title: string;
@@ -199,7 +200,7 @@ const SliderItemSection = ({
                 }`}
             />
             <div className="absolute inset-0 bg-linear-to-r from-black/85 via-black/60 to-black/25" />
-            <div className="absolute top-0 -left-20 h-72 w-72 rounded-full bg-[#F15F23]/25 blur-3xl" />
+            <div className="absolute top-0 -left-20 h-72 w-72 rounded-full bg-[#17524A]/25 blur-3xl" />
             <div className="absolute right-0 bottom-0 h-96 w-96 rounded-full bg-[#56CCF2]/15 blur-3xl" />
 
             <div className="relative z-10 flex min-h-[720px] items-center sm:min-h-180 lg:h-195">
@@ -218,7 +219,7 @@ const SliderItemSection = ({
                         <div className="mt-6 flex flex-col gap-3 sm:mt-8 sm:flex-row sm:flex-wrap">
                             <Link
                                 href={item.url || '/olimpiade'}
-                                className="group inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#F15F23] px-5 py-3 text-sm font-black text-white shadow-xl shadow-[#F15F23]/25 transition hover:scale-[1.02] hover:bg-[#d94f18] sm:w-auto sm:px-6 sm:py-4 sm:text-base"
+                                className="group inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#17524A] px-5 py-3 text-sm font-black text-white shadow-xl shadow-[#17524A]/25 transition hover:scale-[1.02] hover:bg-[#0F4038] sm:w-auto sm:px-6 sm:py-4 sm:text-base"
                             >
                                 <span>Lihat Olimpiade</span>
                                 <ArrowRight

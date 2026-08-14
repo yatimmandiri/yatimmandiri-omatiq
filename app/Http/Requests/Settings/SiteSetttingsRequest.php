@@ -36,6 +36,8 @@ class SiteSetttingsRequest extends FormRequest
             'youtube' => ['nullable', 'string', 'max:255'],
             'whatsapp' => ['nullable', 'string', 'max:255'],
             'tiktok' => ['nullable', 'string', 'max:255'],
+            'registration_public_open' => ['sometimes', 'boolean'],
+            'registration_binaan_open' => ['sometimes', 'boolean'],
         ];
     }
 }

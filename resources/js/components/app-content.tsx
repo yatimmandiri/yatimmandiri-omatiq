@@ -1,4 +1,5 @@
 import { SidebarInset } from '@/components/ui/sidebar';
+import type { ComponentProps } from 'react';
 import type { AppVariant } from '@/types';
 
 type Props = ComponentProps<'main'> & {

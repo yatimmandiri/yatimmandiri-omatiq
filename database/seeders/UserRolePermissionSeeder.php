@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Company\Participant;
 use App\Models\Core\Permission;
 use App\Models\Core\Region\District;
 use App\Models\Core\Region\Province;
@@ -25,6 +26,8 @@ class UserRolePermissionSeeder extends Seeder
         collect([
             ['name' => 'Administrators', 'guard_name' => 'web'],
             ['name' => 'Users', 'guard_name' => 'web'],
+            ['name' => 'Participant', 'guard_name' => 'web'],
+            ['name' => 'Teacher', 'guard_name' => 'web'],
         ])->each(fn ($role) => Role::create($role));
 
         collect([
@@ -95,11 +98,21 @@ class UserRolePermissionSeeder extends Seeder
             ['name' => 'update-olimpiade-schedule', 'guard_name' => 'web'],
             ['name' => 'delete-olimpiade-schedule', 'guard_name' => 'web'],
             ['name' => 'data-olimpiade-schedule', 'guard_name' => 'web'],
+            ['name' => 'view-teacher', 'guard_name' => 'web'],
+            ['name' => 'create-teacher', 'guard_name' => 'web'],
+            ['name' => 'update-teacher', 'guard_name' => 'web'],
+            ['name' => 'delete-teacher', 'guard_name' => 'web'],
+            ['name' => 'data-teacher', 'guard_name' => 'web'],
             ['name' => 'view-participant', 'guard_name' => 'web'],
             ['name' => 'create-participant', 'guard_name' => 'web'],
             ['name' => 'update-participant', 'guard_name' => 'web'],
             ['name' => 'delete-participant', 'guard_name' => 'web'],
             ['name' => 'data-participant', 'guard_name' => 'web'],
+            ['name' => 'view-student', 'guard_name' => 'web'],
+            ['name' => 'create-student', 'guard_name' => 'web'],
+            ['name' => 'update-student', 'guard_name' => 'web'],
+            ['name' => 'delete-student', 'guard_name' => 'web'],
+            ['name' => 'data-student', 'guard_name' => 'web'],
             ['name' => 'view-slider', 'guard_name' => 'web'],
             ['name' => 'create-slider', 'guard_name' => 'web'],
             ['name' => 'update-slider', 'guard_name' => 'web'],
@@ -122,12 +135,45 @@ class UserRolePermissionSeeder extends Seeder
             ['name' => 'data-faq-company', 'guard_name' => 'web'],
         ])->each(fn ($permission) => Permission::create($permission)->assignRole('Administrators'));
 
+        $participantRole = Role::where('name', 'Participant')->first();
+        if ($participantRole) {
+            $participantRole->givePermissionTo(['view-participant', 'data-participant']);
+        }
+
         User::create([
             'name' => 'Administrator',
             'email' => 'scrum@yatimmandiri.org',
             'email_verified_at' => now(),
             'password' => Hash::make('password'),
         ])->assignRole('Administrators');
+
+        $teacherRole = Role::where('name', 'Teacher')->first();
+        if ($teacherRole) {
+            $teacherRole->givePermissionTo([
+                'view-participant', 'create-participant', 'update-participant', 'data-participant',
+            ]);
+        }
+
+        $participantUser = User::create([
+            'name' => 'Partisipan Demo',
+            'email' => 'partisipan@test.dev',
+            'email_verified_at' => now(),
+            'password' => Hash::make('password'),
+        ]);
+        $participantUser->assignRole('Participant');
+
+        $teacherUser = User::create([
+            'name' => 'Guru Pembimbing',
+            'email' => 'guru@test.dev',
+            'email_verified_at' => now(),
+            'password' => Hash::make('password'),
+        ]);
+        $teacherUser->assignRole('Teacher');
+
+        $participant = Participant::first();
+        if ($participant) {
+            $participant->update(['user_id' => $participantUser->id]);
+        }
 
         Province::query()->update([
             'created_at' => now(),

@@ -17,7 +17,7 @@ type Review = {
 export const ReviewSection = ({ data }: { data: Review[] }) => {
     return (
         <section className="relative overflow-hidden px-5 py-16 lg:px-8">
-            <div className="absolute top-16 left-0 h-40 w-40 rounded-full bg-[#FFC857]/20 blur-3xl" />
+            <div className="absolute top-16 left-0 h-40 w-40 rounded-full bg-[#E5BE1E]/20 blur-3xl" />
             <div className="absolute right-0 bottom-16 h-48 w-48 rounded-full bg-[#8B5CF6]/15 blur-3xl" />
             <div className="relative mx-auto max-w-7xl">
                 <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
@@ -58,9 +58,9 @@ const ReviewSlider = ({ items }: { items: Review[] }) => {
             {items.map((item, index) => (
                 <SwiperSlide key={item.id} className="h-auto py-2">
                     <article
-                        className={`group relative h-full min-h-0 overflow-hidden rounded-[28px] bg-white p-5 shadow-sm ring-1 ring-slate-100 transition duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-[#0F60AC]/10 sm:min-h-96 sm:rounded-[32px] sm:p-6 ${index % 3 === 0 ? 'lg:rotate-[-1deg]' : index % 3 === 2 ? 'lg:rotate-[1deg]' : ''}`}
+                        className={`group relative h-full min-h-0 overflow-hidden rounded-[28px] bg-white p-5 shadow-sm ring-1 ring-slate-100 transition duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-[#17524A]/10 sm:min-h-96 sm:rounded-[32px] sm:p-6 ${index % 3 === 0 ? 'lg:rotate-[-1deg]' : index % 3 === 2 ? 'lg:rotate-[1deg]' : ''}`}
                     >
-                        <div className="absolute top-5 right-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F15F23]/10 text-[#F15F23] transition group-hover:scale-110">
+                        <div className="absolute top-5 right-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#17524A]/10 text-[#17524A] transition group-hover:scale-110">
                             <Quote className="h-7 w-7" />
                         </div>
                         <div className="flex items-center gap-4 pr-16">
@@ -78,7 +78,7 @@ const ReviewSlider = ({ items }: { items: Review[] }) => {
                                 </p>
                             </div>
                         </div>
-                        <div className="mt-6 flex gap-1 text-[#FFC857]">
+                        <div className="mt-6 flex gap-1 text-[#E5BE1E]">
                             {Array.from({ length: 5 }).map((_, starIndex) => (
                                 <Star
                                     key={starIndex}
@@ -89,7 +89,7 @@ const ReviewSlider = ({ items }: { items: Review[] }) => {
                         <p className="mt-5 text-base leading-8 text-[#1E293B]">
                             "{item.quote}"
                         </p>
-                        <div className="mt-6 inline-flex rounded-full bg-[#0F60AC]/10 px-4 py-2 text-xs font-black tracking-wide text-[#0F60AC] uppercase">
+                        <div className="mt-6 inline-flex rounded-full bg-[#17524A]/10 px-4 py-2 text-xs font-black tracking-wide text-[#17524A] uppercase">
                             {item.focus}
                         </div>
                     </article>

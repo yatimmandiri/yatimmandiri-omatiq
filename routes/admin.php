@@ -9,6 +9,8 @@ use App\Http\Controllers\Admin\Company\OlimpiadeVideoController;
 use App\Http\Controllers\Admin\Company\ParticipantController;
 use App\Http\Controllers\Admin\Company\ReviewController;
 use App\Http\Controllers\Admin\Company\SliderController;
+use App\Http\Controllers\Admin\Company\StudentController;
+use App\Http\Controllers\Admin\Company\TeacherController;
 use App\Http\Controllers\Admin\Company\TestimonialController;
 use App\Http\Controllers\Admin\Core\PermissionController;
 use App\Http\Controllers\Admin\Core\Region\DistrictController;
@@ -20,6 +22,7 @@ use App\Http\Controllers\Admin\Core\UserController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\Settings\LogActivityController;
 use App\Http\Controllers\Admin\Settings\SiteSettingsController;
+use App\Http\Controllers\Admin\Teacher\TeacherStudentController;
 use App\Http\Controllers\Auth\AuthController;
 use Illuminate\Support\Facades\Route;
 
@@ -81,6 +84,17 @@ Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'auth.admi
         Route::put('faq-companies/{faqCompany}/status', [FaqCompanyController::class, 'status'])->name('faq-companies.status');
         Route::get('faq-companies/data', [FaqCompanyController::class, 'getData'])->name('faq-companies.data');
         Route::resource('faq-companies', FaqCompanyController::class);
+
+        Route::get('teachers/data', [TeacherController::class, 'getData'])->name('teachers.data');
+        Route::resource('teachers', TeacherController::class)->parameters(['teachers' => 'teacher']);
+
+        Route::get('students/data', [StudentController::class, 'getData'])->name('students.data');
+        Route::resource('students', StudentController::class);
+    });
+
+    Route::prefix('teacher')->as('teacher.')->group(function () {
+        Route::get('students/data', [TeacherStudentController::class, 'getData'])->name('students.data');
+        Route::resource('students', TeacherStudentController::class)->parameters(['students' => 'participant']);
     });
 
     Route::prefix('core')->as('core.')->group(function () {

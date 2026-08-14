@@ -117,12 +117,7 @@ export const InputFileComponent = ({
     label,
     errors,
     helperText,
-    group = false,
-    addonLeft = false,
-    addonRight = false,
     color = 'default',
-    handleaddonLeft = () => {},
-    handleRightAddon = () => {},
     handleOnChange = () => {},
     ...props
 }: InputTextComponentProps) => {
@@ -135,7 +130,10 @@ export const InputFileComponent = ({
                 className={cn(variants[color], className)}
                 onChange={(e) => {
                     const file = e.target.files?.[0];
-                    if (file) handleOnChange?.(file);
+
+                    if (file) {
+handleOnChange?.(file);
+}
                 }}
                 {...props}
             />

@@ -20,6 +20,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "../../popover";
 import { useToolbar } from "../toolbars/toolbar-provider";
 import axios from "axios";
 import { toast } from "sonner";
+import { deletefiles, uploadfiles } from "@/routes/admin";
 
 // 🧩 Extension Video
 export const Video = Node.create({
@@ -121,7 +122,7 @@ export const VideoView = ({
         // hapus file dari server kalau local
         if (nodeSrc.includes("/storage/videos/")) {
           console.log("🧾 Menghapus video dari server...");
-          await axios.post(route("settings.deletefiles"), { url: nodeSrc });
+          await axios.post(deletefiles.post().url, { url: nodeSrc });
           toast.success("Video berhasil dihapus dari server");
         } else {
           console.log("ℹ️ Video bukan dari local storage, skip hapus server");
@@ -487,7 +488,7 @@ export const VideoToolbar = () => {
 
     try {
       setUploading(true);
-      const response = await axios.post(route("settings.uploadfiles"), formData, {
+      const response = await axios.post(uploadfiles.post().url, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 

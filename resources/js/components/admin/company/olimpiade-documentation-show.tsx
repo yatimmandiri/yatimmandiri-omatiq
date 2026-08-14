@@ -16,6 +16,7 @@ const configs = {
 export function OlimpiadeDocumentationShow({ kind }: { kind: Kind }) {
     const { item } = usePage<{ item: Record<string, any> }>().props;
     const config = configs[kind];
+
     return (
         <div className="flex flex-1 flex-col gap-6 p-4">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

@@ -2,10 +2,10 @@
 
 namespace App\Models\Company;
 
-use App\Models\Core\Region\Province;
-use App\Models\Core\Region\Regency;
+use App\Models\Core\User;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -16,32 +16,20 @@ use Spatie\Activitylog\Support\LogOptions;
 #[Fillable([
     'registration_number',
     'olimpiade_id',
-    'full_name',
-    'nickname',
-    'gender',
-    'birth_place',
-    'birth_date',
-    'age',
-    'education_level',
-    'school_name',
-    'grade',
-    'address',
-    'province_id',
-    'regency_id',
-    'parent_phone',
-    'development_program',
-    'development_program_other',
-    'institution_name',
-    'branch_office',
-    'mentor_name',
-    'mentor_phone',
+    'user_id',
+    'student_id',
+    'nik',
+    'registration_type',
+    'mentor_id',
     'achievements',
     'has_joined_before',
     'previous_year',
-    'photo_path',
-    'identity_card_path',
-    'recommendation_letter_path',
-    'achievement_certificate_path',
+    'referral_source',
+    'referral_source_other',
+    'payment_status',
+    'payment_proof_path',
+    'payment_amount',
+    'payment_note',
     'data_truth_consent',
     'documentation_consent',
     'rules_consent',
@@ -52,13 +40,11 @@ use Spatie\Activitylog\Support\LogOptions;
 ])]
 class Participant extends Model
 {
-    use LogsActivity, SoftDeletes;
+    use HasFactory, LogsActivity, SoftDeletes;
 
     protected function casts(): array
     {
         return [
-            'birth_date' => 'date',
-            'age' => 'integer',
             'has_joined_before' => 'boolean',
             'data_truth_consent' => 'boolean',
             'documentation_consent' => 'boolean',
@@ -71,14 +57,19 @@ class Participant extends Model
         return $this->belongsTo(Olimpiade::class);
     }
 
-    public function province(): BelongsTo
+    public function student(): BelongsTo
     {
-        return $this->belongsTo(Province::class);
+        return $this->belongsTo(Student::class);
     }
 
-    public function regency(): BelongsTo
+    public function user(): BelongsTo
     {
-        return $this->belongsTo(Regency::class);
+        return $this->belongsTo(User::class);
+    }
+
+    public function mentor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'mentor_id');
     }
 
     public function scopeSearch(Builder $query, ?string $search): Builder
@@ -87,32 +78,22 @@ class Participant extends Model
             $search,
             fn (Builder $query, string $search) => $query->where(function (Builder $query) use ($search) {
                 $query->where('registration_number', 'like', "%{$search}%")
-                    ->orWhere('full_name', 'like', "%{$search}%")
-                    ->orWhere('school_name', 'like', "%{$search}%")
-                    ->orWhere('parent_phone', 'like', "%{$search}%")
+                    ->orWhereHas('student', fn (Builder $q) => $q->where('full_name', 'like', "%{$search}%"))
+                    ->orWhereHas('student', fn (Builder $q) => $q->where('school_name', 'like', "%{$search}%"))
+                    ->orWhereHas('student', fn (Builder $q) => $q->where('parent_phone', 'like', "%{$search}%"))
                     ->orWhereHas('olimpiade', fn (Builder $query) => $query->where('name', 'like', "%{$search}%"));
             }),
         );
     }
 
-    public function getPhotoUrlAttribute(): ?string
+    public function getFullNameAttribute(): ?string
     {
-        return $this->storageUrl($this->photo_path);
+        return $this->student?->full_name ?? $this->user?->name;
     }
 
-    public function getIdentityCardUrlAttribute(): ?string
+    public function getPaymentProofUrlAttribute(): ?string
     {
-        return $this->storageUrl($this->identity_card_path);
-    }
-
-    public function getRecommendationLetterUrlAttribute(): ?string
-    {
-        return $this->storageUrl($this->recommendation_letter_path);
-    }
-
-    public function getAchievementCertificateUrlAttribute(): ?string
-    {
-        return $this->storageUrl($this->achievement_certificate_path);
+        return $this->storageUrl($this->payment_proof_path);
     }
 
     public function getActivitylogOptions(): LogOptions

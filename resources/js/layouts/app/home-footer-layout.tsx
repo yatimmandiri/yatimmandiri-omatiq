@@ -9,8 +9,8 @@ import {
 
 export const HomeFooterComponent = () => {
     return (
-        <footer className="relative overflow-hidden bg-[#0F60AC] text-white">
-            <div className="absolute top-0 left-0 h-72 w-72 rounded-full bg-[#F15F23]/20 blur-3xl" />
+        <footer className="relative overflow-hidden bg-[#17524A] text-white">
+            <div className="absolute top-0 left-0 h-72 w-72 rounded-full bg-[#17524A]/20 blur-3xl" />
             <div className="absolute right-0 bottom-0 h-72 w-72 rounded-full bg-[#56CCF2]/15 blur-3xl" />
 
             <div className="relative mx-auto max-w-7xl px-5 py-14 sm:px-6 sm:py-16">
@@ -18,7 +18,7 @@ export const HomeFooterComponent = () => {
                     <div className="space-y-5">
                         <div>
                             <h2 className="text-3xl font-black">
-                                OMATIQ<span className="text-[#FFC857]">.</span>
+                                OMATIQ<span className="text-[#E5BE1E]">.</span>
                             </h2>
                             <p className="mt-4 text-sm leading-relaxed text-white/75">
                                 Ekosistem belajar modern untuk pelajar, mentor,
@@ -68,9 +68,7 @@ export const HomeFooterComponent = () => {
                     </div>
 
                     <div>
-                        <h3 className="mb-5 text-lg font-bold">
-                            Olimpiade
-                        </h3>
+                        <h3 className="mb-5 text-lg font-bold">Olimpiade</h3>
                         <ul className="space-y-3 text-sm text-white/75">
                             {[
                                 'Olimpiade Al-Quran',
@@ -97,16 +95,16 @@ export const HomeFooterComponent = () => {
                             <div className="flex items-start gap-3">
                                 <MapPin
                                     size={18}
-                                    className="mt-0.5 text-[#FFC857]"
+                                    className="mt-0.5 text-[#E5BE1E]"
                                 />
                                 <p>Jakarta, Indonesia</p>
                             </div>
                             <div className="flex items-center gap-3">
-                                <Phone size={18} className="text-[#FFC857]" />
+                                <Phone size={18} className="text-[#E5BE1E]" />
                                 <p>+62 812 0000 2026</p>
                             </div>
                             <div className="flex items-center gap-3">
-                                <Mail size={18} className="text-[#FFC857]" />
+                                <Mail size={18} className="text-[#E5BE1E]" />
                                 <p>hello@omatiq.id</p>
                             </div>
                         </div>
@@ -119,9 +117,9 @@ export const HomeFooterComponent = () => {
                                 <input
                                     type="email"
                                     placeholder="Email Anda"
-                                    className="w-full bg-white px-4 py-3 text-sm text-slate-900 caret-[#0F60AC] outline-none selection:bg-[#0F60AC] selection:text-white placeholder:text-slate-500 dark:bg-slate-100 dark:text-slate-900 dark:placeholder:text-slate-500"
+                                    className="w-full bg-white px-4 py-3 text-sm text-slate-900 caret-[#17524A] outline-none selection:bg-[#17524A] selection:text-white placeholder:text-slate-500 dark:bg-slate-100 dark:text-slate-900 dark:placeholder:text-slate-500"
                                 />
-                                <button className="bg-[#F15F23] px-5 text-sm font-semibold text-white transition hover:opacity-90">
+                                <button className="bg-[#17524A] px-5 text-sm font-semibold text-white transition hover:opacity-90">
                                     Kirim
                                 </button>
                             </div>

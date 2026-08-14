@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils';
 import { InfoIcon } from 'lucide-react';
-import { ChangeEvent } from 'react';
+import type { ChangeEvent } from 'react';
 
 import { Field, FieldDescription, FieldLabel } from '../ui/field';
 import { Input } from '../ui/input';
@@ -56,6 +56,7 @@ export const NumberComponent = ({
 
             // prevent multiple dots
             const parts = val.split('.');
+
             if (parts.length > 2) {
                 val = `${parts[0]}.${parts.slice(1).join('')}`;
             }

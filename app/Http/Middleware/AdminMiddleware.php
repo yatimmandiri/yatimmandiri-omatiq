@@ -18,8 +18,7 @@ class AdminMiddleware
     {
         $user = $request->user();
 
-        // Jika user role-nya 'User', tolak akses
-        if (Auth::check() && $user->hasRole('Users')) {
+        if (Auth::check() && $user->hasRole('Users') && ! $user->hasRole('Participant') && ! $user->hasRole('Teacher')) {
             abort(403, 'User does not have the right roles.');
         }
 

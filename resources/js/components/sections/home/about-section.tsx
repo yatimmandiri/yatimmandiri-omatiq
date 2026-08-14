@@ -1,6 +1,18 @@
-import { FeatureIcon, SectionHeader } from "@/components/marketing/marketing-components";
-import { Link } from "@inertiajs/react"
-import { ArrowRight, BookOpenCheck, Brain, Calculator, Medal, Sparkles, Trophy, UsersRound } from "lucide-react"
+import {
+    FeatureIcon,
+    SectionHeader,
+} from '@/components/marketing/marketing-components';
+import { Link } from '@inertiajs/react';
+import {
+    ArrowRight,
+    BookOpenCheck,
+    Brain,
+    Calculator,
+    Medal,
+    Sparkles,
+    Trophy,
+    UsersRound,
+} from 'lucide-react';
 
 export const AboutSection = () => {
     const olympiadBranches = [
@@ -17,15 +29,16 @@ export const AboutSection = () => {
             color: 'blue' as const,
         },
     ];
+
     return (
         <>
             <section className="relative overflow-hidden px-5 py-14 sm:py-16 lg:px-8 lg:py-20">
-                <div className="absolute top-10 left-0 h-32 w-32 rounded-[40px] bg-[#FFC857]/25 blur-2xl" />
+                <div className="absolute top-10 left-0 h-32 w-32 rounded-[40px] bg-[#E5BE1E]/25 blur-2xl" />
                 <div className="absolute right-0 bottom-10 h-40 w-40 rounded-[48px] bg-[#56CCF2]/20 blur-2xl" />
 
                 <div className="relative mx-auto grid max-w-7xl items-center gap-10 lg:grid-cols-[0.95fr_1.05fr]">
                     <div>
-                        <span className="inline-flex items-center gap-2 rounded-full bg-[#F15F23]/10 px-4 py-2 text-sm font-black text-[#F15F23]">
+                        <span className="inline-flex items-center gap-2 rounded-full bg-[#17524A]/10 px-4 py-2 text-sm font-black text-[#17524A]">
                             <Sparkles className="h-4 w-4" />
                             Tentang OMATIQ
                         </span>
@@ -46,14 +59,14 @@ export const AboutSection = () => {
                         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                             <Link
                                 href="/about"
-                                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#F15F23] px-6 py-4 text-sm font-black text-white shadow-xl shadow-[#F15F23]/25 transition hover:-translate-y-1 hover:bg-[#d94f18]"
+                                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#17524A] px-6 py-4 text-sm font-black text-white shadow-xl shadow-[#17524A]/25 transition hover:-translate-y-1 hover:bg-[#0F4038]"
                             >
                                 Kenali OMATIQ
                                 <ArrowRight className="h-4 w-4" />
                             </Link>
                             <Link
                                 href="/olimpiade"
-                                className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#0F60AC]/15 bg-white px-6 py-4 text-sm font-black text-[#0F60AC] shadow-sm transition hover:-translate-y-1 hover:border-[#0F60AC]/30 hover:bg-[#0F60AC]/5"
+                                className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#17524A]/15 bg-white px-6 py-4 text-sm font-black text-[#17524A] shadow-sm transition hover:-translate-y-1 hover:border-[#17524A]/30 hover:bg-[#17524A]/5"
                             >
                                 Lihat Olimpiade
                                 <Trophy className="h-4 w-4" />
@@ -63,7 +76,7 @@ export const AboutSection = () => {
 
                     <div className="grid gap-4 lg:relative lg:block lg:min-h-[520px]">
                         <div className="hidden lg:block">
-                            <div className="absolute top-4 left-2 z-10 animate-bounce rounded-3xl bg-[#FFC857] px-5 py-4 text-sm font-black text-[#1E293B] shadow-xl">
+                            <div className="absolute top-4 left-2 z-10 animate-bounce rounded-3xl bg-[#E5BE1E] px-5 py-4 text-sm font-black text-[#1E293B] shadow-xl">
                                 Nasional
                             </div>
 
@@ -76,11 +89,11 @@ export const AboutSection = () => {
                             </div>
                         </div>
 
-                        <div className="relative mx-auto w-full max-w-md rounded-[28px] bg-white p-4 shadow-2xl ring-1 shadow-[#0F60AC]/10 ring-slate-100 transition sm:p-5 lg:absolute lg:inset-x-4 lg:top-0 lg:rotate-[-3deg] lg:rounded-[36px] lg:hover:rotate-0">
-                            <div className="rounded-[28px] bg-[#0F60AC] p-5 text-white">
+                        <div className="relative mx-auto w-full max-w-md rounded-[28px] bg-white p-4 shadow-2xl ring-1 shadow-[#17524A]/10 ring-slate-100 transition sm:p-5 lg:absolute lg:inset-x-4 lg:top-0 lg:rotate-[-3deg] lg:rounded-[36px] lg:hover:rotate-0">
+                            <div className="rounded-[28px] bg-[#17524A] p-5 text-white">
                                 <div className="flex items-center justify-between">
                                     <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/15">
-                                        <Medal className="h-8 w-8 text-[#FFC857]" />
+                                        <Medal className="h-8 w-8 text-[#E5BE1E]" />
                                     </div>
                                     <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-black">
                                         OMATIQ 2026
@@ -101,7 +114,7 @@ export const AboutSection = () => {
                             {olympiadBranches.map((branch, index) => (
                                 <div
                                     key={branch.title}
-                                    className={`rounded-3xl bg-white p-6 shadow-xl ring-1 shadow-[#0F60AC]/10 ring-slate-100 transition duration-300 hover:-translate-y-2 ${index === 1 ? 'sm:mt-16' : 'sm:mb-16'}`}
+                                    className={`rounded-3xl bg-white p-6 shadow-xl ring-1 shadow-[#17524A]/10 ring-slate-100 transition duration-300 hover:-translate-y-2 ${index === 1 ? 'sm:mt-16' : 'sm:mb-16'}`}
                                 >
                                     <FeatureIcon
                                         icon={branch.icon}
@@ -132,7 +145,7 @@ export const AboutSection = () => {
                             key={label}
                             className="rounded-3xl bg-[#F8FAFC] p-6 text-center"
                         >
-                            <p className="text-4xl font-black text-[#F15F23]">
+                            <p className="text-4xl font-black text-[#17524A]">
                                 {value}
                             </p>
                             <p className="mt-2 text-sm font-bold text-[#64748B]">
@@ -197,5 +210,5 @@ export const AboutSection = () => {
                 </div>
             </section>
         </>
-    )
-}
+    );
+};

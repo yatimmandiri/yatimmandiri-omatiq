@@ -1,11 +1,21 @@
 import { cn } from '@/lib/utils';
 import { ChevronDownIcon, InfoIcon } from 'lucide-react';
 import moment from 'moment-timezone';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Button } from '../ui/button';
 import { Calendar } from '../ui/calendar';
 import { Field, FieldDescription, FieldLabel } from '../ui/field';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+
+const serializeDateValue = (val: any) =>
+    val == null
+        ? ''
+        : typeof val === 'string'
+          ? val
+          : val.toISOString?.() ?? String(val);
+
+const isSameDateValue = (a: any, b: any) =>
+    serializeDateValue(a) === serializeDateValue(b);
 
 const variants: any = {
     default: 'border-zinc-300 focus:border-blue-500 focus:ring-blue-500',
@@ -65,7 +75,9 @@ export const DatePickerComponent = ({
 
     const formatted = useMemo(() => {
         if (group) {
-            if (!selectedRange?.from) return placeholder;
+            if (!selectedRange?.from) {
+return placeholder;
+}
 
             const from = moment(selectedRange.from)
                 .tz('Asia/Jakarta')
@@ -82,21 +94,27 @@ export const DatePickerComponent = ({
             return from;
         }
 
-        if (!selectedDate) return placeholder;
+        if (!selectedDate) {
+return placeholder;
+}
 
         return moment(selectedDate).tz('Asia/Jakarta').format('DD MMM YYYY');
     }, [group, selectedDate, selectedRange, placeholder]);
 
     // SAFE SYNC
-    useEffect(() => {
-        if (!value) return;
+    const [prevValue, setPrevValue] = useState(value);
+
+    if (value && !isSameDateValue(prevValue, value)) {
+        setPrevValue(value);
 
         if (group) {
-            if (value?.from) setInternalRange(value);
+            if (value?.from) {
+                setInternalRange(value);
+            }
         } else {
             setInternalDate(value);
         }
-    }, [value, group]);
+    }
 
     return (
         <Field data-invalid={errors}>

@@ -29,7 +29,9 @@ export const RoleForm = ({ dataId }: { dataId?: number }) => {
             const parts = permission.name.split('-');
 
             // minimal harus ada action + subject
-            if (parts.length < 2) return acc;
+            if (parts.length < 2) {
+return acc;
+}
 
             const subject = parts.slice(1).join('-'); // handle "force-delete-user"
 

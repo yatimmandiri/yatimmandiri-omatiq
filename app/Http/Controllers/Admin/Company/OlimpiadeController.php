@@ -267,6 +267,10 @@ class OlimpiadeController extends Controller
             $data['recommended'] = $request->boolean('recommended');
         }
 
+        if ($request->has('show_on_registration')) {
+            $data['show_on_registration'] = $request->boolean('show_on_registration');
+        }
+
         return $data;
     }
 

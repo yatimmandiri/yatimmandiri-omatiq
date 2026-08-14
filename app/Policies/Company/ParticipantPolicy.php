@@ -9,31 +9,91 @@ class ParticipantPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->hasPermissionTo('view-participant');
+        if ($user->hasRole('Administrators')) {
+            return $user->hasPermissionTo('view-participant');
+        }
+
+        if ($user->hasRole('Teacher')) {
+            return $user->hasPermissionTo('view-participant');
+        }
+
+        return false;
     }
 
     public function view(User $user, Participant $participant): bool
     {
-        return $user->hasPermissionTo('view-participant');
+        if (! $user->hasPermissionTo('view-participant')) {
+            return false;
+        }
+
+        if ($user->hasRole('Administrators')) {
+            return true;
+        }
+
+        if ($user->hasRole('Teacher')) {
+            return $participant->mentor_id === $user->id;
+        }
+
+        return $user->participant?->id === $participant->id;
     }
 
     public function create(User $user): bool
     {
-        return $user->hasPermissionTo('create-participant');
+        if ($user->hasRole('Administrators')) {
+            return $user->hasPermissionTo('create-participant');
+        }
+
+        if ($user->hasRole('Teacher')) {
+            return $user->hasPermissionTo('create-participant');
+        }
+
+        return false;
     }
 
     public function update(User $user, Participant $participant): bool
     {
-        return $user->hasPermissionTo('update-participant');
+        if (! $user->hasPermissionTo('update-participant')) {
+            return false;
+        }
+
+        if ($user->hasRole('Administrators')) {
+            return true;
+        }
+
+        if ($user->hasRole('Teacher')) {
+            return $participant->mentor_id === $user->id;
+        }
+
+        return false;
     }
 
     public function delete(User $user, Participant $participant): bool
     {
-        return $user->hasPermissionTo('delete-participant');
+        if (! $user->hasPermissionTo('delete-participant')) {
+            return false;
+        }
+
+        if ($user->hasRole('Administrators')) {
+            return true;
+        }
+
+        if ($user->hasRole('Teacher')) {
+            return $participant->mentor_id === $user->id;
+        }
+
+        return false;
     }
 
     public function dataParticipant(User $user): bool
     {
-        return $user->hasPermissionTo('data-participant');
+        if ($user->hasRole('Administrators')) {
+            return $user->hasPermissionTo('data-participant');
+        }
+
+        if ($user->hasRole('Teacher')) {
+            return $user->hasPermissionTo('data-participant');
+        }
+
+        return false;
     }
 }

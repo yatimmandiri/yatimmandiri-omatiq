@@ -4,10 +4,8 @@ import {
     OlimpiadeCard,
     SectionHeader,
 } from '@/components/marketing/marketing-components';
-import {
-    OlimpiadeItem,
-    olimpiade as fallbackOlimpiade,
-} from '@/components/marketing/site-data';
+import type { OlimpiadeItem } from '@/components/marketing/site-data';
+import { olimpiade as fallbackOlimpiade } from '@/components/marketing/site-data';
 import { Link, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
@@ -265,20 +263,21 @@ export default function OlimpiadeDetailPage() {
             .slice(0, 3);
     const faqs = props.faqs ?? [];
     const schedules = currentOlimpiade.schedules ?? [];
+
     return (
         <>
             <section className="px-5 pt-28 pb-12 sm:pt-32 md:pb-20 lg:px-8">
                 <div className="mx-auto max-w-7xl">
                     <Link
                         href="/olimpiade"
-                        className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-black text-[#0F60AC] shadow-sm ring-1 ring-slate-100 transition hover:-translate-y-1"
+                        className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-black text-[#17524A] shadow-sm ring-1 ring-slate-100 transition hover:-translate-y-1"
                     >
                         <ArrowLeft className="h-4 w-4" />
                         Kembali ke Olimpiade
                     </Link>
-                    <div className="mt-8 grid overflow-hidden rounded-[28px] bg-white shadow-2xl ring-1 shadow-[#0F60AC]/10 ring-slate-100 sm:rounded-[32px] lg:grid-cols-[1fr_0.9fr]">
+                    <div className="mt-8 grid overflow-hidden rounded-[28px] bg-white shadow-2xl ring-1 shadow-[#17524A]/10 ring-slate-100 sm:rounded-[32px] lg:grid-cols-[1fr_0.9fr]">
                         <div className="p-5 sm:p-8 md:p-12">
-                            <span className="inline-flex rounded-full bg-[#F15F23]/10 px-4 py-2 text-sm font-black text-[#F15F23]">
+                            <span className="inline-flex rounded-full bg-[#17524A]/10 px-4 py-2 text-sm font-black text-[#17524A]">
                                 {currentOlimpiade.category}
                             </span>
                             <h1 className="mt-5 text-3xl leading-tight font-black tracking-tight text-[#1E293B] sm:text-4xl md:mt-6 md:text-6xl">
@@ -288,7 +287,7 @@ export default function OlimpiadeDetailPage() {
                                 {currentOlimpiade.description}
                             </p>
                             <div className="mt-8 flex flex-wrap gap-3">
-                                <span className="rounded-xl bg-[#0F60AC]/10 px-4 py-3 text-sm font-black text-[#0F60AC]">
+                                <span className="rounded-xl bg-[#17524A]/10 px-4 py-3 text-sm font-black text-[#17524A]">
                                     {currentOlimpiade.duration}
                                 </span>
                                 <span className="rounded-xl bg-[#5DD39E]/15 px-4 py-3 text-sm font-black text-[#12885b]">
@@ -361,7 +360,7 @@ export default function OlimpiadeDetailPage() {
             </section>
 
             <section className="relative overflow-hidden px-5 py-16 lg:px-8">
-                <div className="absolute top-12 left-0 h-48 w-48 rounded-full bg-[#FFC857]/20 blur-3xl" />
+                <div className="absolute top-12 left-0 h-48 w-48 rounded-full bg-[#E5BE1E]/20 blur-3xl" />
                 <div className="absolute right-0 bottom-20 h-56 w-56 rounded-full bg-[#56CCF2]/20 blur-3xl" />
                 <div className="relative mx-auto max-w-7xl">
                     <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-end">
@@ -393,7 +392,7 @@ export default function OlimpiadeDetailPage() {
                                     key={item.label}
                                     className="rounded-3xl bg-white/90 p-5 shadow-sm ring-1 ring-slate-100 backdrop-blur"
                                 >
-                                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F15F23]/10 text-[#F15F23]">
+                                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#17524A]/10 text-[#17524A]">
                                         <item.icon className="h-6 w-6" />
                                     </div>
                                     <p className="mt-4 text-2xl font-black text-[#1E293B]">
@@ -408,7 +407,7 @@ export default function OlimpiadeDetailPage() {
                     </div>
 
                     <div className="mt-10 grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
-                        <div className="group relative min-h-80 overflow-hidden rounded-[32px] bg-white shadow-2xl ring-1 shadow-[#0F60AC]/10 ring-slate-100">
+                        <div className="group relative min-h-80 overflow-hidden rounded-[32px] bg-white shadow-2xl ring-1 shadow-[#17524A]/10 ring-slate-100">
                             <img
                                 src={currentOlimpiade.image}
                                 alt={`Dokumentasi utama ${currentOlimpiade.title}`}
@@ -443,7 +442,7 @@ export default function OlimpiadeDetailPage() {
                                         className={`w-full object-cover transition duration-700 group-hover:scale-110 ${index === 0 ? 'h-full min-h-64' : 'h-48 sm:h-full'}`}
                                     />
                                     <div className="absolute inset-0 bg-gradient-to-t from-[#1E293B]/55 via-transparent to-transparent opacity-0 transition group-hover:opacity-100" />
-                                    <div className="absolute bottom-4 left-4 rounded-full bg-white/90 px-3 py-1 text-xs font-black text-[#0F60AC] opacity-0 transition group-hover:opacity-100">
+                                    <div className="absolute bottom-4 left-4 rounded-full bg-white/90 px-3 py-1 text-xs font-black text-[#17524A] opacity-0 transition group-hover:opacity-100">
                                         Momen {index + 1}
                                     </div>
                                 </div>
@@ -466,10 +465,10 @@ export default function OlimpiadeDetailPage() {
                         ))}
                     </div>
 
-                    <div className="mt-12 rounded-[32px] bg-white p-4 shadow-2xl ring-1 shadow-[#0F60AC]/10 ring-slate-100 sm:p-6 lg:p-8">
+                    <div className="mt-12 rounded-[32px] bg-white p-4 shadow-2xl ring-1 shadow-[#17524A]/10 ring-slate-100 sm:p-6 lg:p-8">
                         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                             <div>
-                                <span className="inline-flex items-center gap-2 rounded-full bg-[#0F60AC]/10 px-4 py-2 text-sm font-black text-[#0F60AC]">
+                                <span className="inline-flex items-center gap-2 rounded-full bg-[#17524A]/10 px-4 py-2 text-sm font-black text-[#17524A]">
                                     <Film className="h-4 w-4" />
                                     Video kegiatan
                                 </span>
@@ -499,13 +498,13 @@ export default function OlimpiadeDetailPage() {
                                             allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                                             allowFullScreen
                                         />
-                                        <div className="pointer-events-none absolute top-4 left-4 inline-flex items-center gap-2 rounded-full bg-white/90 px-3 py-1 text-xs font-black text-[#F15F23] backdrop-blur">
+                                        <div className="pointer-events-none absolute top-4 left-4 inline-flex items-center gap-2 rounded-full bg-white/90 px-3 py-1 text-xs font-black text-[#17524A] backdrop-blur">
                                             <PlayCircle className="h-4 w-4" />
                                             {video.duration}
                                         </div>
                                     </div>
                                     <div className="p-5 sm:p-6">
-                                        <span className="inline-flex rounded-full bg-[#FFC857]/30 px-3 py-1 text-xs font-black text-[#7A4D00]">
+                                        <span className="inline-flex rounded-full bg-[#E5BE1E]/30 px-3 py-1 text-xs font-black text-[#9C7A0A]">
                                             {video.tag}
                                         </span>
                                         <h4 className="mt-4 text-xl font-black text-[#1E293B]">
@@ -536,20 +535,20 @@ export default function OlimpiadeDetailPage() {
                                 {schedules.map((schedule, index) => (
                                     <article
                                         key={schedule.id}
-                                        className="group grid gap-4 rounded-3xl bg-[#F8FAFC] p-4 ring-1 ring-slate-100 transition hover:-translate-y-1 hover:bg-white hover:shadow-xl hover:shadow-[#0F60AC]/10 sm:grid-cols-[auto_1fr]"
+                                        className="group grid gap-4 rounded-3xl bg-[#F8FAFC] p-4 ring-1 ring-slate-100 transition hover:-translate-y-1 hover:bg-white hover:shadow-xl hover:shadow-[#17524A]/10 sm:grid-cols-[auto_1fr]"
                                     >
                                         <div
                                             className="flex h-12 w-12 items-center justify-center rounded-2xl text-white shadow-lg"
                                             style={{
                                                 backgroundColor:
-                                                    schedule.color ?? '#F15F23',
+                                                    schedule.color ?? '#17524A',
                                             }}
                                         >
                                             <CalendarDays className="h-6 w-6" />
                                         </div>
                                         <div>
                                             <div className="flex flex-wrap items-center gap-2">
-                                                <span className="rounded-full bg-[#F15F23]/10 px-3 py-1 text-xs font-black text-[#F15F23]">
+                                                <span className="rounded-full bg-[#17524A]/10 px-3 py-1 text-xs font-black text-[#17524A]">
                                                     {schedule.phaseLabel}
                                                 </span>
                                                 <span className="text-xs font-black text-[#64748B]">
@@ -565,12 +564,12 @@ export default function OlimpiadeDetailPage() {
                                             </h3>
                                             <div className="mt-3 flex flex-wrap gap-3 text-sm font-bold text-[#64748B]">
                                                 <span className="inline-flex items-center gap-2">
-                                                    <Clock3 className="h-4 w-4 text-[#F15F23]" />
+                                                    <Clock3 className="h-4 w-4 text-[#17524A]" />
                                                     {schedule.dateLabel}
                                                 </span>
                                                 {schedule.location && (
                                                     <span className="inline-flex items-center gap-2">
-                                                        <MapPin className="h-4 w-4 text-[#0F60AC]" />
+                                                        <MapPin className="h-4 w-4 text-[#17524A]" />
                                                         {schedule.location}
                                                     </span>
                                                 )}
@@ -585,7 +584,7 @@ export default function OlimpiadeDetailPage() {
                                 ))}
                                 <Link
                                     href="/jadwal"
-                                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0F60AC] px-6 py-4 text-sm font-black text-white shadow-lg shadow-[#0F60AC]/20 transition hover:-translate-y-1"
+                                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#17524A] px-6 py-4 text-sm font-black text-white shadow-lg shadow-[#17524A]/20 transition hover:-translate-y-1"
                                 >
                                     Lihat Kalender Lengkap
                                     <CalendarDays className="h-4 w-4" />
@@ -611,7 +610,7 @@ export default function OlimpiadeDetailPage() {
                                 >
                                     <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-lg font-black text-[#1E293B]">
                                         {faq.question}
-                                        <ChevronDown className="h-5 w-5 shrink-0 text-[#F15F23] transition group-open:rotate-180" />
+                                        <ChevronDown className="h-5 w-5 shrink-0 text-[#17524A] transition group-open:rotate-180" />
                                     </summary>
                                     <p className="mt-4 text-sm leading-7 text-[#64748B]">
                                         {faq.answer}

@@ -23,15 +23,12 @@ import {
     X,
     Calendar,
 } from 'lucide-react';
-import { FormEvent, ReactNode, useMemo, useState } from 'react';
+import type { FormEvent, ReactNode } from 'react';
+import { useMemo, useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { toast } from 'sonner';
-import {
-    NewsItem,
-    OlimpiadeItem,
-    TestimonialItem,
-    navItems,
-} from './site-data';
+import type { NewsItem, OlimpiadeItem, TestimonialItem } from './site-data';
+import { navItems } from './site-data';
 
 type SharedSettings = {
     site_name?: string;
@@ -49,7 +46,7 @@ type PageProps = {
     settings?: SharedSettings;
 };
 
-const getSettings = () => usePage<PageProps>().props.settings ?? {};
+const useSettings = () => usePage<PageProps>().props.settings ?? {};
 
 export const MarketingShell = ({ children }: { children: ReactNode }) => {
     return (
@@ -69,7 +66,7 @@ export const MarketingShell = ({ children }: { children: ReactNode }) => {
 
 export const Navbar = () => {
     const [open, setOpen] = useState(false);
-    const settings = getSettings();
+    const settings = useSettings();
     const currentPath =
         typeof window === 'undefined' ? '/' : window.location.pathname;
 
@@ -83,7 +80,7 @@ export const Navbar = () => {
                 >
                     <BrandMark logo={settings.logo} />
                     <div>
-                        <p className="text-lg font-black tracking-tight text-[#0F60AC]">
+                        <p className="text-lg font-black tracking-tight text-[#17524A]">
                             {settings.site_name || 'OMATIQ'}
                         </p>
                         <p className="text-xs font-semibold text-[#64748B]">
@@ -108,8 +105,8 @@ export const Navbar = () => {
                                 href={item.href}
                                 className={`rounded-xl px-4 py-2 text-sm font-bold transition ${
                                     isActive
-                                        ? 'bg-[#0F60AC]/10 text-[#0F60AC]'
-                                        : 'text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#0F60AC]'
+                                        ? 'bg-[#17524A]/10 text-[#17524A]'
+                                        : 'text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#17524A]'
                                 }`}
                             >
                                 {item.label}
@@ -121,7 +118,7 @@ export const Navbar = () => {
                 <div className="hidden items-center gap-3 lg:flex">
                     <Link
                         href="/kontak"
-                        className="inline-flex items-center gap-2 rounded-xl bg-[#F15F23] px-5 py-3 text-sm font-black text-white shadow-lg shadow-[#F15F23]/25 transition hover:-translate-y-0.5 hover:bg-[#d94f18]"
+                        className="inline-flex items-center gap-2 rounded-xl bg-[#17524A] px-5 py-3 text-sm font-black text-white shadow-lg shadow-[#17524A]/25 transition hover:-translate-y-0.5 hover:bg-[#0F4038]"
                     >
                         Join Community
                         <ArrowRight className="h-4 w-4" />
@@ -131,7 +128,7 @@ export const Navbar = () => {
                 <button
                     type="button"
                     onClick={() => setOpen((value) => !value)}
-                    className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-[#0F60AC] shadow-sm lg:hidden"
+                    className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-[#17524A] shadow-sm lg:hidden"
                     aria-label="Toggle navigation"
                     aria-expanded={open}
                 >
@@ -153,7 +150,7 @@ export const Navbar = () => {
                             <Link
                                 key={item.href}
                                 href={item.href}
-                                className="rounded-xl px-4 py-3 text-sm font-bold text-[#1E293B] transition hover:bg-[#F8FAFC] hover:text-[#0F60AC]"
+                                className="rounded-xl px-4 py-3 text-sm font-bold text-[#1E293B] transition hover:bg-[#F8FAFC] hover:text-[#17524A]"
                                 onClick={() => setOpen(false)}
                             >
                                 {item.label}
@@ -161,7 +158,7 @@ export const Navbar = () => {
                         ))}
                         <Link
                             href="/kontak"
-                            className="mt-2 inline-flex items-center justify-center gap-2 rounded-xl bg-[#F15F23] px-5 py-3 text-sm font-black text-white"
+                            className="mt-2 inline-flex items-center justify-center gap-2 rounded-xl bg-[#17524A] px-5 py-3 text-sm font-black text-white"
                             onClick={() => setOpen(false)}
                         >
                             Join Community
@@ -175,10 +172,10 @@ export const Navbar = () => {
 };
 
 export const Footer = () => {
-    const settings = getSettings();
+    const settings = useSettings();
 
     return (
-        <footer className="bg-[#0F60AC] text-white">
+        <footer className="bg-[#17524A] text-white">
             <div className="mx-auto grid max-w-7xl gap-10 px-5 py-16 md:grid-cols-[1.3fr_0.8fr_0.8fr_1fr] lg:px-8">
                 <div>
                     <div className="flex items-center gap-3">
@@ -239,7 +236,7 @@ export const Footer = () => {
                 />
 
                 <div>
-                    <h3 className="text-sm font-black tracking-wider text-[#FFC857] uppercase">
+                    <h3 className="text-sm font-black tracking-wider text-[#E5BE1E] uppercase">
                         Newsletter
                     </h3>
                     <p className="mt-4 text-sm leading-7 text-white/75">
@@ -263,7 +260,7 @@ export const Footer = () => {
                         />
                         <button
                             type="submit"
-                            className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-[#F15F23] text-white"
+                            className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-[#17524A] text-white"
                             aria-label="Subscribe newsletter"
                         >
                             <Send className="h-4 w-4" />
@@ -293,7 +290,7 @@ const FooterColumn = ({
     links: Array<{ label: string; href: string }>;
 }) => (
     <div>
-        <h3 className="text-sm font-black tracking-wider text-[#FFC857] uppercase">
+        <h3 className="text-sm font-black tracking-wider text-[#E5BE1E] uppercase">
             {title}
         </h3>
         <div className="mt-4 flex flex-col gap-3">
@@ -329,7 +326,7 @@ export const BrandMark = ({
 
     return (
         <div
-            className={`flex h-11 w-11 items-center justify-center rounded-2xl shadow-lg ${inverse ? 'bg-white text-[#F15F23]' : 'bg-[#F15F23] text-white shadow-[#F15F23]/25'}`}
+            className={`flex h-11 w-11 items-center justify-center rounded-2xl shadow-lg ${inverse ? 'bg-white text-[#17524A]' : 'bg-[#17524A] text-white shadow-[#17524A]/25'}`}
         >
             <Sparkles className="h-6 w-6" />
         </div>
@@ -351,7 +348,7 @@ export const SectionHeader = ({
         className={`max-w-3xl ${align === 'center' ? 'mx-auto text-center' : ''}`}
     >
         {eyebrow && (
-            <span className="inline-flex rounded-full bg-[#F15F23]/10 px-4 py-2 text-sm font-black text-[#F15F23]">
+            <span className="inline-flex rounded-full bg-[#17524A]/10 px-4 py-2 text-sm font-black text-[#17524A]">
                 {eyebrow}
             </span>
         )}
@@ -371,7 +368,7 @@ export const HeroSection = () => (
         <div className="absolute inset-x-0 top-0 h-32 bg-white" />
         <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.02fr_0.98fr]">
             <div>
-                <span className="inline-flex items-center gap-2 rounded-full border border-[#F15F23]/15 bg-white px-4 py-2 text-sm font-black text-[#F15F23] shadow-sm">
+                <span className="inline-flex items-center gap-2 rounded-full border border-[#17524A]/15 bg-white px-4 py-2 text-sm font-black text-[#17524A] shadow-sm">
                     <Sparkles className="h-4 w-4" />
                     Modern education for vibrant communities
                 </span>
@@ -386,14 +383,14 @@ export const HeroSection = () => (
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                     <Link
                         href="/olimpiade"
-                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#F15F23] px-6 py-4 text-sm font-black text-white shadow-xl shadow-[#F15F23]/25 transition hover:-translate-y-1 hover:bg-[#d94f18]"
+                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#17524A] px-6 py-4 text-sm font-black text-white shadow-xl shadow-[#17524A]/25 transition hover:-translate-y-1 hover:bg-[#0F4038]"
                     >
                         Explore Olimpiade
                         <ArrowRight className="h-4 w-4" />
                     </Link>
                     <Link
                         href="/about"
-                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#0F60AC]/15 bg-white px-6 py-4 text-sm font-black text-[#0F60AC] shadow-sm transition hover:-translate-y-1 hover:border-[#0F60AC]/30 hover:bg-[#0F60AC]/5"
+                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#17524A]/15 bg-white px-6 py-4 text-sm font-black text-[#17524A] shadow-sm transition hover:-translate-y-1 hover:border-[#17524A]/30 hover:bg-[#17524A]/5"
                     >
                         Meet OMATIQ
                         <BookOpen className="h-4 w-4" />
@@ -409,7 +406,7 @@ export const HeroSection = () => (
                             key={label}
                             className="rounded-3xl bg-white p-4 text-center shadow-sm ring-1 ring-slate-100"
                         >
-                            <p className="text-2xl font-black text-[#0F60AC]">
+                            <p className="text-2xl font-black text-[#17524A]">
                                 {value}
                             </p>
                             <p className="text-xs font-bold text-[#64748B]">
@@ -421,14 +418,14 @@ export const HeroSection = () => (
             </div>
 
             <div className="relative">
-                <div className="absolute top-8 -left-5 z-10 hidden rotate-[-6deg] rounded-3xl bg-[#FFC857] px-5 py-4 font-black text-[#1E293B] shadow-xl md:block">
+                <div className="absolute top-8 -left-5 z-10 hidden rotate-[-6deg] rounded-3xl bg-[#E5BE1E] px-5 py-4 font-black text-[#1E293B] shadow-xl md:block">
                     Project-based
                 </div>
                 <div className="absolute -right-4 bottom-16 z-10 hidden rotate-6 rounded-3xl bg-[#5DD39E] px-5 py-4 font-black text-white shadow-xl md:block">
                     Mentor circle
                 </div>
-                <div className="rounded-[40px] bg-white p-4 shadow-2xl ring-1 shadow-[#0F60AC]/10 ring-slate-100">
-                    <div className="overflow-hidden rounded-[32px] bg-[#0F60AC]">
+                <div className="rounded-[40px] bg-white p-4 shadow-2xl ring-1 shadow-[#17524A]/10 ring-slate-100">
+                    <div className="overflow-hidden rounded-[32px] bg-[#17524A]">
                         <img
                             src="https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&w=1300&q=80"
                             alt="Learners collaborating in a bright creative classroom"
@@ -438,7 +435,7 @@ export const HeroSection = () => (
                 </div>
                 <div className="absolute right-6 -bottom-6 left-6 rounded-3xl bg-white p-5 shadow-xl ring-1 ring-slate-100">
                     <div className="flex items-center gap-4">
-                        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F15F23]/10 text-[#F15F23]">
+                        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#17524A]/10 text-[#17524A]">
                             <GraduationCap className="h-7 w-7" />
                         </div>
                         <div>
@@ -460,7 +457,7 @@ export const HeroSection = () => (
 export const OlimpiadeCard = ({ olimpiade }: { olimpiade: OlimpiadeItem }) => (
     <Link
         href={`/olimpiade/${olimpiade.slug}`}
-        className="group flex h-full flex-col overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-100 transition duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-[#0F60AC]/10"
+        className="group flex h-full flex-col overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-100 transition duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-[#17524A]/10"
     >
         <div className="relative h-56 overflow-hidden">
             <img
@@ -468,7 +465,7 @@ export const OlimpiadeCard = ({ olimpiade }: { olimpiade: OlimpiadeItem }) => (
                 alt={olimpiade.title}
                 className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
             />
-            <div className="absolute top-4 left-4 rounded-full bg-white/90 px-3 py-1 text-xs font-black text-[#0F60AC] backdrop-blur">
+            <div className="absolute top-4 left-4 rounded-full bg-white/90 px-3 py-1 text-xs font-black text-[#17524A] backdrop-blur">
                 {olimpiade.category}
             </div>
         </div>
@@ -489,7 +486,7 @@ export const OlimpiadeCard = ({ olimpiade }: { olimpiade: OlimpiadeItem }) => (
             <p className="mt-3 line-clamp-3 text-sm leading-7 text-[#64748B]">
                 {olimpiade.description}
             </p>
-            <span className="mt-auto inline-flex items-center gap-2 pt-6 text-sm font-black text-[#F15F23] transition group-hover:gap-3">
+            <span className="mt-auto inline-flex items-center gap-2 pt-6 text-sm font-black text-[#17524A] transition group-hover:gap-3">
                 Learn More
                 <ArrowRight className="h-4 w-4" />
             </span>
@@ -504,7 +501,7 @@ export const NewsCard = ({
     article: NewsItem;
     featured?: boolean;
 }) => {
-    const className = `group min-w-0 overflow-hidden rounded-[28px] bg-white shadow-sm ring-1 ring-slate-100 transition duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-[#0F60AC]/10 sm:rounded-3xl ${
+    const className = `group min-w-0 overflow-hidden rounded-[28px] bg-white shadow-sm ring-1 ring-slate-100 transition duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-[#17524A]/10 sm:rounded-3xl ${
         featured
             ? 'grid md:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]'
             : 'flex h-full flex-col'
@@ -524,7 +521,7 @@ export const NewsCard = ({
                 className={`flex min-w-0 flex-1 flex-col ${featured ? 'p-5 sm:p-7 lg:p-10' : 'p-5 sm:p-6 md:p-7'}`}
             >
                 <div className="flex min-w-0 flex-wrap items-center gap-3 text-xs font-black tracking-wide uppercase">
-                    <span className="rounded-full bg-[#F15F23]/10 px-3 py-1 text-[#F15F23]">
+                    <span className="rounded-full bg-[#17524A]/10 px-3 py-1 text-[#17524A]">
                         {article.category}
                     </span>
                     <span className="text-[#64748B]">{article.date}</span>
@@ -543,7 +540,7 @@ export const NewsCard = ({
                 >
                     {article.excerpt}
                 </p>
-                <span className="mt-auto inline-flex items-center gap-2 pt-6 text-sm font-black text-[#0F60AC] transition group-hover:gap-3">
+                <span className="mt-auto inline-flex items-center gap-2 pt-6 text-sm font-black text-[#17524A] transition group-hover:gap-3">
                     Read Article
                     <ArrowRight className="h-4 w-4" />
                 </span>
@@ -577,7 +574,7 @@ export const TestimonialCard = ({
     testimonial: TestimonialItem;
 }) => (
     <div className="flex h-full flex-col rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-100 transition hover:-translate-y-1 hover:shadow-xl sm:p-6">
-        <div className="flex gap-1 text-[#FFC857]">
+        <div className="flex gap-1 text-[#E5BE1E]">
             {Array.from({ length: testimonial.rating }).map((_, index) => (
                 <Star
                     key={`${testimonial.id}-${index}`}
@@ -614,13 +611,13 @@ export const CTASection = ({
     primaryHref?: string;
 }) => (
     <section className="px-5 py-14 sm:py-16 lg:px-8">
-        <div className="mx-auto max-w-7xl overflow-hidden rounded-[28px] bg-white shadow-2xl ring-1 shadow-[#F15F23]/15 ring-[#F15F23]/10 sm:rounded-[32px]">
-            <div className="relative grid items-center gap-8 bg-gradient-to-br from-[#FFF7ED] via-white to-[#EAF6FF] p-5 sm:p-6 md:p-10 lg:grid-cols-[minmax(0,1fr)_minmax(360px,0.82fr)] lg:p-12">
-                <div className="absolute top-6 left-6 h-20 w-20 rounded-[28px] bg-[#FFC857]/30 blur-2xl" />
+        <div className="mx-auto max-w-7xl overflow-hidden rounded-[28px] bg-white shadow-2xl ring-1 shadow-[#17524A]/15 ring-[#17524A]/10 sm:rounded-[32px]">
+            <div className="relative grid items-center gap-8 bg-gradient-to-br from-[#E7F0ED] via-white to-[#FBF4DC] p-5 sm:p-6 md:p-10 lg:grid-cols-[minmax(0,1fr)_minmax(360px,0.82fr)] lg:p-12">
+                <div className="absolute top-6 left-6 h-20 w-20 rounded-[28px] bg-[#E5BE1E]/30 blur-2xl" />
                 <div className="absolute right-10 bottom-8 h-28 w-28 rounded-[36px] bg-[#56CCF2]/25 blur-3xl" />
 
                 <div className="relative z-10">
-                    <span className="inline-flex items-center gap-2 rounded-full bg-[#F15F23]/10 px-4 py-2 text-sm font-black text-[#F15F23]">
+                    <span className="inline-flex items-center gap-2 rounded-full bg-[#17524A]/10 px-4 py-2 text-sm font-black text-[#17524A]">
                         <Trophy className="h-4 w-4" />
                         Pendaftaran Olimpiade Dibuka
                     </span>
@@ -650,7 +647,7 @@ export const CTASection = ({
                                 key={item.label}
                                 className="flex items-center gap-3 rounded-2xl bg-white/85 p-3 text-sm font-black text-[#1E293B] shadow-sm ring-1 ring-slate-100 backdrop-blur"
                             >
-                                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0F60AC]/10 text-[#0F60AC]">
+                                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#17524A]/10 text-[#17524A]">
                                     <item.icon className="h-5 w-5" />
                                 </span>
                                 <span>{item.label}</span>
@@ -661,14 +658,14 @@ export const CTASection = ({
                     <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                         <Link
                             href={primaryHref}
-                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#F15F23] px-6 py-4 text-sm font-black text-white shadow-xl shadow-[#F15F23]/25 transition hover:-translate-y-1 hover:bg-[#d94f18]"
+                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#17524A] px-6 py-4 text-sm font-black text-white shadow-xl shadow-[#17524A]/25 transition hover:-translate-y-1 hover:bg-[#0F4038]"
                         >
                             Daftar Olimpiade
                             <ArrowRight className="h-4 w-4" />
                         </Link>
                         <Link
                             href="/jadwal"
-                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#0F60AC]/15 bg-white px-6 py-4 text-sm font-black text-[#0F60AC] shadow-sm transition hover:-translate-y-1 hover:border-[#0F60AC]/30 hover:bg-[#0F60AC]/5"
+                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#17524A]/15 bg-white px-6 py-4 text-sm font-black text-[#17524A] shadow-sm transition hover:-translate-y-1 hover:border-[#17524A]/30 hover:bg-[#17524A]/5"
                         >
                             Lihat Jadwal
                             <Calendar className="h-4 w-4" />
@@ -677,7 +674,7 @@ export const CTASection = ({
                 </div>
 
                 <div className="relative z-10 mx-auto w-full max-w-xl">
-                    <div className="absolute top-10 -left-10 z-10 hidden rotate-[-6deg] rounded-2xl bg-[#FFC857] px-4 py-3 text-sm font-black text-[#1E293B] shadow-xl sm:block">
+                    <div className="absolute top-10 -left-10 z-10 hidden rotate-[-6deg] rounded-2xl bg-[#E5BE1E] px-4 py-3 text-sm font-black text-[#1E293B] shadow-xl sm:block">
                         Untuk anak Indonesia
                     </div>
                     <div className="absolute -right-2 bottom-12 z-10 hidden rotate-6 rounded-2xl bg-[#5DD39E] px-4 py-3 text-sm font-black text-white shadow-xl sm:block">
@@ -712,7 +709,7 @@ export const ContactForm = () => {
     return (
         <form
             onSubmit={handleSubmit}
-            className="rounded-3xl bg-white p-6 shadow-xl ring-1 shadow-[#0F60AC]/10 ring-slate-100 md:p-8"
+            className="rounded-3xl bg-white p-6 shadow-xl ring-1 shadow-[#17524A]/10 ring-slate-100 md:p-8"
         >
             <div className="grid gap-4 md:grid-cols-2">
                 <FormField
@@ -748,13 +745,13 @@ export const ContactForm = () => {
                     required
                     rows={5}
                     placeholder="Ceritakan kebutuhan kamu..."
-                    className="mt-2 w-full resize-none rounded-xl border border-slate-200 bg-[#F8FAFC] px-4 py-3 text-sm font-semibold transition outline-none focus:border-[#F15F23] focus:bg-white"
+                    className="mt-2 w-full resize-none rounded-xl border border-slate-200 bg-[#F8FAFC] px-4 py-3 text-sm font-semibold transition outline-none focus:border-[#17524A] focus:bg-white"
                 />
             </label>
             <button
                 type="submit"
                 disabled={submitting}
-                className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#F15F23] px-6 py-4 text-sm font-black text-white shadow-lg shadow-[#F15F23]/25 transition hover:-translate-y-1 disabled:cursor-not-allowed disabled:opacity-70"
+                className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#17524A] px-6 py-4 text-sm font-black text-white shadow-lg shadow-[#17524A]/25 transition hover:-translate-y-1 disabled:cursor-not-allowed disabled:opacity-70"
             >
                 {submitting ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -785,7 +782,7 @@ const FormField = ({
             type={type}
             required
             placeholder={placeholder}
-            className="mt-2 w-full rounded-xl border border-slate-200 bg-[#F8FAFC] px-4 py-3 text-sm font-semibold transition outline-none focus:border-[#F15F23] focus:bg-white"
+            className="mt-2 w-full rounded-xl border border-slate-200 bg-[#F8FAFC] px-4 py-3 text-sm font-semibold transition outline-none focus:border-[#17524A] focus:bg-white"
         />
     </label>
 );
@@ -798,7 +795,7 @@ export const EmptyState = ({
     description: string;
 }) => (
     <div className="rounded-3xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
-        <Search className="mx-auto h-10 w-10 text-[#0F60AC]" />
+        <Search className="mx-auto h-10 w-10 text-[#17524A]" />
         <h3 className="mt-4 text-xl font-black text-[#1E293B]">{title}</h3>
         <p className="mt-2 text-sm leading-7 text-[#64748B]">{description}</p>
     </div>
@@ -806,7 +803,7 @@ export const EmptyState = ({
 
 export const LoadingState = () => (
     <div className="flex min-h-56 items-center justify-center rounded-3xl bg-white shadow-sm ring-1 ring-slate-100">
-        <Loader2 className="h-6 w-6 animate-spin text-[#F15F23]" />
+        <Loader2 className="h-6 w-6 animate-spin text-[#17524A]" />
     </div>
 );
 
@@ -818,8 +815,8 @@ export const FeatureIcon = ({
     color?: 'orange' | 'blue' | 'mint' | 'purple';
 }) => {
     const colors = {
-        orange: 'bg-[#F15F23]/10 text-[#F15F23]',
-        blue: 'bg-[#0F60AC]/10 text-[#0F60AC]',
+        orange: 'bg-[#17524A]/10 text-[#17524A]',
+        blue: 'bg-[#E5BE1E]/15 text-[#9C7A0A]',
         mint: 'bg-[#5DD39E]/15 text-[#12885b]',
         purple: 'bg-[#8B5CF6]/10 text-[#8B5CF6]',
     };
@@ -834,7 +831,7 @@ export const FeatureIcon = ({
 };
 
 export const ContactInfoGrid = () => {
-    const settings = getSettings();
+    const settings = useSettings();
     const items = useMemo(
         () => [
             {

@@ -7,9 +7,13 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Company\StoreParticipantRequest;
 use App\Models\Company\Olimpiade;
 use App\Models\Company\Participant;
+use App\Models\Company\Student;
 use App\Models\Core\Region\Province;
 use App\Models\Core\Region\Regency;
+use App\Models\Core\User;
+use App\Settings\SiteSettings;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -19,9 +23,23 @@ class ParticipantRegistrationController extends Controller
 
     public function create(): Response
     {
+        $settings = app(SiteSettings::class);
+
+        if (! $settings->registration_public_open) {
+            return Inertia::render('home/registration/index', [
+                'pageTitle' => 'Pendaftaran OMATIQ',
+                'registration_closed' => true,
+                'meta' => [
+                    'title' => 'Pendaftaran OMATIQ',
+                    'description' => 'Pendaftaran OMATIQ 2026 sedang ditutup.',
+                    'keywords' => 'pendaftaran OMATIQ',
+                ],
+            ]);
+        }
+
         return Inertia::render('home/registration/index', [
             'pageTitle' => 'Pendaftaran OMATIQ',
-            'olimpiades' => Olimpiade::query()->active()->ordered()->get(['id', 'name', 'category', 'slug']),
+            'olimpiades' => Olimpiade::query()->active()->where('show_on_registration', true)->ordered()->get(['id', 'name', 'category', 'slug']),
             'provinces' => Province::query()->orderBy('name')->get(['id', 'name']),
             'regencies' => Regency::query()
                 ->orderBy('name')
@@ -41,21 +59,38 @@ class ParticipantRegistrationController extends Controller
 
     public function store(StoreParticipantRequest $request)
     {
-        $data = $this->payload($request);
-        $data['registration_number'] = $this->registrationNumber();
-        $data['status'] = 'submitted';
+        $settings = app(SiteSettings::class);
 
-        foreach ($this->fileMap() as $input => $column) {
-            if ($request->hasFile($input)) {
-                $data[$column] = $this->uploadFile(
-                    null,
-                    $request->file($input),
-                    'uploads/participants/'.$input,
-                );
-            }
+        if (! $settings->registration_public_open) {
+            return back()->with('error', 'Pendaftaran umum sedang ditutup.');
         }
 
-        $participant = Participant::create($data);
+        $participant = DB::transaction(function () use ($request) {
+            $user = User::create([
+                'name' => $request->full_name,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+                'email_verified_at' => now(),
+            ]);
+            $user->assignRole('Participant');
+
+            $data = $this->payload($request);
+            $data['user_id'] = $user->id;
+            $data['registration_number'] = $this->registrationNumber();
+            $data['status'] = 'submitted';
+            $data['registration_type'] = 'public';
+
+            $student = Student::firstOrCreate(
+                ['nik' => $request->nik],
+                $this->studentData($request),
+            );
+
+            $this->handleStudentFiles($student, $request);
+
+            $data['student_id'] = $student->id;
+
+            return Participant::create($data);
+        });
 
         return redirect()
             ->route('home.registration.success', $participant->registration_number)
@@ -65,7 +100,7 @@ class ParticipantRegistrationController extends Controller
     public function success(string $registrationNumber): Response
     {
         $participant = Participant::query()
-            ->with('olimpiade:id,name')
+            ->with(['olimpiade:id,name', 'user:id,email', 'student:id,full_name'])
             ->where('registration_number', $registrationNumber)
             ->firstOrFail();
 
@@ -73,8 +108,9 @@ class ParticipantRegistrationController extends Controller
             'pageTitle' => 'Pendaftaran Berhasil',
             'participant' => [
                 'registration_number' => $participant->registration_number,
-                'full_name' => $participant->full_name,
+                'full_name' => $participant->student?->full_name ?? $participant->user?->name,
                 'olimpiade' => $participant->olimpiade?->name,
+                'email' => $participant->user?->email,
             ],
             'meta' => [
                 'title' => 'Pendaftaran Berhasil',
@@ -86,23 +122,55 @@ class ParticipantRegistrationController extends Controller
 
     private function payload(StoreParticipantRequest $request): array
     {
-        $data = $request->safe()->except([
-            'photo',
-            'identity_card',
-            'recommendation_letter',
-            'achievement_certificate',
+        return $request->safe()->only([
+            'nik', 'olimpiade_id', 'referral_source', 'referral_source_other',
+            'has_joined_before', 'previous_year', 'achievements',
+            'participant_signature_name', 'guardian_signature_name',
         ]);
+    }
 
-        $data['has_joined_before'] = $request->boolean('has_joined_before');
-        $data['data_truth_consent'] = $request->boolean('data_truth_consent');
-        $data['documentation_consent'] = $request->boolean('documentation_consent');
-        $data['rules_consent'] = $request->boolean('rules_consent');
+    private function studentData(StoreParticipantRequest $request): array
+    {
+        return [
+            'full_name' => $request->full_name,
+            'nickname' => $request->nickname,
+            'gender' => $request->gender,
+            'birth_place' => $request->birth_place,
+            'birth_date' => $request->birth_date,
+            'age' => $request->age,
+            'school_name' => $request->school_name,
+            'grade' => $request->grade,
+            'address' => $request->address,
+            'province_id' => $request->province_id,
+            'regency_id' => $request->regency_id,
+            'parent_phone' => $request->parent_phone,
+            'mentor_name' => $request->mentor_name,
+            'mentor_phone' => $request->mentor_phone,
+            'is_binaan' => false,
+        ];
+    }
 
-        if (! $data['has_joined_before']) {
-            $data['previous_year'] = null;
+    private function handleStudentFiles(Student $student, StoreParticipantRequest $request): void
+    {
+        foreach ($this->fileMap() as $input => $column) {
+            if ($request->hasFile($input)) {
+                $path = $this->uploadFile(
+                    $student->{$column},
+                    $request->file($input),
+                    'uploads/students/'.$input,
+                );
+                $student->update([$column => $path]);
+            }
         }
+    }
 
-        return $data;
+    private function fileMap(): array
+    {
+        return [
+            'photo' => 'photo_path',
+            'identity_card' => 'identity_card_path',
+            'family_card' => 'family_card_path',
+        ];
     }
 
     private function registrationNumber(): string
@@ -116,15 +184,5 @@ class ParticipantRegistrationController extends Controller
 
             return $prefix.'-'.str_pad((string) ($latest + 1), 4, '0', STR_PAD_LEFT);
         });
-    }
-
-    private function fileMap(): array
-    {
-        return [
-            'photo' => 'photo_path',
-            'identity_card' => 'identity_card_path',
-            'recommendation_letter' => 'recommendation_letter_path',
-            'achievement_certificate' => 'achievement_certificate_path',
-        ];
     }
 }

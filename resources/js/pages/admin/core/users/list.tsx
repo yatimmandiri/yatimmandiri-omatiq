@@ -110,6 +110,7 @@ export default function ListPage() {
                     onClick: () => {
                         if (rowSelection.length === 0) {
                             toast.error('Tidak ada data yang dipilih');
+
                             return;
                         }
 
@@ -135,6 +136,7 @@ export default function ListPage() {
                     onClick: () => {
                         if (rowSelection.length === 0) {
                             toast.error('Tidak ada data yang dipilih');
+
                             return;
                         }
 

@@ -11,3 +11,4 @@ Breadcrumbs::for(
 
 require __DIR__.'/admin/core-breadcrumbs.php';
 require __DIR__.'/admin/company-breadcrumbs.php';
+require __DIR__.'/admin/teacher-breadcrumbs.php';

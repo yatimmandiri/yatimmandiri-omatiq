@@ -6,7 +6,7 @@ import {
 import { ChevronDown, MapPin } from 'lucide-react';
 import { usePage } from '@inertiajs/react';
 
-const fallbackFaqs = [ 
+const fallbackFaqs = [
     [
         'Bagaimana cara mendaftar olimpiade OMATIQ?',
         'Kamu bisa mengirim pesan melalui form kontak. Tim kami akan membantu memilih olimpiade yang paling sesuai dengan kebutuhanmu.',
@@ -42,7 +42,7 @@ export default function ContactPage() {
             <section className="px-5 pt-28 pb-14 sm:pt-32 sm:pb-16 md:pb-24 lg:px-8">
                 <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[0.9fr_1.1fr]">
                     <div>
-                        <span className="inline-flex rounded-full bg-[#F15F23]/10 px-4 py-2 text-sm font-black text-[#F15F23]">
+                        <span className="inline-flex rounded-full bg-[#17524A]/10 px-4 py-2 text-sm font-black text-[#17524A]">
                             Contact
                         </span>
                         <h1 className="mt-6 text-3xl leading-tight font-black tracking-tight text-[#1E293B] sm:text-4xl md:text-6xl">
@@ -70,7 +70,7 @@ export default function ContactPage() {
                             <ContactForm />
                         </div>
                     </div>
-                    <div className="overflow-hidden rounded-[28px] bg-[#0F60AC] p-3 shadow-2xl shadow-[#0F60AC]/15 sm:p-5">
+                    <div className="overflow-hidden rounded-[28px] bg-[#17524A] p-3 shadow-2xl shadow-[#17524A]/15 sm:p-5">
                         <div className="relative flex min-h-96 items-center justify-center overflow-hidden rounded-3xl bg-[#F8FAFC] lg:h-full lg:min-h-[520px]">
                             <img
                                 src="https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=1000&q=80"
@@ -78,7 +78,7 @@ export default function ContactPage() {
                                 className="absolute inset-0 h-full w-full object-cover opacity-70"
                             />
                             <div className="relative mx-4 max-w-sm rounded-3xl bg-white p-5 text-center shadow-xl sm:p-6">
-                                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#F15F23] text-white">
+                                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#17524A] text-white">
                                     <MapPin className="h-8 w-8" />
                                 </div>
                                 <h2 className="mt-5 text-2xl font-black text-[#1E293B]">
@@ -110,7 +110,7 @@ export default function ContactPage() {
                                 >
                                     <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-lg font-black text-[#1E293B]">
                                         {item.question}
-                                        <ChevronDown className="h-5 w-5 shrink-0 text-[#F15F23] transition group-open:rotate-180" />
+                                        <ChevronDown className="h-5 w-5 shrink-0 text-[#17524A] transition group-open:rotate-180" />
                                     </summary>
                                     <p className="mt-4 text-sm leading-7 text-[#64748B]">
                                         {item.answer}

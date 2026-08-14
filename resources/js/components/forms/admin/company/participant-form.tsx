@@ -6,17 +6,11 @@ import { Textarea } from '@/components/ui/textarea';
 import participants from '@/routes/admin/companies/participants';
 import { useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, Save } from 'lucide-react';
-import { FormEvent, ReactNode, useMemo } from 'react';
+import type { FormEvent, ReactNode} from 'react';
+import { useMemo } from 'react';
 
 type Option = { id: number | string; name: string; category?: string };
 type Regency = { id: string; province_id: string; name: string };
-
-const programOptions = [
-    { value: 'sanggar_genius', label: 'Sanggar Genius' },
-    { value: 'sanggar_alquran', label: "Sanggar Al-Qur'an" },
-    { value: 'asrama_yatim_mandiri', label: 'Asrama Yatim Mandiri' },
-    { value: 'other', label: 'Program Lainnya' },
-];
 
 const statusOptions = [
     { value: 'submitted', label: 'Submitted' },
@@ -39,34 +33,36 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
         regencies?: Regency[];
     }>().props;
 
+    const student = participant?.student;
     const form = useForm<any>({
         olimpiade_id: participant?.olimpiade_id ? String(participant.olimpiade_id) : '',
-        full_name: participant?.full_name ?? '',
-        nickname: participant?.nickname ?? '',
-        gender: participant?.gender ?? '',
-        birth_place: participant?.birth_place ?? '',
-        birth_date: dateValue(participant?.birth_date),
-        age: participant?.age ?? '',
-        education_level: participant?.education_level ?? '',
-        school_name: participant?.school_name ?? '',
-        grade: participant?.grade ?? '',
-        address: participant?.address ?? '',
-        province_id: participant?.province_id ?? '',
-        regency_id: participant?.regency_id ?? '',
-        parent_phone: participant?.parent_phone ?? '',
-        development_program: participant?.development_program ?? '',
-        development_program_other: participant?.development_program_other ?? '',
-        institution_name: participant?.institution_name ?? '',
-        branch_office: participant?.branch_office ?? '',
-        mentor_name: participant?.mentor_name ?? '',
-        mentor_phone: participant?.mentor_phone ?? '',
+        nik: student?.nik ?? '',
+        full_name: student?.full_name ?? '',
+        nickname: student?.nickname ?? '',
+        gender: student?.gender ?? '',
+        birth_place: student?.birth_place ?? '',
+        birth_date: dateValue(student?.birth_date),
+        age: student?.age ?? '',
+        school_name: student?.school_name ?? '',
+        grade: student?.grade ?? '',
+        address: student?.address ?? '',
+        province_id: student?.province_id ?? '',
+        regency_id: student?.regency_id ?? '',
+        parent_phone: student?.parent_phone ?? '',
+        mentor_name: student?.mentor_name ?? '',
+        mentor_phone: student?.mentor_phone ?? '',
         achievements: participant?.achievements ?? '',
         has_joined_before: participant?.has_joined_before ?? false,
         previous_year: participant?.previous_year ?? '',
         photo: null,
         identity_card: null,
-        recommendation_letter: null,
-        achievement_certificate: null,
+        family_card: null,
+        referral_source: participant?.referral_source ?? '',
+        referral_source_other: participant?.referral_source_other ?? '',
+        payment_status: participant?.payment_status ?? 'unpaid',
+        payment_amount: participant?.payment_amount ?? '',
+        payment_note: participant?.payment_note ?? '',
+        payment_proof: null,
         data_truth_consent: participant?.data_truth_consent ?? false,
         documentation_consent: participant?.documentation_consent ?? false,
         rules_consent: participant?.rules_consent ?? false,
@@ -119,7 +115,7 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
                 <div>
                     <h1 className="text-2xl font-bold">Edit Peserta</h1>
                     <p className="mt-1 text-sm text-muted-foreground">
-                        {participant.registration_number} - {participant.full_name}
+                        {participant.registration_number} - {student?.full_name ?? participant.nik}
                     </p>
                 </div>
                 <div className="flex gap-2">
@@ -137,6 +133,9 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
             <Card className="space-y-5 p-5">
                 <h2 className="text-lg font-bold">Data Peserta</h2>
                 <div className="grid gap-5 md:grid-cols-2">
+                    <Field label="NIK (16 digit)" error={error('nik')}>
+                        <Input value={form.data.nik} onChange={(e) => form.setData('nik', e.target.value.replace(/\D/g, '').slice(0, 16))} maxLength={16} placeholder="16 digit NIK" />
+                    </Field>
                     <Field label="Nama Lengkap" error={error('full_name')}>
                         <Input value={form.data.full_name} onChange={(e) => form.setData('full_name', e.target.value)} required />
                     </Field>
@@ -155,9 +154,6 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
                     <Field label="Usia" error={error('age')}>
                         <Input type="number" value={form.data.age} onChange={(e) => form.setData('age', e.target.value)} required />
                     </Field>
-                    <Field label="Jenjang" error={error('education_level')}>
-                        <Select value={form.data.education_level} onChange={(value) => form.setData('education_level', value)} options={[{ value: 'SD/MI', label: 'SD/MI' }, { value: 'SMP/MTs', label: 'SMP/MTs' }]} />
-                    </Field>
                     <Field label="Kelas" error={error('grade')}>
                         <Input value={form.data.grade} onChange={(e) => form.setData('grade', e.target.value)} required />
                     </Field>
@@ -173,7 +169,9 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
                 </Field>
                 <div className="grid gap-5 md:grid-cols-2">
                     <Field label="Provinsi" error={error('province_id')}>
-                        <Select value={form.data.province_id} onChange={(value) => { form.setData('province_id', value); form.setData('regency_id', ''); }} options={provinces.map((item) => ({ value: String(item.id), label: item.name }))} />
+                        <Select value={form.data.province_id} onChange={(value) => {
+ form.setData('province_id', value); form.setData('regency_id', ''); 
+}} options={provinces.map((item) => ({ value: String(item.id), label: item.name }))} />
                     </Field>
                     <Field label="Kota/Kabupaten" error={error('regency_id')}>
                         <Select value={form.data.regency_id} onChange={(value) => form.setData('regency_id', value)} options={filteredRegencies.map((item) => ({ value: item.id, label: item.name }))} />
@@ -182,21 +180,10 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
             </Card>
 
             <Card className="space-y-5 p-5">
-                <h2 className="text-lg font-bold">Program, Kategori, dan Status</h2>
+                <h2 className="text-lg font-bold">Kategori, Status, dan Referensi</h2>
                 <div className="grid gap-5 md:grid-cols-2">
-                    <Field label="Program Binaan" error={error('development_program')}>
-                        <Select value={form.data.development_program} onChange={(value) => form.setData('development_program', value)} options={programOptions} />
-                    </Field>
-                    {form.data.development_program === 'other' && (
-                        <Field label="Program Lainnya" error={error('development_program_other')}>
-                            <Input value={form.data.development_program_other} onChange={(e) => form.setData('development_program_other', e.target.value)} />
-                        </Field>
-                    )}
-                    <Field label="Nama Sanggar / Asrama" error={error('institution_name')}>
-                        <Input value={form.data.institution_name} onChange={(e) => form.setData('institution_name', e.target.value)} />
-                    </Field>
-                    <Field label="Kantor Layanan / Cabang" error={error('branch_office')}>
-                        <Input value={form.data.branch_office} onChange={(e) => form.setData('branch_office', e.target.value)} />
+                    <Field label="Kategori Lomba" error={error('olimpiade_id')}>
+                        <Select value={form.data.olimpiade_id} onChange={(value) => form.setData('olimpiade_id', value)} options={olimpiades.map((item) => ({ value: String(item.id), label: item.name }))} />
                     </Field>
                     <Field label="Nama Pendamping" error={error('mentor_name')}>
                         <Input value={form.data.mentor_name} onChange={(e) => form.setData('mentor_name', e.target.value)} />
@@ -204,9 +191,14 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
                     <Field label="HP Pendamping" error={error('mentor_phone')}>
                         <Input value={form.data.mentor_phone} onChange={(e) => form.setData('mentor_phone', e.target.value)} />
                     </Field>
-                    <Field label="Kategori Lomba" error={error('olimpiade_id')}>
-                        <Select value={form.data.olimpiade_id} onChange={(value) => form.setData('olimpiade_id', value)} options={olimpiades.map((item) => ({ value: String(item.id), label: item.name }))} />
+                    <Field label="Referensi" error={error('referral_source')}>
+                        <Select value={form.data.referral_source} onChange={(value) => form.setData('referral_source', value)} options={[{ value: '', label: 'Pilih data' }, { value: 'social_media', label: 'Media Sosial' }, { value: 'friend', label: 'Teman/Keluarga' }, { value: 'school', label: 'Sekolah' }, { value: 'event', label: 'Acara OMATIQ' }, { value: 'other', label: 'Lainnya' }]} />
                     </Field>
+                    {form.data.referral_source === 'other' && (
+                        <Field label="Referensi Lainnya" error={error('referral_source_other')}>
+                            <Input value={form.data.referral_source_other} onChange={(e) => form.setData('referral_source_other', e.target.value)} />
+                        </Field>
+                    )}
                     <Field label="Status" error={error('status')}>
                         <Select value={form.data.status} onChange={(value) => form.setData('status', value)} options={statusOptions} />
                     </Field>
@@ -230,10 +222,9 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
                             <Input type="number" value={form.data.previous_year} onChange={(e) => form.setData('previous_year', e.target.value)} />
                         </Field>
                     )}
-                    <FileField label="Ganti Pas Foto" current={participant.photo_url} onChange={(file) => setFile('photo', file)} error={form.errors.photo} />
-                    <FileField label="Ganti Identitas" current={participant.identity_card_url} onChange={(file) => setFile('identity_card', file)} error={form.errors.identity_card} />
-                    <FileField label="Ganti Surat Rekomendasi" current={participant.recommendation_letter_url} onChange={(file) => setFile('recommendation_letter', file)} error={form.errors.recommendation_letter} />
-                    <FileField label="Ganti Sertifikat" current={participant.achievement_certificate_url} onChange={(file) => setFile('achievement_certificate', file)} error={form.errors.achievement_certificate} />
+                    <FileField label="Ganti Pas Foto" current={student?.photo_url} onChange={(file) => setFile('photo', file)} error={form.errors.photo} />
+                    <FileField label="Ganti Identitas" current={student?.identity_card_url} onChange={(file) => setFile('identity_card', file)} error={form.errors.identity_card} />
+                    <FileField label="Ganti Kartu Keluarga" current={student?.family_card_url} onChange={(file) => setFile('family_card', file)} error={form.errors.family_card} />
                     <Field label="Tanda Tangan Peserta" error={error('participant_signature_name')}>
                         <Input value={form.data.participant_signature_name} onChange={(e) => form.setData('participant_signature_name', e.target.value)} required />
                     </Field>
@@ -241,6 +232,22 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
                         <Input value={form.data.guardian_signature_name} onChange={(e) => form.setData('guardian_signature_name', e.target.value)} required />
                     </Field>
                 </div>
+            </Card>
+
+            <Card className="space-y-5 p-5">
+                <h2 className="text-lg font-bold">Pembayaran</h2>
+                <div className="grid gap-5 md:grid-cols-2">
+                    <Field label="Status Pembayaran" error={error('payment_status')}>
+                        <Select value={form.data.payment_status} onChange={(value) => form.setData('payment_status', value)} options={[{ value: 'unpaid', label: 'Belum Bayar' }, { value: 'paid', label: 'Lunas' }]} />
+                    </Field>
+                    <Field label="Jumlah (Rp)" error={error('payment_amount')}>
+                        <Input type="number" min={0} value={form.data.payment_amount} onChange={(e) => form.setData('payment_amount', e.target.value)} />
+                    </Field>
+                    <FileField label="Upload Bukti Bayar" current={participant.payment_proof_url} onChange={(file) => setFile('payment_proof', file)} error={form.errors.payment_proof} />
+                </div>
+                <Field label="Catatan Pembayaran" error={error('payment_note')}>
+                    <Textarea rows={2} value={form.data.payment_note} onChange={(e) => form.setData('payment_note', e.target.value)} />
+                </Field>
             </Card>
         </form>
     );

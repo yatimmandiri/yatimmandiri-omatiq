@@ -59,6 +59,9 @@ export default function ShowPage() {
                         {olimpiade.recommended && (
                             <Badge variant="outline">Direkomendasikan</Badge>
                         )}
+                        {olimpiade.show_on_registration && (
+                            <Badge variant="secondary">Tampil di Form</Badge>
+                        )}
                     </div>
                     <Detail label="Durasi" value={olimpiade.duration} />
                     <Detail label="Jenjang" value={olimpiade.level} />

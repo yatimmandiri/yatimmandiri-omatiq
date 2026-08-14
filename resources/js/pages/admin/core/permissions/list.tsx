@@ -10,7 +10,7 @@ import { useState } from 'react';
 
 export default function ListPage() {
     const [refreshData, setRefreshData] = useState(false);
-    const [filterValue, setFilterValue] = useState({});
+    const [filterValue] = useState({});
 
     const columns = [
         {

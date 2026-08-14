@@ -1,5 +1,6 @@
 ﻿import { Head, usePage } from '@inertiajs/react';
-import { ReactNode, useEffect } from 'react';
+import type { ReactNode} from 'react';
+import { useEffect } from 'react';
 import { toast, Toaster } from 'sonner';
 import {
     FloatingButtonSection,

@@ -14,7 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import sliders from '@/routes/admin/companies/sliders';
 import { useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, Save } from 'lucide-react';
-import { FormEvent } from 'react';
+import type { FormEvent } from 'react';
 
 type SliderRecord = {
     id: number;
@@ -118,11 +118,13 @@ export function SliderForm({ dataId }: { dataId?: number }) {
                                 const selected = olimpiades.find(
                                     (item) => String(item.id) === value,
                                 );
-                                if (selected && !form.data.url)
-                                    form.setData(
+
+                                if (selected && !form.data.url) {
+form.setData(
                                         'url',
                                         `/olimpiade/${selected.slug}`,
                                     );
+}
                             }}
                         >
                             <SelectTrigger className="w-full">

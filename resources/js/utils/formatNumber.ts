@@ -1,5 +1,7 @@
 export const formatNumberWhatsapp = (value: string) => {
-    if (!value) return '';
+    if (!value) {
+return '';
+}
 
     let number = value.replace(/\D/g, '');
 
@@ -15,11 +17,15 @@ export const formatNumberWhatsapp = (value: string) => {
 };
 
 export const formatRupiah = ({ value, prefix = 'Rp' }: FormatRupiahProps) => {
-    if (value === null || value === undefined || value === '') return '';
+    if (value === null || value === undefined || value === '') {
+return '';
+}
 
     const number = Number(value);
 
-    if (isNaN(number)) return '';
+    if (isNaN(number)) {
+return '';
+}
 
     return new Intl.NumberFormat('id-ID', {
         style: 'currency',
@@ -33,7 +39,9 @@ export const formatRupiah = ({ value, prefix = 'Rp' }: FormatRupiahProps) => {
 };
 
 export const formatNumber = (value: string | number) => {
-    if (value === null || value === undefined) return '';
+    if (value === null || value === undefined) {
+return '';
+}
 
     const cleaned = String(value).replace(/\D/g, '');
 
@@ -45,7 +53,9 @@ export const onlyNumber = (value: string) => {
 };
 
 export const parseNumber = (value: string) => {
-    if (!value) return 0;
+    if (!value) {
+return 0;
+}
 
     return Number(value.replace(/\./g, '').replace(/,/g, ''));
 };
@@ -57,7 +67,9 @@ export const formatCurrency = (
 ) => {
     const number = Number(value);
 
-    if (isNaN(number)) return '';
+    if (isNaN(number)) {
+return '';
+}
 
     return new Intl.NumberFormat(locale, {
         style: 'currency',
@@ -67,7 +79,9 @@ export const formatCurrency = (
 };
 
 export const formatCompactNumber = (value: number) => {
-    if (!value) return '0';
+    if (!value) {
+return '0';
+}
 
     return new Intl.NumberFormat('id-ID', {
         notation: 'compact',
@@ -78,7 +92,9 @@ export const formatCompactNumber = (value: number) => {
 export const formatPercent = (value: number | string) => {
     const number = Number(value);
 
-    if (isNaN(number)) return '0%';
+    if (isNaN(number)) {
+return '0%';
+}
 
     return new Intl.NumberFormat('id-ID', {
         style: 'percent',

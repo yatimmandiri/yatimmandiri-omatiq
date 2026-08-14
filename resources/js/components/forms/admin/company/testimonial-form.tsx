@@ -14,7 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import testimonials from '@/routes/admin/companies/testimonials';
 import { useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, Save, Star } from 'lucide-react';
-import { FormEvent } from 'react';
+import type { FormEvent } from 'react';
 
 type TestimonialRecord = {
     id: number;

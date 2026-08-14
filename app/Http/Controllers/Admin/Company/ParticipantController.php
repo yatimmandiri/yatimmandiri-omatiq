@@ -11,6 +11,7 @@ use App\Models\Company\Participant;
 use App\Models\Core\Region\Province;
 use App\Models\Core\Region\Regency;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -30,7 +31,9 @@ class ParticipantController extends Controller
         $this->authorize('view', $participant);
 
         return Inertia::render('admin/company/participant/show', [
-            'participant' => $this->participantPayload($participant->load(['olimpiade:id,name', 'province:id,name', 'regency:id,name,province_id'])),
+            'participant' => $this->participantPayload(
+                $participant->load(['olimpiade:id,name', 'student:id,full_name,school_name,grade,gender,photo_path,province_id,regency_id,parent_phone,nik,birth_place,birth_date,nickname,address', 'student.province:id,name', 'student.regency:id,name']),
+            ),
         ]);
     }
 
@@ -39,7 +42,9 @@ class ParticipantController extends Controller
         $this->authorize('update', $participant);
 
         return Inertia::render('admin/company/participant/edit', [
-            'participant' => $this->participantPayload($participant),
+            'participant' => $this->participantPayload(
+                $participant->load(['student:id,full_name,school_name,grade,gender,photo_path,identity_card_path,family_card_path,province_id,regency_id,parent_phone,nik,birth_place,birth_date,nickname,address', 'student.province:id,name', 'student.regency:id,name,province_id']),
+            ),
             ...$this->formOptions(),
         ]);
     }
@@ -50,17 +55,33 @@ class ParticipantController extends Controller
 
         $data = $this->payload($request);
 
-        foreach ($this->fileMap() as $input => $column) {
-            if ($request->hasFile($input)) {
-                $data[$column] = $this->replaceFile(
-                    $participant->{$column},
-                    $request->file($input),
-                    'uploads/participants/'.$input,
-                );
+        DB::transaction(function () use ($request, $participant, $data) {
+            if ($participant->student) {
+                $studentData = $this->studentPayload($request);
+                foreach ($this->studentFileMap() as $input => $column) {
+                    if ($request->hasFile($input)) {
+                        $studentData[$column] = $this->replaceFile(
+                            $participant->student->{$column},
+                            $request->file($input),
+                            'uploads/students/'.$input,
+                        );
+                    }
+                }
+                $participant->student->update($studentData);
             }
-        }
 
-        $participant->update($data);
+            foreach ($this->fileMap() as $input => $column) {
+                if ($request->hasFile($input)) {
+                    $data[$column] = $this->replaceFile(
+                        $participant->{$column},
+                        $request->file($input),
+                        'uploads/participants/'.$input,
+                    );
+                }
+            }
+
+            $participant->update($data);
+        });
 
         $this->logSuccess('update-participant', "Updated participant: {$participant->full_name}", [
             'participant_id' => $participant->id,
@@ -75,12 +96,15 @@ class ParticipantController extends Controller
     {
         $this->authorize('delete', $participant);
 
-        foreach ($this->fileMap() as $column) {
-            $this->deleteFile($participant->{$column});
-        }
+        $name = $participant->student?->full_name ?? $participant->user?->name ?? 'Unknown';
 
-        $name = $participant->full_name;
-        $participant->delete();
+        DB::transaction(function () use ($participant) {
+            foreach ($this->fileMap() as $column) {
+                $this->deleteFile($participant->{$column});
+            }
+
+            $participant->delete();
+        });
 
         $this->logSuccess('delete-participant', "Deleted participant: {$name}");
 
@@ -107,22 +131,28 @@ class ParticipantController extends Controller
     {
         $this->authorize('data-participant', Participant::class);
 
-        $allowed = ['id', 'registration_number', 'full_name', 'education_level', 'status', 'created_at', 'updated_at'];
+        $allowed = ['id', 'registration_number', 'status', 'created_at', 'updated_at'];
         $orderBy = in_array($request->input('orderBy'), $allowed, true)
             ? $request->input('orderBy')
             : 'created_at';
         $direction = strtolower((string) $request->input('orderDirection')) === 'asc' ? 'asc' : 'desc';
 
         $query = Participant::query()
-            ->with(['olimpiade:id,name', 'province:id,name', 'regency:id,name'])
+            ->with([
+                'olimpiade:id,name',
+                'student:id,full_name,school_name,gender,province_id,regency_id',
+                'student.regency:id,name',
+            ])
             ->search($request->string('globalSearch')->toString())
             ->when($request->input('filterValue.status'), fn ($query, $status) => $query->where('status', $status))
             ->when($request->input('filterValue.olimpiade_id'), fn ($query, $id) => $query->where('olimpiade_id', $id))
             ->orderBy($orderBy, $direction)
             ->orderBy('id', 'desc');
 
+        $perPage = min($request->integer('perPage') ?: 10, 100);
+
         $data = $request->integer('perPage')
-            ? $query->paginate($request->integer('perPage'), ['*'], 'page', $request->integer('page') ?: null)
+            ? $query->paginate($perPage, ['*'], 'page', $request->integer('page') ?: null)
             : $query->get();
 
         return response()->json($data);
@@ -131,10 +161,23 @@ class ParticipantController extends Controller
     private function payload(UpdateParticipantRequest $request): array
     {
         $data = $request->safe()->except([
+            'payment_proof',
+            'full_name',
+            'nickname',
+            'gender',
+            'birth_place',
+            'birth_date',
+            'age',
+            'school_name',
+            'grade',
+            'address',
+            'province_id',
+            'regency_id',
+            'parent_phone',
+            'nik',
             'photo',
             'identity_card',
-            'recommendation_letter',
-            'achievement_certificate',
+            'family_card',
         ]);
 
         $data['has_joined_before'] = $request->boolean('has_joined_before');
@@ -147,6 +190,24 @@ class ParticipantController extends Controller
         }
 
         return $data;
+    }
+
+    private function studentPayload(UpdateParticipantRequest $request): array
+    {
+        return $request->safe()->only([
+            'full_name', 'nickname', 'gender', 'birth_place', 'birth_date', 'age',
+            'school_name', 'grade', 'address', 'province_id',
+            'regency_id', 'parent_phone', 'nik',
+        ]);
+    }
+
+    private function studentFileMap(): array
+    {
+        return [
+            'photo' => 'photo_path',
+            'identity_card' => 'identity_card_path',
+            'family_card' => 'family_card_path',
+        ];
     }
 
     private function formOptions(): array
@@ -167,22 +228,26 @@ class ParticipantController extends Controller
 
     private function participantPayload(Participant $participant): array
     {
-        return [
-            ...$participant->toArray(),
-            'photo_url' => $participant->photo_url,
-            'identity_card_url' => $participant->identity_card_url,
-            'recommendation_letter_url' => $participant->recommendation_letter_url,
-            'achievement_certificate_url' => $participant->achievement_certificate_url,
-        ];
+        $payload = $participant->toArray();
+
+        if ($participant->relationLoaded('student') && $participant->student) {
+            $payload['student'] = [
+                ...$participant->student->toArray(),
+                'photo_url' => $participant->student->photo_url,
+                'identity_card_url' => $participant->student->identity_card_url,
+                'family_card_url' => $participant->student->family_card_url,
+            ];
+        }
+
+        $payload['payment_proof_url'] = $participant->payment_proof_url;
+
+        return $payload;
     }
 
     private function fileMap(): array
     {
         return [
-            'photo' => 'photo_path',
-            'identity_card' => 'identity_card_path',
-            'recommendation_letter' => 'recommendation_letter_path',
-            'achievement_certificate' => 'achievement_certificate_path',
+            'payment_proof' => 'payment_proof_path',
         ];
     }
 }

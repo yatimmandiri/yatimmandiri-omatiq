@@ -36,6 +36,7 @@ class StoreOlimpiadeRequest extends FormRequest
             'registration_url' => ['nullable', 'string', 'max:2048'],
             'status' => ['sometimes', 'boolean'],
             'recommended' => ['sometimes', 'boolean'],
+            'show_on_registration' => ['sometimes', 'boolean'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
         ];
     }

@@ -7,7 +7,8 @@ import Superscript from '@tiptap/extension-superscript';
 import TextAlign from '@tiptap/extension-text-align';
 import { TextStyle } from '@tiptap/extension-text-style';
 import Typography from '@tiptap/extension-typography';
-import { EditorContent, type Extension, useEditor } from '@tiptap/react';
+import { EditorContent,  useEditor } from '@tiptap/react';
+import type {Extension} from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { InfoIcon } from 'lucide-react';
 import { useEffect, useRef } from 'react';
@@ -213,7 +214,9 @@ export const EditorComponent = ({
     const isInitialized = useRef(false);
 
     useEffect(() => {
-        if (!editor) return;
+        if (!editor) {
+return;
+}
 
         if (!isInitialized.current) {
             editor.commands.setContent(value || '', {
@@ -224,7 +227,9 @@ export const EditorComponent = ({
         }
     }, [editor]);
 
-    if (!editor) return null;
+    if (!editor) {
+return null;
+}
 
     return (
         <Field data-invalid={errors}>

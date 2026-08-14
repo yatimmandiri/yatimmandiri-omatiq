@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import olimpiades from '@/routes/admin/companies/olimpiades';
 import { useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, ChevronsUpDown, Save } from 'lucide-react';
-import { FormEvent } from 'react';
+import type { FormEvent } from 'react';
 
 type OlimpiadeRecord = {
     id: number;
@@ -34,6 +34,7 @@ type OlimpiadeRecord = {
     registration_url?: string | null;
     status: boolean;
     recommended: boolean;
+    show_on_registration: boolean;
     sort_order: number;
 };
 
@@ -46,7 +47,10 @@ const parseLines = (value: string) =>
         .filter(Boolean);
 
 const imageUrl = (value?: string | null) => {
-    if (!value) return null;
+    if (!value) {
+return null;
+}
+
     return value.startsWith('http://') || value.startsWith('https://')
         ? value
         : '/storage/' + value;
@@ -83,6 +87,7 @@ export const OlimpiadeForm = ({ dataId }: { dataId?: number }) => {
         registration_url: olimpiade?.registration_url ?? '/kontak',
         status: olimpiade?.status ?? true,
         recommended: olimpiade?.recommended ?? false,
+        show_on_registration: olimpiade?.show_on_registration ?? false,
         sort_order: olimpiade?.sort_order ?? 0,
     });
 
@@ -95,6 +100,7 @@ export const OlimpiadeForm = ({ dataId }: { dataId?: number }) => {
             benefits: parseLines(benefitsText),
             status: current.status ? 1 : 0,
             recommended: current.recommended ? 1 : 0,
+            show_on_registration: current.show_on_registration ? 1 : 0,
         };
     });
 
@@ -113,6 +119,7 @@ export const OlimpiadeForm = ({ dataId }: { dataId?: number }) => {
 
     const error = (name: string) => {
         const message = form.errors[name];
+
         return message ? (
             <p className="text-sm font-medium text-destructive">{message}</p>
         ) : null;
@@ -241,6 +248,13 @@ export const OlimpiadeForm = ({ dataId }: { dataId?: number }) => {
                         checked={form.data.recommended}
                         onChange={(checked) =>
                             form.setData('recommended', checked)
+                        }
+                    />
+                    <ToggleField
+                        label="Tampilkan di Form Pendaftaran"
+                        checked={form.data.show_on_registration}
+                        onChange={(checked) =>
+                            form.setData('show_on_registration', checked)
                         }
                     />
                 </div>

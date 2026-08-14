@@ -4,7 +4,8 @@ import {
     NewsCard,
     SectionHeader,
 } from '@/components/marketing/marketing-components';
-import { NewsItem, news } from '@/components/marketing/site-data';
+import type { NewsItem } from '@/components/marketing/site-data';
+import { news } from '@/components/marketing/site-data';
 import axios from 'axios';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -19,10 +20,10 @@ type ExternalNewsPost = {
     slug?: string;
     excerpt?: string;
     author?:
-    | {
-        name?: string;
-    }
-    | string;
+        | {
+              name?: string;
+          }
+        | string;
     categories?: Array<{
         name?: string;
     }>;
@@ -113,8 +114,10 @@ export default function NewsPage() {
     }, []);
 
     useEffect(() => {
-        fetchArticles();
-        fetchBlogs();
+        queueMicrotask(() => {
+            void fetchArticles();
+            void fetchBlogs();
+        });
     }, [fetchArticles, fetchBlogs]);
 
     const featured = articles[0];
@@ -162,7 +165,7 @@ export default function NewsPage() {
                     </div>
 
                     {failed && (
-                        <div className="mt-6 rounded-2xl bg-[#FFC857]/20 px-5 py-4 text-sm font-bold text-[#9A3412]">
+                        <div className="mt-6 rounded-2xl bg-[#E5BE1E]/20 px-5 py-4 text-sm font-bold text-[#0F4038]">
                             Data API belum bisa diambil saat ini. Sementara
                             ditampilkan artikel cadangan OMATIQ.
                         </div>
@@ -201,7 +204,7 @@ export default function NewsPage() {
                     </div>
 
                     {blogFailed && (
-                        <div className="mt-6 rounded-2xl bg-[#FFC857]/20 px-5 py-4 text-sm font-bold text-[#9A3412]">
+                        <div className="mt-6 rounded-2xl bg-[#E5BE1E]/20 px-5 py-4 text-sm font-bold text-[#0F4038]">
                             Data blog belum bisa diambil saat ini. Silakan coba
                             refresh halaman beberapa saat lagi.
                         </div>

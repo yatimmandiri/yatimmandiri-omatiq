@@ -1,4 +1,5 @@
 import Image from "@tiptap/extension-image";
+import { deletefiles } from "@/routes/admin";
 import {
   type NodeViewProps,
   NodeViewWrapper,
@@ -153,7 +154,7 @@ function TiptapImage(props: NodeViewProps) {
   const handleDelete = async () => {
     const src = node.attrs.src;
     if (src) {
-      await fetch(route("settings.deletefiles"), {
+      await fetch(deletefiles.post().url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
