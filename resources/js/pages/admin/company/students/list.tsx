@@ -22,8 +22,12 @@ export default function ListPage() {
             accessorKey: 'full_name',
             cell: (info: any) => (
                 <div className="space-y-1">
-                    <p className="font-semibold">{info.row.original.full_name}</p>
-                    <p className="text-xs text-muted-foreground">{info.row.original.nik}</p>
+                    <p className="font-semibold">
+                        {info.row.original.full_name}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                        {info.row.original.nik}
+                    </p>
                 </div>
             ),
         },
@@ -107,7 +111,7 @@ ListPage.layout = {
             href: dashboard(),
         },
         {
-            title: 'Murid',
+            title: 'Binaan',
             href: students.index().url,
         },
     ],

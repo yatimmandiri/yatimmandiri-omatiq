@@ -48,7 +48,7 @@ class StudentController extends Controller
             'new_data' => $student->toArray(),
         ]);
 
-        return redirect()->route('admin.companies.students.index')->with('success', "Murid {$student->full_name} berhasil ditambahkan.");
+        return redirect()->route('admin.companies.students.index')->with('success', "Binaan {$student->full_name} berhasil ditambahkan.");
     }
 
     public function show(Student $student): Response
@@ -89,7 +89,7 @@ class StudentController extends Controller
             'new_data' => $student->fresh()->toArray(),
         ]);
 
-        return redirect()->route('admin.companies.students.index')->with('success', "Data murid {$student->full_name} berhasil diupdate.");
+        return redirect()->route('admin.companies.students.index')->with('success', "Data binaan {$student->full_name} berhasil diupdate.");
     }
 
     public function destroy(Student $student)
@@ -97,7 +97,7 @@ class StudentController extends Controller
         $this->authorize('delete', $student);
 
         if ($student->participants()->exists()) {
-            return redirect()->route('admin.companies.students.index')->with('error', "Murid {$student->full_name} memiliki data peserta dan tidak dapat dihapus.");
+            return redirect()->route('admin.companies.students.index')->with('error', "Binaan {$student->full_name} memiliki data peserta dan tidak dapat dihapus.");
         }
 
         $name = $student->full_name;
@@ -108,7 +108,7 @@ class StudentController extends Controller
         $student->delete();
         $this->logSuccess('delete-student', "Deleted student: {$name}", ['student_id' => $student->id]);
 
-        return redirect()->route('admin.companies.students.index')->with('success', "Murid {$name} berhasil dihapus.");
+        return redirect()->route('admin.companies.students.index')->with('success', "Binaan {$name} berhasil dihapus.");
     }
 
     public function getData(Request $request)

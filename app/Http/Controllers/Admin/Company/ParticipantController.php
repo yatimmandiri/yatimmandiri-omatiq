@@ -32,7 +32,7 @@ class ParticipantController extends Controller
 
         return Inertia::render('admin/company/participant/show', [
             'participant' => $this->participantPayload(
-                $participant->load(['olimpiade:id,name', 'student:id,full_name,school_name,grade,gender,photo_path,province_id,regency_id,parent_phone,nik,birth_place,birth_date,nickname,address', 'student.province:id,name', 'student.regency:id,name']),
+                $participant->load(['olimpiade:id,name', 'student:id,full_name,school_name,grade,gender,photo_path,student_card_path,province_id,regency_id,parent_phone,nik,birth_place,birth_date,nickname,address', 'student.province:id,name', 'student.regency:id,name']),
             ),
         ]);
     }
@@ -43,7 +43,7 @@ class ParticipantController extends Controller
 
         return Inertia::render('admin/company/participant/edit', [
             'participant' => $this->participantPayload(
-                $participant->load(['student:id,full_name,school_name,grade,gender,photo_path,identity_card_path,family_card_path,province_id,regency_id,parent_phone,nik,birth_place,birth_date,nickname,address', 'student.province:id,name', 'student.regency:id,name,province_id']),
+                $participant->load(['student:id,full_name,school_name,grade,gender,photo_path,identity_card_path,family_card_path,student_card_path,province_id,regency_id,parent_phone,nik,birth_place,birth_date,nickname,address', 'student.province:id,name', 'student.regency:id,name,province_id']),
             ),
             ...$this->formOptions(),
         ]);
@@ -178,6 +178,7 @@ class ParticipantController extends Controller
             'photo',
             'identity_card',
             'family_card',
+            'student_card',
         ]);
 
         $data['has_joined_before'] = $request->boolean('has_joined_before');
@@ -207,6 +208,7 @@ class ParticipantController extends Controller
             'photo' => 'photo_path',
             'identity_card' => 'identity_card_path',
             'family_card' => 'family_card_path',
+            'student_card' => 'student_card_path',
         ];
     }
 
@@ -236,6 +238,7 @@ class ParticipantController extends Controller
                 'photo_url' => $participant->student->photo_url,
                 'identity_card_url' => $participant->student->identity_card_url,
                 'family_card_url' => $participant->student->family_card_url,
+                'student_card_url' => $participant->student->student_card_url,
             ];
         }
 

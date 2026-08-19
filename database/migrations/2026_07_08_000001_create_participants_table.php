@@ -21,7 +21,7 @@ return new class extends Migration
             $table->boolean('has_joined_before')->default(false);
             $table->year('previous_year')->nullable();
             $table->string('referral_source')->nullable();
-            $table->string('referral_source_other')->nullable();
+            $table->string('branch')->nullable();
             $table->string('payment_status', 30)->default('unpaid');
             $table->string('payment_proof_path')->nullable();
             $table->decimal('payment_amount', 12, 2)->nullable();

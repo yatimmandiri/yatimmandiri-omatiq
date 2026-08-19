@@ -14,7 +14,7 @@ export default function Dashboard() {
                 <div>
                     <h1 className="text-2xl font-bold">Dashboard Guru</h1>
                     <p className="mt-1 text-sm text-muted-foreground">
-                        Kelola data murid binaan Anda
+                        Kelola data binaan Anda
                     </p>
                 </div>
 
@@ -25,7 +25,9 @@ export default function Dashboard() {
                         </div>
                         <div>
                             <p className="text-2xl font-bold">{studentCount}</p>
-                            <p className="text-sm text-muted-foreground">Total Murid</p>
+                            <p className="text-sm text-muted-foreground">
+                                Total Binaan
+                            </p>
                         </div>
                     </Card>
 
@@ -35,9 +37,10 @@ export default function Dashboard() {
                                 <BookOpen className="size-6 text-primary" />
                             </div>
                             <div>
-                                <p className="font-semibold">Kelola Murid</p>
+                                <p className="font-semibold">Kelola Binaan</p>
                                 <p className="flex items-center gap-1 text-sm text-muted-foreground">
-                                    Lihat daftar murid <ExternalLink className="size-3" />
+                                    Lihat daftar binaan{' '}
+                                    <ExternalLink className="size-3" />
                                 </p>
                             </div>
                         </Card>

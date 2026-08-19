@@ -52,7 +52,7 @@ class DashboardService
                 'pageTitle' => 'Dashboard Partisipan',
                 'participant' => $participant?->load([
                     'olimpiade:id,name,category,slug,excerpt',
-                    'student:id,full_name,nickname,gender,birth_place,birth_date,age,school_name,grade,address,province_id,regency_id,parent_phone,mentor_name,mentor_phone,photo_path,identity_card_path,family_card_path',
+                    'student:id,full_name,nickname,gender,birth_place,birth_date,age,school_name,grade,address,province_id,regency_id,parent_phone,mentor_name,mentor_phone,photo_path,identity_card_path,family_card_path,student_card_path',
                     'student.province:id,name',
                     'student.regency:id,name',
                 ]),

@@ -2,8 +2,8 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { dashboard } from '@/routes/admin';
 import teacherStudents from '@/routes/admin/teacher/students';
-import { router, usePage } from '@inertiajs/react';
-import { ArrowLeft, Pencil } from 'lucide-react';
+import { usePage } from '@inertiajs/react';
+import { ArrowLeft } from 'lucide-react';
 
 const labels: Record<string, string> = {
     male: 'Laki-laki',
@@ -21,7 +21,7 @@ export default function ShowPage() {
         <div className="flex flex-1 flex-col gap-6 p-4">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold">Detail Siswa</h1>
+                    <h1 className="text-2xl font-bold">Detail Binaan</h1>
                     <p className="text-sm text-muted-foreground">
                         {participant.registration_number} -{' '}
                         {participant.student?.full_name ?? participant.nik}
@@ -34,16 +34,6 @@ export default function ShowPage() {
                     >
                         <ArrowLeft />
                         Kembali
-                    </Button>
-                    <Button
-                        onClick={() =>
-                            router.visit(
-                                teacherStudents.edit(participant.id).url,
-                            )
-                        }
-                    >
-                        <Pencil />
-                        Edit
                     </Button>
                 </div>
             </div>
@@ -77,7 +67,10 @@ export default function ShowPage() {
                             label="Sekolah"
                             value={participant.student?.school_name}
                         />
-                        <Detail label="Kelas" value={participant.student?.grade} />
+                        <Detail
+                            label="Kelas"
+                            value={participant.student?.grade}
+                        />
                         <Detail
                             label="Provinsi"
                             value={participant.student?.province?.name}
@@ -95,7 +88,10 @@ export default function ShowPage() {
                             value={labels[participant.status]}
                         />
                     </div>
-                    <Detail label="Alamat" value={participant.student?.address} />
+                    <Detail
+                        label="Alamat"
+                        value={participant.student?.address}
+                    />
                 </Card>
 
                 <Card className="space-y-5 p-5">
@@ -142,11 +138,11 @@ ShowPage.layout = {
             href: dashboard(),
         },
         {
-            title: 'Siswa',
+            title: 'Binaan',
             href: teacherStudents.index().url,
         },
         {
-            title: 'Detail Siswa',
+            title: 'Detail Binaan',
             href: '#',
         },
     ],
@@ -169,13 +165,7 @@ const Detail = ({
     </div>
 );
 
-const DetailFile = ({
-    label,
-    url,
-}: {
-    label: string;
-    url?: string | null;
-}) => (
+const DetailFile = ({ label, url }: { label: string; url?: string | null }) => (
     <div>
         <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
             {label}

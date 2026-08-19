@@ -10,6 +10,7 @@ Key packages: Fortify (auth), Socialite, Reverb (websockets), Spatie (permission
 
 | To do | Command |
 |---|---|
+| Fresh setup (install + .env + migrate + build) | `composer run setup` |
 | Full dev server | `composer run dev` |
 | Run all tests | `composer run test` |
 | Single test | `php artisan test --compact --filter=testName` |
@@ -22,13 +23,14 @@ Key packages: Fortify (auth), Socialite, Reverb (websockets), Spatie (permission
 | New Pest test | `php artisan make:test --pest SomeFeatureTest` |
 
 Order when touching PHP: `vendor/bin/pint --dirty --format agent` then `composer run test`.
-Order for full check: `npm run lint:check` → `npm run types:check` → `composer run test`.
+Order for full check (matches `ci:check`): `npm run lint:check` → `npm run format:check` → `npm run types:check` → `composer run test`.
+`composer run dev` = `php artisan serve` + `queue:listen` + Vite concurrently; `composer run test` = `config:clear` + `pint --parallel --test` + `php artisan test`.
 
 ## Architecture
 
-- **Auth**: Fortify handles login/register/reset-password/2FA/email-verification. Inertia views defined in `FortifyServiceProvider`. Socialite OAuth in `routes/auth.php`.
+- **Auth**: Fortify handles login/register/reset-password/2FA/email-verification. Inertia views defined in `FortifyServiceProvider`. Socialite OAuth in `routes/auth.php`. `routes/admin.php` only wires `AuthController@updateProfile`; the remaining `AuthController` methods (login/register/forgot/reset/logout) are dead code — Fortify owns those flows.
 - **Routing**: `routes/web.php` only requires the others: `auth.php`, `settings.php`, `admin.php`, `home.php`. Controllers split by namespace (`App\Http\Controllers\Admin`, `Home`, `Auth`, `Settings`) matching route files. Settings routes are grouped with prefix `admin.` under a `auth` guard.
-- **Admin**: All admin routes at `/admin/*`, guarded by `auth`, `verified`, `auth.admin` (`App\Http\Middleware\AdminMiddleware`). Uses Spatie roles/permissions. Middleware aliases defined in `bootstrap/app.php`.
+- **Admin**: All admin routes at `/admin/*`, guarded by `auth`, `verified`, `auth.admin` (`App\Http\Middleware\AdminMiddleware`). Uses Spatie roles/permissions. Middleware aliases defined in `bootstrap/app.php`: `auth.admin`, `auth.user` (`UserMiddleware`), `guest.redirect` (`RedirectIfAuthenticated`), plus Spatie `role` / `permission` / `role_or_permission`. `AdminMiddleware` is a **blacklist**, not a whitelist — it only 403s users whose sole role is `Users`; it never checks for an admin role. Roles seeded in `UserRolePermissionSeeder`: `Administrators` (all permissions), `Teacher` (view/create/data-participant), `Participant` (view/data-participant), `Users` (default, no permissions). `config/permission.php` maps to the base `Spatie\Permission\Models` Role/Permission, so `App\Models\Core\Role` / `Core\Permission` are unused wrappers.
 - **Public**: Public routes in `routes/home.php` — home page, about, olimpiade listing, schedule, registration, news, contact.
 - **Layouts**: Selected in `resources/js/app.tsx` by page name prefix: `home/*` → HomeLayout, `auth/*` → AuthLayout, `settings/*` → [AppLayout, SettingsLayout], `welcome` → null, default → AppLayout.
 - **Route types**: Use Wayfinder generated imports — `@/routes/` for named routes, `@/actions/` for controller actions. Regenerate when routes change via the Vite plugin / `wayfinder:generate` if TS errors appear.
@@ -39,22 +41,27 @@ Two model namespaces:
 - `App\Models\Core` — User, Role, Permission, Social, LogActivity; plus `App\Models\Core\Region` (Province, Regency, District, Village from `azishapidin/indoregion`)
 - `App\Models\Company` — Olimpiade, OlimpiadeGallery, OlimpiadeObjective, OlimpiadeSchedule, OlimpiadeVideo, Participant, Student, Slider, Testimonial, Review, FaqCompany
 
-Note: "Teacher" is **not** an Eloquent model — mentor/teacher roles are `User` rows with a Spatie role. `Admin\Teacher\TeacherStudentController` manages participants from the mentor's perspective.
+Note: "Teacher" is **not** an Eloquent model — mentor/teacher roles are `User` rows with a Spatie role. `Admin\Teacher\TeacherStudentController` is the mentor-facing "Kelola Binaan" feature: it lists the teacher's own roster (`students WHERE mentor_id = auth AND is_binaan = true`) with a registration-status badge + `filterValue[registration]` filter, registers an *existing* binaan into an Olimpiade (`TeacherService::registerStudent` — no documents, no student creation; `preselected_student_id` passed via `?student_id=`), and shows the participant detail. Routes are limited to `only(['index','create','store','show'])` — no edit/update/destroy. Student master data (create/import) is admin-only via `Admin\Company\StudentController`.
+
+Legacy JSON: `olimpiades` stores `benefits`, `objectives`, `gallery`, `videos` as JSON array columns (casts in `Olimpiade`) alongside the newer relational `OlimpiadeObjective`/`OlimpiadeGallery`/`OlimpiadeVideo` tables. Unused scopes: `Testimonial::scopeType`, `Review::scopeType`, `FaqCompany::scopeSearch` are dead.
 
 ## Conventions
 
 - **Migrations**: Do NOT create separate migration files for schema changes. Always edit the existing `create_*` table migration directly, since we use `migrate:fresh --seed`. This applies to every feature — modify the original table creation file, not a new `update_*` file.
 - Use `php artisan make:*` with `--no-interaction` for all new files.
 - New models should ship with factories and seeders.
-- Controllers use Admin/Home/Settings namespace split matching route files.
+- Controllers use Admin/Home/Settings namespace split matching route files. Beware: `App\Http\Controllers\SliderController` and `App\Http\Controllers\FaqCompanyController` are unused leftovers — always use the `Admin\Company\*` versions.
+- **UI label "Binaan"**: the Student concept is shown to users as **"Binaan"** everywhere in the UI — sidebar (`Data Binaan`, `Kelola Binaan`), page headings (`Detail Binaan`, `Daftarkan Binaan`), breadcrumbs, table headers, flash messages (`Binaan {name} berhasil ditambahkan.`) and validation errors (`Binaan ini bukan binaan Anda.`). Never show "Siswa"/"Murid" in user-facing strings. The DB schema and code identifiers keep `student*` (`Student`, `students`, `student_id`) — do not rename them to match the label. `routes/breadcrumbs/*` labels use "Binaan" too.
 - Regions (province/regency/district/village) use `azishapidin/indoregion`.
 - Site settings via `spatie/laravel-settings` — see `app/Settings/SiteSettings.php`.
-- Breadcrumbs via `diglactic/laravel-breadcrumbs` — defined in `routes/breadcrumbs/` for Blade; every Inertia page component **must** define a static `.layout` property with `breadcrumbs` array: `{ title: string, href: routeHelper().url }`. Last item = current page (plain text). Import `dashboard` from `@/routes/admin` for the root breadcrumb.
+- Breadcrumbs via `diglactic/laravel-breadcrumbs` — `routes/breadcrumbs.php` for Blade (requires per-area files in `routes/breadcrumbs/`); every Inertia page component **must** define a static `.layout` property with `breadcrumbs` array: `{ title: string, href: routeHelper().url }`. Last item = current page (plain text). Import `dashboard` from `@/routes/admin` for the root breadcrumb.
 - **New routes**: every new page/route (public `routes/home.php`, `routes/settings.php`, `routes/admin.php`) must add its own page component with a `.layout` breadcrumbs array — this is how the current page shows in the AppLayout header. Public (`home/*`) pages use HomeLayout and don't need breadcrumbs; admin/settings pages do.
 - **Breadcrumb bug to avoid**: the breadcrumb link field is `href` (per `BreadcrumbItem` in `resources/js/types/navigation.ts`), NOT `url`. `resources/js/components/breadcrumbs.tsx` renders `item.href`; the last item is rendered as plain text regardless of its `href`.
 - **Header dropdowns** (public `home-sidebar-layout.tsx`): desktop dropdown must bridge the hover gap — wrap the panel in a `pt-3` container inside the `group-hover` wrapper so the cursor doesn't leave the hover zone while moving to the dropdown (a bare `mt-3` gap makes the panel disappear before click). Mobile dropdown already uses `Disclosure` via `menu.children`.
 - Rich text uses TipTap — see `resources/js/components/ui/tiptap/`.
-- Media via Spatie media-library (conversions for images, PDF, video, SVG).
+- File uploads are manual (NOT Spatie media-library): forms use the `FileField` component, controllers store the path in a `*_path` column under `uploads/...`, and models expose a `*_url` accessor via `storageUrl()`. `laravel-medialibrary` is installed and configured but used by no model.
+- Brand colors `#17524A` (dark green) and `#E5BE1E` (yellow) are hard-coded hex in components (e.g. `marketing-components.tsx`, `home-footer-layout.tsx`) — not shared Tailwind tokens.
+- News pages (`home/news/*`) fetch from external WordPress REST APIs (`https://yatimmandiri.org/news|/blog/wp-json/ymapi/v2/posts`) client-side; `MainController@news` only passes `pageTitle`/`meta`.
 - ESLint ignores: `resources/js/actions/**`, `resources/js/routes/**`, `resources/js/wayfinder/**`, `resources/js/components/ui/*` (generated/third-party).
 - Prettier ignores in `.prettierignore`.
 
@@ -79,3 +86,8 @@ Target: tables will grow to thousands+ rows. Optimize for that from day one.
 - PHPUnit config uses SQLite in-memory. Tests must not rely on external services.
 - `RefreshDatabase` is **not** applied by default in `Pest.php` — apply per-testcase when needed.
 - Factories live in `database/factories/` under PSR-4 `Database\Factories\`.
+
+## Other Instruction Sources
+
+- `CLAUDE.md` holds the Laravel Boost guidelines (MCP tools, `search-docs` before changes, PHP/Inertia/Pest coding rules) — follow it too.
+- Domain skills in `.claude/skills/` (echo, Fortify, Inertia+React, Wayfinder, Pest, Tailwind, Socialite, Laravel best practices) must be activated when working in that domain.

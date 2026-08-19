@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Admin\Teacher;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Company\StoreTeacherParticipantRequest;
-use App\Http\Requests\Company\UpdateTeacherParticipantRequest;
 use App\Models\Company\Participant;
+use App\Models\Company\Student;
 use App\Services\TeacherService;
 use App\Settings\SiteSettings;
 use Illuminate\Http\Request;
@@ -26,7 +26,7 @@ class TeacherStudentController extends Controller
         return Inertia::render('admin/teacher/students/list');
     }
 
-    public function create(): Response
+    public function create(Request $request): Response
     {
         $this->authorize('create', Participant::class);
 
@@ -36,7 +36,10 @@ class TeacherStudentController extends Controller
             abort(403, 'Pendaftaran binaan sedang ditutup.');
         }
 
-        return Inertia::render('admin/teacher/students/create', $this->service->getFormOptions());
+        return Inertia::render(
+            'admin/teacher/students/create',
+            $this->service->getFormOptions(Auth::user(), $request->integer('student_id')),
+        );
     }
 
     public function store(StoreTeacherParticipantRequest $request)
@@ -56,7 +59,7 @@ class TeacherStudentController extends Controller
 
         return redirect()
             ->route('admin.teacher.students.index')
-            ->with('success', "Siswa {$name} berhasil didaftarkan.");
+            ->with('success', "Binaan {$name} berhasil didaftarkan.");
     }
 
     public function show(Participant $participant)
@@ -64,61 +67,48 @@ class TeacherStudentController extends Controller
         $this->authorize('view', $participant);
 
         return Inertia::render('admin/teacher/students/show', [
-            'participant' => $participant->load(['olimpiade:id,name', 'student:id,full_name,school_name,grade,gender,photo_path,province_id,regency_id,parent_phone,nik,birth_place,birth_date,nickname,address,identity_card_path,family_card_path', 'student.province:id,name', 'student.regency:id,name']),
+            'participant' => $this->service->getStudentById(Auth::user(), $participant->id),
         ]);
-    }
-
-    public function edit(Participant $participant)
-    {
-        $this->authorize('update', $participant);
-
-        return Inertia::render('admin/teacher/students/edit', [
-            'participant' => $participant->load(['student:id,full_name,nickname,gender,birth_place,birth_date,age,school_name,grade,address,province_id,regency_id,parent_phone,nik,photo_path,identity_card_path,family_card_path', 'student.province:id,name', 'student.regency:id,name']),
-            ...$this->service->getFormOptions(),
-        ]);
-    }
-
-    public function update(UpdateTeacherParticipantRequest $request, Participant $participant)
-    {
-        $this->authorize('update', $participant);
-
-        $this->service->updateStudent(Auth::user(), $participant, $request->validated());
-
-        $name = $participant->fresh()->student?->full_name ?? 'Unknown';
-
-        return redirect()
-            ->route('admin.teacher.students.index')
-            ->with('success', "Data siswa {$name} berhasil diupdate.");
-    }
-
-    public function destroy(Participant $participant)
-    {
-        $this->authorize('delete', $participant);
-
-        $name = $participant->student?->full_name ?? 'Unknown';
-        $participant->delete();
-
-        return redirect()
-            ->route('admin.teacher.students.index')
-            ->with('success', "Data siswa {$name} berhasil dihapus.");
     }
 
     public function getData(Request $request)
     {
         $this->authorize('data-participant', Participant::class);
 
-        $query = Participant::query()
-            ->with(['olimpiade:id,name', 'student:id,full_name,school_name,gender,nik,province_id,regency_id'])
-            ->where('mentor_id', Auth::id())
-            ->search($request->string('globalSearch')->toString())
-            ->orderBy('created_at', 'desc');
-
         $perPage = min($request->integer('perPage') ?: 10, 100);
 
-        $data = $request->integer('perPage')
-            ? $query->paginate($perPage, ['*'], 'page', $request->integer('page') ?: null)
-            : $query->get();
+        $registration = $request->input('filterValue.registration');
 
-        return response()->json($data);
+        return response()->json(
+            Student::query()
+                ->where('mentor_id', Auth::id())
+                ->where('is_binaan', true)
+                ->with(['participants' => fn ($query) => $query->orderByDesc('created_at')])
+                ->with('participants.olimpiade:id,name')
+                ->search($request->string('globalSearch')->toString())
+                ->when($registration === 'registered', fn ($query) => $query->has('participants'))
+                ->when($registration === 'unregistered', fn ($query) => $query->doesntHave('participants'))
+                ->orderBy('full_name')
+                ->paginate($perPage, ['*'], 'page', $request->integer('page') ?: null)
+                ->through(fn (Student $student) => $this->studentPayload($student)),
+        );
+    }
+
+    private function studentPayload(Student $student): array
+    {
+        $latest = $student->participants->first();
+
+        return [
+            'id' => $student->id,
+            'nik' => $student->nik,
+            'full_name' => $student->full_name,
+            'school_name' => $student->school_name,
+            'grade' => $student->grade,
+            'is_registered' => $latest !== null,
+            'participant_id' => $latest?->id,
+            'registration_status' => $latest?->status,
+            'registration_number' => $latest?->registration_number,
+            'olimpiade_name' => $latest?->olimpiade?->name,
+        ];
     }
 }

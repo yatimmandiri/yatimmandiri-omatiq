@@ -41,18 +41,6 @@ type RegistrationProps = {
     registration_closed?: boolean;
 };
 
-const referralOptions = [
-    { value: 'Instagram', label: 'Instagram' },
-    { value: 'Facebook', label: 'Facebook' },
-    { value: 'TikTok', label: 'TikTok' },
-    { value: 'YouTube', label: 'YouTube' },
-    { value: 'Teman/Keluarga', label: 'Teman/Keluarga' },
-    { value: 'Guru/Sekolah', label: 'Guru/Sekolah' },
-    { value: 'Poster/Banner', label: 'Poster/Banner' },
-    { value: 'Website', label: 'Website' },
-    { value: 'Lainnya', label: 'Lainnya' },
-];
-
 const steps = [
     {
         title: 'Data Peserta',
@@ -75,6 +63,7 @@ const steps = [
             'mentor_name',
             'mentor_phone',
             'referral_source',
+            'branch',
         ],
     },
     {
@@ -85,9 +74,9 @@ const steps = [
     },
     {
         title: 'Dokumen',
-        description: 'Upload pas foto, kartu pelajar, dan kartu keluarga.',
+        description: 'Upload bukti transfer pendaftaran dan kartu pelajar.',
         icon: FileUp,
-        fields: ['photo', 'identity_card', 'family_card'],
+        fields: ['payment_proof', 'student_card'],
     },
     {
         title: 'Persetujuan',
@@ -135,11 +124,10 @@ export default function RegistrationPage() {
         mentor_name: '',
         mentor_phone: '',
         referral_source: '',
-        referral_source_other: '',
+        branch: '',
         olimpiade_id: '',
-        photo: null,
-        identity_card: null,
-        family_card: null,
+        payment_proof: null,
+        student_card: null,
         data_truth_consent: false,
         documentation_consent: false,
         rules_consent: false,
@@ -228,14 +216,8 @@ export default function RegistrationPage() {
             required('province_id', 'Provinsi wajib dipilih.');
             required('regency_id', 'Kota/kabupaten wajib dipilih.');
             required('parent_phone', 'Nomor HP orang tua/wali wajib diisi.');
-            required('referral_source', 'Sumber informasi wajib dipilih.');
-
-            if (form.data.referral_source === 'Lainnya') {
-                required(
-                    'referral_source_other',
-                    'Sumber informasi lainnya wajib diisi.',
-                );
-            }
+            required('referral_source', 'Rekomendasi wajib diisi.');
+            required('branch', 'Cabang wajib diisi.');
         }
 
         if (step === 1) {
@@ -243,12 +225,11 @@ export default function RegistrationPage() {
         }
 
         if (step === 2) {
-            required('photo', 'Pas foto wajib diupload.');
             required(
-                'identity_card',
-                'Kartu pelajar/identitas wajib diupload.',
+                'payment_proof',
+                'Bukti transfer pendaftaran wajib diupload.',
             );
-            required('family_card', 'Kartu keluarga (KK) wajib diupload.');
+            required('student_card', 'Kartu pelajar wajib diupload.');
         }
 
         if (step === 3) {
@@ -764,45 +745,37 @@ export default function RegistrationPage() {
                                     </div>
                                     <div className="mt-5 grid gap-5 md:grid-cols-2">
                                         <Field
-                                            label="Dapat Info OMATIQ dari?"
+                                            label="Dapat rekomendasi sekolah/lembaga dari?"
                                             error={mergedErrors.referral_source}
                                         >
-                                            <Select
+                                            <Input
                                                 value={
                                                     form.data.referral_source
                                                 }
-                                                onChange={(value) =>
+                                                onChange={(event) =>
                                                     setData(
                                                         'referral_source',
-                                                        value,
+                                                        event.target.value,
                                                     )
                                                 }
-                                                placeholder="Pilih sumber informasi"
-                                                options={referralOptions}
+                                                placeholder="Contoh: SDN 1 Surabaya"
                                             />
                                         </Field>
-                                        {form.data.referral_source ===
-                                            'Lainnya' && (
-                                            <Field
-                                                label="Sumber Lainnya"
-                                                error={
-                                                    mergedErrors.referral_source_other
+                                        <Field
+                                            label="Ikut dari Cabang Mana?"
+                                            error={mergedErrors.branch}
+                                        >
+                                            <Input
+                                                value={form.data.branch}
+                                                onChange={(event) =>
+                                                    setData(
+                                                        'branch',
+                                                        event.target.value,
+                                                    )
                                                 }
-                                            >
-                                                <Input
-                                                    value={
-                                                        form.data
-                                                            .referral_source_other
-                                                    }
-                                                    onChange={(event) =>
-                                                        setData(
-                                                            'referral_source_other',
-                                                            event.target.value,
-                                                        )
-                                                    }
-                                                />
-                                            </Field>
-                                        )}
+                                                placeholder="Contoh: Cabang Surabaya"
+                                            />
+                                        </Field>
                                     </div>
                                 </div>
                             </FormSection>
@@ -862,33 +835,24 @@ export default function RegistrationPage() {
                             <FormSection
                                 icon={FileUp}
                                 title="C. Dokumen Pendukung"
-                                description="Lampirkan pas foto, kartu pelajar/identitas, dan kartu keluarga (KK)."
+                                description="Lampirkan bukti transfer pendaftaran dan kartu pelajar."
                             >
                                 <div className="grid gap-5 md:grid-cols-2">
                                     <FileField
-                                        label="Upload Pas Foto"
-                                        file={form.data.photo}
-                                        error={mergedErrors.photo}
+                                        label="Upload Bukti Transfer Pendaftaran"
+                                        file={form.data.payment_proof}
+                                        error={mergedErrors.payment_proof}
                                         onChange={(file) =>
-                                            setFile('photo', file)
-                                        }
-                                        accept="image/*"
-                                    />
-                                    <FileField
-                                        label="Upload Kartu Pelajar / Identitas"
-                                        file={form.data.identity_card}
-                                        error={mergedErrors.identity_card}
-                                        onChange={(file) =>
-                                            setFile('identity_card', file)
+                                            setFile('payment_proof', file)
                                         }
                                         accept="image/*,.pdf"
                                     />
                                     <FileField
-                                        label="Upload Kartu Keluarga (KK)"
-                                        file={form.data.family_card}
-                                        error={mergedErrors.family_card}
+                                        label="Upload Kartu Pelajar"
+                                        file={form.data.student_card}
+                                        error={mergedErrors.student_card}
                                         onChange={(file) =>
-                                            setFile('family_card', file)
+                                            setFile('student_card', file)
                                         }
                                         accept="image/*,.pdf"
                                     />

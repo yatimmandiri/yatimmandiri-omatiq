@@ -94,7 +94,9 @@ Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'auth.admi
 
     Route::prefix('teacher')->as('teacher.')->group(function () {
         Route::get('students/data', [TeacherStudentController::class, 'getData'])->name('students.data');
-        Route::resource('students', TeacherStudentController::class)->parameters(['students' => 'participant']);
+        Route::resource('students', TeacherStudentController::class)
+            ->parameters(['students' => 'participant'])
+            ->only(['index', 'create', 'store', 'show']);
     });
 
     Route::prefix('core')->as('core.')->group(function () {

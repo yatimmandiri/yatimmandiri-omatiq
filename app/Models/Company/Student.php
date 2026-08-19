@@ -36,6 +36,7 @@ use Spatie\Activitylog\Support\LogOptions;
     'photo_path',
     'identity_card_path',
     'family_card_path',
+    'student_card_path',
     'is_binaan',
 ])]
 class Student extends Model
@@ -84,6 +85,11 @@ class Student extends Model
     public function getFamilyCardUrlAttribute(): ?string
     {
         return $this->storageUrl($this->family_card_path);
+    }
+
+    public function getStudentCardUrlAttribute(): ?string
+    {
+        return $this->storageUrl($this->student_card_path);
     }
 
     public function scopeSearch(Builder $query, ?string $search): Builder

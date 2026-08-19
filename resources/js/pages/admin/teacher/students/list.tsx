@@ -1,72 +1,64 @@
 import { DataTableComponent } from '@/components/partials/dataTables';
 import { DataTableProvider } from '@/components/partials/dataTables/hooks/useDataTables';
-import { renderRowHeader, RowActions } from '@/components/partials/dataTables/utils/dataTable-utils';
+import { renderRowHeader } from '@/components/partials/dataTables/utils/dataTable-utils';
+import { SelectComponent } from '@/components/partials/select-component';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { dashboard } from '@/routes/admin';
 import teacherStudents from '@/routes/admin/teacher/students';
-import { CheckCircle2, Clock3, XCircle } from 'lucide-react';
+import { router } from '@inertiajs/react';
+import {
+    CheckCircle2,
+    CircleSlash2,
+    Clock3,
+    Eye,
+    RefreshCcw,
+    UserPlus,
+    XCircle,
+} from 'lucide-react';
 import { useState } from 'react';
 
-const statusLabels: Record<string, string> = {
-    submitted: 'Submitted',
-    verified: 'Verified',
-    rejected: 'Rejected',
-};
-
-const statusVariant = (status: string) =>
-    status === 'verified' ? 'default' : status === 'rejected' ? 'destructive' : 'secondary';
-
 export default function ListPage() {
+    const [filterValue, setFilterValue] = useState<any>({});
     const [refreshData, setRefreshData] = useState(false);
+
     const columns = [
         {
-            header: (info: any) => renderRowHeader(info, 'Siswa'),
-            accessorKey: 'student.full_name',
+            header: (info: any) => renderRowHeader(info, 'Binaan'),
+            accessorKey: 'full_name',
             cell: (info: any) => (
                 <div className="space-y-1">
                     <p className="font-semibold">{info.getValue()}</p>
                     <p className="text-xs text-muted-foreground">
-                        {info.row.original.registration_number}
+                        {info.row.original.nik}
                     </p>
                 </div>
             ),
         },
         {
-            header: 'Olimpiade',
-            accessorKey: 'olimpiade',
-            cell: (info: any) => info.getValue()?.name ?? '-',
-        },
-        {
-            header: 'NIK',
-            accessorKey: 'student.nik',
-        },
-        {
             header: 'Sekolah',
-            accessorKey: 'student.school_name',
+            accessorKey: 'school_name',
+            cell: (info: any) => info.getValue() ?? '-',
         },
         {
-            header: 'Status',
-            accessorKey: 'status',
+            header: 'Kelas',
+            accessorKey: 'grade',
+            cell: (info: any) => info.getValue() ?? '-',
+        },
+        {
+            header: 'Status OMATIQ',
+            accessorKey: 'registration_status',
             cell: (info: any) => {
-                const status = info.getValue();
-                const Icon = status === 'verified' ? CheckCircle2 : status === 'rejected' ? XCircle : Clock3;
+                const row = info.row.original;
 
-                return (
-                    <Badge variant={statusVariant(status) as any}>
-                        <Icon />
-                        {statusLabels[status] ?? status}
-                    </Badge>
-                );
+                return <RegistrationBadge row={row} />;
             },
+            enableSorting: false,
         },
         {
             id: 'actions',
             header: 'Aksi',
-            cell: (info: any) => (
-                <div className="flex items-center gap-2">
-                    <RowActions info={info} setRefreshData={setRefreshData} />
-                </div>
-            ),
+            cell: (info: any) => <RowAction row={info.row.original} />,
             enableSorting: false,
             enableHiding: false,
         },
@@ -77,28 +69,149 @@ export default function ListPage() {
             <div className="relative min-h-screen flex-1 overflow-hidden rounded-xl border border-sidebar-border/70 md:min-h-min dark:border-sidebar-border">
                 <DataTableProvider
                     columns={columns}
-                    filterValue={{}}
+                    filterValue={filterValue}
                     refreshData={refreshData}
                     setRefreshData={setRefreshData}
                     urlFetchData={teacherStudents.data().url}
                     formatDataExport={(items: any[]) =>
                         items.map((item, index) => ({
                             No: index + 1,
-                            Registrasi: item.registration_number,
-                            NIK: item.student?.nik,
+                            NIK: item.nik,
                             Nama: item.full_name,
-                            Olimpiade: item.olimpiade?.name || '-',
-                            Sekolah: item.student?.school_name,
-                            Status: statusLabels[item.status] ?? item.status,
+                            Sekolah: item.school_name,
+                            Kelas: item.grade,
+                            'Status OMATIQ': item.is_registered
+                                ? `${item.olimpiade_name ?? 'Terdaftar'} (${item.registration_status ?? '-'})`
+                                : 'Belum Terdaftar',
                         }))
                     }
                 >
+                    <div className="flex flex-col space-y-4 px-4 pt-8 md:px-8">
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                            <SelectComponent
+                                label="Status OMATIQ"
+                                placeholder="Semua status..."
+                                data={[
+                                    { value: 'registered', label: 'Terdaftar' },
+                                    {
+                                        value: 'unregistered',
+                                        label: 'Belum Terdaftar',
+                                    },
+                                ]}
+                                dataSelected={filterValue.registration}
+                                handleOnChange={(value: any) =>
+                                    setFilterValue((prev: any) => ({
+                                        ...prev,
+                                        registration: value,
+                                    }))
+                                }
+                            />
+                        </div>
+                    </div>
                     <DataTableComponent buttonActive={{ create: true }} />
                 </DataTableProvider>
             </div>
         </div>
     );
 }
+
+const RegistrationBadge = ({ row }: { row: any }) => {
+    if (!row.is_registered) {
+        return (
+            <Badge variant="secondary">
+                <CircleSlash2 />
+                Belum Terdaftar
+            </Badge>
+        );
+    }
+
+    const status = row.registration_status;
+
+    if (status === 'verified') {
+        return (
+            <div className="flex flex-col items-start gap-1">
+                <Badge>
+                    <CheckCircle2 />
+                    Terdaftar · {row.olimpiade_name ?? 'OMATIQ'}
+                </Badge>
+                <span className="text-xs text-muted-foreground">
+                    {row.registration_number}
+                </span>
+            </div>
+        );
+    }
+
+    if (status === 'rejected') {
+        return (
+            <Badge variant="destructive">
+                <XCircle />
+                Ditolak · {row.olimpiade_name ?? 'OMATIQ'}
+            </Badge>
+        );
+    }
+
+    return (
+        <div className="flex flex-col items-start gap-1">
+            <Badge variant="secondary">
+                <Clock3 />
+                Menunggu · {row.olimpiade_name ?? 'OMATIQ'}
+            </Badge>
+            <span className="text-xs text-muted-foreground">
+                {row.registration_number}
+            </span>
+        </div>
+    );
+};
+
+const RowAction = ({ row }: { row: any }) => {
+    if (!row.is_registered) {
+        return (
+            <Button
+                size="sm"
+                onClick={() =>
+                    router.visit(
+                        teacherStudents.create({
+                            query: { student_id: String(row.id) },
+                        }).url,
+                    )
+                }
+            >
+                <UserPlus />
+                Daftarkan
+            </Button>
+        );
+    }
+
+    return (
+        <div className="flex items-center gap-2">
+            <Button
+                size="sm"
+                variant="outline"
+                onClick={() =>
+                    router.visit(teacherStudents.show(row.participant_id).url)
+                }
+            >
+                <Eye />
+                Detail
+            </Button>
+            {row.registration_status === 'rejected' && (
+                <Button
+                    size="sm"
+                    onClick={() =>
+                        router.visit(
+                            teacherStudents.create({
+                                query: { student_id: String(row.id) },
+                            }).url,
+                        )
+                    }
+                >
+                    <RefreshCcw />
+                    Daftarkan Ulang
+                </Button>
+            )}
+        </div>
+    );
+};
 
 ListPage.layout = {
     breadcrumbs: [
@@ -107,7 +220,7 @@ ListPage.layout = {
             href: dashboard(),
         },
         {
-            title: 'Siswa',
+            title: 'Kelola Binaan',
             href: teacherStudents.index().url,
         },
     ],

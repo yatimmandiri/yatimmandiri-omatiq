@@ -25,7 +25,7 @@ use Spatie\Activitylog\Support\LogOptions;
     'has_joined_before',
     'previous_year',
     'referral_source',
-    'referral_source_other',
+    'branch',
     'payment_status',
     'payment_proof_path',
     'payment_amount',

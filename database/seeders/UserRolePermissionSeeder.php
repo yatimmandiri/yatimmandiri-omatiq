@@ -150,7 +150,7 @@ class UserRolePermissionSeeder extends Seeder
         $teacherRole = Role::where('name', 'Teacher')->first();
         if ($teacherRole) {
             $teacherRole->givePermissionTo([
-                'view-participant', 'create-participant', 'update-participant', 'data-participant',
+                'view-participant', 'create-participant', 'data-participant',
             ]);
         }
 
