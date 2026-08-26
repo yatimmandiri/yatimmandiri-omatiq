@@ -40,4 +40,9 @@ return [
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
         'redirect' => env('GOOGLE_REDIRECT_URI'),
     ],
+
+    'penyaluran' => [
+        'url' => env('APP_PENYALURAN_URL', 'https://penyaluran.yatimmandiri.org'),
+        'otp_enabled' => env('PENYALURAN_OTP_ENABLED', false),
+    ],
 ];

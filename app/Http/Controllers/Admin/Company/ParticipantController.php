@@ -151,9 +151,7 @@ class ParticipantController extends Controller
 
         $perPage = min($request->integer('perPage') ?: 10, 100);
 
-        $data = $request->integer('perPage')
-            ? $query->paginate($perPage, ['*'], 'page', $request->integer('page') ?: null)
-            : $query->get();
+        $data = $query->paginate($perPage, ['*'], 'page', $request->integer('page') ?: null);
 
         return response()->json($data);
     }
@@ -180,6 +178,19 @@ class ParticipantController extends Controller
             'family_card',
             'student_card',
         ]);
+
+        // For binaan snapshot: don't overwrite with null when admin only changes status
+        $penyaluranKeys = [
+            'penyaluran_student_name', 'penyaluran_student_nik', 'penyaluran_student_nis',
+            'penyaluran_student_gender', 'penyaluran_student_school_name',
+            'penyaluran_student_school_level', 'penyaluran_student_class',
+            'penyaluran_student_birth_date', 'penyaluran_sanggar_name',
+        ];
+        foreach ($penyaluranKeys as $key) {
+            if (array_key_exists($key, $data) && $data[$key] === null) {
+                unset($data[$key]);
+            }
+        }
 
         $data['has_joined_before'] = $request->boolean('has_joined_before');
         $data['data_truth_consent'] = $request->boolean('data_truth_consent');
@@ -239,6 +250,31 @@ class ParticipantController extends Controller
                 'identity_card_url' => $participant->student->identity_card_url,
                 'family_card_url' => $participant->student->family_card_url,
                 'student_card_url' => $participant->student->student_card_url,
+            ];
+        } elseif ($participant->penyaluran_student_id) {
+            // Synthesize student-like payload from penyaluran snapshot for binaan
+            $payload['student'] = [
+                'id' => null,
+                'full_name' => $participant->penyaluran_student_name,
+                'nik' => $participant->penyaluran_student_nik ?? $participant->nik,
+                'nis' => $participant->penyaluran_student_nis,
+                'gender' => $participant->penyaluran_student_gender,
+                'school_name' => $participant->penyaluran_student_school_name,
+                'grade' => $participant->penyaluran_student_class,
+                'school_level' => $participant->penyaluran_student_school_level,
+                'birth_date' => $participant->penyaluran_student_birth_date?->format('Y-m-d'),
+                'birth_place' => null,
+                'age' => null,
+                'address' => null,
+                'province_id' => null,
+                'regency_id' => null,
+                'parent_phone' => null,
+                'mentor_name' => null,
+                'mentor_phone' => null,
+                'photo_url' => null,
+                'identity_card_url' => null,
+                'family_card_url' => null,
+                'student_card_url' => null,
             ];
         }
 

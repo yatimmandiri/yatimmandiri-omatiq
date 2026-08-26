@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { dashboard } from '@/routes/admin';
 import teacherStudents from '@/routes/admin/teacher/students';
@@ -24,18 +25,27 @@ export default function CreatePage() {
     const {
         olimpiades = [],
         students = [],
+        sanggars = [],
         preselected_student_id = null,
     } = usePage<{
         olimpiades?: Option[];
         students?: RosterStudent[];
+        sanggars?: Array<{ id: number | string; name: string; type?: string }>;
         preselected_student_id?: number | string | null;
     }>().props;
 
     const form = useForm<any>({
-        student_id: preselected_student_id
+        penyaluran_student_id: preselected_student_id
             ? String(preselected_student_id)
             : '',
+        penyaluran_sanggar_id: '',
         olimpiade_id: '',
+        achievements: '',
+        has_joined_before: false,
+        previous_year: '',
+        referral_source: '',
+        branch: '',
+        notes: '',
     });
 
     const submit = (event: FormEvent<HTMLFormElement>) => {
@@ -82,18 +92,17 @@ export default function CreatePage() {
 
             {students.length === 0 && (
                 <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
-                    Belum ada binaan yang dapat didaftarkan. Silakan minta admin
-                    untuk menambahkan atau mengimport data binaan terlebih
-                    dahulu.
+                    Belum ada binaan yang dapat didaftarkan dari penyaluran. Pastikan
+                    akun guru terhubung dan data santri tersedia di Penyaluran.
                 </div>
             )}
 
             <Card className="space-y-5 p-5">
                 <h2 className="text-lg font-bold">Data Pendaftaran</h2>
-                <Field label="Binaan" error={error('student_id')}>
+                <Field label="Binaan" error={error('penyaluran_student_id')}>
                     <Select
-                        value={form.data.student_id}
-                        onChange={(value) => form.setData('student_id', value)}
+                        value={form.data.penyaluran_student_id}
+                        onChange={(value) => form.setData('penyaluran_student_id', value)}
                         placeholder="Pilih binaan"
                         options={students.map((item) => ({
                             value: String(item.id),
@@ -102,16 +111,32 @@ export default function CreatePage() {
                     />
                     {students.length > 0 && (
                         <p className="text-xs text-muted-foreground">
-                            {form.data.student_id
+                            {form.data.penyaluran_student_id
                                 ? students.find(
                                       (item) =>
                                           String(item.id) ===
-                                          form.data.student_id,
+                                          form.data.penyaluran_student_id,
                                   )?.school_name
-                                : 'Hanya menampilkan binaan yang belum memiliki pendaftaran aktif.'}
+                                : 'Hanya menampilkan binaan dari penyaluran yang belum memiliki pendaftaran aktif.'}
                         </p>
                     )}
                 </Field>
+                {sanggars.length > 0 && (
+                    <Field label="Sanggar (opsional)" error={error('penyaluran_sanggar_id')}>
+                        <Select
+                            value={form.data.penyaluran_sanggar_id}
+                            onChange={(value) => form.setData('penyaluran_sanggar_id', value)}
+                            placeholder="Pilih sanggar"
+                            options={sanggars.map((item) => ({
+                                value: String(item.id),
+                                label: `${item.name}${item.type ? ` (${item.type})` : ''}`,
+                            }))}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                            Jika binaan ada di &gt;1 sanggar, pilih sanggar perwakilan (opsional).
+                        </p>
+                    </Field>
+                )}
                 <Field label="Kategori Lomba" error={error('olimpiade_id')}>
                     <Select
                         value={form.data.olimpiade_id}
@@ -123,6 +148,65 @@ export default function CreatePage() {
                             value: String(item.id),
                             label: item.name,
                         }))}
+                    />
+                </Field>
+
+                <Field label="Prestasi (opsional)" error={error('achievements')}>
+                    <textarea
+                        value={form.data.achievements}
+                        onChange={(e) => form.setData('achievements', e.target.value)}
+                        placeholder="Contoh: Juara 1 Matematika tingkat Kota 2025"
+                        className="min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                        rows={3}
+                    />
+                </Field>
+
+                <div className="grid gap-5 sm:grid-cols-2">
+                    <Field label="Pernah ikut sebelumnya?">
+                        <label className="flex items-center gap-2 text-sm">
+                            <input
+                                type="checkbox"
+                                checked={!!form.data.has_joined_before}
+                                onChange={(e) => form.setData('has_joined_before', e.target.checked)}
+                            />
+                            Ya, pernah ikut
+                        </label>
+                    </Field>
+                    {form.data.has_joined_before && (
+                        <Field label="Tahun sebelumnya" error={error('previous_year')}>
+                            <Input
+                                value={form.data.previous_year}
+                                onChange={(e) => form.setData('previous_year', e.target.value)}
+                                placeholder="2024"
+                            />
+                        </Field>
+                    )}
+                </div>
+
+                <div className="grid gap-5 sm:grid-cols-2">
+                    <Field label="Sumber referral" error={error('referral_source')}>
+                        <Input
+                            value={form.data.referral_source}
+                            onChange={(e) => form.setData('referral_source', e.target.value)}
+                            placeholder="Guru / Teman / Media sosial"
+                        />
+                    </Field>
+                    <Field label="Cabang" error={error('branch')}>
+                        <Input
+                            value={form.data.branch}
+                            onChange={(e) => form.setData('branch', e.target.value)}
+                            placeholder="Cabang Yatim Mandiri"
+                        />
+                    </Field>
+                </div>
+
+                <Field label="Catatan" error={error('notes')}>
+                    <textarea
+                        value={form.data.notes}
+                        onChange={(e) => form.setData('notes', e.target.value)}
+                        placeholder="Catatan tambahan"
+                        className="min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                        rows={3}
                     />
                 </Field>
             </Card>

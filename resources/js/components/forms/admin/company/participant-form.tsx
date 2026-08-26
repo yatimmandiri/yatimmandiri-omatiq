@@ -34,25 +34,59 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
     }>().props;
 
     const student = participant?.student;
+    const isBinaan = !!participant?.penyaluran_student_id;
     const form = useForm<any>({
         olimpiade_id: participant?.olimpiade_id
             ? String(participant.olimpiade_id)
             : '',
-        nik: student?.nik ?? '',
-        full_name: student?.full_name ?? '',
+        // Unified: binaan uses penyaluran snapshot, umum uses student
+        nik: isBinaan
+            ? (participant?.penyaluran_student_nik ?? participant?.nik ?? '')
+            : (student?.nik ?? ''),
+        full_name: isBinaan
+            ? (participant?.penyaluran_student_name ?? '')
+            : (student?.full_name ?? ''),
         nickname: student?.nickname ?? '',
-        gender: student?.gender ?? '',
+        gender: isBinaan
+            ? (participant?.penyaluran_student_gender ?? student?.gender ?? '')
+            : (student?.gender ?? ''),
         birth_place: student?.birth_place ?? '',
-        birth_date: dateValue(student?.birth_date),
+        birth_date:
+            dateValue(
+                isBinaan
+                    ? participant?.penyaluran_student_birth_date
+                    : student?.birth_date,
+            ) ?? '',
         age: student?.age ?? '',
-        school_name: student?.school_name ?? '',
-        grade: student?.grade ?? '',
+        school_name: isBinaan
+            ? (participant?.penyaluran_student_school_name ?? student?.school_name ?? '')
+            : (student?.school_name ?? ''),
+        grade: isBinaan
+            ? (participant?.penyaluran_student_class ?? student?.grade ?? '')
+            : (student?.grade ?? ''),
         address: student?.address ?? '',
         province_id: student?.province_id ?? '',
         regency_id: student?.regency_id ?? '',
         parent_phone: student?.parent_phone ?? '',
         mentor_name: student?.mentor_name ?? '',
         mentor_phone: student?.mentor_phone ?? '',
+        // keep penyaluran snapshot for sync (hidden, auto-synced on submit)
+        penyaluran_student_name: participant?.penyaluran_student_name ?? '',
+        penyaluran_student_nik: participant?.penyaluran_student_nik ?? '',
+        penyaluran_student_nis: participant?.penyaluran_student_nis ?? '',
+        penyaluran_student_gender:
+            participant?.penyaluran_student_gender ?? '',
+        penyaluran_student_school_name:
+            participant?.penyaluran_student_school_name ?? '',
+        penyaluran_student_school_level:
+            participant?.penyaluran_student_school_level ?? '',
+        penyaluran_student_class: participant?.penyaluran_student_class ?? '',
+        penyaluran_student_birth_date:
+            dateValue(participant?.penyaluran_student_birth_date) ?? '',
+        penyaluran_sanggar_name: participant?.penyaluran_sanggar_name ?? '',
+        // extra for binaan completeness
+        nis: participant?.penyaluran_student_nis ?? '',
+        school_level: participant?.penyaluran_student_school_level ?? '',
         achievements: participant?.achievements ?? '',
         has_joined_before: participant?.has_joined_before ?? false,
         previous_year: participant?.previous_year ?? '',
@@ -76,14 +110,25 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
         notes: participant?.notes ?? '',
     });
 
-    form.transform((data: any) => ({
-        ...data,
-        _method: 'put',
-        has_joined_before: data.has_joined_before ? 1 : 0,
-        data_truth_consent: data.data_truth_consent ? 1 : 0,
-        documentation_consent: data.documentation_consent ? 1 : 0,
-        rules_consent: data.rules_consent ? 1 : 0,
-    }));
+    form.transform((data: any) => {
+        // For binaan, sync unified fields to penyaluran snapshot (single table participant)
+        const out: any = { ...data, _method: 'put' };
+        if (isBinaan) {
+            out.penyaluran_student_name = data.full_name;
+            out.penyaluran_student_nik = data.nik;
+            out.penyaluran_student_nis = data.nis ?? data.penyaluran_student_nis;
+            out.penyaluran_student_gender = data.gender;
+            out.penyaluran_student_school_name = data.school_name;
+            out.penyaluran_student_school_level = data.school_level ?? data.penyaluran_student_school_level;
+            out.penyaluran_student_class = data.grade;
+            out.penyaluran_student_birth_date = data.birth_date;
+        }
+        out.has_joined_before = data.has_joined_before ? 1 : 0;
+        out.data_truth_consent = data.data_truth_consent ? 1 : 0;
+        out.documentation_consent = data.documentation_consent ? 1 : 0;
+        out.rules_consent = data.rules_consent ? 1 : 0;
+        return out;
+    });
 
     const filteredRegencies = useMemo(
         () =>
@@ -191,7 +236,7 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
                             onChange={(e) =>
                                 form.setData('birth_place', e.target.value)
                             }
-                            required
+                            required={!isBinaan}
                         />
                     </Field>
                     <Field label="Tanggal Lahir" error={error('birth_date')}>
@@ -201,7 +246,7 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
                             onChange={(e) =>
                                 form.setData('birth_date', e.target.value)
                             }
-                            required
+                            required={!isBinaan}
                         />
                     </Field>
                     <Field label="Usia" error={error('age')}>
@@ -211,7 +256,7 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
                             onChange={(e) =>
                                 form.setData('age', e.target.value)
                             }
-                            required
+                            required={!isBinaan}
                         />
                     </Field>
                     <Field label="Kelas" error={error('grade')}>
@@ -232,6 +277,35 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
                             required
                         />
                     </Field>
+                    {isBinaan && (
+                        <>
+                            <Field label="NIS" error={error('penyaluran_student_nis')}>
+                                <Input
+                                    value={form.data.nis}
+                                    onChange={(e) => {
+                                        form.setData('nis', e.target.value);
+                                        form.setData('penyaluran_student_nis', e.target.value);
+                                    }}
+                                />
+                            </Field>
+                            <Field label="Jenjang" error={error('penyaluran_student_school_level')}>
+                                <Input
+                                    value={form.data.school_level}
+                                    onChange={(e) => {
+                                        form.setData('school_level', e.target.value);
+                                        form.setData('penyaluran_student_school_level', e.target.value);
+                                    }}
+                                    placeholder="SD/SMP/SMA"
+                                />
+                            </Field>
+                            <Field label="Sanggar" error={error('penyaluran_sanggar_name')}>
+                                <Input
+                                    value={form.data.penyaluran_sanggar_name}
+                                    onChange={(e) => form.setData('penyaluran_sanggar_name', e.target.value)}
+                                />
+                            </Field>
+                        </>
+                    )}
                     <Field
                         label="HP Orang Tua/Wali"
                         error={error('parent_phone')}
@@ -241,7 +315,7 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
                             onChange={(e) =>
                                 form.setData('parent_phone', e.target.value)
                             }
-                            required
+                            required={!isBinaan}
                         />
                     </Field>
                 </div>
@@ -252,36 +326,38 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
                         onChange={(e) =>
                             form.setData('address', e.target.value)
                         }
-                        required
+                        required={!isBinaan}
                     />
                 </Field>
-                <div className="grid gap-5 md:grid-cols-2">
-                    <Field label="Provinsi" error={error('province_id')}>
-                        <Select
-                            value={form.data.province_id}
-                            onChange={(value) => {
-                                form.setData('province_id', value);
-                                form.setData('regency_id', '');
-                            }}
-                            options={provinces.map((item) => ({
-                                value: String(item.id),
-                                label: item.name,
-                            }))}
-                        />
-                    </Field>
-                    <Field label="Kota/Kabupaten" error={error('regency_id')}>
-                        <Select
-                            value={form.data.regency_id}
-                            onChange={(value) =>
-                                form.setData('regency_id', value)
-                            }
-                            options={filteredRegencies.map((item) => ({
-                                value: item.id,
-                                label: item.name,
-                            }))}
-                        />
-                    </Field>
-                </div>
+                {!isBinaan && (
+                    <div className="grid gap-5 md:grid-cols-2">
+                        <Field label="Provinsi" error={error('province_id')}>
+                            <Select
+                                value={form.data.province_id}
+                                onChange={(value) => {
+                                    form.setData('province_id', value);
+                                    form.setData('regency_id', '');
+                                }}
+                                options={provinces.map((item) => ({
+                                    value: String(item.id),
+                                    label: item.name,
+                                }))}
+                            />
+                        </Field>
+                        <Field label="Kota/Kabupaten" error={error('regency_id')}>
+                            <Select
+                                value={form.data.regency_id}
+                                onChange={(value) =>
+                                    form.setData('regency_id', value)
+                                }
+                                options={filteredRegencies.map((item) => ({
+                                    value: item.id,
+                                    label: item.name,
+                                }))}
+                            />
+                        </Field>
+                    </div>
+                )}
             </Card>
 
             <Card className="space-y-5 p-5">

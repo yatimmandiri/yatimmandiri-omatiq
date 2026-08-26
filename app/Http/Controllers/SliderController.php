@@ -7,7 +7,6 @@ use App\Concerns\Traits\UploadFiles;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Company\StoreSliderRequest;
 use App\Http\Requests\Company\UpdateSliderRequest;
-use App\Models\Company\Category;
 use App\Models\Company\Olimpiade;
 use App\Models\Company\Slider;
 use Illuminate\Http\Request;
@@ -39,7 +38,7 @@ class SliderController extends Controller
         $olimpiades = Olimpiade::select(['id', 'name'])->get();
 
         $data = [
-            'olimpiades' => $olimpiades
+            'olimpiades' => $olimpiades,
         ];
 
         return Inertia::render('admin/company/slider/create', $data);
@@ -108,7 +107,7 @@ class SliderController extends Controller
 
         $data = [
             'slider' => $slider,
-            'olimpiades' => $olimpiades
+            'olimpiades' => $olimpiades,
         ];
 
         return Inertia::render('admin/company/slider/edit', $data);
@@ -172,21 +171,18 @@ class SliderController extends Controller
     {
         $this->authorize('data-slider', Slider::class);
 
-        $perPage = $request->input('perPage', null);
-        $page = $request->input('page', null);
-        $globalSearch = $request->input('globalSearch', '');
-        $orderBy = $request->input('orderBy', 'id');
-        $orderDirection = $request->input('orderDirection', 'desc');
-        $filterValue = $request->input('filterValue', []);
+        $allowed = ['id', 'title', 'sort_order', 'status', 'created_at', 'updated_at'];
+        $orderBy = in_array($request->input('orderBy'), $allowed, true) ? $request->input('orderBy') : 'id';
+        $direction = strtolower((string) $request->input('orderDirection')) === 'asc' ? 'asc' : 'desc';
+
+        $perPage = min($request->integer('perPage') ?: 10, 100);
 
         $query = Slider::query()
-            ->latest()
-            ->search($globalSearch)
-            ->orderBy($orderBy, $orderDirection);
+            ->search($request->string('globalSearch')->toString())
+            ->orderBy($orderBy, $direction)
+            ->orderBy('id', 'desc');
 
-        $data = $perPage
-            ? $query->paginate($perPage, ['*'], 'page', $page)
-            : $query->get();
+        $data = $query->paginate($perPage, ['*'], 'page', $request->integer('page') ?: null);
 
         return response()->json($data);
     }

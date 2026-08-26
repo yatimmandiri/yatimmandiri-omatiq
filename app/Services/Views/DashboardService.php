@@ -4,6 +4,7 @@ namespace App\Services\Views;
 
 use App\Models\Company\Participant;
 use App\Models\Core\User;
+use App\Services\PenyaluranService;
 
 class DashboardService
 {
@@ -32,12 +33,38 @@ class DashboardService
     private static function teacher(User $user): array
     {
         $studentCount = Participant::where('mentor_id', $user->id)->count();
+        $penyaluranProfile = null;
+        $sanggars = [];
+        $penyaluranStudents = [];
+        $penyaluranTotal = null;
+
+        $overlap = null;
+        $sanggarSum = null;
+
+        if ($user->penyaluran_token) {
+            try {
+                $penyaluran = app(PenyaluranService::class);
+                $penyaluranProfile = $penyaluran->me($user->penyaluran_token);
+                $sanggars = $penyaluran->sanggars($user->penyaluran_token);
+                $penyaluranStudents = $penyaluran->students($user->penyaluran_token);
+                $penyaluranTotal = count($penyaluranStudents);
+                $sanggarSum = collect($sanggars)->sum(fn ($s) => (int) ($s['total_students'] ?? 0));
+                $overlap = $sanggarSum > $penyaluranTotal ? $sanggarSum - $penyaluranTotal : 0;
+            } catch (\Throwable $e) {
+                // fallback to local, keep null
+            }
+        }
 
         return [
             'view' => 'admin/dashboard/teacher',
             'data' => [
                 'pageTitle' => 'Dashboard Guru',
-                'studentCount' => $studentCount,
+                'studentCount' => $penyaluranTotal ?? $studentCount,
+                'sanggarSum' => $sanggarSum,
+                'overlapCount' => $overlap,
+                'penyaluranProfile' => $penyaluranProfile,
+                'sanggars' => $sanggars,
+                'penyaluranStudents' => array_slice($penyaluranStudents, 0, 5),
             ],
         ];
     }

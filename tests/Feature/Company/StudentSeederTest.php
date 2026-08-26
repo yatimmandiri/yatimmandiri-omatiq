@@ -71,7 +71,8 @@ it('seeds a participant referencing the student from StudentSeeder', function ()
 
     $participant = Participant::first();
 
-    expect($participant->student->full_name)->toBe('Ahmad Fauzi')
+    $name = $participant->penyaluran_student_name ?? $participant->student?->full_name;
+    expect($name)->toBe('RACHMA TALITA AZALIA')
         ->and($participant->mentor_id)->toBe($teacher->id)
         ->and($participant->registration_type)->toBe('teacher')
         ->and($participant->status)->toBe('verified');

@@ -15,6 +15,14 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
+            $table->string('phone', 20)->nullable()->index();
+            $table->unsignedBigInteger('penyaluran_id')->nullable()->unique();
+            $table->text('penyaluran_token')->nullable();
+            $table->timestamp('phone_verified_at')->nullable();
+            $table->string('phone_otp', 6)->nullable();
+            $table->timestamp('phone_otp_expires_at')->nullable();
+            $table->unsignedTinyInteger('phone_otp_attempts')->default(0);
+            $table->timestamp('phone_otp_last_sent_at')->nullable();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->rememberToken();

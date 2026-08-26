@@ -87,7 +87,10 @@ class FaqCompanyController extends Controller
         $orderBy = in_array($request->input('orderBy'), $allowed, true) ? $request->input('orderBy') : 'sort_order';
         $direction = strtolower((string) $request->input('orderDirection')) === 'desc' ? 'desc' : 'asc';
         $query = FaqCompany::query()->with('olimpiade:id,name')->search($request->string('globalSearch')->toString())->orderBy($orderBy, $direction)->orderBy('id');
-        $data = $request->integer('perPage') ? $query->paginate($request->integer('perPage'), ['*'], 'page', $request->integer('page') ?: null) : $query->get();
+
+        $perPage = min($request->integer('perPage') ?: 10, 100);
+
+        $data = $query->paginate($perPage, ['*'], 'page', $request->integer('page') ?: null);
 
         return response()->json($data);
     }

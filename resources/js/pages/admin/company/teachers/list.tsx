@@ -55,7 +55,7 @@ export default function ListPage() {
                         }))
                     }
                 >
-                    <DataTableComponent buttonActive={{ create: true }} />
+                    <DataTableComponent buttonActive={{ create: false }} />
                 </DataTableProvider>
             </div>
         </div>

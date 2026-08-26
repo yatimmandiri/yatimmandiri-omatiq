@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\Company\Olimpiade;
 use App\Models\Company\Participant;
-use App\Models\Company\Student;
 use App\Models\Core\User;
 use Illuminate\Support\Facades\DB;
 
@@ -13,59 +12,96 @@ class TeacherService
     public function getStudentById(User $teacher, int $id): Participant
     {
         return Participant::query()
-            ->with(['olimpiade:id,name,category,slug', 'student.province:id,name', 'student.regency:id,name'])
+            ->with(['olimpiade:id,name,category,slug'])
             ->where('mentor_id', $teacher->id)
             ->findOrFail($id);
     }
 
-    public function registerStudent(User $teacher, array $data): Participant
+    /**
+     * Register a binaan from penyaluran API into Olimpiade.
+     *
+     * @param  array{penyaluran_student_id:int, olimpiade_id:int, penyaluran_sanggar_id?:int, penyaluran_sanggar_name?:string, achievements?:string, has_joined_before?:bool, previous_year?:int, referral_source?:string, branch?:string, notes?:string}  $data
+     */
+    public function registerStudent(User $teacher, array $data, array $penyaluranStudent): Participant
     {
-        $student = Student::query()
-            ->where('mentor_id', $teacher->id)
-            ->where('is_binaan', true)
-            ->findOrFail($data['student_id']);
+        $mapGender = function (?string $g) {
+            if ($g === 'L') {
+                return 'male';
+            }
+            if ($g === 'P') {
+                return 'female';
+            }
 
-        return DB::transaction(function () use ($teacher, $student, $data) {
+            return $g;
+        };
+
+        return DB::transaction(function () use ($teacher, $data, $penyaluranStudent, $mapGender) {
             return Participant::create([
-                'student_id' => $student->id,
+                'penyaluran_student_id' => $penyaluranStudent['student_id'] ?? $penyaluranStudent['id'] ?? $data['penyaluran_student_id'],
+                'penyaluran_student_name' => $penyaluranStudent['name'] ?? $penyaluranStudent['full_name'] ?? '',
+                'penyaluran_student_nik' => $penyaluranStudent['nik'] ?? null,
+                'penyaluran_student_nis' => $penyaluranStudent['nis'] ?? null,
+                'penyaluran_student_gender' => $mapGender($penyaluranStudent['gender'] ?? null),
+                'penyaluran_student_school_name' => $penyaluranStudent['school_name'] ?? null,
+                'penyaluran_student_school_level' => $penyaluranStudent['school_level'] ?? null,
+                'penyaluran_student_class' => $penyaluranStudent['class'] ?? $penyaluranStudent['grade'] ?? null,
+                'penyaluran_student_birth_date' => $penyaluranStudent['birth_date'] ?? null,
+                'nik' => $penyaluranStudent['nik'] ?? null,
+                'penyaluran_sanggar_id' => $data['penyaluran_sanggar_id'] ?? null,
+                'penyaluran_sanggar_name' => $data['penyaluran_sanggar_name'] ?? null,
                 'mentor_id' => $teacher->id,
                 'olimpiade_id' => $data['olimpiade_id'],
                 'registration_type' => 'teacher',
                 'registration_number' => $this->generateRegistrationNumber(),
                 'status' => 'submitted',
+                'achievements' => $data['achievements'] ?? null,
+                'has_joined_before' => $data['has_joined_before'] ?? false,
+                'previous_year' => $data['previous_year'] ?? null,
+                'referral_source' => $data['referral_source'] ?? null,
+                'branch' => $data['branch'] ?? null,
+                'notes' => $data['notes'] ?? null,
                 'data_truth_consent' => true,
                 'documentation_consent' => true,
                 'rules_consent' => true,
-            ])->load('student:id,full_name');
+            ]);
         });
     }
 
-    public function getFormOptions(User $teacher, ?int $studentId = null): array
+    /**
+     * Build form options from penyaluran API.
+     *
+     * @param  array<int, array>  $penyaluranStudents  raw from PenyaluranService::students()
+     */
+    public function getFormOptionsFromApi(array $penyaluranStudents, ?int $studentId = null): array
     {
-        $activeStudentIds = Participant::query()
-            ->whereIn('status', Student::ACTIVE_STATUSES)
-            ->whereNotNull('student_id')
-            ->pluck('student_id');
+        $activeIds = Participant::query()
+            ->whereIn('status', ['submitted', 'verified'])
+            ->where(function ($q) {
+                $q->whereNotNull('penyaluran_student_id')->orWhereNotNull('student_id');
+            })
+            ->get(['penyaluran_student_id', 'student_id'])
+            ->flatMap(fn ($p) => [(int) $p->penyaluran_student_id, (int) $p->student_id])
+            ->filter()
+            ->unique()
+            ->all();
 
-        $students = Student::query()
-            ->where('mentor_id', $teacher->id)
-            ->where('is_binaan', true)
-            ->whereNotIn('id', $activeStudentIds)
-            ->orderBy('full_name')
-            ->get(['id', 'nik', 'full_name', 'school_name', 'grade'])
-            ->map(fn (Student $student) => [
-                'id' => $student->id,
-                'nik' => $student->nik,
-                'full_name' => $student->full_name,
-                'school_name' => $student->school_name,
-                'grade' => $student->grade,
-            ]);
+        $filtered = collect($penyaluranStudents)
+            ->filter(fn (array $s) => ! in_array((int) ($s['student_id'] ?? $s['id'] ?? 0), $activeIds, true))
+            ->map(fn (array $s) => [
+                'id' => $s['student_id'] ?? $s['id'],
+                'nik' => $s['nik'] ?? null,
+                'full_name' => $s['name'] ?? $s['full_name'] ?? '-',
+                'school_name' => $s['school_name'] ?? null,
+                'grade' => $s['class'] ?? $s['grade'] ?? null,
+            ])
+            ->sortBy('full_name')
+            ->values();
 
-        $preselected = $students->contains(fn (array $student) => $student['id'] === $studentId) ? $studentId : null;
+        $preselected = $filtered->contains(fn (array $s) => (int) $s['id'] === (int) $studentId) ? $studentId : null;
 
         return [
             'olimpiades' => Olimpiade::query()->active()->ordered()->get(['id', 'name', 'category', 'slug']),
-            'students' => $students->values(),
+            'students' => $filtered,
             'preselected_student_id' => $preselected,
         ];
     }
@@ -75,12 +111,17 @@ class TeacherService
         $prefix = 'OMQ-'.now()->format('Ymd');
 
         return DB::transaction(function () use ($prefix) {
-            $latest = Participant::query()
+            $max = Participant::query()
                 ->where('registration_number', 'like', "{$prefix}%")
                 ->lockForUpdate()
-                ->count();
+                ->max('registration_number');
 
-            return $prefix.'-'.str_pad((string) ($latest + 1), 4, '0', STR_PAD_LEFT);
+            $next = 1;
+            if ($max && preg_match('/-(\d{4})$/', $max, $m)) {
+                $next = ((int) $m[1]) + 1;
+            }
+
+            return $prefix.'-'.str_pad((string) $next, 4, '0', STR_PAD_LEFT);
         });
     }
 }

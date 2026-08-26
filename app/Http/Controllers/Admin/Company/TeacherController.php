@@ -8,7 +8,6 @@ use App\Http\Requests\Company\StoreTeacherRequest;
 use App\Http\Requests\Company\UpdateTeacherRequest;
 use App\Models\Core\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
 
 class TeacherController extends Controller
@@ -24,29 +23,12 @@ class TeacherController extends Controller
 
     public function create()
     {
-        $this->authorize('create', User::class);
-
-        return Inertia::render('admin/company/teachers/create');
+        abort(403, 'Data guru diambil langsung dari Penyaluran, tidak bisa ditambah manual.');
     }
 
     public function store(StoreTeacherRequest $request)
     {
-        $this->authorize('create', User::class);
-
-        $teacher = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
-
-        $teacher->assignRole('Teacher');
-
-        $this->logSuccess('create-teacher', "Created Teacher: {$teacher->name}", [
-            'user_id' => $teacher->id,
-            'new_data' => $teacher->toArray(),
-        ]);
-
-        return redirect()->route('admin.companies.teachers.index')->with('success', "Guru {$teacher->name} berhasil ditambahkan.");
+        abort(403, 'Data guru diambil langsung dari Penyaluran, tidak bisa ditambah manual.');
     }
 
     public function show(User $teacher)
@@ -62,72 +44,36 @@ class TeacherController extends Controller
 
     public function edit(User $teacher)
     {
-        $this->authorize('update', $teacher);
-
-        $teacher->load(['roles']);
-
-        return Inertia::render('admin/company/teachers/edit', [
-            'user' => $teacher,
-        ]);
+        abort(403, 'Data guru diambil langsung dari Penyaluran, tidak bisa diedit.');
     }
 
     public function update(UpdateTeacherRequest $request, User $teacher)
     {
-        $this->authorize('update', $teacher);
-
-        $oldData = $teacher->replicate();
-
-        $teacher->update([
-            'name' => $request->name,
-            'email' => $request->email,
-        ]);
-
-        if ($request->password) {
-            $teacher->update([
-                'password' => Hash::make($request->password),
-            ]);
-        }
-
-        $this->logSuccess('update-teacher', "Update Teacher: {$teacher->name}", [
-            'user_id' => $teacher->id,
-            'old_data' => $oldData->toArray(),
-            'new_data' => $teacher->toArray(),
-        ]);
-
-        return redirect()->route('admin.companies.teachers.index')->with('success', "Guru {$teacher->name} berhasil diupdate.");
+        abort(403, 'Data guru diambil langsung dari Penyaluran, tidak bisa diedit.');
     }
 
     public function destroy(User $teacher)
     {
-        $this->authorize('delete', $teacher);
-
-        $name = $teacher->name;
-        $teacher->delete();
-
-        $this->logSuccess('delete-teacher', "Delete Teacher: {$name}", ['user_id' => $teacher->id]);
-
-        return redirect()->route('admin.companies.teachers.index')->with('success', "Guru {$name} berhasil dihapus.");
+        abort(403, 'Data guru diambil langsung dari Penyaluran, tidak bisa dihapus.');
     }
 
     public function getData(Request $request)
     {
         $this->authorize('data-user', User::class);
 
-        $perPage = $request->input('perPage', 10);
-        $page = $request->input('page', 1);
-        $globalSearch = $request->input('globalSearch', '');
-        $orderDirection = $request->input('orderDirection', 'desc');
-        $orderBy = $request->input('orderBy', 'id');
+        $allowed = ['id', 'name', 'email', 'created_at', 'updated_at'];
+        $orderBy = in_array($request->input('orderBy'), $allowed, true) ? $request->input('orderBy') : 'id';
+        $direction = strtolower((string) $request->input('orderDirection')) === 'asc' ? 'asc' : 'desc';
+        $perPage = min($request->integer('perPage') ?: 10, 100);
 
         $query = User::query()
             ->with(['roles'])
             ->whereHas('roles', fn ($q) => $q->where('name', 'Teacher'))
-            ->search($globalSearch)
-            ->orderBy($orderBy, $orderDirection);
+            ->search($request->string('globalSearch')->toString())
+            ->orderBy($orderBy, $direction)
+            ->orderBy('id', 'desc');
 
-        $data = $perPage
-            ? $query->paginate($perPage, ['*'], 'page', $page)
-            : $query->get();
+        $data = $query->paginate($perPage, ['*'], 'page', $request->integer('page') ?: null);
 
         return response()->json($data);
     }

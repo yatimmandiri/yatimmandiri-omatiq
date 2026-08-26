@@ -130,9 +130,7 @@ class StudentController extends Controller
 
         $perPage = min($request->integer('perPage') ?: 10, 100);
 
-        $data = $request->integer('perPage')
-            ? $query->paginate($perPage, ['*'], 'page', $request->integer('page') ?: null)
-            : $query->get();
+        $data = $query->paginate($perPage, ['*'], 'page', $request->integer('page') ?: null);
 
         return response()->json($data);
     }

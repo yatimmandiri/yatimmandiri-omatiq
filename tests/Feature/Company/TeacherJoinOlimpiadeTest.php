@@ -4,6 +4,8 @@ use App\Models\Company\Olimpiade;
 use App\Models\Company\Participant;
 use App\Models\Company\Student;
 use App\Models\Core\Permission;
+use App\Models\Core\Region\Province;
+use App\Models\Core\Region\Regency;
 use App\Models\Core\Role;
 use App\Models\Core\User;
 use App\Settings\SiteSettings;
@@ -61,7 +63,7 @@ function createOlimpiade(string $name = 'Olimpiade Matematika', string $category
 function registrationPayload(int $olimpiadeId, int $studentId): array
 {
     return [
-        'student_id' => $studentId,
+        'penyaluran_student_id' => $studentId,
         'olimpiade_id' => $olimpiadeId,
     ];
 }
@@ -80,7 +82,7 @@ it('lets a teacher register an assigned binaan student', function () {
     $participant = Participant::first();
 
     expect($participant)->not->toBeNull()
-        ->and($participant->student_id)->toBe($student->id)
+        ->and($participant->penyaluran_student_id)->toBe($student->id)
         ->and($participant->mentor_id)->toBe($teacher->id)
         ->and($participant->registration_type)->toBe('teacher')
         ->and($participant->status)->toBe('submitted')
@@ -94,7 +96,9 @@ it('prevents registering a student who already has an active registration', func
     $olimpiade = createOlimpiade('Olimpiade IPA', 'IPA');
 
     Participant::create([
-        'student_id' => $student->id,
+        'penyaluran_student_id' => $student->id,
+        'penyaluran_student_name' => $student->full_name,
+        'penyaluran_student_nik' => $student->nik,
         'mentor_id' => $teacher->id,
         'olimpiade_id' => $olimpiade->id,
         'registration_number' => 'OMQ-TEST-0001',
@@ -106,7 +110,7 @@ it('prevents registering a student who already has an active registration', func
 
     $this->actingAs($teacher)
         ->post(route('admin.teacher.students.store'), registrationPayload($next->id, $student->id))
-        ->assertSessionHasErrors('student_id');
+        ->assertSessionHasErrors('penyaluran_student_id');
 
     expect(Participant::count())->toBe(1);
 });
@@ -120,7 +124,7 @@ it('prevents a teacher from registering another teacher student', function () {
 
     $this->actingAs($teacherB)
         ->post(route('admin.teacher.students.store'), registrationPayload($olimpiade->id, $student->id))
-        ->assertSessionHasErrors('student_id');
+        ->assertSessionHasErrors('penyaluran_student_id');
 
     expect(Participant::count())->toBe(0);
 });
@@ -133,7 +137,9 @@ it('lets a teacher re-register a student whose previous registration was rejecte
     $previous = createOlimpiade('Olimpiade IPA', 'IPA');
 
     Participant::create([
-        'student_id' => $student->id,
+        'penyaluran_student_id' => $student->id,
+        'penyaluran_student_name' => $student->full_name,
+        'penyaluran_student_nik' => $student->nik,
         'mentor_id' => $teacher->id,
         'olimpiade_id' => $previous->id,
         'registration_number' => 'OMQ-TEST-0001',
@@ -148,7 +154,7 @@ it('lets a teacher re-register a student whose previous registration was rejecte
         ->assertRedirect(route('admin.teacher.students.index'))
         ->assertSessionHasNoErrors();
 
-    expect(Participant::where('student_id', $student->id)->count())->toBe(2);
+    expect(Participant::where('penyaluran_student_id', $student->id)->count())->toBe(2);
 });
 
 it('blocks public registration when the NIK already has an active registration', function () {
@@ -157,8 +163,25 @@ it('blocks public registration when the NIK already has an active registration',
     $student = createAssignedStudent($teacher);
     $olimpiade = createOlimpiade();
 
+    // ensure regions exist for public registration validation
+    if (! Province::where('id', '35')->exists()) {
+        $province = new Province;
+        $province->id = '35';
+        $province->name = 'JAWA TIMUR';
+        $province->save();
+    }
+    if (! Regency::where('id', '3578')->exists()) {
+        $regency = new Regency;
+        $regency->id = '3578';
+        $regency->province_id = '35';
+        $regency->name = 'KOTA SURABAYA';
+        $regency->save();
+    }
+
     Participant::create([
-        'student_id' => $student->id,
+        'penyaluran_student_id' => $student->id,
+        'penyaluran_student_name' => $student->full_name,
+        'penyaluran_student_nik' => $student->nik,
         'mentor_id' => $teacher->id,
         'olimpiade_id' => $olimpiade->id,
         'registration_number' => 'OMQ-TEST-0001',
@@ -206,7 +229,9 @@ it('does not expose edit, update, or destroy routes to teachers', function () {
     $olimpiade = createOlimpiade();
 
     $participant = Participant::create([
-        'student_id' => $student->id,
+        'penyaluran_student_id' => $student->id,
+        'penyaluran_student_name' => $student->full_name,
+        'penyaluran_student_nik' => $student->nik,
         'mentor_id' => $teacher->id,
         'olimpiade_id' => $olimpiade->id,
         'registration_number' => 'OMQ-TEST-0001',

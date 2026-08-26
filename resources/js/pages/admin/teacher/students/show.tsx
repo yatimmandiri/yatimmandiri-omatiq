@@ -24,7 +24,7 @@ export default function ShowPage() {
                     <h1 className="text-2xl font-bold">Detail Binaan</h1>
                     <p className="text-sm text-muted-foreground">
                         {participant.registration_number} -{' '}
-                        {participant.student?.full_name ?? participant.nik}
+                        {participant.penyaluran_student_name ?? participant.student?.full_name ?? participant.nik ?? participant.penyaluran_student_nik}
                     </p>
                 </div>
                 <div className="flex gap-2">
@@ -42,10 +42,10 @@ export default function ShowPage() {
                 <Card className="space-y-5 p-5">
                     <h2 className="text-lg font-bold">Data Peserta</h2>
                     <div className="grid gap-5 sm:grid-cols-2">
-                        <Detail label="NIK" value={participant.student?.nik} />
+                        <Detail label="NIK" value={participant.penyaluran_student_nik ?? participant.student?.nik ?? participant.nik} />
                         <Detail
                             label="Nama Lengkap"
-                            value={participant.student?.full_name}
+                            value={participant.penyaluran_student_name ?? participant.student?.full_name}
                         />
                         <Detail
                             label="Nama Panggilan"
@@ -53,7 +53,7 @@ export default function ShowPage() {
                         />
                         <Detail
                             label="Jenis Kelamin"
-                            value={labels[participant.student?.gender]}
+                            value={labels[participant.student?.gender ?? '']}
                         />
                         <Detail
                             label="Tempat, Tanggal Lahir"
@@ -88,6 +88,10 @@ export default function ShowPage() {
                             value={labels[participant.status]}
                         />
                     </div>
+                    <Detail
+                        label="ID Penyaluran"
+                        value={participant.penyaluran_student_id}
+                    />
                     <Detail
                         label="Alamat"
                         value={participant.student?.address}

@@ -186,12 +186,17 @@ class ParticipantRegistrationController extends Controller
     {
         return DB::transaction(function () {
             $prefix = 'OMQ-'.now()->format('Ymd');
-            $latest = Participant::query()
+            $max = Participant::query()
                 ->where('registration_number', 'like', "{$prefix}%")
                 ->lockForUpdate()
-                ->count();
+                ->max('registration_number');
 
-            return $prefix.'-'.str_pad((string) ($latest + 1), 4, '0', STR_PAD_LEFT);
+            $next = 1;
+            if ($max && preg_match('/-(\d{4})$/', $max, $m)) {
+                $next = ((int) $m[1]) + 1;
+            }
+
+            return $prefix.'-'.str_pad((string) $next, 4, '0', STR_PAD_LEFT);
         });
     }
 }

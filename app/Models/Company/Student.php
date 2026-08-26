@@ -115,9 +115,15 @@ class Student extends Model
 
     public static function hasActiveRegistrationFor(string $nik): bool
     {
-        return static::query()
-            ->where('nik', $nik)
-            ->whereHas('participants', fn (Builder $query) => $query->whereIn('status', self::ACTIVE_STATUSES))
+        if (static::query()->where('nik', $nik)->whereHas('participants', fn (Builder $query) => $query->whereIn('status', self::ACTIVE_STATUSES))->exists()) {
+            return true;
+        }
+
+        return Participant::query()
+            ->where(function (Builder $q) use ($nik) {
+                $q->where('nik', $nik)->orWhere('penyaluran_student_nik', $nik);
+            })
+            ->whereIn('status', self::ACTIVE_STATUSES)
             ->exists();
     }
 

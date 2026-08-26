@@ -129,7 +129,7 @@ it('lets a teacher register an assigned student from the create page', function 
 
     $this->actingAs($teacher)
         ->post(route('admin.teacher.students.store'), [
-            'student_id' => $student->id,
+            'penyaluran_student_id' => $student->id,
             'olimpiade_id' => $olimpiade->id,
         ])
         ->assertRedirect(route('admin.teacher.students.index'))
@@ -138,7 +138,7 @@ it('lets a teacher register an assigned student from the create page', function 
     $participant = Participant::first();
 
     expect($participant)->not->toBeNull()
-        ->and($participant->student_id)->toBe($student->id)
+        ->and($participant->penyaluran_student_id)->toBe($student->id)
         ->and($participant->mentor_id)->toBe($teacher->id);
 });
 

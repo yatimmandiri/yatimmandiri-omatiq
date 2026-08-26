@@ -2,7 +2,14 @@ import { DataTableComponent } from '@/components/partials/dataTables';
 import { DataTableProvider } from '@/components/partials/dataTables/hooks/useDataTables';
 import { renderRowHeader } from '@/components/partials/dataTables/utils/dataTable-utils';
 import { Badge } from '@/components/ui/badge';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import participants from '@/routes/admin/companies/participants';
+import { router } from '@inertiajs/react';
 import { CheckCircle2, Clock3, XCircle } from 'lucide-react';
 import { useState } from 'react';
 
@@ -50,12 +57,39 @@ export default function ListPage() {
             cell: (info: any) => {
                 const status = info.getValue();
                 const Icon = status === 'verified' ? CheckCircle2 : status === 'rejected' ? XCircle : Clock3;
+                const row = info.row.original;
+
+                const updateStatus = (newStatus: string) => {
+                    router.put(
+                        participants.status(row.id).url,
+                        { status: newStatus },
+                        {
+                            preserveScroll: true,
+                            onSuccess: () => setRefreshData((v) => !v),
+                        },
+                    );
+                };
 
                 return (
-                    <Badge variant={statusVariant(status) as any}>
-                        <Icon />
-                        {statusLabels[status] ?? status}
-                    </Badge>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Badge variant={statusVariant(status) as any} className="cursor-pointer">
+                                <Icon />
+                                {statusLabels[status] ?? status}
+                            </Badge>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start">
+                            <DropdownMenuItem onClick={() => updateStatus('submitted')}>
+                                <Clock3 /> Submitted
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => updateStatus('verified')}>
+                                <CheckCircle2 /> Verified
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => updateStatus('rejected')}>
+                                <XCircle /> Rejected
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 );
             },
         },
