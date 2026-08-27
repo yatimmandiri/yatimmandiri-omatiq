@@ -50,7 +50,7 @@ return null;
 };
 
 export const MainNav = ({ items }: any) => {
-    const { auth } = usePage<any>().props;
+    const { auth, sidebarSanggars } = usePage<any>().props;
     const { currentUrl } = useCurrentUrl();
 
     const roles = useMemo(() => auth.user.roles || [], [auth.user.roles]);
@@ -93,8 +93,37 @@ return '';
     );
 
     const filteredItems = useMemo(() => {
-        return filterMenuByPermissions(items, hasRole, hasPermission);
-    }, [items, hasRole, hasPermission]);
+        let filtered = filterMenuByPermissions(items, hasRole, hasPermission);
+
+        // Inject sanggars as children of Kelola Binaan for Teacher (multi-sanggar)
+        const sanggars: any[] = sidebarSanggars ?? [];
+        if (sanggars.length > 1 && hasRole(['Teacher'])) {
+            filtered = filtered.map((group: any) => ({
+                ...group,
+                children: (group.children ?? []).map((item: any) => {
+                    if (item.title === 'Kelola Binaan' && !item.children?.length) {
+                        return {
+                            ...item,
+                            children: [
+                                {
+                                    title: 'Semua Binaan',
+                                    href: item.href,
+                                    icon: item.icon,
+                                },
+                                ...sanggars.map((s: any) => ({
+                                    title: s.name,
+                                    href: `${item.href}?sanggar_id=${s.id}`,
+                                })),
+                            ],
+                        };
+                    }
+                    return item;
+                }),
+            }));
+        }
+
+        return filtered;
+    }, [items, hasRole, hasPermission, sidebarSanggars]);
 
     const getMenuKey = (item: any, parents: string[] = []) => {
         return [...parents, item.title].join(' > ');

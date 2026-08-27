@@ -89,16 +89,23 @@ export default function Dashboard() {
                         <h3 className="mb-3 font-semibold">Sanggar</h3>
                         <div className="grid gap-3 sm:grid-cols-2">
                             {sanggars.map((s: any) => (
-                                <div
+                                <Link
                                     key={s.id}
-                                    className="rounded-lg border p-3"
+                                    href={
+                                        teacherStudents.index({
+                                            query: { sanggar_id: String(s.id) },
+                                        }).url
+                                    }
+                                    prefetch
                                 >
-                                    <p className="font-medium">{s.name}</p>
-                                    <p className="text-xs text-muted-foreground">
-                                        {s.type} • {s.kantor_name} •{' '}
-                                        {s.total_students} santri
-                                    </p>
-                                </div>
+                                    <div className="rounded-lg border p-3 transition-colors hover:bg-accent">
+                                        <p className="font-medium">{s.name}</p>
+                                        <p className="text-xs text-muted-foreground">
+                                            {s.type} • {s.kantor_name} •{' '}
+                                            {s.total_students} santri
+                                        </p>
+                                    </div>
+                                </Link>
                             ))}
                         </div>
                     </Card>

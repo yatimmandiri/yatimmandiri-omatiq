@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Company\Olimpiade;
 use App\Models\Company\Participant;
+use App\Models\Company\Student;
 use App\Models\Core\User;
 use Illuminate\Support\Facades\DB;
 
@@ -11,10 +12,29 @@ class TeacherService
 {
     public function getStudentById(User $teacher, int $id): Participant
     {
-        return Participant::query()
+        $participant = Participant::query()
             ->with(['olimpiade:id,name,category,slug'])
             ->where('mentor_id', $teacher->id)
             ->findOrFail($id);
+
+        // Synthesize student relation from penyaluran snapshot for pure-API binaan (like ParticipantController::participantPayload)
+        if (! $participant->relationLoaded('student') || ! $participant->student) {
+            if ($participant->penyaluran_student_id) {
+                $synthetic = new Student([
+                    'full_name' => $participant->penyaluran_student_name,
+                    'nik' => $participant->penyaluran_student_nik ?? $participant->nik,
+                    'gender' => $participant->penyaluran_student_gender,
+                    'school_name' => $participant->penyaluran_student_school_name,
+                    'grade' => $participant->penyaluran_student_class,
+                    'birth_date' => $participant->penyaluran_student_birth_date,
+                ]);
+                $synthetic->setAttribute('nis', $participant->penyaluran_student_nis);
+                $synthetic->setAttribute('school_level', $participant->penyaluran_student_school_level);
+                $participant->setRelation('student', $synthetic);
+            }
+        }
+
+        return $participant;
     }
 
     /**

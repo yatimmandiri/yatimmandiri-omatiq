@@ -28,14 +28,18 @@ export default function ListPage() {
         {
             header: (info: any) => renderRowHeader(info, 'Peserta'),
             accessorKey: 'student.full_name',
-            cell: (info: any) => (
-                <div className="space-y-1">
-                    <p className="font-semibold">{info.getValue() ?? '-'}</p>
-                    <p className="text-xs text-muted-foreground">
-                        {info.row.original.registration_number}
-                    </p>
-                </div>
-            ),
+            cell: (info: any) => {
+                const row = info.row.original;
+                const name = row.penyaluran_student_name ?? info.getValue() ?? row.full_name ?? '-';
+                return (
+                    <div className="space-y-1">
+                        <p className="font-semibold">{name}</p>
+                        <p className="text-xs text-muted-foreground">
+                            {row.registration_number}
+                        </p>
+                    </div>
+                );
+            },
         },
         {
             header: 'Olimpiade',
@@ -45,11 +49,18 @@ export default function ListPage() {
         {
             header: 'Sekolah',
             accessorKey: 'student.school_name',
+            cell: (info: any) => {
+                const row = info.row.original;
+                return row.penyaluran_student_school_name ?? row.student?.school_name ?? info.getValue() ?? '-';
+            },
         },
         {
             header: 'Wilayah',
             accessorKey: 'student.regency',
-            cell: (info: any) => info.getValue()?.name ?? '-',
+            cell: (info: any) => {
+                const row = info.row.original;
+                return info.getValue()?.name ?? row.penyaluran_sanggar_name ?? row.penyaluran_student_school_name ?? '-';
+            },
         },
         {
             header: 'Status',
@@ -108,9 +119,9 @@ export default function ListPage() {
                         items.map((item, index) => ({
                             No: index + 1,
                             Registrasi: item.registration_number,
-                            Nama: item.full_name,
+                            Nama: item.penyaluran_student_name ?? item.student?.full_name ?? item.full_name ?? '-',
                             Olimpiade: item.olimpiade?.name || '-',
-                            Sekolah: item.student?.school_name,
+                            Sekolah: item.penyaluran_student_school_name ?? item.student?.school_name ?? '-',
                             Status: statusLabels[item.status] ?? item.status,
                         }))
                     }

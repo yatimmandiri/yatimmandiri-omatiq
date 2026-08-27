@@ -67,12 +67,60 @@ class PenyaluranService
 
     /**
      * Get students list for authenticated guru. Normalizes gender P/L → male/female, maps school_level.
+     * sanggar_id is now required per API contract; if null, aggregates per sanggar and dedups.
      *
-     * @return array<int, array{student_id:int, name:string, nik:?string, nis:?string, gender:?string, school_name:?string, school_level:?string, class:?string, birth_date:?string, status:bool}>
+     * @return array<int, array{student_id:int, name:string, nik:?string, nis:?string, gender:?string, school_name:?string, school_level:?string, class:?string, birth_date:?string, sanggar_id:?int, status:bool}>
      */
-    public function students(string $token): array
+    public function students(string $token, ?int $sanggarId = null): array
     {
-        $response = $this->client($token)->get('api/v1/guru/students');
+        if ($sanggarId !== null) {
+            return $this->fetchStudentsForSanggar($token, $sanggarId);
+        }
+
+        // Backward-compatible aggregation: fetch per sanggar and merge deduped
+        // If API still allows without sanggar_id, try direct first
+        try {
+            $response = $this->client($token)->get('api/v1/guru/students');
+            if ($response->successful()) {
+                $data = $response->json('data');
+                if (is_array($data) && ! empty($data)) {
+                    return $this->normalizeStudents($data);
+                }
+            }
+        } catch (\Throwable $e) {
+            // fall through to per-sanggar aggregation
+        }
+
+        // Aggregate per sanggar
+        try {
+            $sanggars = $this->sanggars($token);
+        } catch (\Throwable $e) {
+            return [];
+        }
+
+        if (empty($sanggars)) {
+            return [];
+        }
+
+        $all = collect();
+        foreach ($sanggars as $sanggar) {
+            $sid = (int) ($sanggar['id'] ?? 0);
+            if (! $sid) {
+                continue;
+            }
+            $students = $this->fetchStudentsForSanggar($token, $sid);
+            foreach ($students as $s) {
+                $s['sanggar_id'] = $sid;
+                $all->push($s);
+            }
+        }
+
+        return $all->unique(fn (array $s) => $s['student_id'] ?? null)->values()->all();
+    }
+
+    private function fetchStudentsForSanggar(string $token, int $sanggarId): array
+    {
+        $response = $this->client($token)->get('api/v1/guru/students', ['sanggar_id' => $sanggarId]);
         $this->assertSuccess($response);
 
         $data = $response->json('data');
@@ -80,8 +128,12 @@ class PenyaluranService
             return [];
         }
 
-        // Normalize fields: gender P/L → male/female, school_level variants, birth_date
-        $normalized = collect($data)->map(function (array $s) {
+        return $this->normalizeStudents($data, $sanggarId);
+    }
+
+    private function normalizeStudents(array $data, ?int $sanggarId = null): array
+    {
+        $normalized = collect($data)->map(function (array $s) use ($sanggarId) {
             $gender = $s['gender'] ?? null;
             if ($gender === 'L') {
                 $gender = 'male';
@@ -99,11 +151,11 @@ class PenyaluranService
                 'school_level' => $s['school_level'] ?? $s['jenjang'] ?? $s['level'] ?? $s['tingkat'] ?? null,
                 'class' => $s['class'] ?? $s['grade'] ?? null,
                 'birth_date' => $s['birth_date'] ?? $s['tanggal_lahir'] ?? null,
+                'sanggar_id' => $s['sanggar_id'] ?? $s['sanggarId'] ?? $sanggarId,
                 'status' => $s['status'] ?? true,
             ];
         });
 
-        // Deduplicate by student_id (same binaan in 2 sanggars → 1x)
         return $normalized->unique(fn (array $s) => $s['student_id'] ?? null)->values()->all();
     }
 
