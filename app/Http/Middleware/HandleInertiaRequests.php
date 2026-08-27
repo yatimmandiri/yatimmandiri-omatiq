@@ -75,11 +75,17 @@ class HandleInertiaRequests extends Middleware
                 'registration_public_open' => $settings->registration_public_open,
                 'registration_binaan_open' => $settings->registration_binaan_open,
             ],
-            'breadcrumbs' => $request->isMethod('get') && $request->route()
-                ? Breadcrumbs::generate(
-                    $request->route()->getName(),
-                    ...array_values($request->route()->parameters())
-                )
+            'breadcrumbs' => $request->isMethod('get') && $request->route() && $request->route()->getName()
+                ? (function () use ($request) {
+                    try {
+                        return Breadcrumbs::generate(
+                            $request->route()->getName(),
+                            ...array_values($request->route()->parameters())
+                        );
+                    } catch (\Throwable $e) {
+                        return [];
+                    }
+                })()
                 : [],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];

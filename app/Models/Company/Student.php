@@ -36,6 +36,7 @@ use Spatie\Activitylog\Support\LogOptions;
     'photo_path',
     'identity_card_path',
     'family_card_path',
+    'student_card_path',
     'is_binaan',
 ])]
 class Student extends Model
@@ -86,6 +87,11 @@ class Student extends Model
         return $this->storageUrl($this->family_card_path);
     }
 
+    public function getStudentCardUrlAttribute(): ?string
+    {
+        return $this->storageUrl($this->student_card_path);
+    }
+
     public function scopeSearch(Builder $query, ?string $search): Builder
     {
         return $query->when(
@@ -109,9 +115,15 @@ class Student extends Model
 
     public static function hasActiveRegistrationFor(string $nik): bool
     {
-        return static::query()
-            ->where('nik', $nik)
-            ->whereHas('participants', fn (Builder $query) => $query->whereIn('status', self::ACTIVE_STATUSES))
+        if (static::query()->where('nik', $nik)->whereHas('participants', fn (Builder $query) => $query->whereIn('status', self::ACTIVE_STATUSES))->exists()) {
+            return true;
+        }
+
+        return Participant::query()
+            ->where(function (Builder $q) use ($nik) {
+                $q->where('nik', $nik)->orWhere('penyaluran_student_nik', $nik);
+            })
+            ->whereIn('status', self::ACTIVE_STATUSES)
             ->exists();
     }
 

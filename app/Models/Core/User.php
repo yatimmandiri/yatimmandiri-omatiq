@@ -17,8 +17,8 @@ use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['name', 'email', 'password'])]
-#[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
+#[Fillable(['name', 'email', 'password', 'phone', 'penyaluran_id', 'penyaluran_token', 'phone_verified_at', 'phone_otp', 'phone_otp_expires_at', 'phone_otp_attempts', 'phone_otp_last_sent_at'])]
+#[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token', 'penyaluran_token', 'phone_otp'])]
 
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -28,9 +28,31 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return [
             'email_verified_at' => 'datetime',
+            'phone_verified_at' => 'datetime',
+            'phone_otp_expires_at' => 'datetime',
+            'phone_otp_last_sent_at' => 'datetime',
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
         ];
+    }
+
+    public function hasVerifiedEmail(): bool
+    {
+        if ($this->hasRole('Teacher')) {
+            return true;
+        }
+
+        return ! is_null($this->email_verified_at);
+    }
+
+    public function markPhoneAsVerified(): bool
+    {
+        return $this->forceFill([
+            'phone_verified_at' => $this->freshTimestamp(),
+            'phone_otp' => null,
+            'phone_otp_expires_at' => null,
+            'phone_otp_attempts' => 0,
+        ])->save();
     }
 
     public function participant(): HasOne

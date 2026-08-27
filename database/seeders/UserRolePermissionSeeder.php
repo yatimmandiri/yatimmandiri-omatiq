@@ -150,17 +150,17 @@ class UserRolePermissionSeeder extends Seeder
         $teacherRole = Role::where('name', 'Teacher')->first();
         if ($teacherRole) {
             $teacherRole->givePermissionTo([
-                'view-participant', 'create-participant', 'update-participant', 'data-participant',
+                'view-participant', 'create-participant', 'data-participant',
             ]);
         }
 
-        $participantUser = User::create([
-            'name' => 'Partisipan Demo',
-            'email' => 'partisipan@test.dev',
-            'email_verified_at' => now(),
-            'password' => Hash::make('password'),
-        ]);
-        $participantUser->assignRole('Participant');
+        // $participantUser = User::create([
+        //     'name' => 'Partisipan Demo',
+        //     'email' => 'partisipan@test.dev',
+        //     'email_verified_at' => now(),
+        //     'password' => Hash::make('password'),
+        // ]);
+        // $participantUser->assignRole('Participant');
 
         $teacherUser = User::create([
             'name' => 'Guru Pembimbing',
@@ -170,10 +170,10 @@ class UserRolePermissionSeeder extends Seeder
         ]);
         $teacherUser->assignRole('Teacher');
 
-        $participant = Participant::first();
-        if ($participant) {
-            $participant->update(['user_id' => $participantUser->id]);
-        }
+        // $participant = Participant::first();
+        // if ($participant) {
+        //     $participant->update(['user_id' => $participantUser->id]);
+        // }
 
         Province::query()->update([
             'created_at' => now(),

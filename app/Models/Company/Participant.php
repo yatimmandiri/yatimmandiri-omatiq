@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
@@ -18,6 +17,17 @@ use Spatie\Activitylog\Support\LogOptions;
     'olimpiade_id',
     'user_id',
     'student_id',
+    'penyaluran_student_id',
+    'penyaluran_student_name',
+    'penyaluran_student_nik',
+    'penyaluran_student_nis',
+    'penyaluran_student_gender',
+    'penyaluran_student_school_name',
+    'penyaluran_student_school_level',
+    'penyaluran_student_class',
+    'penyaluran_student_birth_date',
+    'penyaluran_sanggar_id',
+    'penyaluran_sanggar_name',
     'nik',
     'registration_type',
     'mentor_id',
@@ -25,7 +35,7 @@ use Spatie\Activitylog\Support\LogOptions;
     'has_joined_before',
     'previous_year',
     'referral_source',
-    'referral_source_other',
+    'branch',
     'payment_status',
     'payment_proof_path',
     'payment_amount',
@@ -40,7 +50,7 @@ use Spatie\Activitylog\Support\LogOptions;
 ])]
 class Participant extends Model
 {
-    use HasFactory, LogsActivity, SoftDeletes;
+    use HasFactory, LogsActivity;
 
     protected function casts(): array
     {
@@ -49,6 +59,7 @@ class Participant extends Model
             'data_truth_consent' => 'boolean',
             'documentation_consent' => 'boolean',
             'rules_consent' => 'boolean',
+            'penyaluran_student_birth_date' => 'date',
         ];
     }
 
@@ -78,6 +89,8 @@ class Participant extends Model
             $search,
             fn (Builder $query, string $search) => $query->where(function (Builder $query) use ($search) {
                 $query->where('registration_number', 'like', "%{$search}%")
+                    ->orWhere('penyaluran_student_name', 'like', "%{$search}%")
+                    ->orWhere('penyaluran_student_nik', 'like', "%{$search}%")
                     ->orWhereHas('student', fn (Builder $q) => $q->where('full_name', 'like', "%{$search}%"))
                     ->orWhereHas('student', fn (Builder $q) => $q->where('school_name', 'like', "%{$search}%"))
                     ->orWhereHas('student', fn (Builder $q) => $q->where('parent_phone', 'like', "%{$search}%"))
@@ -88,7 +101,7 @@ class Participant extends Model
 
     public function getFullNameAttribute(): ?string
     {
-        return $this->student?->full_name ?? $this->user?->name;
+        return $this->penyaluran_student_name ?? $this->student?->full_name ?? $this->user?->name;
     }
 
     public function getPaymentProofUrlAttribute(): ?string

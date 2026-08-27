@@ -7,14 +7,14 @@ Breadcrumbs::for(
     'admin.teacher.students.index',
     fn (BreadcrumbTrail $trail) => $trail
         ->parent('admin.dashboard')
-        ->push('Siswa', route('admin.teacher.students.index')),
+        ->push('Binaan', route('admin.teacher.students.index')),
 );
 
 Breadcrumbs::for(
     'admin.teacher.students.create',
     fn (BreadcrumbTrail $trail) => $trail
         ->parent('admin.teacher.students.index')
-        ->push('Daftarkan Siswa', route('admin.teacher.students.create')),
+        ->push('Daftarkan Binaan', route('admin.teacher.students.create')),
 );
 
 Breadcrumbs::for(
@@ -35,5 +35,5 @@ Breadcrumbs::for(
     'admin.teacher.students.data',
     fn (BreadcrumbTrail $trail) => $trail
         ->parent('admin.teacher.students.index')
-        ->push('Siswa Data', route('admin.teacher.students.data')),
+        ->push('Data Binaan', route('admin.teacher.students.data')),
 );

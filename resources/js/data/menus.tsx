@@ -15,10 +15,20 @@ import roles from '@/routes/admin/core/roles';
 import users from '@/routes/admin/core/users';
 import activities from '@/routes/admin/logs/activities';
 import site from '@/routes/admin/settings/site';
-import { ChevronRight, CogIcon, CpuIcon, GraduationCap, Handshake, LayoutDashboard, MapIcon, Trophy, UserCheck, Users } from 'lucide-react';
+import {
+    ChevronRight,
+    CogIcon,
+    CpuIcon,
+    GraduationCap,
+    Handshake,
+    LayoutDashboard,
+    MapIcon,
+    Trophy,
+    UserCheck,
+    Users,
+} from 'lucide-react';
 import reviews from '@/routes/admin/companies/reviews';
 import sliders from '@/routes/admin/companies/sliders';
-import students from '@/routes/admin/companies/students';
 import teachers from '@/routes/admin/companies/teachers';
 import faqCompanies from '@/routes/admin/companies/faq-companies';
 import teacherStudents from '@/routes/admin/teacher/students';
@@ -55,14 +65,7 @@ export const NavigationList = [
                 icon: Users,
             },
             {
-                title: 'Data Murid',
-                href: students.index().url,
-                permission: 'view-student',
-                roles: ['Administrators'],
-                icon: GraduationCap,
-            },
-            {
-                title: 'Kelola Murid',
+                title: 'Kelola Binaan',
                 href: teacherStudents.index().url,
                 permission: 'view-participant',
                 roles: ['Teacher'],

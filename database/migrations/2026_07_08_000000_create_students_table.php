@@ -29,6 +29,7 @@ return new class extends Migration
             $table->string('photo_path')->nullable();
             $table->string('identity_card_path')->nullable();
             $table->string('family_card_path')->nullable();
+            $table->string('student_card_path')->nullable();
             $table->boolean('is_binaan')->default(false);
             $table->index('province_id');
             $table->index('regency_id');

@@ -122,7 +122,6 @@ foreach ([
     'faq-companies' => ['label' => 'FAQ Company', 'attribute' => 'question'],
     'participants' => ['label' => 'Peserta', 'attribute' => 'full_name'],
     'teachers' => ['label' => 'Guru', 'attribute' => 'name'],
-    'students' => ['label' => 'Murid', 'attribute' => 'full_name'],
 ] as $resource => $config) {
     Breadcrumbs::for(
         "admin.companies.{$resource}.index",

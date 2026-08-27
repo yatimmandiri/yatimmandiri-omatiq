@@ -54,3 +54,10 @@ Breadcrumbs::for('admin.security.edit', function (BreadcrumbTrail $trail) {
 Breadcrumbs::for('admin.appearance.edit', function (BreadcrumbTrail $trail) {
     $trail->push('Profile Settings', route('admin.appearance.edit'));
 });
+
+Breadcrumbs::for('guru.login', function (BreadcrumbTrail $trail) {
+    $trail->push('Login Guru', route('guru.login'));
+});
+Breadcrumbs::for('guru.verify', function (BreadcrumbTrail $trail) {
+    $trail->parent('guru.login')->push('Verifikasi OTP', route('guru.verify'));
+});

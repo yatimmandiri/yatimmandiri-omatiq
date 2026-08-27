@@ -33,12 +33,12 @@ export const renderRowHeader = (info: any, title: string) => {
 
     const renderSortIcon = () => {
         if (isSorted === 'asc') {
-return <ChevronUpIcon className="h-5 w-5" />;
-}
+            return <ChevronUpIcon className="h-5 w-5" />;
+        }
 
         if (isSorted === 'desc') {
-return <ChevronDownIcon className="h-5 w-5" />;
-}
+            return <ChevronDownIcon className="h-5 w-5" />;
+        }
 
         if (!isSorted && columnId === 'id') {
             return (
@@ -62,8 +62,8 @@ return <ChevronDownIcon className="h-5 w-5" />;
 
 export const renderRowDate = (value: any) => {
     if (!value) {
-return '-';
-}
+        return '-';
+    }
 
     return formatDate(value);
 };
@@ -119,15 +119,20 @@ export const renderRowImage = (
 export const RowActions = ({
     info,
     setRefreshData,
+    actions,
 }: {
     info: any;
     setRefreshData: any;
+    actions?: { edit?: boolean; delete?: boolean };
 }) => {
     const { currentUrl } = useCurrentUrl();
 
     const [openModal, setOpenModal] = useState(false);
 
     const data = info.row.original;
+
+    const showEdit = actions?.edit !== false;
+    const showDelete = actions?.delete !== false;
 
     const handleDelete = (id: number) => {
         router.delete(`${currentUrl}/${id}`, {
@@ -155,20 +160,24 @@ export const RowActions = ({
                     >
                         Detail
                     </DropdownMenuItem>
-                    <DropdownMenuItem
-                        onClick={() =>
-                            router.visit(`${currentUrl}/${data.id}/edit`)
-                        }
-                    >
-                        Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setOpenModal(true)}>
-                        Delete
-                    </DropdownMenuItem>
+                    {showEdit && (
+                        <DropdownMenuItem
+                            onClick={() =>
+                                router.visit(`${currentUrl}/${data.id}/edit`)
+                            }
+                        >
+                            Edit
+                        </DropdownMenuItem>
+                    )}
+                    {showDelete && (
+                        <DropdownMenuItem onClick={() => setOpenModal(true)}>
+                            Delete
+                        </DropdownMenuItem>
+                    )}
                 </DropdownMenuContent>
             </DropdownMenu>
 
-            {openModal && (
+            {showDelete && openModal && (
                 <Dialog
                     open={openModal}
                     onOpenChange={(open) => setOpenModal(open)}

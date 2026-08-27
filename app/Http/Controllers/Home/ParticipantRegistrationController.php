@@ -79,6 +79,8 @@ class ParticipantRegistrationController extends Controller
             $data['registration_number'] = $this->registrationNumber();
             $data['status'] = 'submitted';
             $data['registration_type'] = 'public';
+            $data['payment_status'] = 'waiting_confirmation';
+            $data['payment_proof_path'] = $this->handlePaymentProof($request);
 
             $student = Student::firstOrCreate(
                 ['nik' => $request->nik],
@@ -123,7 +125,7 @@ class ParticipantRegistrationController extends Controller
     private function payload(StoreParticipantRequest $request): array
     {
         return $request->safe()->only([
-            'nik', 'olimpiade_id', 'referral_source', 'referral_source_other',
+            'nik', 'olimpiade_id', 'referral_source', 'branch',
             'has_joined_before', 'previous_year', 'achievements',
             'participant_signature_name', 'guardian_signature_name',
         ]);
@@ -164,12 +166,19 @@ class ParticipantRegistrationController extends Controller
         }
     }
 
+    private function handlePaymentProof(StoreParticipantRequest $request): ?string
+    {
+        if (! $request->hasFile('payment_proof')) {
+            return null;
+        }
+
+        return $this->uploadFile(null, $request->file('payment_proof'), 'uploads/participants/payment_proof');
+    }
+
     private function fileMap(): array
     {
         return [
-            'photo' => 'photo_path',
-            'identity_card' => 'identity_card_path',
-            'family_card' => 'family_card_path',
+            'student_card' => 'student_card_path',
         ];
     }
 
@@ -177,12 +186,17 @@ class ParticipantRegistrationController extends Controller
     {
         return DB::transaction(function () {
             $prefix = 'OMQ-'.now()->format('Ymd');
-            $latest = Participant::query()
+            $max = Participant::query()
                 ->where('registration_number', 'like', "{$prefix}%")
                 ->lockForUpdate()
-                ->count();
+                ->max('registration_number');
 
-            return $prefix.'-'.str_pad((string) ($latest + 1), 4, '0', STR_PAD_LEFT);
+            $next = 1;
+            if ($max && preg_match('/-(\d{4})$/', $max, $m)) {
+                $next = ((int) $m[1]) + 1;
+            }
+
+            return $prefix.'-'.str_pad((string) $next, 4, '0', STR_PAD_LEFT);
         });
     }
 }
