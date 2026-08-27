@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\PenyaluranService;
 use App\Settings\SiteSettings;
 use Diglactic\Breadcrumbs\Breadcrumbs;
 use Illuminate\Http\Request;
@@ -87,6 +88,17 @@ class HandleInertiaRequests extends Middleware
                     }
                 })()
                 : [],
+            'sidebarSanggars' => (function () use ($request) {
+                $user = $request->user();
+                if (! $user || ! $user->hasRole('Teacher') || ! $user->penyaluran_token) {
+                    return [];
+                }
+                try {
+                    return app(PenyaluranService::class)->sanggars($user->penyaluran_token);
+                } catch (\Throwable $e) {
+                    return [];
+                }
+            })(),
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }

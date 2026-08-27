@@ -20,7 +20,7 @@ class DatabaseSeeder extends Seeder
             OlimpiadeScheduleSeeder::class,
             TestimonialSeeder::class,
             StudentSeeder::class,
-            ParticipantSeeder::class,
+            // ParticipantSeeder::class,
         ]);
     }
 }

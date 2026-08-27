@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { dashboard } from '@/routes/admin';
 import teacherStudents from '@/routes/admin/teacher/students';
-import { router } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import {
     CheckCircle2,
     CircleSlash2,
@@ -19,7 +19,14 @@ import {
 import { useState } from 'react';
 
 export default function ListPage() {
-    const [filterValue, setFilterValue] = useState<any>({});
+    const { sanggars = [], selected_sanggar_id: initialSanggarId } = usePage<{
+        sanggars?: Array<{ id: number | string; name: string; type?: string }>;
+        selected_sanggar_id?: number | string | null;
+    }>().props;
+
+    const [filterValue, setFilterValue] = useState<any>(() =>
+        initialSanggarId ? { sanggar_id: String(initialSanggarId) } : {},
+    );
     const [refreshData, setRefreshData] = useState(false);
 
     const columns = [
@@ -106,6 +113,23 @@ export default function ListPage() {
                                     }))
                                 }
                             />
+                            {sanggars.length > 0 && (
+                                <SelectComponent
+                                    label="Sanggar"
+                                    placeholder="Semua sanggar..."
+                                    data={sanggars.map((s: any) => ({
+                                        value: String(s.id),
+                                        label: s.name,
+                                    }))}
+                                    dataSelected={filterValue.sanggar_id}
+                                    handleOnChange={(value: any) =>
+                                        setFilterValue((prev: any) => ({
+                                            ...prev,
+                                            sanggar_id: value,
+                                        }))
+                                    }
+                                />
+                            )}
                         </div>
                     </div>
                     <DataTableComponent buttonActive={{ create: true }} />

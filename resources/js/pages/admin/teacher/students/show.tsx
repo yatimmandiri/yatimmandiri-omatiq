@@ -16,6 +16,7 @@ const labels: Record<string, string> = {
 export default function ShowPage() {
     const { participant } = usePage<{ participant: Record<string, any> }>()
         .props;
+    const isBinaan = !!participant.penyaluran_student_id;
 
     return (
         <div className="flex flex-1 flex-col gap-6 p-4">
@@ -47,22 +48,34 @@ export default function ShowPage() {
                             label="Nama Lengkap"
                             value={participant.penyaluran_student_name ?? participant.student?.full_name}
                         />
-                        <Detail
-                            label="Nama Panggilan"
-                            value={participant.student?.nickname}
-                        />
+                        {!isBinaan && (
+                            <Detail
+                                label="Nama Panggilan"
+                                value={participant.student?.nickname}
+                            />
+                        )}
                         <Detail
                             label="Jenis Kelamin"
                             value={labels[participant.student?.gender ?? '']}
                         />
-                        <Detail
-                            label="Tempat, Tanggal Lahir"
-                            value={`${participant.student?.birth_place ?? ''}, ${participant.student?.birth_date?.slice(0, 10) ?? ''}`}
-                        />
-                        <Detail
-                            label="Usia"
-                            value={`${participant.student?.age ?? ''} tahun`}
-                        />
+                        {isBinaan ? (
+                            <>
+                                <Detail label="NIS" value={participant.student?.nis ?? participant.penyaluran_student_nis} />
+                                <Detail label="Tanggal Lahir" value={participant.student?.birth_date?.slice(0, 10) ?? ''} />
+                                <Detail label="Jenjang" value={participant.student?.school_level} />
+                            </>
+                        ) : (
+                            <>
+                                <Detail
+                                    label="Tempat, Tanggal Lahir"
+                                    value={`${participant.student?.birth_place ?? ''}, ${participant.student?.birth_date?.slice(0, 10) ?? ''}`}
+                                />
+                                <Detail
+                                    label="Usia"
+                                    value={`${participant.student?.age ?? ''} tahun`}
+                                />
+                            </>
+                        )}
                         <Detail
                             label="Sekolah"
                             value={participant.student?.school_name}
@@ -71,18 +84,25 @@ export default function ShowPage() {
                             label="Kelas"
                             value={participant.student?.grade}
                         />
-                        <Detail
-                            label="Provinsi"
-                            value={participant.student?.province?.name}
-                        />
-                        <Detail
-                            label="Kota/Kabupaten"
-                            value={participant.student?.regency?.name}
-                        />
-                        <Detail
-                            label="HP Orang Tua/Wali"
-                            value={participant.student?.parent_phone}
-                        />
+                        {!isBinaan && (
+                            <>
+                                <Detail
+                                    label="Provinsi"
+                                    value={participant.student?.province?.name}
+                                />
+                                <Detail
+                                    label="Kota/Kabupaten"
+                                    value={participant.student?.regency?.name}
+                                />
+                                <Detail
+                                    label="HP Orang Tua/Wali"
+                                    value={participant.student?.parent_phone}
+                                />
+                            </>
+                        )}
+                        {isBinaan && participant.penyaluran_sanggar_name && (
+                            <Detail label="Sanggar" value={participant.penyaluran_sanggar_name} />
+                        )}
                         <Detail
                             label="Status"
                             value={labels[participant.status]}
@@ -92,10 +112,12 @@ export default function ShowPage() {
                         label="ID Penyaluran"
                         value={participant.penyaluran_student_id}
                     />
-                    <Detail
-                        label="Alamat"
-                        value={participant.student?.address}
-                    />
+                    {!isBinaan && (
+                        <Detail
+                            label="Alamat"
+                            value={participant.student?.address}
+                        />
+                    )}
                 </Card>
 
                 <Card className="space-y-5 p-5">

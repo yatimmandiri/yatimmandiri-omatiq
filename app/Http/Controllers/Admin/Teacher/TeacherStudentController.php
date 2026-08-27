@@ -21,11 +21,24 @@ class TeacherStudentController extends Controller
         private readonly PenyaluranService $penyaluran,
     ) {}
 
-    public function index(): Response
+    public function index(Request $request): Response
     {
         $this->authorize('viewAny', Participant::class);
 
-        return Inertia::render('admin/teacher/students/list');
+        $token = $request->session()->get('penyaluran_token') ?? Auth::user()?->penyaluran_token;
+        $sanggars = [];
+        if ($token) {
+            try {
+                $sanggars = $this->penyaluran->sanggars($token);
+            } catch (\Throwable $e) {
+                $sanggars = [];
+            }
+        }
+
+        return Inertia::render('admin/teacher/students/list', [
+            'sanggars' => collect($sanggars)->map(fn (array $s) => ['id' => $s['id'] ?? null, 'name' => $s['name'] ?? '-', 'type' => $s['type'] ?? null])->values()->all(),
+            'selected_sanggar_id' => $request->integer('sanggar_id') ?: null,
+        ]);
     }
 
     public function create(Request $request): Response
@@ -39,11 +52,11 @@ class TeacherStudentController extends Controller
         }
 
         $token = $request->session()->get('penyaluran_token') ?? Auth::user()?->penyaluran_token;
-
+        $sanggarId = $request->integer('sanggar_id') ?: null;
         $studentsRaw = [];
         if ($token) {
             try {
-                $studentsRaw = $this->penyaluran->students($token);
+                $studentsRaw = $this->penyaluran->students($token, $sanggarId);
             } catch (\Throwable $e) {
                 $studentsRaw = [];
             }
@@ -71,6 +84,7 @@ class TeacherStudentController extends Controller
             }
         }
         $options['sanggars'] = collect($sanggarsRaw)->map(fn (array $s) => ['id' => $s['id'] ?? null, 'name' => $s['name'] ?? '-', 'type' => $s['type'] ?? null])->values()->all();
+        $options['selected_sanggar_id'] = $sanggarId;
 
         return Inertia::render('admin/teacher/students/create', $options);
     }
@@ -147,6 +161,7 @@ class TeacherStudentController extends Controller
 
         $perPage = min($request->integer('perPage') ?: 10, 100);
         $registration = $request->input('filterValue.registration');
+        $sanggarId = $request->integer('filterValue.sanggar_id') ?: $request->integer('sanggar_id') ?: null;
         $search = strtolower($request->string('globalSearch')->toString());
 
         $token = $request->session()->get('penyaluran_token') ?? Auth::user()?->penyaluran_token;
@@ -154,7 +169,7 @@ class TeacherStudentController extends Controller
         $studentsRaw = [];
         if ($token) {
             try {
-                $studentsRaw = $this->penyaluran->students($token);
+                $studentsRaw = $this->penyaluran->students($token, $sanggarId);
             } catch (\Throwable $e) {
                 $studentsRaw = [];
             }

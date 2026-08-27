@@ -152,6 +152,7 @@ class ParticipantController extends Controller
         $perPage = min($request->integer('perPage') ?: 10, 100);
 
         $data = $query->paginate($perPage, ['*'], 'page', $request->integer('page') ?: null);
+        $data->through(fn (Participant $p) => $this->participantPayload($p));
 
         return response()->json($data);
     }
