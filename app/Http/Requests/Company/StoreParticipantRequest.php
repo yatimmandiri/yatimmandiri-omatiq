@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Company;
 
+use App\Models\Company\Olimpiade;
 use App\Models\Company\Student;
 use Closure;
 use Illuminate\Foundation\Http\FormRequest;
@@ -22,8 +23,12 @@ class StoreParticipantRequest extends FormRequest
                 'string',
                 'size:16',
                 function (string $attribute, mixed $value, Closure $fail) {
-                    if (Student::hasActiveRegistrationFor($value)) {
-                        $fail('NIK ini sudah memiliki pendaftaran aktif pada OMATIQ.');
+                    $eventYear = null;
+                    if ($this->filled('olimpiade_id')) {
+                        $eventYear = Olimpiade::find($this->input('olimpiade_id'))?->event_year ?? 2026;
+                    }
+                    if (Student::hasActiveRegistrationFor($value, $eventYear)) {
+                        $fail('NIK ini sudah memiliki pendaftaran aktif pada OMATIQ '.($eventYear ?? '').'.');
                     }
                 },
             ],

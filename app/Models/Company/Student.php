@@ -2,8 +2,10 @@
 
 namespace App\Models\Company;
 
+use App\Models\Core\Region\District;
 use App\Models\Core\Region\Province;
 use App\Models\Core\Region\Regency;
+use App\Models\Core\Region\Village;
 use App\Models\Core\User;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -29,6 +31,10 @@ use Spatie\Activitylog\Support\LogOptions;
     'address',
     'province_id',
     'regency_id',
+    'district_id',
+    'village_id',
+    'penyaluran_id',
+    'user_id',
     'parent_phone',
     'mentor_id',
     'mentor_name',
@@ -60,6 +66,21 @@ class Student extends Model
     public function regency(): BelongsTo
     {
         return $this->belongsTo(Regency::class);
+    }
+
+    public function district(): BelongsTo
+    {
+        return $this->belongsTo(District::class, 'district_id');
+    }
+
+    public function village(): BelongsTo
+    {
+        return $this->belongsTo(Village::class, 'village_id');
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function mentor(): BelongsTo
@@ -113,15 +134,35 @@ class Student extends Model
             ->exists();
     }
 
-    public static function hasActiveRegistrationFor(string $nik): bool
+    public static function hasActiveRegistrationFor(string $nik, ?int $eventYear = null): bool
     {
-        if (static::query()->where('nik', $nik)->whereHas('participants', fn (Builder $query) => $query->whereIn('status', self::ACTIVE_STATUSES))->exists()) {
+        $eventYear ??= (int) date('Y');
+
+        $hasViaStudent = static::query()
+            ->where('nik', $nik)
+            ->whereHas('participants', function (Builder $query) use ($eventYear) {
+                $query->whereIn('status', self::ACTIVE_STATUSES)->where(function ($q) use ($eventYear) {
+                    $q->where('event_year', $eventYear);
+                    if ($eventYear == 2026) {
+                        $q->orWhereNull('event_year');
+                    }
+                });
+            })
+            ->exists();
+
+        if ($hasViaStudent) {
             return true;
         }
 
         return Participant::query()
             ->where(function (Builder $q) use ($nik) {
                 $q->where('nik', $nik)->orWhere('penyaluran_student_nik', $nik);
+            })
+            ->where(function ($q) use ($eventYear) {
+                $q->where('event_year', $eventYear);
+                if ($eventYear == 2026) {
+                    $q->orWhereNull('event_year');
+                }
             })
             ->whereIn('status', self::ACTIVE_STATUSES)
             ->exists();

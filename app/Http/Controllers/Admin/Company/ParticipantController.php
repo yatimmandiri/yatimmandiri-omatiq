@@ -252,31 +252,6 @@ class ParticipantController extends Controller
                 'family_card_url' => $participant->student->family_card_url,
                 'student_card_url' => $participant->student->student_card_url,
             ];
-        } elseif ($participant->penyaluran_student_id) {
-            // Synthesize student-like payload from penyaluran snapshot for binaan
-            $payload['student'] = [
-                'id' => null,
-                'full_name' => $participant->penyaluran_student_name,
-                'nik' => $participant->penyaluran_student_nik ?? $participant->nik,
-                'nis' => $participant->penyaluran_student_nis,
-                'gender' => $participant->penyaluran_student_gender,
-                'school_name' => $participant->penyaluran_student_school_name,
-                'grade' => $participant->penyaluran_student_class,
-                'school_level' => $participant->penyaluran_student_school_level,
-                'birth_date' => $participant->penyaluran_student_birth_date?->format('Y-m-d'),
-                'birth_place' => null,
-                'age' => null,
-                'address' => null,
-                'province_id' => null,
-                'regency_id' => null,
-                'parent_phone' => null,
-                'mentor_name' => null,
-                'mentor_phone' => null,
-                'photo_url' => null,
-                'identity_card_url' => null,
-                'family_card_url' => null,
-                'student_card_url' => null,
-            ];
         }
 
         $payload['payment_proof_url'] = $participant->payment_proof_url;

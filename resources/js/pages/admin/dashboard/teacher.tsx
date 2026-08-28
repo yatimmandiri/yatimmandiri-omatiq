@@ -1,6 +1,7 @@
 import { Card } from '@/components/ui/card';
 import { dashboard } from '@/routes/admin';
 import teacherStudents from '@/routes/admin/teacher/students';
+import masterBinaan from '@/routes/admin/teacher/master/binaan';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { BookOpen, ExternalLink, Users } from 'lucide-react';
 
@@ -92,7 +93,7 @@ export default function Dashboard() {
                                 <Link
                                     key={s.id}
                                     href={
-                                        teacherStudents.index({
+                                        masterBinaan.index({
                                             query: { sanggar_id: String(s.id) },
                                         }).url
                                     }

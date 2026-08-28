@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Company;
 
+use App\Models\Company\Olimpiade;
 use App\Models\Company\Participant;
 use App\Models\Company\Student;
 use App\Services\PenyaluranService;
@@ -31,6 +32,9 @@ class StoreTeacherParticipantRequest extends FormRequest
                 function (string $attribute, mixed $value, Closure $fail) {
                     $token = $this->session()->get('penyaluran_token') ?? $this->user()?->penyaluran_token;
 
+                    $olimpiade = $this->filled('olimpiade_id') ? Olimpiade::find($this->input('olimpiade_id')) : null;
+                    $eventYear = $olimpiade?->event_year ?? 2026;
+
                     // Fallback to local DB for tests / when penyaluran not configured
                     if (! $token) {
                         $local = Student::find($value);
@@ -43,10 +47,16 @@ class StoreTeacherParticipantRequest extends FormRequest
                             ->where(function ($q) use ($value) {
                                 $q->where('penyaluran_student_id', $value)->orWhere('student_id', $value);
                             })
+                            ->where(function ($q) use ($eventYear) {
+                                $q->where('event_year', $eventYear);
+                                if ($eventYear == 2026) {
+                                    $q->orWhereNull('event_year');
+                                }
+                            })
                             ->whereIn('status', ['submitted', 'verified'])
                             ->exists();
                         if ($exists) {
-                            $fail('Binaan ini sudah memiliki pendaftaran aktif pada OMATIQ.');
+                            $fail('Binaan ini sudah terdaftar di OMATIQ '.($eventYear ?? '').'.');
                         }
 
                         return;
@@ -76,17 +86,33 @@ class StoreTeacherParticipantRequest extends FormRequest
 
                     $exists = Participant::query()
                         ->where('penyaluran_student_id', $value)
+                        ->where(function ($q) use ($eventYear) {
+                            $q->where('event_year', $eventYear);
+                            if ($eventYear == 2026) {
+                                $q->orWhereNull('event_year');
+                            }
+                        })
                         ->whereIn('status', ['submitted', 'verified'])
                         ->exists();
 
                     if ($exists) {
-                        $fail('Binaan ini sudah memiliki pendaftaran aktif pada OMATIQ.');
+                        $fail('Binaan ini sudah terdaftar di OMATIQ '.($eventYear ?? '').'.');
                     }
                 },
             ],
             'olimpiade_id' => ['required', 'integer', 'exists:olimpiades,id'],
             'penyaluran_sanggar_id' => ['nullable', 'integer'],
             'penyaluran_sanggar_name' => ['nullable', 'string', 'max:255'],
+            'birth_date' => ['nullable', 'date', 'before:today'],
+            'address' => ['nullable', 'string'],
+            'province_id' => ['nullable', 'exists:provinces,id'],
+            'regency_id' => ['nullable', 'exists:regencies,id'],
+            'district_id' => ['nullable', 'exists:districts,id'],
+            'village_id' => ['nullable', 'exists:villages,id'],
+            'nickname' => ['nullable', 'string', 'max:120'],
+            'birth_place' => ['nullable', 'string', 'max:120'],
+            'age' => ['nullable', 'integer', 'min:5', 'max:20'],
+            'parent_phone' => ['nullable', 'string', 'max:30'],
             'achievements' => ['nullable', 'string', 'max:2000'],
             'has_joined_before' => ['nullable', 'boolean'],
             'previous_year' => ['nullable', 'integer', 'min:1900', 'max:2100'],

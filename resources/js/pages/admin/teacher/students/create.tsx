@@ -26,20 +26,42 @@ export default function CreatePage() {
         olimpiades = [],
         students = [],
         sanggars = [],
+        provinces = [],
+        regencies = [],
+        districts = [],
+        villages = [],
         preselected_student_id = null,
+        selected_sanggar_id = null,
     } = usePage<{
         olimpiades?: Option[];
         students?: RosterStudent[];
         sanggars?: Array<{ id: number | string; name: string; type?: string }>;
+        provinces?: Array<{ id: string; name: string }>;
+        regencies?: Array<{ id: string; province_id: string; name: string }>;
+        districts?: Array<{ id: string; regency_id: string; name: string }>;
+        villages?: Array<{ id: string; district_id: string; name: string }>;
         preselected_student_id?: number | string | null;
+        selected_sanggar_id?: number | string | null;
     }>().props;
 
     const form = useForm<any>({
         penyaluran_student_id: preselected_student_id
             ? String(preselected_student_id)
             : '',
-        penyaluran_sanggar_id: '',
+        penyaluran_sanggar_id: selected_sanggar_id
+            ? String(selected_sanggar_id)
+            : '',
         olimpiade_id: '',
+        birth_date: '',
+        address: '',
+        province_id: '',
+        regency_id: '',
+        district_id: '',
+        village_id: '',
+        nickname: '',
+        birth_place: '',
+        age: '',
+        parent_phone: '',
         achievements: '',
         has_joined_before: false,
         previous_year: '',
@@ -47,6 +69,10 @@ export default function CreatePage() {
         branch: '',
         notes: '',
     });
+
+    const filteredRegencies = regencies.filter((r) => String(r.province_id) === String(form.data.province_id));
+    const filteredDistricts = districts.filter((r) => String(r.regency_id) === String(form.data.regency_id));
+    const filteredVillages = villages.filter((r) => String(r.district_id) === String(form.data.district_id));
 
     const submit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -112,31 +138,79 @@ export default function CreatePage() {
                     {students.length > 0 && (
                         <p className="text-xs text-muted-foreground">
                             {form.data.penyaluran_student_id
-                                ? students.find(
+                                ? (students.find(
                                       (item) =>
                                           String(item.id) ===
                                           form.data.penyaluran_student_id,
-                                  )?.school_name
+                                  )?.school_name ?? 'Otomatis terisi')
                                 : 'Hanya menampilkan binaan dari penyaluran yang belum memiliki pendaftaran aktif.'}
                         </p>
                     )}
+                    {preselected_student_id && (
+                        <p className="text-xs text-amber-600">Otomatis terisi dari Daftar — guru hanya isi kategori & prestasi.</p>
+                    )}
                 </Field>
                 {sanggars.length > 0 && (
-                    <Field label="Sanggar (opsional)" error={error('penyaluran_sanggar_id')}>
+                    <Field label="Sanggar" error={error('penyaluran_sanggar_id')}>
                         <Select
                             value={form.data.penyaluran_sanggar_id}
                             onChange={(value) => form.setData('penyaluran_sanggar_id', value)}
-                            placeholder="Pilih sanggar"
+                            placeholder="Pilih sanggar perwakilan"
                             options={sanggars.map((item) => ({
                                 value: String(item.id),
                                 label: `${item.name}${item.type ? ` (${item.type})` : ''}`,
                             }))}
                         />
                         <p className="text-xs text-muted-foreground">
-                            Jika binaan ada di &gt;1 sanggar, pilih sanggar perwakilan (opsional).
+                            {selected_sanggar_id
+                                ? 'Otomatis terisi dari Daftar — wajib untuk traceability sanggar.'
+                                : 'Wajib — pilih sanggar binaan ikut olimpiade dari sanggar mana.'}
                         </p>
                     </Field>
                 )}
+                <Card className="space-y-5 p-5">
+                    <h2 className="text-lg font-bold">Data Binaan (wajib)</h2>
+                    <p className="text-sm text-muted-foreground">Lengkapi data binaan dari Penyaluran — tanggal lahir & alamat lengkap wajib.</p>
+                    <div className="grid gap-5 md:grid-cols-2">
+                        <Field label="Tanggal Lahir" error={error('birth_date')}>
+                            <Input type="date" value={form.data.birth_date} onChange={(e) => form.setData('birth_date', e.target.value)} required />
+                        </Field>
+                        <Field label="Nama Panggilan (opsional)" error={error('nickname')}>
+                            <Input value={form.data.nickname} onChange={(e) => form.setData('nickname', e.target.value)} placeholder="Panggilan" />
+                        </Field>
+                    </div>
+                    <div className="grid gap-5 md:grid-cols-2">
+                        <Field label="Tempat Lahir (opsional)" error={error('birth_place')}>
+                            <Input value={form.data.birth_place} onChange={(e) => form.setData('birth_place', e.target.value)} placeholder="Surabaya" />
+                        </Field>
+                        <Field label="Usia (opsional)" error={error('age')}>
+                            <Input type="number" value={form.data.age} onChange={(e) => form.setData('age', e.target.value)} placeholder="12" />
+                        </Field>
+                    </div>
+                    <Field label="Alamat Lengkap" error={error('address')}>
+                        <textarea value={form.data.address} onChange={(e) => form.setData('address', e.target.value)} placeholder="Jl. Mawar No. 123" className="min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" rows={2} required />
+                    </Field>
+                    <div className="grid gap-5 md:grid-cols-2">
+                        <Field label="Provinsi" error={error('province_id')}>
+                            <Select value={form.data.province_id} onChange={(v) => { form.setData('province_id', v); form.setData('regency_id', ''); form.setData('district_id', ''); form.setData('village_id', ''); }} placeholder="Pilih provinsi" options={provinces.map((p) => ({ value: String(p.id), label: p.name }))} />
+                        </Field>
+                        <Field label="Kabupaten/Kota" error={error('regency_id')}>
+                            <Select value={form.data.regency_id} onChange={(v) => { form.setData('regency_id', v); form.setData('district_id', ''); form.setData('village_id', ''); }} placeholder="Pilih kabupaten" options={filteredRegencies.map((p) => ({ value: String(p.id), label: p.name }))} />
+                        </Field>
+                    </div>
+                    <div className="grid gap-5 md:grid-cols-2">
+                        <Field label="Kecamatan" error={error('district_id')}>
+                            <Select value={form.data.district_id} onChange={(v) => { form.setData('district_id', v); form.setData('village_id', ''); }} placeholder="Pilih kecamatan" options={filteredDistricts.map((p) => ({ value: String(p.id), label: p.name }))} />
+                        </Field>
+                        <Field label="Desa/Kelurahan" error={error('village_id')}>
+                            <Select value={form.data.village_id} onChange={(v) => form.setData('village_id', v)} placeholder="Pilih desa" options={filteredVillages.map((p) => ({ value: String(p.id), label: p.name }))} />
+                        </Field>
+                    </div>
+                    <Field label="HP Orang Tua (opsional)" error={error('parent_phone')}>
+                        <Input value={form.data.parent_phone} onChange={(e) => form.setData('parent_phone', e.target.value)} placeholder="0812..." />
+                    </Field>
+                </Card>
+
                 <Field label="Kategori Lomba" error={error('olimpiade_id')}>
                     <Select
                         value={form.data.olimpiade_id}

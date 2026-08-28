@@ -13,16 +13,20 @@ return new class extends Migration
             $table->char('nik', 16);
             $table->string('full_name');
             $table->string('nickname')->nullable();
-            $table->string('gender', 20);
-            $table->string('birth_place');
-            $table->date('birth_date');
-            $table->unsignedTinyInteger('age');
-            $table->string('school_name');
-            $table->string('grade', 30);
-            $table->text('address');
+            $table->string('gender', 20)->nullable();
+            $table->string('birth_place')->nullable();
+            $table->date('birth_date')->nullable();
+            $table->unsignedTinyInteger('age')->nullable();
+            $table->string('school_name')->nullable();
+            $table->string('grade', 30)->nullable();
+            $table->text('address')->nullable();
             $table->char('province_id', 2)->nullable();
             $table->char('regency_id', 4)->nullable();
-            $table->string('parent_phone', 30);
+            $table->char('district_id', 7)->nullable();
+            $table->char('village_id', 10)->nullable();
+            $table->unsignedBigInteger('penyaluran_id')->nullable()->unique();
+            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
+            $table->string('parent_phone', 30)->nullable();
             $table->foreignId('mentor_id')->nullable()->constrained('users')->nullOnDelete();
             $table->string('mentor_name')->nullable();
             $table->string('mentor_phone', 30)->nullable();
@@ -33,6 +37,9 @@ return new class extends Migration
             $table->boolean('is_binaan')->default(false);
             $table->index('province_id');
             $table->index('regency_id');
+            $table->index('district_id');
+            $table->index('village_id');
+            $table->index('penyaluran_id');
             $table->index('school_name');
             $table->index('is_binaan');
             $table->index(['mentor_id', 'created_at']);
@@ -43,6 +50,8 @@ return new class extends Migration
 
             $table->foreign('province_id')->references('id')->on('provinces')->nullOnDelete();
             $table->foreign('regency_id')->references('id')->on('regencies')->nullOnDelete();
+            $table->foreign('district_id')->references('id')->on('districts')->nullOnDelete();
+            $table->foreign('village_id')->references('id')->on('villages')->nullOnDelete();
         });
     }
 

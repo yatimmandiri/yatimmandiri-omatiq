@@ -12,35 +12,16 @@ class TeacherService
 {
     public function getStudentById(User $teacher, int $id): Participant
     {
-        $participant = Participant::query()
-            ->with(['olimpiade:id,name,category,slug'])
+        return Participant::query()
+            ->with(['olimpiade:id,name,category,slug', 'student', 'student.province:id,name', 'student.regency:id,name', 'student.village:id,name'])
             ->where('mentor_id', $teacher->id)
             ->findOrFail($id);
-
-        // Synthesize student relation from penyaluran snapshot for pure-API binaan (like ParticipantController::participantPayload)
-        if (! $participant->relationLoaded('student') || ! $participant->student) {
-            if ($participant->penyaluran_student_id) {
-                $synthetic = new Student([
-                    'full_name' => $participant->penyaluran_student_name,
-                    'nik' => $participant->penyaluran_student_nik ?? $participant->nik,
-                    'gender' => $participant->penyaluran_student_gender,
-                    'school_name' => $participant->penyaluran_student_school_name,
-                    'grade' => $participant->penyaluran_student_class,
-                    'birth_date' => $participant->penyaluran_student_birth_date,
-                ]);
-                $synthetic->setAttribute('nis', $participant->penyaluran_student_nis);
-                $synthetic->setAttribute('school_level', $participant->penyaluran_student_school_level);
-                $participant->setRelation('student', $synthetic);
-            }
-        }
-
-        return $participant;
     }
 
     /**
-     * Register a binaan from penyaluran API into Olimpiade.
+     * Register a binaan from penyaluran API into Olimpiade. Creates Student master + Participant form.
      *
-     * @param  array{penyaluran_student_id:int, olimpiade_id:int, penyaluran_sanggar_id?:int, penyaluran_sanggar_name?:string, achievements?:string, has_joined_before?:bool, previous_year?:int, referral_source?:string, branch?:string, notes?:string}  $data
+     * @param  array{penyaluran_student_id:int, olimpiade_id:int, penyaluran_sanggar_id?:int, penyaluran_sanggar_name?:string, birth_date?:string, address?:string, province_id?:string, regency_id?:string, district_id?:string, village_id?:string, nickname?:string, birth_place?:string, age?:int, parent_phone?:string, achievements?:string, has_joined_before?:bool, previous_year?:int, referral_source?:string, branch?:string, notes?:string}  $data
      */
     public function registerStudent(User $teacher, array $data, array $penyaluranStudent): Participant
     {
@@ -55,22 +36,44 @@ class TeacherService
             return $g;
         };
 
-        return DB::transaction(function () use ($teacher, $data, $penyaluranStudent, $mapGender) {
+        $olimpiade = Olimpiade::find($data['olimpiade_id']);
+        $eventYear = $olimpiade?->event_year ?? (int) date('Y');
+
+        return DB::transaction(function () use ($teacher, $data, $penyaluranStudent, $mapGender, $eventYear) {
+            // Create/update Student master (is_binaan true, no User) with full data
+            $student = Student::updateOrCreate(
+                ['penyaluran_id' => $penyaluranStudent['student_id'] ?? $penyaluranStudent['id'] ?? $data['penyaluran_student_id']],
+                [
+                    'nik' => $penyaluranStudent['nik'] ?? null,
+                    'full_name' => $penyaluranStudent['name'] ?? $penyaluranStudent['full_name'] ?? '',
+                    'nickname' => $data['nickname'] ?? null,
+                    'gender' => $mapGender($penyaluranStudent['gender'] ?? null),
+                    'birth_place' => $data['birth_place'] ?? null,
+                    'birth_date' => $data['birth_date'] ?? $penyaluranStudent['birth_date'] ?? null,
+                    'age' => $data['age'] ?? null,
+                    'school_name' => $penyaluranStudent['school_name'] ?? null,
+                    'grade' => $penyaluranStudent['class'] ?? $penyaluranStudent['grade'] ?? null,
+                    'address' => $data['address'] ?? null,
+                    'province_id' => $data['province_id'] ?? null,
+                    'regency_id' => $data['regency_id'] ?? null,
+                    'district_id' => $data['district_id'] ?? null,
+                    'village_id' => $data['village_id'] ?? null,
+                    'parent_phone' => $data['parent_phone'] ?? null,
+                    'mentor_id' => $teacher->id,
+                    'is_binaan' => true,
+                ]
+            );
+
             return Participant::create([
+                'student_id' => $student->id,
                 'penyaluran_student_id' => $penyaluranStudent['student_id'] ?? $penyaluranStudent['id'] ?? $data['penyaluran_student_id'],
                 'penyaluran_student_name' => $penyaluranStudent['name'] ?? $penyaluranStudent['full_name'] ?? '',
                 'penyaluran_student_nik' => $penyaluranStudent['nik'] ?? null,
-                'penyaluran_student_nis' => $penyaluranStudent['nis'] ?? null,
-                'penyaluran_student_gender' => $mapGender($penyaluranStudent['gender'] ?? null),
-                'penyaluran_student_school_name' => $penyaluranStudent['school_name'] ?? null,
-                'penyaluran_student_school_level' => $penyaluranStudent['school_level'] ?? null,
-                'penyaluran_student_class' => $penyaluranStudent['class'] ?? $penyaluranStudent['grade'] ?? null,
-                'penyaluran_student_birth_date' => $penyaluranStudent['birth_date'] ?? null,
-                'nik' => $penyaluranStudent['nik'] ?? null,
                 'penyaluran_sanggar_id' => $data['penyaluran_sanggar_id'] ?? null,
                 'penyaluran_sanggar_name' => $data['penyaluran_sanggar_name'] ?? null,
                 'mentor_id' => $teacher->id,
                 'olimpiade_id' => $data['olimpiade_id'],
+                'event_year' => $eventYear,
                 'registration_type' => 'teacher',
                 'registration_number' => $this->generateRegistrationNumber(),
                 'status' => 'submitted',
@@ -92,18 +95,40 @@ class TeacherService
      *
      * @param  array<int, array>  $penyaluranStudents  raw from PenyaluranService::students()
      */
-    public function getFormOptionsFromApi(array $penyaluranStudents, ?int $studentId = null): array
+    public function getFormOptionsFromApi(array $penyaluranStudents, ?int $studentId = null, ?int $eventYear = null): array
     {
-        $activeIds = Participant::query()
-            ->whereIn('status', ['submitted', 'verified'])
-            ->where(function ($q) {
-                $q->whereNotNull('penyaluran_student_id')->orWhereNotNull('student_id');
+        $eventYear ??= (int) date('Y');
+        // Exclude students already actively registered for this event_year
+        // Active binaan are those with a Student linked via penyaluran_id or student_id
+        $activePenyaluranIds = Participant::query()
+            ->where(function ($q) use ($eventYear) {
+                $q->where('event_year', $eventYear);
+                if ($eventYear == 2026) {
+                    $q->orWhereNull('event_year');
+                }
             })
-            ->get(['penyaluran_student_id', 'student_id'])
-            ->flatMap(fn ($p) => [(int) $p->penyaluran_student_id, (int) $p->student_id])
+            ->whereIn('status', ['submitted', 'verified'])
+            ->whereHas('student', fn ($q) => $q->whereNotNull('penyaluran_id'))
+            ->with('student:id,penyaluran_id')
+            ->get()
+            ->pluck('student.penyaluran_id')
             ->filter()
             ->unique()
             ->all();
+
+        $activeStudentIds = Participant::query()
+            ->where(function ($q) use ($eventYear) {
+                $q->where('event_year', $eventYear);
+                if ($eventYear == 2026) {
+                    $q->orWhereNull('event_year');
+                }
+            })
+            ->whereIn('status', ['submitted', 'verified'])
+            ->pluck('student_id')
+            ->filter()
+            ->all();
+
+        $activeIds = array_unique(array_merge($activePenyaluranIds, $activeStudentIds));
 
         $filtered = collect($penyaluranStudents)
             ->filter(fn (array $s) => ! in_array((int) ($s['student_id'] ?? $s['id'] ?? 0), $activeIds, true))
@@ -120,7 +145,7 @@ class TeacherService
         $preselected = $filtered->contains(fn (array $s) => (int) $s['id'] === (int) $studentId) ? $studentId : null;
 
         return [
-            'olimpiades' => Olimpiade::query()->active()->ordered()->get(['id', 'name', 'category', 'slug']),
+            'olimpiades' => Olimpiade::query()->active()->ordered()->get(['id', 'name', 'category', 'slug', 'event_year']),
             'students' => $filtered,
             'preselected_student_id' => $preselected,
         ];

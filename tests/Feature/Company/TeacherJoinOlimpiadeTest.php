@@ -106,10 +106,9 @@ it('prevents registering a student who already has an active registration', func
         'status' => 'verified',
     ]);
 
-    $next = createOlimpiade('Olimpiade Al-Quran', 'Al-Quran');
-
+    // Same olimpiade should be blocked (per-olimpiade unique), different olimpiade would be allowed
     $this->actingAs($teacher)
-        ->post(route('admin.teacher.students.store'), registrationPayload($next->id, $student->id))
+        ->post(route('admin.teacher.students.store'), registrationPayload($olimpiade->id, $student->id))
         ->assertSessionHasErrors('penyaluran_student_id');
 
     expect(Participant::count())->toBe(1);

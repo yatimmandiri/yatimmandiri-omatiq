@@ -15,6 +15,7 @@ use Spatie\Activitylog\Support\LogOptions;
 #[Fillable([
     'registration_number',
     'olimpiade_id',
+    'event_year',
     'user_id',
     'student_id',
     'penyaluran_student_id',
@@ -60,6 +61,7 @@ class Participant extends Model
             'documentation_consent' => 'boolean',
             'rules_consent' => 'boolean',
             'penyaluran_student_birth_date' => 'date',
+            'event_year' => 'integer',
         ];
     }
 
@@ -92,6 +94,7 @@ class Participant extends Model
                     ->orWhere('penyaluran_student_name', 'like', "%{$search}%")
                     ->orWhere('penyaluran_student_nik', 'like', "%{$search}%")
                     ->orWhereHas('student', fn (Builder $q) => $q->where('full_name', 'like', "%{$search}%"))
+                    ->orWhereHas('student', fn (Builder $q) => $q->where('nik', 'like', "%{$search}%"))
                     ->orWhereHas('student', fn (Builder $q) => $q->where('school_name', 'like', "%{$search}%"))
                     ->orWhereHas('student', fn (Builder $q) => $q->where('parent_phone', 'like', "%{$search}%"))
                     ->orWhereHas('olimpiade', fn (Builder $query) => $query->where('name', 'like', "%{$search}%"));

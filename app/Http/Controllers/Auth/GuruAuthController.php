@@ -9,7 +9,6 @@ use App\Services\PhoneOtpService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -26,9 +25,11 @@ class GuruAuthController extends Controller
     {
         $request->validate([
             'phone' => ['required', 'string', 'min:10', 'max:20'],
+            'password' => ['required', 'string', 'min:6', 'max:100'],
         ]);
 
         $phone = preg_replace('/\D+/', '', (string) $request->input('phone'));
+        $password = (string) $request->input('password');
 
         try {
             $token = $this->penyaluran->loginGuru($phone);
@@ -52,25 +53,37 @@ class GuruAuthController extends Controller
             $email = 'guru'.$penyaluranId.'@penyaluran.local';
         }
 
-        $user = User::updateOrCreate(
+        // Find or create local Teacher user; default password 'password' for first login
+        $user = User::firstOrCreate(
             ['penyaluran_id' => $penyaluranId],
             [
                 'name' => $profile['name'] ?? 'Guru '.$penyaluranId,
                 'email' => $email,
                 'phone' => $phone,
-                'penyaluran_token' => $token,
-                'password' => Hash::make(Str::random(32)),
+                'password' => Hash::make('password'),
             ],
         );
 
-        // Ensure token is stored (Hidden) and email verified for Teacher bypass
-        $user->forceFill(['penyaluran_token' => $token])->save();
-        if (! $user->hasVerifiedEmail()) {
+        // Sync profile data without overwriting custom password
+        $user->forceFill([
+            'name' => $profile['name'] ?? $user->name,
+            'phone' => $phone,
+            'penyaluran_token' => $token,
+        ])->save();
+
+        if ($user->wasRecentlyCreated) {
+            $user->markEmailAsVerified();
+        } elseif (! $user->hasVerifiedEmail()) {
             $user->markEmailAsVerified();
         }
 
         if (! $user->hasRole('Teacher')) {
             $user->assignRole('Teacher');
+        }
+
+        // Verify local password (default 'password' until guru changes via settings/security)
+        if (! Hash::check($password, $user->password)) {
+            return back()->withErrors(['password' => 'Password salah. Hubungi admin untuk reset ke default.']);
         }
 
         // OTP scaffold: disabled for now (otp_enabled=false) → direct login

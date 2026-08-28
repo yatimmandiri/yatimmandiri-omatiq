@@ -21,6 +21,9 @@ use App\Http\Controllers\Admin\Core\UserController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\Settings\LogActivityController;
 use App\Http\Controllers\Admin\Settings\SiteSettingsController;
+use App\Http\Controllers\Admin\Teacher\AbsensiController;
+use App\Http\Controllers\Admin\Teacher\MasterBinaanController;
+use App\Http\Controllers\Admin\Teacher\MasterSanggarController;
 use App\Http\Controllers\Admin\Teacher\TeacherStudentController;
 use App\Http\Controllers\Auth\AuthController;
 use Illuminate\Support\Facades\Route;
@@ -85,6 +88,7 @@ Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'auth.admi
         Route::resource('faq-companies', FaqCompanyController::class);
 
         Route::get('teachers/data', [TeacherController::class, 'getData'])->name('teachers.data');
+        Route::put('teachers/{teacher}/reset-password', [TeacherController::class, 'resetPassword'])->name('teachers.reset-password');
         Route::resource('teachers', TeacherController::class)->parameters(['teachers' => 'teacher'])->only(['index', 'show']);
     });
 
@@ -93,6 +97,18 @@ Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'auth.admi
         Route::resource('students', TeacherStudentController::class)
             ->parameters(['students' => 'participant'])
             ->only(['index', 'create', 'store', 'show']);
+
+        Route::prefix('master')->as('master.')->group(function () {
+            Route::get('binaan/data', [MasterBinaanController::class, 'getData'])->name('binaan.data');
+            Route::get('binaan/{binaan}', [MasterBinaanController::class, 'show'])->name('binaan.show');
+            Route::get('binaan', [MasterBinaanController::class, 'index'])->name('binaan.index');
+
+            Route::get('sanggar/data', [MasterSanggarController::class, 'getData'])->name('sanggar.data');
+            Route::get('sanggar/{sanggar}', [MasterSanggarController::class, 'show'])->name('sanggar.show');
+            Route::get('sanggar', [MasterSanggarController::class, 'index'])->name('sanggar.index');
+        });
+
+        Route::get('absensi', [AbsensiController::class, 'index'])->name('absensi.index');
     });
 
     Route::prefix('core')->as('core.')->group(function () {

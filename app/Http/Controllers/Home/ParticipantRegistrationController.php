@@ -74,8 +74,10 @@ class ParticipantRegistrationController extends Controller
             ]);
             $user->assignRole('Participant');
 
+            $olimpiade = Olimpiade::find($request->olimpiade_id);
             $data = $this->payload($request);
             $data['user_id'] = $user->id;
+            $data['event_year'] = $olimpiade?->event_year ?? (int) date('Y');
             $data['registration_number'] = $this->registrationNumber();
             $data['status'] = 'submitted';
             $data['registration_type'] = 'public';

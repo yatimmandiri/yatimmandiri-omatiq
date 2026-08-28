@@ -115,7 +115,13 @@ class PenyaluranService
             }
         }
 
-        return $all->unique(fn (array $s) => $s['student_id'] ?? null)->values()->all();
+        // Group by student_id to keep all sanggar_ids for multi-sanggar students
+        return $all->groupBy(fn (array $s) => $s['student_id'] ?? null)->map(function ($group) {
+            $first = $group->first();
+            $first['sanggar_ids'] = $group->pluck('sanggar_id')->filter()->unique()->values()->all();
+
+            return $first;
+        })->values()->all();
     }
 
     private function fetchStudentsForSanggar(string $token, int $sanggarId): array

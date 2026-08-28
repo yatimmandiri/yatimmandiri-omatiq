@@ -2,7 +2,7 @@
 
 namespace App\Services\Views;
 
-use App\Models\Company\Participant;
+use App\Models\Company\Student;
 use App\Models\Core\User;
 use App\Services\PenyaluranService;
 
@@ -32,7 +32,8 @@ class DashboardService
 
     private static function teacher(User $user): array
     {
-        $studentCount = Participant::where('mentor_id', $user->id)->count();
+        // Students master: only those already registered via guru (is_binaan) or global
+        $studentCount = Student::where('mentor_id', $user->id)->where('is_binaan', true)->count();
         $penyaluranProfile = null;
         $sanggars = [];
         $penyaluranStudents = [];
@@ -59,7 +60,8 @@ class DashboardService
             'view' => 'admin/dashboard/teacher',
             'data' => [
                 'pageTitle' => 'Dashboard Guru',
-                'studentCount' => $penyaluranTotal ?? $studentCount,
+                'studentCount' => $studentCount,
+                'penyaluranTotal' => $penyaluranTotal,
                 'sanggarSum' => $sanggarSum,
                 'overlapCount' => $overlap,
                 'penyaluranProfile' => $penyaluranProfile,

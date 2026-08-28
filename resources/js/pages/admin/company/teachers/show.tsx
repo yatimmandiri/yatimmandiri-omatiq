@@ -1,9 +1,10 @@
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { dashboard } from '@/routes/admin';
 import teachers from '@/routes/admin/companies/teachers';
 import { formatDate } from '@/utils/formatDate';
-import { usePage } from '@inertiajs/react';
-import { InfoIcon } from 'lucide-react';
+import { router, usePage } from '@inertiajs/react';
+import { InfoIcon, KeyRound } from 'lucide-react';
 
 export default function DetailPage() {
     const { user } = usePage<any>().props;
@@ -17,6 +18,19 @@ export default function DetailPage() {
                         <span className="text-sm font-semibold">
                             Detail Guru
                         </span>
+                    </div>
+                    <div className="mb-4 flex justify-end">
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                if (confirm('Reset password guru ini ke default "password"?')) {
+                                    router.put(teachers.resetPassword(user.id).url, {}, { preserveScroll: true });
+                                }
+                            }}
+                        >
+                            <KeyRound className="mr-2 h-4 w-4" />
+                            Reset ke password default
+                        </Button>
                     </div>
                     <ul className="grid grid-cols-1 gap-4 md:grid-cols-2">
                         <li className="flex flex-col space-y-2">

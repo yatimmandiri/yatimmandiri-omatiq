@@ -41,6 +41,7 @@ class UpdateOlimpiadeRequest extends FormRequest
             'video_ids.*' => ['integer', 'exists:olimpiade_videos,id'],
             'cta_description' => ['nullable', 'string'],
             'registration_url' => ['nullable', 'string', 'max:2048'],
+            'event_year' => ['nullable', 'integer', 'min:2024', 'max:2030'],
             'status' => ['sometimes', 'boolean'],
             'recommended' => ['sometimes', 'boolean'],
             'show_on_registration' => ['sometimes', 'boolean'],

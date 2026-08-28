@@ -70,8 +70,8 @@ it('provides only olimpiades and the teacher roster on the create page', functio
             ->where('students.0.id', $student->id)
             ->where('students.0.nik', $student->nik)
             ->where('students.0.full_name', $student->full_name)
-            ->missing('provinces')
-            ->missing('regencies')
+            ->has('provinces')
+            ->has('regencies')
         );
 });
 
