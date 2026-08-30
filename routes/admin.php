@@ -28,7 +28,7 @@ use App\Http\Controllers\Admin\Teacher\TeacherStudentController;
 use App\Http\Controllers\Auth\AuthController;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'auth.admin'])->group(function () {
+Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'auth.admin', 'teacher.profile.completed'])->group(function () {
     Route::redirect('/', '/admin/dashboard')->name('index');
 
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');

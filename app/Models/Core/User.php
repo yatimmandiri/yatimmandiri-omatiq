@@ -17,7 +17,7 @@ use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['name', 'email', 'password', 'phone', 'penyaluran_id', 'penyaluran_token', 'phone_verified_at', 'phone_otp', 'phone_otp_expires_at', 'phone_otp_attempts', 'phone_otp_last_sent_at'])]
+#[Fillable(['name', 'email', 'password', 'phone', 'penyaluran_id', 'penyaluran_token', 'phone_verified_at', 'teacher_profile_completed_at', 'phone_otp', 'phone_otp_expires_at', 'phone_otp_attempts', 'phone_otp_last_sent_at'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token', 'penyaluran_token', 'phone_otp'])]
 
 class User extends Authenticatable implements MustVerifyEmail
@@ -29,6 +29,7 @@ class User extends Authenticatable implements MustVerifyEmail
         return [
             'email_verified_at' => 'datetime',
             'phone_verified_at' => 'datetime',
+            'teacher_profile_completed_at' => 'datetime',
             'phone_otp_expires_at' => 'datetime',
             'phone_otp_last_sent_at' => 'datetime',
             'password' => 'hashed',
@@ -53,6 +54,13 @@ class User extends Authenticatable implements MustVerifyEmail
             'phone_otp_expires_at' => null,
             'phone_otp_attempts' => 0,
         ])->save();
+    }
+
+    public function needsTeacherProfileCompletion(): bool
+    {
+        return $this->hasRole('Teacher')
+            && is_null($this->teacher_profile_completed_at)
+            && str_ends_with((string) $this->email, '@penyaluran.local');
     }
 
     public function participant(): HasOne

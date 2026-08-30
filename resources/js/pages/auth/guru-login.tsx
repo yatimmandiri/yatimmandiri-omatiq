@@ -47,10 +47,13 @@ export default function GuruLogin() {
                                     required
                                     tabIndex={2}
                                     autoComplete="current-password"
-                                    placeholder="Default: password"
+                                    placeholder="Password dari admin"
                                 />
                                 <p className="text-xs text-muted-foreground">
-                                    Default password: <code>password</code> — silakan ganti di Pengaturan setelah login pertama.
+                                    Gunakan password yang diberikan oleh tim
+                                    OMATIQ. Setelah login pertama, Anda akan
+                                    diminta mendaftarkan email dan membuat
+                                    password baru.
                                 </p>
                                 <InputError message={errors.password} />
                             </div>
@@ -82,5 +85,5 @@ export default function GuruLogin() {
 
 GuruLogin.layout = {
     title: 'Login Guru',
-    description: 'Masuk dengan nomor HP + password (default: password)',
+    description: 'Masuk dengan nomor HP dan password dari tim OMATIQ',
 };

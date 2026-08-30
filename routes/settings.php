@@ -5,7 +5,7 @@ use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\SecurityController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth'])->as('admin.')->group(function () {
+Route::middleware(['auth', 'teacher.profile.completed'])->as('admin.')->group(function () {
     Route::redirect('settings', '/settings/profile');
 
     Route::post('upload-image', [SiteSettingsController::class, 'editorUploadFile'])->name('uploadfiles');
@@ -15,7 +15,7 @@ Route::middleware(['auth'])->as('admin.')->group(function () {
     Route::patch('settings/profile', [ProfileController::class, 'update'])->name('profile.update');
 });
 
-Route::middleware(['auth', 'verified'])->as('admin.')->group(function () {
+Route::middleware(['auth', 'verified', 'teacher.profile.completed'])->as('admin.')->group(function () {
     Route::delete('settings/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::get('settings/security', [SecurityController::class, 'edit'])->name('security.edit');

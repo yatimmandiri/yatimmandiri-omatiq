@@ -9,6 +9,8 @@ use App\Services\PhoneOtpService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -48,17 +50,12 @@ class GuruAuthController extends Controller
             return back()->withErrors(['phone' => 'Profil guru tidak valid (id kosong).']);
         }
 
-        $email = $profile['email'] ?? null;
-        if (! $email) {
-            $email = 'guru'.$penyaluranId.'@penyaluran.local';
-        }
-
-        // Find or create local Teacher user; default password 'password' for first login
+        // Find or create local Teacher user; email is completed by the teacher after first login.
         $user = User::firstOrCreate(
             ['penyaluran_id' => $penyaluranId],
             [
                 'name' => $profile['name'] ?? 'Guru '.$penyaluranId,
-                'email' => $email,
+                'email' => 'guru'.$penyaluranId.'@penyaluran.local',
                 'phone' => $phone,
                 'password' => Hash::make('password'),
             ],
@@ -102,10 +99,66 @@ class GuruAuthController extends Controller
         $request->session()->put('penyaluran_id', $penyaluranId);
         $request->session()->regenerate();
 
+        if ($user->needsTeacherProfileCompletion()) {
+            return redirect()->route('guru.profile.edit');
+        }
+
         return redirect()->intended(route('admin.dashboard'));
     }
 
-    public function verifyForm(Request $request): Response
+    public function completeProfile(Request $request)
+    {
+        $user = $request->user();
+
+        if (! $user?->hasRole('Teacher')) {
+            abort(403);
+        }
+
+        if (! $user->needsTeacherProfileCompletion()) {
+            return redirect()->route('admin.dashboard');
+        }
+
+        return Inertia::render('auth/guru-complete-profile', [
+            'teacher' => [
+                'name' => $user->name,
+                'phone' => $user->phone,
+            ],
+        ]);
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $user = $request->user();
+
+        if (! $user?->hasRole('Teacher')) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'email' => [
+                'required',
+                'string',
+                'lowercase',
+                'email',
+                'max:255',
+                Rule::unique('users', 'email')->ignore($user->id),
+            ],
+            'password' => ['required', 'confirmed', Password::defaults()],
+        ]);
+
+        $user->forceFill([
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
+            'email_verified_at' => now(),
+            'teacher_profile_completed_at' => now(),
+        ])->save();
+
+        return redirect()
+            ->route('admin.dashboard')
+            ->with('success', 'Akun guru berhasil dilengkapi. Selamat datang di dashboard.');
+    }
+
+    public function showOtpForm(Request $request): Response
     {
         $userId = $request->session()->get('otp_user_id');
         if (! $userId) {
@@ -135,6 +188,10 @@ class GuruAuthController extends Controller
         Auth::login($user, true);
         $request->session()->forget('otp_user_id');
         $request->session()->regenerate();
+
+        if ($user->needsTeacherProfileCompletion()) {
+            return redirect()->route('guru.profile.edit');
+        }
 
         return redirect()->intended(route('admin.dashboard'));
     }
