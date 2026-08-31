@@ -8,6 +8,8 @@ use App\Models\Company\Student;
 use App\Services\PenyaluranService;
 use Closure;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 
 class StoreTeacherParticipantRequest extends FormRequest
 {
@@ -45,7 +47,8 @@ class StoreTeacherParticipantRequest extends FormRequest
                         }
                         $exists = Participant::query()
                             ->where(function ($q) use ($value) {
-                                $q->where('penyaluran_student_id', $value)->orWhere('student_id', $value);
+                                $q->where('penyaluran_student_id', $value)
+                                    ->orWhereHas('student', fn ($qq) => $qq->where('penyaluran_id', $value)->orWhere('id', $value));
                             })
                             ->where(function ($q) use ($eventYear) {
                                 $q->where('event_year', $eventYear);
@@ -73,10 +76,11 @@ class StoreTeacherParticipantRequest extends FormRequest
 
                     $found = collect($students)->firstWhere(fn (array $s) => (int) ($s['student_id'] ?? $s['id'] ?? 0) === (int) $value);
                     if (! $found) {
-                        // Fallback to local check for tests
-                        $local = Student::find($value);
+                        // Fallback to local check for tests (by penyaluran_id or id)
+                        $local = Student::where('penyaluran_id', $value)->where('mentor_id', $this->user()->id)->where('is_binaan', true)->first()
+                            ?? Student::find($value);
                         if ($local && $local->mentor_id === $this->user()->id && $local->is_binaan) {
-                            $found = ['student_id' => $local->id, 'status' => true];
+                            $found = ['student_id' => $local->penyaluran_id ?? $local->id, 'status' => true];
                         } else {
                             $fail('Binaan tidak ditemukan di data penyaluran Anda.');
 
@@ -84,8 +88,12 @@ class StoreTeacherParticipantRequest extends FormRequest
                         }
                     }
 
+                    // Check existing participant via penyaluran_student_id or Student for this event
                     $exists = Participant::query()
-                        ->where('penyaluran_student_id', $value)
+                        ->where(function ($q) use ($value) {
+                            $q->where('penyaluran_student_id', $value)
+                                ->orWhereHas('student', fn ($qq) => $qq->where('penyaluran_id', $value)->orWhere('id', $value));
+                        })
                         ->where(function ($q) use ($eventYear) {
                             $q->where('event_year', $eventYear);
                             if ($eventYear == 2026) {
@@ -117,7 +125,16 @@ class StoreTeacherParticipantRequest extends FormRequest
             'has_joined_before' => ['nullable', 'boolean'],
             'previous_year' => ['nullable', 'integer', 'min:1900', 'max:2100'],
             'referral_source' => ['nullable', 'string', 'max:255'],
-            'branch' => ['nullable', 'string', 'max:255'],
+            'branch' => ['nullable', 'string', 'max:255', function (string $attribute, mixed $value, $fail) {
+                if (! $value) {
+                    return;
+                }
+                $branches = Cache::remember('branch_offices', 3600, fn () => json_decode(Storage::disk('local')->get('branch-offices.json'), true) ?? []);
+                $names = array_column($branches, 'name');
+                if (! in_array($value, $names, true)) {
+                    $fail('Cabang tidak valid.');
+                }
+            }],
             'notes' => ['nullable', 'string', 'max:2000'],
         ];
     }

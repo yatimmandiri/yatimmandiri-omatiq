@@ -16,9 +16,10 @@ return new class extends Migration
             $table->string('gender', 20)->nullable();
             $table->string('birth_place')->nullable();
             $table->date('birth_date')->nullable();
-            $table->unsignedTinyInteger('age')->nullable();
             $table->string('school_name')->nullable();
+            $table->string('school_level', 30)->nullable();
             $table->string('grade', 30)->nullable();
+            $table->string('nis', 20)->nullable();
             $table->text('address')->nullable();
             $table->char('province_id', 2)->nullable();
             $table->char('regency_id', 4)->nullable();

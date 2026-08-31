@@ -41,7 +41,7 @@ it('keeps student media files when a participant is deleted', function () {
         'gender' => 'female',
         'birth_place' => 'Surabaya',
         'birth_date' => '2012-05-15',
-        'age' => 14,
+
         'school_name' => 'SMP Negeri 2 Surabaya',
         'grade' => '8',
         'address' => 'Jl. Raya Darmo No. 12',

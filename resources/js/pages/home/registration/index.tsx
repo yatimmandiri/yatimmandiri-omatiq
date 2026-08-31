@@ -32,12 +32,29 @@ type Regency = {
     province_id: number | string;
     name: string;
 };
+type District = {
+    id: number | string;
+    regency_id: number | string;
+    name: string;
+};
+type Village = {
+    id: number | string;
+    district_id: number | string;
+    name: string;
+};
+type Branch = {
+    id: number | string;
+    name: string;
+};
 type RegistrationErrors = Record<string, string | undefined>;
 
 type RegistrationProps = {
     olimpiades?: Option[];
     provinces?: Option[];
     regencies?: Regency[];
+    districts?: District[];
+    villages?: Village[];
+    branches?: Branch[];
     registration_closed?: boolean;
 };
 
@@ -53,12 +70,13 @@ const steps = [
             'gender',
             'birth_place',
             'birth_date',
-            'age',
             'school_name',
             'grade',
             'address',
             'province_id',
             'regency_id',
+            'district_id',
+            'village_id',
             'parent_phone',
             'mentor_name',
             'mentor_phone',
@@ -101,6 +119,9 @@ export default function RegistrationPage() {
         olimpiades = [],
         provinces = [],
         regencies = [],
+        districts = [],
+        villages = [],
+        branches = [],
         registration_closed,
     } = usePage<RegistrationProps>().props;
 
@@ -114,12 +135,13 @@ export default function RegistrationPage() {
         gender: '',
         birth_place: '',
         birth_date: '',
-        age: '',
         school_name: '',
         grade: '',
         address: '',
         province_id: '',
         regency_id: '',
+        district_id: '',
+        village_id: '',
         parent_phone: '',
         mentor_name: '',
         mentor_phone: '',
@@ -146,6 +168,26 @@ export default function RegistrationPage() {
                     String(form.data.province_id),
             ),
         [form.data.province_id, regencies],
+    );
+
+    const filteredDistricts = useMemo(
+        () =>
+            districts.filter(
+                (district) =>
+                    String(district.regency_id) ===
+                    String(form.data.regency_id),
+            ),
+        [form.data.regency_id, districts],
+    );
+
+    const filteredVillages = useMemo(
+        () =>
+            villages.filter(
+                (village) =>
+                    String(village.district_id) ===
+                    String(form.data.district_id),
+            ),
+        [form.data.district_id, villages],
     );
 
     const mergedErrors = {
@@ -209,7 +251,6 @@ export default function RegistrationPage() {
             required('gender', 'Jenis kelamin wajib dipilih.');
             required('birth_place', 'Tempat lahir wajib diisi.');
             required('birth_date', 'Tanggal lahir wajib diisi.');
-            required('age', 'Usia wajib diisi.');
             required('school_name', 'Nama sekolah wajib diisi.');
             required('grade', 'Kelas wajib diisi.');
             required('address', 'Alamat lengkap wajib diisi.');
@@ -582,35 +623,23 @@ export default function RegistrationPage() {
                                         />
                                     </Field>
                                     <Field
-                                        label="Usia"
-                                        error={mergedErrors.age}
-                                    >
-                                        <Input
-                                            type="number"
-                                            min={5}
-                                            max={20}
-                                            value={form.data.age}
-                                            onChange={(event) =>
-                                                setData(
-                                                    'age',
-                                                    event.target.value,
-                                                )
-                                            }
-                                        />
-                                    </Field>
-                                    <Field
                                         label="Kelas"
                                         error={mergedErrors.grade}
                                     >
-                                        <Input
-                                            value={form.data.grade}
-                                            onChange={(event) =>
-                                                setData(
-                                                    'grade',
-                                                    event.target.value,
-                                                )
+                                        <Select
+                                            value={String(form.data.grade)}
+                                            onChange={(value) =>
+                                                setData('grade', value)
                                             }
-                                            placeholder="Contoh: 1 / 2 / 3 / 4 / 5 / 6"
+                                            placeholder="Pilih kelas"
+                                            options={[
+                                                { value: 'I', label: 'Kelas I' },
+                                                { value: 'II', label: 'Kelas II' },
+                                                { value: 'III', label: 'Kelas III' },
+                                                { value: 'IV', label: 'Kelas IV' },
+                                                { value: 'V', label: 'Kelas V' },
+                                                { value: 'VI', label: 'Kelas VI' },
+                                            ]}
                                         />
                                     </Field>
                                     <Field
@@ -671,11 +700,15 @@ export default function RegistrationPage() {
                                                     ...data,
                                                     province_id: value,
                                                     regency_id: '',
+                                                    district_id: '',
+                                                    village_id: '',
                                                 }));
                                                 setLocalErrors((errors) => ({
                                                     ...errors,
                                                     province_id: undefined,
                                                     regency_id: undefined,
+                                                    district_id: undefined,
+                                                    village_id: undefined,
                                                 }));
                                             }}
                                             placeholder="Pilih provinsi"
@@ -691,9 +724,20 @@ export default function RegistrationPage() {
                                     >
                                         <Select
                                             value={String(form.data.regency_id)}
-                                            onChange={(value) =>
-                                                setData('regency_id', value)
-                                            }
+                                            onChange={(value) => {
+                                                form.setData((data: any) => ({
+                                                    ...data,
+                                                    regency_id: value,
+                                                    district_id: '',
+                                                    village_id: '',
+                                                }));
+                                                setLocalErrors((errors) => ({
+                                                    ...errors,
+                                                    regency_id: undefined,
+                                                    district_id: undefined,
+                                                    village_id: undefined,
+                                                }));
+                                            }}
                                             placeholder={
                                                 form.data.province_id
                                                     ? 'Pilih kota/kabupaten'
@@ -701,6 +745,61 @@ export default function RegistrationPage() {
                                             }
                                             disabled={!form.data.province_id}
                                             options={filteredRegencies.map(
+                                                (item) => ({
+                                                    value: String(item.id),
+                                                    label: item.name,
+                                                }),
+                                            )}
+                                        />
+                                    </Field>
+                                    <Field
+                                        label="Kecamatan"
+                                        error={mergedErrors.district_id}
+                                    >
+                                        <Select
+                                            value={String(form.data.district_id)}
+                                            onChange={(value) => {
+                                                form.setData((data: any) => ({
+                                                    ...data,
+                                                    district_id: value,
+                                                    village_id: '',
+                                                }));
+                                                setLocalErrors((errors) => ({
+                                                    ...errors,
+                                                    district_id: undefined,
+                                                    village_id: undefined,
+                                                }));
+                                            }}
+                                            placeholder={
+                                                form.data.regency_id
+                                                    ? 'Pilih kecamatan'
+                                                    : 'Pilih kota/kabupaten dulu'
+                                            }
+                                            disabled={!form.data.regency_id}
+                                            options={filteredDistricts.map(
+                                                (item) => ({
+                                                    value: String(item.id),
+                                                    label: item.name,
+                                                }),
+                                            )}
+                                        />
+                                    </Field>
+                                    <Field
+                                        label="Desa/Kelurahan"
+                                        error={mergedErrors.village_id}
+                                    >
+                                        <Select
+                                            value={String(form.data.village_id)}
+                                            onChange={(value) =>
+                                                setData('village_id', value)
+                                            }
+                                            placeholder={
+                                                form.data.district_id
+                                                    ? 'Pilih desa/kelurahan'
+                                                    : 'Pilih kecamatan dulu'
+                                            }
+                                            disabled={!form.data.district_id}
+                                            options={filteredVillages.map(
                                                 (item) => ({
                                                     value: String(item.id),
                                                     label: item.name,
@@ -765,15 +864,16 @@ export default function RegistrationPage() {
                                             label="Ikut dari Cabang Mana?"
                                             error={mergedErrors.branch}
                                         >
-                                            <Input
-                                                value={form.data.branch}
-                                                onChange={(event) =>
-                                                    setData(
-                                                        'branch',
-                                                        event.target.value,
-                                                    )
+                                            <Select
+                                                value={String(form.data.branch)}
+                                                onChange={(value) =>
+                                                    setData('branch', value)
                                                 }
-                                                placeholder="Contoh: Cabang Surabaya"
+                                                placeholder="Pilih cabang"
+                                                options={branches.map((b) => ({
+                                                    value: b.name,
+                                                    label: b.name,
+                                                }))}
                                             />
                                         </Field>
                                     </div>
@@ -848,7 +948,7 @@ export default function RegistrationPage() {
                                         accept="image/*,.pdf"
                                     />
                                     <FileField
-                                        label="Upload Kartu Pelajar"
+                                        label="Upload Kartu Pelajar/KIA/KK/AKTA"
                                         file={form.data.student_card}
                                         error={mergedErrors.student_card}
                                         onChange={(file) =>
@@ -996,41 +1096,70 @@ export default function RegistrationPage() {
                                         />
                                     </Field>
                                 </div>
-                                <div className="space-y-3">
-                                    <Consent
-                                        checked={form.data.data_truth_consent}
-                                        onChange={(checked) =>
-                                            setData(
-                                                'data_truth_consent',
-                                                checked,
-                                            )
-                                        }
-                                        text="Saya menyatakan bahwa seluruh data yang diberikan adalah benar dan dapat dipertanggungjawabkan."
-                                        error={mergedErrors.data_truth_consent}
-                                    />
-                                    <Consent
-                                        checked={
-                                            form.data.documentation_consent
-                                        }
-                                        onChange={(checked) =>
-                                            setData(
-                                                'documentation_consent',
-                                                checked,
-                                            )
-                                        }
-                                        text="Saya menyetujui penggunaan dokumentasi selama kegiatan OMATIQ berlangsung."
-                                        error={
-                                            mergedErrors.documentation_consent
-                                        }
-                                    />
-                                    <Consent
-                                        checked={form.data.rules_consent}
-                                        onChange={(checked) =>
-                                            setData('rules_consent', checked)
-                                        }
-                                        text="Saya bersedia mengikuti seluruh ketentuan dan jadwal kegiatan OMATIQ."
-                                        error={mergedErrors.rules_consent}
-                                    />
+                                <div className="rounded-3xl border border-slate-200 bg-[#F8FAFC] p-5 dark:border-slate-700 dark:bg-slate-800">
+                                    <p className="mb-4 text-sm font-black text-[#1E293B] dark:text-white">
+                                        Persetujuan Peserta & Wali
+                                    </p>
+                                    <div className="space-y-3">
+                                        <label className="flex cursor-pointer items-start gap-3 rounded-2xl bg-white p-4 ring-1 ring-slate-100 dark:bg-slate-900 dark:ring-slate-700">
+                                            <input
+                                                type="checkbox"
+                                                checked={form.data.data_truth_consent}
+                                                onChange={(event) =>
+                                                    setData(
+                                                        'data_truth_consent',
+                                                        event.target.checked,
+                                                    )
+                                                }
+                                                className="mt-1 h-4 w-4 rounded border-slate-300 text-[#17524A] dark:border-slate-600"
+                                            />
+                                            <span className="text-sm leading-7 font-bold text-[#1E293B] dark:text-white">
+                                                Saya menyatakan bahwa seluruh data yang diberikan adalah benar dan dapat dipertanggungjawabkan.
+                                            </span>
+                                        </label>
+                                        <label className="flex cursor-pointer items-start gap-3 rounded-2xl bg-white p-4 ring-1 ring-slate-100 dark:bg-slate-900 dark:ring-slate-700">
+                                            <input
+                                                type="checkbox"
+                                                checked={form.data.documentation_consent}
+                                                onChange={(event) =>
+                                                    setData(
+                                                        'documentation_consent',
+                                                        event.target.checked,
+                                                    )
+                                                }
+                                                className="mt-1 h-4 w-4 rounded border-slate-300 text-[#17524A] dark:border-slate-600"
+                                            />
+                                            <span className="text-sm leading-7 font-bold text-[#1E293B] dark:text-white">
+                                                Saya menyetujui penggunaan dokumentasi selama kegiatan OMATIQ berlangsung.
+                                            </span>
+                                        </label>
+                                        <label className="flex cursor-pointer items-start gap-3 rounded-2xl bg-white p-4 ring-1 ring-slate-100 dark:bg-slate-900 dark:ring-slate-700">
+                                            <input
+                                                type="checkbox"
+                                                checked={form.data.rules_consent}
+                                                onChange={(event) =>
+                                                    setData(
+                                                        'rules_consent',
+                                                        event.target.checked,
+                                                    )
+                                                }
+                                                className="mt-1 h-4 w-4 rounded border-slate-300 text-[#17524A] dark:border-slate-600"
+                                            />
+                                            <span className="text-sm leading-7 font-bold text-[#1E293B] dark:text-white">
+                                                Saya bersedia mengikuti seluruh ketentuan dan jadwal kegiatan OMATIQ.
+                                            </span>
+                                        </label>
+                                    </div>
+                                    {(mergedErrors.data_truth_consent ||
+                                        mergedErrors.documentation_consent ||
+                                        mergedErrors.rules_consent) && (
+                                        <p className="mt-3 text-sm font-medium text-destructive">
+                                            {mergedErrors.data_truth_consent ||
+                                                mergedErrors.documentation_consent ||
+                                                mergedErrors.rules_consent ||
+                                                'Semua persetujuan wajib dicentang.'}
+                                        </p>
+                                    )}
                                 </div>
                             </FormSection>
                         )}

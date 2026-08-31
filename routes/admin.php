@@ -100,8 +100,7 @@ Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'auth.admi
 
         Route::prefix('master')->as('master.')->group(function () {
             Route::get('binaan/data', [MasterBinaanController::class, 'getData'])->name('binaan.data');
-            Route::get('binaan/{binaan}', [MasterBinaanController::class, 'show'])->name('binaan.show');
-            Route::get('binaan', [MasterBinaanController::class, 'index'])->name('binaan.index');
+            Route::resource('binaan', MasterBinaanController::class)->parameters(['binaan' => 'binaan']);
 
             Route::get('sanggar/data', [MasterSanggarController::class, 'getData'])->name('sanggar.data');
             Route::get('sanggar/{sanggar}', [MasterSanggarController::class, 'show'])->name('sanggar.show');

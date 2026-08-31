@@ -43,9 +43,9 @@ function createOptionsStudent(User $teacher, string $nik): Student
         'gender' => 'female',
         'birth_place' => 'Surabaya',
         'birth_date' => '2012-05-15',
-        'age' => 14,
+
         'school_name' => 'SMP Negeri 2 Surabaya',
-        'grade' => '8',
+        'grade' => 'II',
         'address' => 'Jl. Raya Darmo No. 12',
         'parent_phone' => '081234567890',
         'mentor_id' => $teacher->id,

@@ -66,9 +66,6 @@ class TeacherService
 
             return Participant::create([
                 'student_id' => $student->id,
-                'penyaluran_student_id' => $penyaluranStudent['student_id'] ?? $penyaluranStudent['id'] ?? $data['penyaluran_student_id'],
-                'penyaluran_student_name' => $penyaluranStudent['name'] ?? $penyaluranStudent['full_name'] ?? '',
-                'penyaluran_student_nik' => $penyaluranStudent['nik'] ?? null,
                 'penyaluran_sanggar_id' => $data['penyaluran_sanggar_id'] ?? null,
                 'penyaluran_sanggar_name' => $data['penyaluran_sanggar_name'] ?? null,
                 'mentor_id' => $teacher->id,

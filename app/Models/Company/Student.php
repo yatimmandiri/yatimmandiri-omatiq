@@ -25,9 +25,10 @@ use Spatie\Activitylog\Support\LogOptions;
     'gender',
     'birth_place',
     'birth_date',
-    'age',
     'school_name',
     'grade',
+    'school_level',
+    'nis',
     'address',
     'province_id',
     'regency_id',
@@ -53,7 +54,6 @@ class Student extends Model
     {
         return [
             'birth_date' => 'date',
-            'age' => 'integer',
             'is_binaan' => 'boolean',
         ];
     }
@@ -156,7 +156,9 @@ class Student extends Model
 
         return Participant::query()
             ->where(function (Builder $q) use ($nik) {
-                $q->where('nik', $nik)->orWhere('penyaluran_student_nik', $nik);
+                $q->where('nik', $nik)
+                    ->orWhere('penyaluran_student_nik', $nik)
+                    ->orWhereHas('student', fn (Builder $qq) => $qq->where('nik', $nik));
             })
             ->where(function ($q) use ($eventYear) {
                 $q->where('event_year', $eventYear);

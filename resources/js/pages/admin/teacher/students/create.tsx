@@ -30,6 +30,7 @@ export default function CreatePage() {
         regencies = [],
         districts = [],
         villages = [],
+        branches = [],
         preselected_student_id = null,
         selected_sanggar_id = null,
     } = usePage<{
@@ -40,6 +41,7 @@ export default function CreatePage() {
         regencies?: Array<{ id: string; province_id: string; name: string }>;
         districts?: Array<{ id: string; regency_id: string; name: string }>;
         villages?: Array<{ id: string; district_id: string; name: string }>;
+        branches?: Array<{ id: number; name: string }>;
         preselected_student_id?: number | string | null;
         selected_sanggar_id?: number | string | null;
     }>().props;
@@ -266,10 +268,11 @@ export default function CreatePage() {
                         />
                     </Field>
                     <Field label="Cabang" error={error('branch')}>
-                        <Input
+                        <Select
                             value={form.data.branch}
-                            onChange={(e) => form.setData('branch', e.target.value)}
-                            placeholder="Cabang Yatim Mandiri"
+                            onChange={(value) => form.setData('branch', value)}
+                            placeholder="Pilih cabang"
+                            options={(typeof branches !== 'undefined' ? branches : []).map((b: any) => ({ value: b.name, label: b.name }))}
                         />
                     </Field>
                 </div>
