@@ -7,17 +7,11 @@ use App\Http\Requests\Company\StoreTeacherParticipantRequest;
 use App\Models\Company\Olimpiade;
 use App\Models\Company\Participant;
 use App\Models\Company\Student;
-use App\Models\Core\Region\District;
-use App\Models\Core\Region\Province;
-use App\Models\Core\Region\Regency;
-use App\Models\Core\Region\Village;
 use App\Services\PenyaluranService;
 use App\Services\TeacherService;
 use App\Settings\SiteSettings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -97,11 +91,6 @@ class TeacherStudentController extends Controller
         }
         $options['sanggars'] = collect($sanggarsRaw)->map(fn (array $s) => ['id' => $s['id'] ?? null, 'name' => $s['name'] ?? '-', 'type' => $s['type'] ?? null])->values()->all();
         $options['selected_sanggar_id'] = $sanggarId;
-        $options['provinces'] = Province::orderBy('name')->get(['id', 'name']);
-        $options['regencies'] = Regency::orderBy('name')->get(['id', 'province_id', 'name'])->map(fn ($r) => ['id' => $r->id, 'province_id' => $r->province_id, 'name' => $r->name])->values()->all();
-        $options['districts'] = District::orderBy('name')->get(['id', 'regency_id', 'name'])->map(fn ($r) => ['id' => $r->id, 'regency_id' => $r->regency_id, 'name' => $r->name])->values()->all();
-        $options['villages'] = Village::orderBy('name')->limit(500)->get(['id', 'district_id', 'name'])->map(fn ($r) => ['id' => $r->id, 'district_id' => $r->district_id, 'name' => $r->name])->values()->all();
-        $options['branches'] = Cache::remember('branch_offices', 3600, fn () => json_decode(Storage::disk('local')->get('branch-offices.json'), true) ?? []);
 
         return Inertia::render('admin/teacher/students/create', $options);
     }
@@ -136,7 +125,7 @@ class TeacherStudentController extends Controller
         $penyaluranStudent = null;
         if ($token) {
             try {
-                $studentsRaw = $this->penyaluran->students($token);
+                $studentsRaw = $this->penyaluran->students($token, $data['penyaluran_sanggar_id'] ?? null);
                 $penyaluranStudent = collect($studentsRaw)->firstWhere(fn (array $s) => (int) ($s['student_id'] ?? $s['id'] ?? 0) === (int) $data['penyaluran_student_id']);
             } catch (\Throwable $e) {
                 $penyaluranStudent = null;
@@ -154,9 +143,17 @@ class TeacherStudentController extends Controller
             return back()->withErrors(['penyaluran_student_id' => 'Binaan tidak ditemukan.']);
         }
 
+        if (empty($data['penyaluran_sanggar_id']) && ! empty($penyaluranStudent['sanggar_id'])) {
+            $data['penyaluran_sanggar_id'] = $penyaluranStudent['sanggar_id'];
+        }
+
+        if (empty($data['penyaluran_sanggar_name']) && ! empty($penyaluranStudent['sanggar_name'])) {
+            $data['penyaluran_sanggar_name'] = $penyaluranStudent['sanggar_name'];
+        }
+
         $participant = $this->service->registerStudent(Auth::user(), $data, $penyaluranStudent);
 
-        $name = $participant->penyaluran_student_name ?? 'Unknown';
+        $name = $participant->student?->full_name ?? 'Unknown';
 
         return redirect()
             ->route('admin.teacher.students.index')
@@ -205,18 +202,14 @@ class TeacherStudentController extends Controller
             $studentsRaw = $local;
         }
 
-        // Map active participants by penyaluran_student_id + legacy student_id
+        // Map active participants by Student.penyaluran_id so API roster rows can be matched.
         $activeMap = Participant::query()
             ->where('mentor_id', Auth::id())
-            ->where(function ($q) {
-                $q->whereNotNull('penyaluran_student_id')->orWhereNotNull('student_id');
-            })
-            ->with('olimpiade:id,name')
+            ->whereNotNull('student_id')
+            ->with(['olimpiade:id,name', 'student:id,penyaluran_id'])
             ->orderByDesc('created_at')
             ->get()
-            ->groupBy(function (Participant $p) {
-                return (int) ($p->penyaluran_student_id ?? $p->student_id ?? 0);
-            })
+            ->groupBy(fn (Participant $p) => (int) ($p->student?->penyaluran_id ?? $p->student_id))
             ->map(fn ($group) => $group->first());
 
         // Pendaftaran: flat unique by NIK (binaan di >1 sanggar tampil 1x)

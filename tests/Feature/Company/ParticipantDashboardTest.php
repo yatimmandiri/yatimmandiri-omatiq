@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Company\Olimpiade;
 use App\Models\Company\Participant;
 use App\Models\Core\Permission;
 use App\Models\Core\Role;
@@ -83,4 +84,60 @@ test('admin can access participant index', function () {
 
     $response = $this->actingAs($user)->get(route('admin.companies.participants.index'));
     $response->assertOk();
+});
+
+test('admin can filter participant data by operational fields', function () {
+    $user = User::factory()->create();
+    $user->assignRole('Administrators');
+
+    $math = Olimpiade::factory()->create([
+        'name' => 'Olimpiade Matematika',
+        'event_year' => 2026,
+    ]);
+    $quran = Olimpiade::factory()->create([
+        'name' => 'Olimpiade Al-Quran',
+        'event_year' => 2027,
+    ]);
+
+    $matched = Participant::factory()->create([
+        'olimpiade_id' => $math->id,
+        'status' => 'verified',
+        'registration_type' => 'teacher',
+        'event_year' => 2026,
+        'payment_status' => 'paid',
+        'branch' => 'TANGERANG',
+    ]);
+
+    Participant::factory()->create([
+        'olimpiade_id' => $math->id,
+        'status' => 'submitted',
+        'registration_type' => 'public',
+        'event_year' => 2026,
+        'payment_status' => 'waiting_confirmation',
+        'branch' => 'SURABAYA',
+    ]);
+
+    Participant::factory()->create([
+        'olimpiade_id' => $quran->id,
+        'status' => 'rejected',
+        'registration_type' => 'public',
+        'event_year' => 2027,
+        'payment_status' => 'unpaid',
+        'branch' => 'TANGERANG',
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('admin.companies.participants.data', [
+            'filterValue' => [
+                'olimpiade_id' => (string) $math->id,
+                'status' => 'verified',
+                'registration_type' => 'teacher',
+                'event_year' => '2026',
+                'payment_status' => 'paid',
+                'branch' => 'TANGERANG',
+            ],
+        ]))
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.id', $matched->id);
 });

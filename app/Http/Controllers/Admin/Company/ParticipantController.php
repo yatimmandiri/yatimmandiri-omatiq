@@ -23,7 +23,49 @@ class ParticipantController extends Controller
     {
         $this->authorize('viewAny', Participant::class);
 
-        return Inertia::render('admin/company/participant/list');
+        $eventYears = collect([
+            ...Participant::query()
+                ->whereNotNull('event_year')
+                ->distinct()
+                ->pluck('event_year')
+                ->all(),
+            ...Olimpiade::query()
+                ->whereNotNull('event_year')
+                ->distinct()
+                ->pluck('event_year')
+                ->all(),
+        ])
+            ->filter()
+            ->unique()
+            ->sortDesc()
+            ->values();
+
+        return Inertia::render('admin/company/participant/list', [
+            'filterOptions' => [
+                'olimpiades' => Olimpiade::query()
+                    ->ordered()
+                    ->get(['id', 'name', 'event_year'])
+                    ->map(fn (Olimpiade $olimpiade) => [
+                        'value' => (string) $olimpiade->id,
+                        'label' => trim($olimpiade->name.' '.($olimpiade->event_year ? "({$olimpiade->event_year})" : '')),
+                    ]),
+                'eventYears' => $eventYears->map(fn ($year) => [
+                    'value' => (string) $year,
+                    'label' => (string) $year,
+                ]),
+                'branches' => Participant::query()
+                    ->whereNotNull('branch')
+                    ->where('branch', '<>', '')
+                    ->distinct()
+                    ->orderBy('branch')
+                    ->limit(150)
+                    ->pluck('branch')
+                    ->map(fn (string $branch) => [
+                        'value' => $branch,
+                        'label' => $branch,
+                    ]),
+            ],
+        ]);
     }
 
     public function show(Participant $participant): Response
@@ -32,7 +74,7 @@ class ParticipantController extends Controller
 
         return Inertia::render('admin/company/participant/show', [
             'participant' => $this->participantPayload(
-                $participant->load(['olimpiade:id,name', 'student:id,full_name,school_name,grade,gender,photo_path,student_card_path,province_id,regency_id,parent_phone,nik,birth_place,birth_date,nickname,address', 'student.province:id,name', 'student.regency:id,name']),
+                $participant->load(['olimpiade:id,name', 'student:id,full_name,school_name,school_level,nis,grade,gender,photo_path,student_card_path,province_id,regency_id,parent_phone,nik,birth_place,birth_date,nickname,address,is_binaan', 'student.province:id,name', 'student.regency:id,name']),
             ),
         ]);
     }
@@ -43,7 +85,7 @@ class ParticipantController extends Controller
 
         return Inertia::render('admin/company/participant/edit', [
             'participant' => $this->participantPayload(
-                $participant->load(['student:id,full_name,school_name,grade,gender,photo_path,identity_card_path,family_card_path,student_card_path,province_id,regency_id,parent_phone,nik,birth_place,birth_date,nickname,address', 'student.province:id,name', 'student.regency:id,name,province_id']),
+                $participant->load(['student:id,full_name,school_name,school_level,nis,grade,gender,photo_path,identity_card_path,family_card_path,student_card_path,province_id,regency_id,parent_phone,nik,birth_place,birth_date,nickname,address,is_binaan', 'student.province:id,name', 'student.regency:id,name,province_id']),
             ),
             ...$this->formOptions(),
         ]);
@@ -137,6 +179,8 @@ class ParticipantController extends Controller
             : 'created_at';
         $direction = strtolower((string) $request->input('orderDirection')) === 'asc' ? 'asc' : 'desc';
 
+        $filterValue = $request->input('filterValue', []);
+
         $query = Participant::query()
             ->with([
                 'olimpiade:id,name',
@@ -144,8 +188,12 @@ class ParticipantController extends Controller
                 'student.regency:id,name',
             ])
             ->search($request->string('globalSearch')->toString())
-            ->when($request->input('filterValue.status'), fn ($query, $status) => $query->where('status', $status))
-            ->when($request->input('filterValue.olimpiade_id'), fn ($query, $id) => $query->where('olimpiade_id', $id))
+            ->when(data_get($filterValue, 'status'), fn ($query, $status) => $query->where('status', $status))
+            ->when(data_get($filterValue, 'olimpiade_id'), fn ($query, $id) => $query->where('olimpiade_id', $id))
+            ->when(data_get($filterValue, 'registration_type'), fn ($query, $type) => $query->where('registration_type', $type))
+            ->when(data_get($filterValue, 'event_year'), fn ($query, $year) => $query->where('event_year', $year))
+            ->when(data_get($filterValue, 'payment_status'), fn ($query, $status) => $query->where('payment_status', $status))
+            ->when(data_get($filterValue, 'branch'), fn ($query, $branch) => $query->where('branch', $branch))
             ->orderBy($orderBy, $direction)
             ->orderBy('id', 'desc');
 
@@ -166,7 +214,6 @@ class ParticipantController extends Controller
             'gender',
             'birth_place',
             'birth_date',
-            'age',
             'school_name',
             'grade',
             'address',
@@ -180,17 +227,8 @@ class ParticipantController extends Controller
             'student_card',
         ]);
 
-        // For binaan snapshot: don't overwrite with null when admin only changes status
-        $penyaluranKeys = [
-            'penyaluran_student_name', 'penyaluran_student_nik', 'penyaluran_student_nis',
-            'penyaluran_student_gender', 'penyaluran_student_school_name',
-            'penyaluran_student_school_level', 'penyaluran_student_class',
-            'penyaluran_student_birth_date', 'penyaluran_sanggar_name',
-        ];
-        foreach ($penyaluranKeys as $key) {
-            if (array_key_exists($key, $data) && $data[$key] === null) {
-                unset($data[$key]);
-            }
+        if (array_key_exists('penyaluran_sanggar_name', $data) && $data['penyaluran_sanggar_name'] === null) {
+            unset($data['penyaluran_sanggar_name']);
         }
 
         $data['has_joined_before'] = $request->boolean('has_joined_before');
@@ -208,9 +246,9 @@ class ParticipantController extends Controller
     private function studentPayload(UpdateParticipantRequest $request): array
     {
         return $request->safe()->only([
-            'full_name', 'nickname', 'gender', 'birth_place', 'birth_date', 'age',
+            'full_name', 'nickname', 'gender', 'birth_place', 'birth_date',
             'school_name', 'grade', 'address', 'province_id',
-            'regency_id', 'parent_phone', 'nik',
+            'regency_id', 'parent_phone', 'nik', 'school_level', 'nis',
         ]);
     }
 

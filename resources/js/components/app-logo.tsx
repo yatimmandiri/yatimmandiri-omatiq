@@ -4,9 +4,14 @@ import { usePage } from '@inertiajs/react';
 
 export default function AppLogo() {
     const { settings } = usePage<any>().props;
+    const year = new Date().getFullYear();
 
     const logoUrl = (() => {
-        if (settings.logo?.startsWith('http')) {
+        if (!settings?.logo) {
+            return null;
+        }
+
+        if (settings.logo.startsWith('http') || settings.logo.startsWith('/')) {
             return settings.logo;
         }
 
@@ -17,19 +22,23 @@ export default function AppLogo() {
         <>
             <div
                 className={cn(
-                    !settings.logo && 'bg-sidebar-primary',
+                    !settings?.logo && 'bg-sidebar-primary',
                     'flex aspect-square size-8 items-center justify-center rounded-md text-sidebar-primary-foreground',
                 )}
             >
-                {settings.logo ? (
-                    <img src={logoUrl} alt="Logo" />
+                {logoUrl ? (
+                    <img
+                        src={logoUrl}
+                        alt="Logo OMATIQ"
+                        className="size-full rounded-md object-contain"
+                    />
                 ) : (
                     <AppLogoIcon className="size-5 fill-current text-white dark:text-black" />
                 )}
             </div>
             <div className="ml-1 grid flex-1 text-left text-sm">
                 <span className="mb-0.5 truncate leading-tight font-semibold">
-                    Laravel Starter Kit
+                    OMATIQ {year}
                 </span>
             </div>
         </>

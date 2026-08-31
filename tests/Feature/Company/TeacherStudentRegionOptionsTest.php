@@ -70,8 +70,6 @@ it('provides only olimpiades and the teacher roster on the create page', functio
             ->where('students.0.id', $student->id)
             ->where('students.0.nik', $student->nik)
             ->where('students.0.full_name', $student->full_name)
-            ->has('provinces')
-            ->has('regencies')
         );
 });
 
@@ -138,7 +136,7 @@ it('lets a teacher register an assigned student from the create page', function 
     $participant = Participant::first();
 
     expect($participant)->not->toBeNull()
-        ->and($participant->penyaluran_student_id)->toBe($student->id)
+        ->and($participant->student_id)->toBe($student->id)
         ->and($participant->mentor_id)->toBe($teacher->id);
 });
 

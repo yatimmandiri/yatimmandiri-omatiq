@@ -29,8 +29,8 @@ export const SiteForm = () => {
         linkedin: settings?.linkedin || '',
         whatsapp: settings?.whatsapp || '',
         tiktok: settings?.tiktok || '',
-        registration_public_open: settings?.registration_public_open ?? false,
-        registration_binaan_open: settings?.registration_binaan_open ?? false,
+        registration_public_open: settings?.registration_public_open ?? true,
+        registration_binaan_open: settings?.registration_binaan_open ?? true,
         _method: 'PUT',
     });
 

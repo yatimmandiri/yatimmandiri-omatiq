@@ -46,10 +46,7 @@ class StoreTeacherParticipantRequest extends FormRequest
                             return;
                         }
                         $exists = Participant::query()
-                            ->where(function ($q) use ($value) {
-                                $q->where('penyaluran_student_id', $value)
-                                    ->orWhereHas('student', fn ($qq) => $qq->where('penyaluran_id', $value)->orWhere('id', $value));
-                            })
+                            ->whereHas('student', fn ($q) => $q->where('penyaluran_id', $value)->orWhere('id', $value))
                             ->where(function ($q) use ($eventYear) {
                                 $q->where('event_year', $eventYear);
                                 if ($eventYear == 2026) {
@@ -88,12 +85,9 @@ class StoreTeacherParticipantRequest extends FormRequest
                         }
                     }
 
-                    // Check existing participant via penyaluran_student_id or Student for this event
+                    // Check existing participant via Student.penyaluran_id for this event.
                     $exists = Participant::query()
-                        ->where(function ($q) use ($value) {
-                            $q->where('penyaluran_student_id', $value)
-                                ->orWhereHas('student', fn ($qq) => $qq->where('penyaluran_id', $value)->orWhere('id', $value));
-                        })
+                        ->whereHas('student', fn ($q) => $q->where('penyaluran_id', $value)->orWhere('id', $value))
                         ->where(function ($q) use ($eventYear) {
                             $q->where('event_year', $eventYear);
                             if ($eventYear == 2026) {
@@ -119,8 +113,8 @@ class StoreTeacherParticipantRequest extends FormRequest
             'village_id' => ['nullable', 'exists:villages,id'],
             'nickname' => ['nullable', 'string', 'max:120'],
             'birth_place' => ['nullable', 'string', 'max:120'],
-            'age' => ['nullable', 'integer', 'min:5', 'max:20'],
             'parent_phone' => ['nullable', 'string', 'max:30'],
+            'mentor_phone' => ['nullable', 'string', 'max:30'],
             'achievements' => ['nullable', 'string', 'max:2000'],
             'has_joined_before' => ['nullable', 'boolean'],
             'previous_year' => ['nullable', 'integer', 'min:1900', 'max:2100'],

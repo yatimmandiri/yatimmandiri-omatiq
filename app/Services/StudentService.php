@@ -16,7 +16,7 @@ class StudentService
 
     private const STUDENT_FIELDS = [
         'nik', 'full_name', 'nickname', 'gender', 'birth_place', 'birth_date',
-        'age', 'school_name', 'grade', 'address', 'province_id', 'regency_id',
+        'school_level', 'nis', 'school_name', 'grade', 'address', 'province_id', 'regency_id',
         'parent_phone', 'mentor_id', 'mentor_name', 'mentor_phone', 'is_binaan',
     ];
 

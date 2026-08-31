@@ -6,10 +6,11 @@ import { dashboard } from '@/routes/admin';
 import masterBinaan from '@/routes/admin/teacher/master/binaan';
 import { useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, Save } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
 
 export default function CreatePage() {
-    const { provinces = [], regencies = [], districts = [], villages = [] } = usePage<any>().props;
+    const { provinces = [], regencies = [], districts = [], villages: initialVillages = [] } = usePage<any>().props;
     const form = useForm<any>({
         nik: '',
         full_name: '',
@@ -23,6 +24,40 @@ export default function CreatePage() {
         district_id: '',
         village_id: '',
     });
+    const [villages, setVillages] = useState<any[]>(initialVillages);
+    const [isLoadingVillages, setIsLoadingVillages] = useState(false);
+
+    useEffect(() => {
+        const districtId = form.data.district_id;
+
+        if (!districtId) {
+            setVillages([]);
+            return;
+        }
+
+        const controller = new AbortController();
+        setIsLoadingVillages(true);
+
+        fetch(`/regions/villages?district_id=${encodeURIComponent(districtId)}`, {
+            headers: { Accept: 'application/json' },
+            signal: controller.signal,
+        })
+            .then((response) => (response.ok ? response.json() : { data: [] }))
+            .then((payload) => setVillages(payload.data ?? []))
+            .catch((fetchError) => {
+                if (fetchError.name !== 'AbortError') {
+                    setVillages([]);
+                }
+            })
+            .finally(() => {
+                if (!controller.signal.aborted) {
+                    setIsLoadingVillages(false);
+                }
+            });
+
+        return () => controller.abort();
+    }, [form.data.district_id]);
+
     const submit = (e: FormEvent) => {
         e.preventDefault();
         form.post(masterBinaan.store().url);
@@ -51,7 +86,7 @@ export default function CreatePage() {
                 </div>
                 <div className="grid gap-5 md:grid-cols-2">
                     <Field label="Kecamatan" error={error('district_id')}><select value={form.data.district_id} onChange={(e) => { form.setData('district_id', e.target.value); form.setData('village_id', ''); }} className="w-full rounded-md border px-3 py-2 text-sm"><option value="">Pilih kecamatan</option>{districts.filter((r: any) => String(r.regency_id) === String(form.data.regency_id)).map((r: any) => <option key={r.id} value={r.id}>{r.name}</option>)}</select></Field>
-                    <Field label="Desa" error={error('village_id')}><select value={form.data.village_id} onChange={(e) => form.setData('village_id', e.target.value)} className="w-full rounded-md border px-3 py-2 text-sm" required><option value="">Pilih desa</option>{villages.filter((r: any) => String(r.district_id) === String(form.data.district_id)).map((r: any) => <option key={r.id} value={r.id}>{r.name}</option>)}</select></Field>
+                    <Field label="Desa" error={error('village_id')}><select value={form.data.village_id} onChange={(e) => form.setData('village_id', e.target.value)} className="w-full rounded-md border px-3 py-2 text-sm" disabled={!form.data.district_id || isLoadingVillages} required><option value="">{isLoadingVillages ? 'Memuat desa...' : 'Pilih desa'}</option>{villages.filter((r: any) => String(r.district_id) === String(form.data.district_id)).map((r: any) => <option key={r.id} value={r.id}>{r.name}</option>)}</select></Field>
                 </div>
             </Card>
         </form>

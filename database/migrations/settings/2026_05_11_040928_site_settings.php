@@ -20,7 +20,7 @@ return new class extends SettingsMigration
         $this->migrator->add('site.whatsapp', '0811 1343 577');
         $this->migrator->add('site.tiktok', 'yatimmandiri');
         $this->migrator->add('site.maintenance_mode', false);
-        $this->migrator->add('site.registration_public_open', false);
-        $this->migrator->add('site.registration_binaan_open', false);
+        $this->migrator->add('site.registration_public_open', true);
+        $this->migrator->add('site.registration_binaan_open', true);
     }
 };

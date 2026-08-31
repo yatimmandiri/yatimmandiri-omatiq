@@ -16,7 +16,7 @@ const labels: Record<string, string> = {
 export default function ShowPage() {
     const { participant } = usePage<{ participant: Record<string, any> }>()
         .props;
-    const isBinaan = !!participant.penyaluran_student_id;
+    const isBinaan = !!participant.student?.is_binaan || !!participant.student?.penyaluran_id;
 
     return (
         <div className="flex flex-1 flex-col gap-6 p-4">
@@ -25,7 +25,7 @@ export default function ShowPage() {
                     <h1 className="text-2xl font-bold">Detail Binaan</h1>
                     <p className="text-sm text-muted-foreground">
                         {participant.registration_number} -{' '}
-                        {participant.penyaluran_student_name ?? participant.student?.full_name ?? participant.nik ?? participant.penyaluran_student_nik}
+                        {participant.student?.full_name ?? participant.nik}
                     </p>
                 </div>
                 <div className="flex gap-2">
@@ -43,10 +43,10 @@ export default function ShowPage() {
                 <Card className="space-y-5 p-5">
                     <h2 className="text-lg font-bold">Data Peserta</h2>
                     <div className="grid gap-5 sm:grid-cols-2">
-                        <Detail label="NIK" value={participant.penyaluran_student_nik ?? participant.student?.nik ?? participant.nik} />
+                        <Detail label="NIK" value={participant.student?.nik ?? participant.nik} />
                         <Detail
                             label="Nama Lengkap"
-                            value={participant.penyaluran_student_name ?? participant.student?.full_name}
+                            value={participant.student?.full_name}
                         />
                         {!isBinaan && (
                             <Detail
@@ -60,7 +60,7 @@ export default function ShowPage() {
                         />
                         {isBinaan ? (
                             <>
-                                <Detail label="NIS" value={participant.student?.nis ?? participant.penyaluran_student_nis} />
+                                <Detail label="NIS" value={participant.student?.nis} />
                                 <Detail label="Tanggal Lahir" value={participant.student?.birth_date?.slice(0, 10) ?? ''} />
                                 <Detail label="Jenjang" value={participant.student?.school_level} />
                             </>
@@ -69,10 +69,6 @@ export default function ShowPage() {
                                 <Detail
                                     label="Tempat, Tanggal Lahir"
                                     value={`${participant.student?.birth_place ?? ''}, ${participant.student?.birth_date?.slice(0, 10) ?? ''}`}
-                                />
-                                <Detail
-                                    label="Usia"
-                                    value={`${participant.student?.age ?? ''} tahun`}
                                 />
                             </>
                         )}
@@ -108,10 +104,7 @@ export default function ShowPage() {
                             value={labels[participant.status]}
                         />
                     </div>
-                    <Detail
-                        label="ID Penyaluran"
-                        value={participant.penyaluran_student_id}
-                    />
+                    <Detail label="ID Penyaluran" value={participant.student?.penyaluran_id} />
                     {!isBinaan && (
                         <Detail
                             label="Alamat"

@@ -1,11 +1,17 @@
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { dashboard } from '@/routes/admin';
 import teacherStudents from '@/routes/admin/teacher/students';
 import { useForm, usePage } from '@inertiajs/react';
-import { ArrowLeft, Save } from 'lucide-react';
+import {
+    ArrowLeft,
+    CheckCircle2,
+    GraduationCap,
+    Save,
+    School,
+    UserRound,
+} from 'lucide-react';
 import type { FormEvent, ReactNode } from 'react';
 
 type Option = {
@@ -13,12 +19,21 @@ type Option = {
     name: string;
     category?: string;
 };
+
 type RosterStudent = {
     id: number | string;
     nik: string;
     full_name: string;
-    school_name: string;
-    grade: string;
+    school_name?: string | null;
+    school_level?: string | null;
+    grade?: string | null;
+    birth_date?: string | null;
+    address?: string | null;
+    guardian_name?: string | null;
+    guardian_phone?: string | null;
+    sanggar_id?: number | string | null;
+    sanggar_name?: string | null;
+    kantor_name?: string | null;
 };
 
 export default function CreatePage() {
@@ -26,55 +41,41 @@ export default function CreatePage() {
         olimpiades = [],
         students = [],
         sanggars = [],
-        provinces = [],
-        regencies = [],
-        districts = [],
-        villages = [],
-        branches = [],
         preselected_student_id = null,
         selected_sanggar_id = null,
     } = usePage<{
         olimpiades?: Option[];
         students?: RosterStudent[];
         sanggars?: Array<{ id: number | string; name: string; type?: string }>;
-        provinces?: Array<{ id: string; name: string }>;
-        regencies?: Array<{ id: string; province_id: string; name: string }>;
-        districts?: Array<{ id: string; regency_id: string; name: string }>;
-        villages?: Array<{ id: string; district_id: string; name: string }>;
-        branches?: Array<{ id: number; name: string }>;
         preselected_student_id?: number | string | null;
         selected_sanggar_id?: number | string | null;
     }>().props;
 
-    const form = useForm<any>({
-        penyaluran_student_id: preselected_student_id
-            ? String(preselected_student_id)
-            : '',
-        penyaluran_sanggar_id: selected_sanggar_id
-            ? String(selected_sanggar_id)
-            : '',
+    const selectedStudent =
+        students.find(
+            (item) => String(item.id) === String(preselected_student_id),
+        ) ?? students[0];
+
+    const selectedSanggarId =
+        selected_sanggar_id ?? selectedStudent?.sanggar_id ?? '';
+
+    const form = useForm({
+        penyaluran_student_id: selectedStudent ? String(selectedStudent.id) : '',
+        penyaluran_sanggar_id: selectedSanggarId ? String(selectedSanggarId) : '',
         olimpiade_id: '',
-        birth_date: '',
-        address: '',
-        province_id: '',
-        regency_id: '',
-        district_id: '',
-        village_id: '',
-        nickname: '',
-        birth_place: '',
-        age: '',
-        parent_phone: '',
         achievements: '',
-        has_joined_before: false,
-        previous_year: '',
-        referral_source: '',
-        branch: '',
         notes: '',
     });
 
-    const filteredRegencies = regencies.filter((r) => String(r.province_id) === String(form.data.province_id));
-    const filteredDistricts = districts.filter((r) => String(r.regency_id) === String(form.data.regency_id));
-    const filteredVillages = villages.filter((r) => String(r.district_id) === String(form.data.district_id));
+    const activeStudent =
+        students.find(
+            (item) => String(item.id) === form.data.penyaluran_student_id,
+        ) ?? null;
+
+    const activeSanggar =
+        sanggars.find(
+            (item) => String(item.id) === form.data.penyaluran_sanggar_id,
+        ) ?? null;
 
     const submit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -83,7 +84,7 @@ export default function CreatePage() {
         });
     };
 
-    const error = (name: string) =>
+    const error = (name: keyof typeof form.data | string) =>
         form.errors[name] ? (
             <p className="text-sm font-medium text-destructive">
                 {form.errors[name]}
@@ -91,12 +92,23 @@ export default function CreatePage() {
         ) : null;
 
     return (
-        <form onSubmit={submit} className="space-y-6 p-4">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold">Daftarkan Binaan</h1>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                        Daftarkan binaan Anda ke OMATIQ
+        <form
+            onSubmit={submit}
+            className="mx-auto w-full max-w-5xl space-y-6 p-4 lg:p-6"
+        >
+            <div className="flex flex-col gap-4 rounded-3xl border bg-gradient-to-br from-orange-50 via-background to-sky-50 p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between lg:p-7">
+                <div className="max-w-2xl">
+                    <p className="mb-2 inline-flex items-center gap-2 rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-700">
+                        <CheckCircle2 className="size-4" />
+                        Form singkat guru
+                    </p>
+                    <h1 className="text-2xl font-bold tracking-tight text-foreground lg:text-3xl">
+                        Daftarkan Binaan ke OMATIQ
+                    </h1>
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                        Data binaan diambil otomatis dari Penyaluran. Guru cukup
+                        memilih kategori olimpiade, lalu menambahkan prestasi
+                        atau catatan bila diperlukan.
                     </p>
                 </div>
                 <div className="flex gap-2">
@@ -110,7 +122,11 @@ export default function CreatePage() {
                     </Button>
                     <Button
                         type="submit"
-                        disabled={form.processing || students.length === 0}
+                        disabled={
+                            form.processing ||
+                            students.length === 0 ||
+                            !form.data.penyaluran_student_id
+                        }
                     >
                         <Save />
                         {form.processing ? 'Menyimpan...' : 'Daftarkan'}
@@ -119,174 +135,196 @@ export default function CreatePage() {
             </div>
 
             {students.length === 0 && (
-                <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
-                    Belum ada binaan yang dapat didaftarkan dari penyaluran. Pastikan
-                    akun guru terhubung dan data santri tersedia di Penyaluran.
+                <div className="rounded-2xl border border-dashed p-5 text-sm text-muted-foreground">
+                    Belum ada binaan yang dapat didaftarkan dari Penyaluran.
+                    Pastikan akun guru terhubung dan data binaan tersedia.
                 </div>
             )}
 
-            <Card className="space-y-5 p-5">
-                <h2 className="text-lg font-bold">Data Pendaftaran</h2>
-                <Field label="Binaan" error={error('penyaluran_student_id')}>
-                    <Select
-                        value={form.data.penyaluran_student_id}
-                        onChange={(value) => form.setData('penyaluran_student_id', value)}
-                        placeholder="Pilih binaan"
-                        options={students.map((item) => ({
-                            value: String(item.id),
-                            label: `${item.full_name} - ${item.nik}`,
-                        }))}
-                    />
-                    {students.length > 0 && (
-                        <p className="text-xs text-muted-foreground">
-                            {form.data.penyaluran_student_id
-                                ? (students.find(
-                                      (item) =>
-                                          String(item.id) ===
-                                          form.data.penyaluran_student_id,
-                                  )?.school_name ?? 'Otomatis terisi')
-                                : 'Hanya menampilkan binaan dari penyaluran yang belum memiliki pendaftaran aktif.'}
-                        </p>
-                    )}
-                    {preselected_student_id && (
-                        <p className="text-xs text-amber-600">Otomatis terisi dari Daftar — guru hanya isi kategori & prestasi.</p>
-                    )}
-                </Field>
-                {sanggars.length > 0 && (
-                    <Field label="Sanggar" error={error('penyaluran_sanggar_id')}>
-                        <Select
-                            value={form.data.penyaluran_sanggar_id}
-                            onChange={(value) => form.setData('penyaluran_sanggar_id', value)}
-                            placeholder="Pilih sanggar perwakilan"
-                            options={sanggars.map((item) => ({
-                                value: String(item.id),
-                                label: `${item.name}${item.type ? ` (${item.type})` : ''}`,
-                            }))}
-                        />
-                        <p className="text-xs text-muted-foreground">
-                            {selected_sanggar_id
-                                ? 'Otomatis terisi dari Daftar — wajib untuk traceability sanggar.'
-                                : 'Wajib — pilih sanggar binaan ikut olimpiade dari sanggar mana.'}
-                        </p>
-                    </Field>
-                )}
-                <Card className="space-y-5 p-5">
-                    <h2 className="text-lg font-bold">Data Binaan (wajib)</h2>
-                    <p className="text-sm text-muted-foreground">Lengkapi data binaan dari Penyaluran — tanggal lahir & alamat lengkap wajib.</p>
-                    <div className="grid gap-5 md:grid-cols-2">
-                        <Field label="Tanggal Lahir" error={error('birth_date')}>
-                            <Input type="date" value={form.data.birth_date} onChange={(e) => form.setData('birth_date', e.target.value)} required />
-                        </Field>
-                        <Field label="Nama Panggilan (opsional)" error={error('nickname')}>
-                            <Input value={form.data.nickname} onChange={(e) => form.setData('nickname', e.target.value)} placeholder="Panggilan" />
-                        </Field>
-                    </div>
-                    <div className="grid gap-5 md:grid-cols-2">
-                        <Field label="Tempat Lahir (opsional)" error={error('birth_place')}>
-                            <Input value={form.data.birth_place} onChange={(e) => form.setData('birth_place', e.target.value)} placeholder="Surabaya" />
-                        </Field>
-                        <Field label="Usia (opsional)" error={error('age')}>
-                            <Input type="number" value={form.data.age} onChange={(e) => form.setData('age', e.target.value)} placeholder="12" />
-                        </Field>
-                    </div>
-                    <Field label="Alamat Lengkap" error={error('address')}>
-                        <textarea value={form.data.address} onChange={(e) => form.setData('address', e.target.value)} placeholder="Jl. Mawar No. 123" className="min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" rows={2} required />
-                    </Field>
-                    <div className="grid gap-5 md:grid-cols-2">
-                        <Field label="Provinsi" error={error('province_id')}>
-                            <Select value={form.data.province_id} onChange={(v) => { form.setData('province_id', v); form.setData('regency_id', ''); form.setData('district_id', ''); form.setData('village_id', ''); }} placeholder="Pilih provinsi" options={provinces.map((p) => ({ value: String(p.id), label: p.name }))} />
-                        </Field>
-                        <Field label="Kabupaten/Kota" error={error('regency_id')}>
-                            <Select value={form.data.regency_id} onChange={(v) => { form.setData('regency_id', v); form.setData('district_id', ''); form.setData('village_id', ''); }} placeholder="Pilih kabupaten" options={filteredRegencies.map((p) => ({ value: String(p.id), label: p.name }))} />
-                        </Field>
-                    </div>
-                    <div className="grid gap-5 md:grid-cols-2">
-                        <Field label="Kecamatan" error={error('district_id')}>
-                            <Select value={form.data.district_id} onChange={(v) => { form.setData('district_id', v); form.setData('village_id', ''); }} placeholder="Pilih kecamatan" options={filteredDistricts.map((p) => ({ value: String(p.id), label: p.name }))} />
-                        </Field>
-                        <Field label="Desa/Kelurahan" error={error('village_id')}>
-                            <Select value={form.data.village_id} onChange={(v) => form.setData('village_id', v)} placeholder="Pilih desa" options={filteredVillages.map((p) => ({ value: String(p.id), label: p.name }))} />
-                        </Field>
-                    </div>
-                    <Field label="HP Orang Tua (opsional)" error={error('parent_phone')}>
-                        <Input value={form.data.parent_phone} onChange={(e) => form.setData('parent_phone', e.target.value)} placeholder="0812..." />
-                    </Field>
-                </Card>
+            {students.length > 0 && (
+                <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+                    <Card className="space-y-5 rounded-3xl p-5 shadow-sm lg:p-6">
+                        <div className="flex items-start gap-4">
+                            <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-orange-100 text-orange-600">
+                                <UserRound className="size-6" />
+                            </div>
+                            <div>
+                                <h2 className="text-lg font-bold">
+                                    Data Binaan
+                                </h2>
+                                <p className="text-sm text-muted-foreground">
+                                    Pilih binaan yang akan didaftarkan.
+                                </p>
+                            </div>
+                        </div>
 
-                <Field label="Kategori Lomba" error={error('olimpiade_id')}>
-                    <Select
-                        value={form.data.olimpiade_id}
-                        onChange={(value) =>
-                            form.setData('olimpiade_id', value)
-                        }
-                        placeholder="Pilih kategori"
-                        options={olimpiades.map((item) => ({
-                            value: String(item.id),
-                            label: item.name,
-                        }))}
-                    />
-                </Field>
+                        <Field
+                            label="Binaan"
+                            error={error('penyaluran_student_id')}
+                        >
+                            <Select
+                                value={form.data.penyaluran_student_id}
+                                onChange={(value) => {
+                                    const next = students.find(
+                                        (item) => String(item.id) === value,
+                                    );
 
-                <Field label="Prestasi (opsional)" error={error('achievements')}>
-                    <textarea
-                        value={form.data.achievements}
-                        onChange={(e) => form.setData('achievements', e.target.value)}
-                        placeholder="Contoh: Juara 1 Matematika tingkat Kota 2025"
-                        className="min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                        rows={3}
-                    />
-                </Field>
-
-                <div className="grid gap-5 sm:grid-cols-2">
-                    <Field label="Pernah ikut sebelumnya?">
-                        <label className="flex items-center gap-2 text-sm">
-                            <input
-                                type="checkbox"
-                                checked={!!form.data.has_joined_before}
-                                onChange={(e) => form.setData('has_joined_before', e.target.checked)}
-                            />
-                            Ya, pernah ikut
-                        </label>
-                    </Field>
-                    {form.data.has_joined_before && (
-                        <Field label="Tahun sebelumnya" error={error('previous_year')}>
-                            <Input
-                                value={form.data.previous_year}
-                                onChange={(e) => form.setData('previous_year', e.target.value)}
-                                placeholder="2024"
+                                    form.setData((data) => ({
+                                        ...data,
+                                        penyaluran_student_id: value,
+                                        penyaluran_sanggar_id:
+                                            data.penyaluran_sanggar_id ||
+                                            (next?.sanggar_id
+                                                ? String(next.sanggar_id)
+                                                : ''),
+                                    }));
+                                }}
+                                placeholder="Pilih binaan"
+                                options={students.map((item) => ({
+                                    value: String(item.id),
+                                    label: `${item.full_name} - ${item.nik}`,
+                                }))}
                             />
                         </Field>
-                    )}
-                </div>
 
-                <div className="grid gap-5 sm:grid-cols-2">
-                    <Field label="Sumber referral" error={error('referral_source')}>
-                        <Input
-                            value={form.data.referral_source}
-                            onChange={(e) => form.setData('referral_source', e.target.value)}
-                            placeholder="Guru / Teman / Media sosial"
-                        />
-                    </Field>
-                    <Field label="Cabang" error={error('branch')}>
-                        <Select
-                            value={form.data.branch}
-                            onChange={(value) => form.setData('branch', value)}
-                            placeholder="Pilih cabang"
-                            options={(typeof branches !== 'undefined' ? branches : []).map((b: any) => ({ value: b.name, label: b.name }))}
-                        />
-                    </Field>
-                </div>
+                        {sanggars.length > 0 && (
+                            <Field
+                                label="Sanggar"
+                                error={error('penyaluran_sanggar_id')}
+                            >
+                                <Select
+                                    value={form.data.penyaluran_sanggar_id}
+                                    onChange={(value) =>
+                                        form.setData(
+                                            'penyaluran_sanggar_id',
+                                            value,
+                                        )
+                                    }
+                                    placeholder="Pilih sanggar"
+                                    options={sanggars.map((item) => ({
+                                        value: String(item.id),
+                                        label: `${item.name}${item.type ? ` (${item.type})` : ''}`,
+                                    }))}
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                    Biasanya sudah otomatis dari tombol
+                                    pendaftaran di daftar binaan.
+                                </p>
+                            </Field>
+                        )}
 
-                <Field label="Catatan" error={error('notes')}>
-                    <textarea
-                        value={form.data.notes}
-                        onChange={(e) => form.setData('notes', e.target.value)}
-                        placeholder="Catatan tambahan"
-                        className="min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                        rows={3}
-                    />
-                </Field>
-            </Card>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                            <InfoCard
+                                icon={<School className="size-5" />}
+                                label="Sekolah"
+                                value={[
+                                    activeStudent?.school_name,
+                                    activeStudent?.school_level,
+                                    activeStudent?.grade
+                                        ? `Kelas ${activeStudent.grade}`
+                                        : null,
+                                ]
+                                    .filter(Boolean)
+                                    .join(' - ')}
+                            />
+                            <InfoCard
+                                icon={<GraduationCap className="size-5" />}
+                                label="Sanggar"
+                                value={
+                                    activeStudent?.sanggar_name ??
+                                    activeSanggar?.name
+                                }
+                            />
+                            <InfoCard
+                                label="Tanggal Lahir"
+                                value={activeStudent?.birth_date?.slice(0, 10)}
+                            />
+                            <InfoCard
+                                label="Wali"
+                                value={[
+                                    activeStudent?.guardian_name,
+                                    activeStudent?.guardian_phone,
+                                ]
+                                    .filter(Boolean)
+                                    .join(' - ')}
+                            />
+                            <InfoCard
+                                className="sm:col-span-2"
+                                label="Alamat"
+                                value={activeStudent?.address}
+                            />
+                        </div>
+                    </Card>
+
+                    <Card className="space-y-5 rounded-3xl p-5 shadow-sm lg:p-6">
+                        <div>
+                            <h2 className="text-lg font-bold">
+                                Pilihan Olimpiade
+                            </h2>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                                Satu binaan hanya dapat memiliki satu
+                                pendaftaran aktif pada tahun event yang sama.
+                            </p>
+                        </div>
+
+                        <Field
+                            label="Kategori Olimpiade"
+                            error={error('olimpiade_id')}
+                        >
+                            <Select
+                                value={form.data.olimpiade_id}
+                                onChange={(value) =>
+                                    form.setData('olimpiade_id', value)
+                                }
+                                placeholder="Pilih kategori"
+                                options={olimpiades.map((item) => ({
+                                    value: String(item.id),
+                                    label: item.name,
+                                }))}
+                            />
+                        </Field>
+
+                        <Field
+                            label="Prestasi / Pengalaman (opsional)"
+                            error={error('achievements')}
+                        >
+                            <textarea
+                                value={form.data.achievements}
+                                onChange={(event) =>
+                                    form.setData(
+                                        'achievements',
+                                        event.target.value,
+                                    )
+                                }
+                                placeholder="Contoh: Juara kelas, hafalan juz, atau lomba yang pernah diikuti"
+                                className="min-h-28 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+                                rows={4}
+                            />
+                        </Field>
+
+                        <Field
+                            label="Catatan Guru (opsional)"
+                            error={error('notes')}
+                        >
+                            <textarea
+                                value={form.data.notes}
+                                onChange={(event) =>
+                                    form.setData('notes', event.target.value)
+                                }
+                                placeholder="Catatan singkat untuk admin, bila ada"
+                                className="min-h-24 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+                                rows={3}
+                            />
+                        </Field>
+
+                        <div className="rounded-2xl bg-muted/60 p-4 text-sm leading-6 text-muted-foreground">
+                            Dengan menekan tombol daftar, guru menyatakan data
+                            binaan dari Penyaluran sudah dipilih sesuai anak
+                            yang akan mengikuti OMATIQ.
+                        </div>
+                    </Card>
+                </div>
+            )}
         </form>
     );
 }
@@ -307,6 +345,28 @@ const Field = ({
     </div>
 );
 
+const InfoCard = ({
+    icon,
+    label,
+    value,
+    className = '',
+}: {
+    icon?: ReactNode;
+    label: string;
+    value?: string | null;
+    className?: string;
+}) => (
+    <div className={`rounded-2xl border bg-muted/30 p-4 ${className}`}>
+        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            {icon}
+            {label}
+        </div>
+        <p className="mt-2 text-sm font-semibold text-foreground">
+            {value || 'Belum tersedia dari Penyaluran'}
+        </p>
+    </div>
+);
+
 const Select = ({
     value,
     onChange,
@@ -321,7 +381,7 @@ const Select = ({
     <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+        className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
         required
     >
         <option value="">{placeholder}</option>

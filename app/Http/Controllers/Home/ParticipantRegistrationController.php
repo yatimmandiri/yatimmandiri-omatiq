@@ -14,6 +14,7 @@ use App\Models\Core\Region\Regency;
 use App\Models\Core\Region\Village;
 use App\Models\Core\User;
 use App\Settings\SiteSettings;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -65,17 +66,32 @@ class ParticipantRegistrationController extends Controller
                 ->orderBy('name')
                 ->get(['id', 'regency_id', 'name'])
                 ->map(fn (District $d) => ['id' => $d->id, 'regency_id' => $d->regency_id, 'name' => $d->name]),
-            'villages' => Village::query()
-                ->orderBy('name')
-                ->limit(800)
-                ->get(['id', 'district_id', 'name'])
-                ->map(fn (Village $v) => ['id' => $v->id, 'district_id' => $v->district_id, 'name' => $v->name]),
+            'villages' => [],
             'branches' => $branches,
             'meta' => [
                 'title' => 'Pendaftaran OMATIQ',
                 'description' => 'Daftarkan peserta untuk menjadi bagian dari OMATIQ 2026.',
                 'keywords' => 'pendaftaran OMATIQ, daftar olimpiade, peserta OMATIQ',
             ],
+        ]);
+    }
+
+    public function villages(Request $request)
+    {
+        $request->validate([
+            'district_id' => ['required', 'exists:districts,id'],
+        ]);
+
+        return response()->json([
+            'data' => Village::query()
+                ->where('district_id', $request->input('district_id'))
+                ->orderBy('name')
+                ->get(['id', 'district_id', 'name'])
+                ->map(fn (Village $v) => [
+                    'id' => $v->id,
+                    'district_id' => $v->district_id,
+                    'name' => $v->name,
+                ]),
         ]);
     }
 
@@ -171,8 +187,6 @@ class ParticipantRegistrationController extends Controller
             'district_id' => $request->district_id,
             'village_id' => $request->village_id,
             'parent_phone' => $request->parent_phone,
-            'mentor_name' => $request->mentor_name,
-            'mentor_phone' => $request->mentor_phone,
             'is_binaan' => false,
         ];
     }

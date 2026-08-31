@@ -87,7 +87,7 @@ it('lets a teacher register an assigned binaan student', function () {
         ->and($participant->student_id)->toBe($student->id)
         ->and($participant->mentor_id)->toBe($teacher->id)
         ->and($participant->registration_type)->toBe('teacher')
-        ->and($participant->status)->toBe('submitted')
+        ->and($participant->status)->toBe('verified')
         ->and($participant->registration_number)->toStartWith('OMQ-');
 });
 
@@ -98,7 +98,7 @@ it('prevents registering a student who already has an active registration', func
     $olimpiade = createOlimpiade('Olimpiade IPA', 'IPA');
 
     // Create a Student master for binaan (penyaluran) and link via student_id
-    $binaanStudent = \App\Models\Company\Student::where('penyaluran_id', $student->id)->first() ?? $student;
+    $binaanStudent = Student::where('penyaluran_id', $student->id)->first() ?? $student;
     Participant::create([
         'student_id' => $binaanStudent->id,
         'mentor_id' => $teacher->id,
@@ -139,9 +139,7 @@ it('lets a teacher re-register a student whose previous registration was rejecte
     $previous = createOlimpiade('Olimpiade IPA', 'IPA');
 
     Participant::create([
-        'penyaluran_student_id' => $student->id,
-        'penyaluran_student_name' => $student->full_name,
-        'penyaluran_student_nik' => $student->nik,
+        'student_id' => $student->id,
         'mentor_id' => $teacher->id,
         'olimpiade_id' => $previous->id,
         'registration_number' => 'OMQ-TEST-0001',
@@ -156,7 +154,7 @@ it('lets a teacher re-register a student whose previous registration was rejecte
         ->assertRedirect(route('admin.teacher.students.index'))
         ->assertSessionHasNoErrors();
 
-    expect(Participant::where('penyaluran_student_id', $student->id)->count())->toBe(2);
+    expect(Participant::where('student_id', $student->id)->count())->toBe(2);
 });
 
 it('blocks public registration when the NIK already has an active registration', function () {
@@ -195,9 +193,7 @@ it('blocks public registration when the NIK already has an active registration',
     }
 
     Participant::create([
-        'penyaluran_student_id' => $student->id,
-        'penyaluran_student_name' => $student->full_name,
-        'penyaluran_student_nik' => $student->nik,
+        'student_id' => $student->id,
         'mentor_id' => $teacher->id,
         'olimpiade_id' => $olimpiade->id,
         'registration_number' => 'OMQ-TEST-0001',
@@ -246,9 +242,7 @@ it('does not expose edit, update, or destroy routes to teachers', function () {
     $olimpiade = createOlimpiade();
 
     $participant = Participant::create([
-        'penyaluran_student_id' => $student->id,
-        'penyaluran_student_name' => $student->full_name,
-        'penyaluran_student_nik' => $student->nik,
+        'student_id' => $student->id,
         'mentor_id' => $teacher->id,
         'olimpiade_id' => $olimpiade->id,
         'registration_number' => 'OMQ-TEST-0001',

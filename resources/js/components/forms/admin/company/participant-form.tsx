@@ -45,8 +45,9 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
         gender: student?.gender ?? '',
         birth_place: student?.birth_place ?? '',
         birth_date: dateValue(student?.birth_date),
-        age: student?.age ?? '',
         school_name: student?.school_name ?? '',
+        school_level: student?.school_level ?? '',
+        nis: student?.nis ?? '',
         grade: student?.grade ?? '',
         address: student?.address ?? '',
         province_id: student?.province_id ?? '',
@@ -206,16 +207,6 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
                             required={!isBinaan}
                         />
                     </Field>
-                    <Field label="Usia" error={error('age')}>
-                        <Input
-                            type="number"
-                            value={form.data.age}
-                            onChange={(e) =>
-                                form.setData('age', e.target.value)
-                            }
-                            required={!isBinaan}
-                        />
-                    </Field>
                     <Field label="Kelas" error={error('grade')}>
                         <Input
                             value={form.data.grade}
@@ -236,22 +227,16 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
                     </Field>
                     {isBinaan && (
                         <>
-                            <Field label="NIS" error={error('penyaluran_student_nis')}>
+                            <Field label="NIS" error={error('nis')}>
                                 <Input
                                     value={form.data.nis}
-                                    onChange={(e) => {
-                                        form.setData('nis', e.target.value);
-                                        form.setData('penyaluran_student_nis', e.target.value);
-                                    }}
+                                    onChange={(e) => form.setData('nis', e.target.value)}
                                 />
                             </Field>
-                            <Field label="Jenjang" error={error('penyaluran_student_school_level')}>
+                            <Field label="Jenjang" error={error('school_level')}>
                                 <Input
                                     value={form.data.school_level}
-                                    onChange={(e) => {
-                                        form.setData('school_level', e.target.value);
-                                        form.setData('penyaluran_student_school_level', e.target.value);
-                                    }}
+                                    onChange={(e) => form.setData('school_level', e.target.value)}
                                     placeholder="SD/SMP/SMA"
                                 />
                             </Field>

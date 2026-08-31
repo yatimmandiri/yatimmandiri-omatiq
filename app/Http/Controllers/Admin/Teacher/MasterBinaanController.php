@@ -80,19 +80,17 @@ class MasterBinaanController extends Controller
         $activeMap = Participant::query()
             ->where('mentor_id', Auth::id())
             ->whereNotNull('student_id')
-            ->with('olimpiade:id,name')
+            ->with(['olimpiade:id,name', 'student:id,penyaluran_id'])
             ->get()
-            ->groupBy(fn (Participant $p) => (int) $p->student_id);
+            ->groupBy(fn (Participant $p) => (int) ($p->student?->penyaluran_id ?? $p->student_id));
 
         $collection = collect($allRaw)
             ->unique(fn (array $s) => $s['nik'] ?? $s['student_id'] ?? null)
             ->map(function (array $s) use ($activeMap) {
                 // For Penyaluran-based, student_id is penyaluran_id, for local, it's students.id
                 $penyaluranId = (int) ($s['student_id'] ?? $s['id'] ?? 0);
-                // Try to find local student by penyaluran_id to get real student.id for is_registered check
                 $localStudent = Student::where('penyaluran_id', $penyaluranId)->where('is_binaan', true)->first();
-                $lookupId = $localStudent ? $localStudent->id : $penyaluranId;
-                $participants = $activeMap->get($lookupId) ?? $activeMap->get($penyaluranId) ?? collect();
+                $participants = $activeMap->get($penyaluranId) ?? collect();
                 $isRegistered = $participants->isNotEmpty();
 
                 return [
@@ -144,7 +142,7 @@ class MasterBinaanController extends Controller
             'provinces' => Province::orderBy('name')->get(['id', 'name']),
             'regencies' => Regency::orderBy('name')->get(['id', 'province_id', 'name'])->map(fn ($r) => ['id' => $r->id, 'province_id' => $r->province_id, 'name' => $r->name])->values()->all(),
             'districts' => District::orderBy('name')->get(['id', 'regency_id', 'name'])->map(fn ($r) => ['id' => $r->id, 'regency_id' => $r->regency_id, 'name' => $r->name])->values()->all(),
-            'villages' => Village::orderBy('name')->limit(500)->get(['id', 'district_id', 'name'])->map(fn ($r) => ['id' => $r->id, 'district_id' => $r->district_id, 'name' => $r->name])->values()->all(),
+            'villages' => [],
         ]);
     }
 
@@ -157,6 +155,8 @@ class MasterBinaanController extends Controller
             'full_name' => ['required', 'string', 'max:255'],
             'gender' => ['required', 'in:male,female'],
             'birth_date' => ['required', 'date', 'before:today'],
+            'school_level' => ['nullable', 'string', 'max:30'],
+            'nis' => ['nullable', 'string', 'max:20'],
             'school_name' => ['required', 'string', 'max:255'],
             'grade' => ['required', 'string', 'max:30'],
             'address' => ['required', 'string'],
@@ -172,7 +172,8 @@ class MasterBinaanController extends Controller
             'gender' => $request->gender,
             'birth_date' => $request->birth_date,
             'birth_place' => $request->birth_place,
-            'age' => $request->age,
+            'school_level' => $request->school_level,
+            'nis' => $request->nis,
             'school_name' => $request->school_name,
             'grade' => $request->grade,
             'address' => $request->address,
@@ -200,7 +201,9 @@ class MasterBinaanController extends Controller
             'provinces' => Province::orderBy('name')->get(['id', 'name']),
             'regencies' => Regency::orderBy('name')->get(['id', 'province_id', 'name'])->map(fn ($r) => ['id' => $r->id, 'province_id' => $r->province_id, 'name' => $r->name])->values()->all(),
             'districts' => District::orderBy('name')->get(['id', 'regency_id', 'name'])->map(fn ($r) => ['id' => $r->id, 'regency_id' => $r->regency_id, 'name' => $r->name])->values()->all(),
-            'villages' => Village::orderBy('name')->limit(500)->get(['id', 'district_id', 'name'])->map(fn ($r) => ['id' => $r->id, 'district_id' => $r->district_id, 'name' => $r->name])->values()->all(),
+            'villages' => $binaan->district_id
+                ? Village::where('district_id', $binaan->district_id)->orderBy('name')->get(['id', 'district_id', 'name'])->map(fn ($r) => ['id' => $r->id, 'district_id' => $r->district_id, 'name' => $r->name])->values()->all()
+                : [],
         ]);
     }
 
@@ -215,6 +218,8 @@ class MasterBinaanController extends Controller
             'full_name' => ['required', 'string', 'max:255'],
             'gender' => ['required', 'in:male,female'],
             'birth_date' => ['required', 'date', 'before:today'],
+            'school_level' => ['nullable', 'string', 'max:30'],
+            'nis' => ['nullable', 'string', 'max:20'],
             'school_name' => ['required', 'string', 'max:255'],
             'grade' => ['required', 'string', 'max:30'],
             'address' => ['required', 'string'],
@@ -224,7 +229,7 @@ class MasterBinaanController extends Controller
             'village_id' => ['nullable', 'exists:villages,id'],
         ]);
 
-        $binaan->update($request->only(['full_name', 'gender', 'birth_date', 'school_name', 'grade', 'address', 'province_id', 'regency_id', 'district_id', 'village_id', 'birth_place', 'age', 'parent_phone', 'nickname']));
+        $binaan->update($request->only(['full_name', 'gender', 'birth_date', 'school_name', 'grade', 'address', 'province_id', 'regency_id', 'district_id', 'village_id', 'birth_place', 'parent_phone', 'nickname', 'school_level', 'nis']));
 
         return redirect()->route('admin.teacher.master.binaan.index')->with('success', "Binaan {$binaan->full_name} diperbarui.");
     }

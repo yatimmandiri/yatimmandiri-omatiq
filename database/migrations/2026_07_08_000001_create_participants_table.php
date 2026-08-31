@@ -46,6 +46,13 @@ return new class extends Migration
             $table->string('status', 30)->default('submitted');
             $table->text('notes')->nullable();
             $table->index('status');
+            $table->index('registration_type');
+            $table->index('payment_status');
+            $table->index('branch');
+            $table->index(['olimpiade_id', 'status']);
+            $table->index(['event_year', 'status']);
+            $table->index(['registration_type', 'status']);
+            $table->index(['payment_status', 'status']);
             $table->index(['mentor_id', 'created_at']);
             $table->index(['penyaluran_student_id', 'created_at']);
             $table->index('created_at');

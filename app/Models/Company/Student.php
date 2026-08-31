@@ -157,7 +157,6 @@ class Student extends Model
         return Participant::query()
             ->where(function (Builder $q) use ($nik) {
                 $q->where('nik', $nik)
-                    ->orWhere('penyaluran_student_nik', $nik)
                     ->orWhereHas('student', fn (Builder $qq) => $qq->where('nik', $nik));
             })
             ->where(function ($q) use ($eventYear) {

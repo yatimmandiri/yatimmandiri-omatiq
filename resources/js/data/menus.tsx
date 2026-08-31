@@ -1,4 +1,3 @@
-import { dashboard } from '@/routes/admin';
 import olimpiades from '@/routes/admin/companies/olimpiades';
 import olimpiadeGalleries from '@/routes/admin/companies/olimpiade-galleries';
 import olimpiadeObjectives from '@/routes/admin/companies/olimpiade-objectives';
@@ -21,7 +20,6 @@ import {
     CpuIcon,
     GraduationCap,
     Handshake,
-    LayoutDashboard,
     MapIcon,
     Trophy,
     UserCheck,
@@ -37,17 +35,6 @@ import masterSanggar from '@/routes/admin/teacher/master/sanggar';
 import absensi from '@/routes/admin/teacher/absensi';
 
 export const NavigationList = [
-    {
-        title: 'Umum',
-        children: [
-            {
-                title: 'Dashboard Saya',
-                href: dashboard().url,
-                permission: 'view-participant',
-                icon: LayoutDashboard,
-            },
-        ],
-    },
     {
         title: 'Partisipasi',
         roles: ['Administrators', 'Teacher'],

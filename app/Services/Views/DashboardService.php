@@ -2,6 +2,8 @@
 
 namespace App\Services\Views;
 
+use App\Models\Company\Olimpiade;
+use App\Models\Company\Participant;
 use App\Models\Company\Student;
 use App\Models\Core\User;
 use App\Services\PenyaluranService;
@@ -26,21 +28,31 @@ class DashboardService
             'view' => 'admin/dashboard/admin',
             'data' => [
                 'pageTitle' => 'Dashboard Admin',
+                'participantCount' => Participant::count(),
+                'verifiedParticipantCount' => Participant::where('status', 'verified')->count(),
+                'submittedParticipantCount' => Participant::where('status', 'submitted')->count(),
+                'teacherCount' => User::role('Teacher')->count(),
+                'studentCount' => Student::where('is_binaan', true)->count(),
+                'olimpiadeCount' => Olimpiade::count(),
             ],
         ];
     }
 
     private static function teacher(User $user): array
     {
-        // Students master: only those already registered via guru (is_binaan) or global
         $studentCount = Student::where('mentor_id', $user->id)->where('is_binaan', true)->count();
         $penyaluranProfile = null;
         $sanggars = [];
         $penyaluranStudents = [];
         $penyaluranTotal = null;
-
+        $sanggarCount = 0;
         $overlap = null;
         $sanggarSum = null;
+        $registeredCount = Participant::query()
+            ->where('mentor_id', $user->id)
+            ->where('registration_type', 'teacher')
+            ->whereIn('status', ['submitted', 'verified'])
+            ->count();
 
         if ($user->penyaluran_token) {
             try {
@@ -49,6 +61,7 @@ class DashboardService
                 $sanggars = $penyaluran->sanggars($user->penyaluran_token);
                 $penyaluranStudents = $penyaluran->students($user->penyaluran_token);
                 $penyaluranTotal = count($penyaluranStudents);
+                $sanggarCount = count($sanggars);
                 $sanggarSum = collect($sanggars)->sum(fn ($s) => (int) ($s['total_students'] ?? 0));
                 $overlap = $sanggarSum > $penyaluranTotal ? $sanggarSum - $penyaluranTotal : 0;
             } catch (\Throwable $e) {
@@ -62,11 +75,13 @@ class DashboardService
                 'pageTitle' => 'Dashboard Guru',
                 'studentCount' => $studentCount,
                 'penyaluranTotal' => $penyaluranTotal,
+                'sanggarCount' => $sanggarCount,
                 'sanggarSum' => $sanggarSum,
                 'overlapCount' => $overlap,
                 'penyaluranProfile' => $penyaluranProfile,
                 'sanggars' => $sanggars,
                 'penyaluranStudents' => array_slice($penyaluranStudents, 0, 5),
+                'registeredCount' => $registeredCount,
             ],
         ];
     }
@@ -81,7 +96,7 @@ class DashboardService
                 'pageTitle' => 'Dashboard Partisipan',
                 'participant' => $participant?->load([
                     'olimpiade:id,name,category,slug,excerpt',
-                    'student:id,full_name,nickname,gender,birth_place,birth_date,age,school_name,grade,address,province_id,regency_id,parent_phone,mentor_name,mentor_phone,photo_path,identity_card_path,family_card_path,student_card_path',
+                    'student:id,full_name,nickname,gender,birth_place,birth_date,school_name,school_level,nis,grade,address,province_id,regency_id,parent_phone,mentor_name,mentor_phone,photo_path,identity_card_path,family_card_path,student_card_path',
                     'student.province:id,name',
                     'student.regency:id,name',
                 ]),
