@@ -37,7 +37,6 @@ class StoreOlimpiadeRequest extends FormRequest
             'event_year' => ['nullable', 'integer', 'min:2024', 'max:2030'],
             'status' => ['sometimes', 'boolean'],
             'recommended' => ['sometimes', 'boolean'],
-            'show_on_registration' => ['sometimes', 'boolean'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
         ];
     }

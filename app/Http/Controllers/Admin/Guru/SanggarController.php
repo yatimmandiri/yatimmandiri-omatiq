@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Admin\Teacher;
+namespace App\Http\Controllers\Admin\Guru;
 
 use App\Http\Controllers\Controller;
 use App\Models\Company\Participant;
@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class MasterSanggarController extends Controller
+class SanggarController extends Controller
 {
     public function __construct(private readonly PenyaluranService $penyaluran) {}
 
@@ -18,7 +18,7 @@ class MasterSanggarController extends Controller
     {
         $this->authorize('viewAny', Participant::class);
 
-        return Inertia::render('admin/teacher/master/sanggar/list');
+        return Inertia::render('admin/guru/data-sanggar/list');
     }
 
     public function getData(Request $request)
@@ -72,6 +72,6 @@ class MasterSanggarController extends Controller
             abort(404);
         }
 
-        return Inertia::render('admin/teacher/master/sanggar/show', ['sanggar' => $sanggar]);
+        return Inertia::render('admin/guru/data-sanggar/show', ['sanggar' => $sanggar]);
     }
 }

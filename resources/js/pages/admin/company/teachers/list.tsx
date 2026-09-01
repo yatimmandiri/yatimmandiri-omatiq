@@ -5,8 +5,11 @@ import {
     renderRowHeader,
 } from '@/components/partials/dataTables/utils/dataTable-utils';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { dashboard } from '@/routes/admin';
 import teachers from '@/routes/admin/companies/teachers';
+import { router } from '@inertiajs/react';
+import { Eye } from 'lucide-react';
 import { useState } from 'react';
 
 export default function ListPage() {
@@ -35,6 +38,18 @@ export default function ListPage() {
             header: (info: any) => renderRowHeader(info, 'Created At'),
             accessorKey: 'created_at',
             cell: (info: any) => renderRowDate(info.getValue()),
+        },
+        {
+            id: 'actions',
+            header: 'Aksi',
+            cell: (info: any) => (
+                <Button size="sm" variant="outline" onClick={() => router.visit(teachers.show(info.row.original.id).url)}>
+                    <Eye className="size-4" />
+                    Detail
+                </Button>
+            ),
+            enableSorting: false,
+            enableHiding: false,
         },
     ];
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Admin\Teacher;
+namespace App\Http\Controllers\Admin\Guru;
 
 use App\Http\Controllers\Controller;
 use App\Models\Company\Participant;
@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class MasterBinaanController extends Controller
+class BinaanController extends Controller
 {
     public function __construct(private readonly PenyaluranService $penyaluran) {}
 
@@ -33,7 +33,7 @@ class MasterBinaanController extends Controller
             }
         }
 
-        return Inertia::render('admin/teacher/master/binaan/list', [
+        return Inertia::render('admin/guru/data-binaan/list', [
             'sanggars' => collect($sanggars)->map(fn (array $s) => ['id' => $s['id'] ?? null, 'name' => $s['name'] ?? '-', 'type' => $s['type'] ?? null])->values()->all(),
             'selected_sanggar_id' => $request->integer('sanggar_id') ?: null,
         ]);
@@ -46,17 +46,22 @@ class MasterBinaanController extends Controller
         $perPage = min($request->integer('perPage') ?: 10, 100);
         $search = strtolower($request->string('globalSearch')->toString());
         $sanggarId = $request->integer('filterValue.sanggar_id') ?: $request->integer('sanggar_id') ?: null;
+        $registration = $request->input('filterValue.registration');
         $token = $request->session()->get('penyaluran_token') ?? Auth::user()?->penyaluran_token;
 
         $studentsRaw = [];
+        $sanggarMap = collect();
         if ($token) {
             try {
                 $studentsRaw = $this->penyaluran->students($token, $sanggarId);
+                $sanggarsTmp = $this->penyaluran->sanggars($token);
+                $sanggarMap = collect($sanggarsTmp)->pluck('name', 'id');
             } catch (\Throwable $e) {
                 $studentsRaw = [];
             }
         }
 
+        // Pure API — fallback for tests / local without penyaluran (no merge lokal is_binaan)
         if (empty($studentsRaw) && app()->environment('testing')) {
             $studentsRaw = Student::query()
                 ->where('mentor_id', Auth::id())
@@ -66,47 +71,45 @@ class MasterBinaanController extends Controller
                 ->all();
         }
 
-        // Also include local is_binaan students that may not be in Penyaluran (for CRUD scaffold)
-        $localStudents = Student::query()
-            ->where('mentor_id', Auth::id())
-            ->where('is_binaan', true)
-            ->whereNotIn('penyaluran_id', collect($studentsRaw)->pluck('student_id')->filter()->all())
-            ->get(['id as student_id', 'nik', 'full_name as name', 'school_name', 'grade as class'])
-            ->map(fn ($s) => ['student_id' => $s->student_id, 'nik' => $s->nik, 'name' => $s->name, 'school_name' => $s->school_name, 'class' => $s->class, 'status' => true])
-            ->all();
-
-        $allRaw = array_merge($studentsRaw, $localStudents);
-
         $activeMap = Participant::query()
             ->where('mentor_id', Auth::id())
             ->whereNotNull('student_id')
             ->with(['olimpiade:id,name', 'student:id,penyaluran_id'])
+            ->orderByDesc('created_at')
             ->get()
-            ->groupBy(fn (Participant $p) => (int) ($p->student?->penyaluran_id ?? $p->student_id));
+            ->groupBy(fn (Participant $p) => (int) ($p->student?->penyaluran_id ?? $p->student_id))
+            ->map(fn ($group) => $group->first());
 
-        $collection = collect($allRaw)
-            ->unique(fn (array $s) => $s['nik'] ?? $s['student_id'] ?? null)
-            ->map(function (array $s) use ($activeMap) {
-                // For Penyaluran-based, student_id is penyaluran_id, for local, it's students.id
-                $penyaluranId = (int) ($s['student_id'] ?? $s['id'] ?? 0);
-                $localStudent = Student::where('penyaluran_id', $penyaluranId)->where('is_binaan', true)->first();
-                $participants = $activeMap->get($penyaluranId) ?? collect();
-                $isRegistered = $participants->isNotEmpty();
+        $collection = collect($studentsRaw)
+            ->unique(fn (array $s) => $s['nik'] ?? $s['student_id'] ?? $s['id'] ?? null)
+            ->map(function (array $s) use ($activeMap, $sanggarMap) {
+                $id = (int) ($s['student_id'] ?? $s['id'] ?? 0);
+                $latest = $activeMap->get($id);
+                $sanggarIds = $s['sanggar_ids'] ?? (isset($s['sanggar_id']) ? [$s['sanggar_id']] : []);
+                $sanggarNames = collect($sanggarIds)->map(fn ($sid) => $sanggarMap[$sid] ?? $sid)->filter()->values()->all();
+                if (empty($sanggarNames) && isset($s['sanggar_id']) && $s['sanggar_id']) {
+                    $sanggarNames = [$sanggarMap[$s['sanggar_id']] ?? $s['sanggar_id']];
+                }
 
                 return [
-                    'id' => $penyaluranId,
-                    'student_db_id' => $localStudent?->id,
+                    'id' => $id,
                     'nik' => $s['nik'] ?? null,
                     'full_name' => $s['name'] ?? $s['full_name'] ?? '-',
                     'school_name' => $s['school_name'] ?? null,
                     'grade' => $s['class'] ?? $s['grade'] ?? null,
-                    'gender' => $s['gender'] ?? null,
-                    'sanggar_id' => $s['sanggar_id'] ?? null,
-                    'is_registered' => $isRegistered,
-                    'registrations' => $participants->map(fn (Participant $p) => ['olimpiade' => $p->olimpiade?->name, 'status' => $p->status])->values()->all(),
+                    'sanggar_ids' => $sanggarIds,
+                    'sanggar_names' => $sanggarNames,
+                    'sanggar_terdaftar' => $latest?->penyaluran_sanggar_name,
+                    'is_registered' => $latest !== null && in_array($latest->status, ['submitted', 'verified'], true),
+                    'participant_id' => $latest?->id,
+                    'registration_status' => $latest?->status,
+                    'registration_number' => $latest?->registration_number,
+                    'olimpiade_name' => $latest?->olimpiade?->name,
                 ];
             })
-            ->when($search !== '', fn ($c) => $c->filter(fn (array $item) => str_contains(strtolower($item['full_name'] ?? ''), $search) || str_contains(strtolower($item['nik'] ?? ''), $search) || str_contains(strtolower($item['school_name'] ?? ''), $search)))
+            ->when($search !== '', fn ($c) => $c->filter(fn (array $item) => str_contains(strtolower($item['full_name'] ?? ''), $search) || str_contains(strtolower($item['nik'] ?? ''), $search) || str_contains(strtolower($item['school_name'] ?? ''), $search) || str_contains(strtolower(implode(',', $item['sanggar_names'] ?? [])) ?? '', $search)))
+            ->when($registration === 'registered', fn ($c) => $c->filter(fn (array $item) => $item['is_registered']))
+            ->when($registration === 'unregistered', fn ($c) => $c->filter(fn (array $item) => ! $item['is_registered']))
             ->sortBy('full_name')
             ->values();
 
@@ -137,7 +140,7 @@ class MasterBinaanController extends Controller
             }
         }
 
-        return Inertia::render('admin/teacher/master/binaan/create', [
+        return Inertia::render('admin/guru/data-binaan/create', [
             'sanggars' => collect($sanggars)->map(fn (array $s) => ['id' => $s['id'] ?? null, 'name' => $s['name'] ?? '-'])->values()->all(),
             'provinces' => Province::orderBy('name')->get(['id', 'name']),
             'regencies' => Regency::orderBy('name')->get(['id', 'province_id', 'name'])->map(fn ($r) => ['id' => $r->id, 'province_id' => $r->province_id, 'name' => $r->name])->values()->all(),
@@ -186,7 +189,7 @@ class MasterBinaanController extends Controller
             'is_binaan' => true,
         ]);
 
-        return redirect()->route('admin.teacher.master.binaan.index')->with('success', "Binaan {$student->full_name} berhasil ditambahkan (lokal, sync Penyaluran TODO).");
+        return redirect()->route('admin.guru.data-binaan.index')->with('success', "Binaan {$student->full_name} berhasil ditambahkan (lokal, sync Penyaluran TODO).");
     }
 
     public function edit(Student $binaan)
@@ -196,7 +199,7 @@ class MasterBinaanController extends Controller
             abort(403);
         }
 
-        return Inertia::render('admin/teacher/master/binaan/edit', [
+        return Inertia::render('admin/guru/data-binaan/edit', [
             'binaan' => $binaan->load(['province:id,name', 'regency:id,name', 'village:id,name', 'district:id,name']),
             'provinces' => Province::orderBy('name')->get(['id', 'name']),
             'regencies' => Regency::orderBy('name')->get(['id', 'province_id', 'name'])->map(fn ($r) => ['id' => $r->id, 'province_id' => $r->province_id, 'name' => $r->name])->values()->all(),
@@ -231,7 +234,7 @@ class MasterBinaanController extends Controller
 
         $binaan->update($request->only(['full_name', 'gender', 'birth_date', 'school_name', 'grade', 'address', 'province_id', 'regency_id', 'district_id', 'village_id', 'birth_place', 'parent_phone', 'nickname', 'school_level', 'nis']));
 
-        return redirect()->route('admin.teacher.master.binaan.index')->with('success', "Binaan {$binaan->full_name} diperbarui.");
+        return redirect()->route('admin.guru.data-binaan.index')->with('success', "Binaan {$binaan->full_name} diperbarui.");
     }
 
     public function destroy(Student $binaan)
@@ -245,19 +248,88 @@ class MasterBinaanController extends Controller
         }
         $binaan->delete();
 
-        return redirect()->route('admin.teacher.master.binaan.index')->with('success', 'Binaan dihapus.');
+        return redirect()->route('admin.guru.data-binaan.index')->with('success', 'Binaan dihapus.');
     }
 
-    public function show(Student $binaan)
+    public function show(int $binaan)
     {
-        $this->authorize('view', $binaan);
+        $this->authorize('viewAny', Participant::class);
 
-        if ($binaan->mentor_id !== Auth::id()) {
-            abort(403);
+        $token = request()->session()->get('penyaluran_token') ?? Auth::user()?->penyaluran_token;
+
+        $studentsRaw = [];
+        $sanggars = [];
+        if ($token) {
+            try {
+                $studentsRaw = $this->penyaluran->students($token);
+                $sanggars = $this->penyaluran->sanggars($token);
+            } catch (\Throwable $e) {
+                $studentsRaw = [];
+                $sanggars = [];
+            }
         }
 
-        $binaan->load(['province:id,name', 'regency:id,name', 'village:id,name', 'district:id,name']);
+        // Fallback for tests / local without penyaluran
+        if (empty($studentsRaw) && app()->environment('testing')) {
+            $local = Student::where('id', $binaan)->where('mentor_id', Auth::id())->where('is_binaan', true)->first();
+            if ($local) {
+                return Inertia::render('admin/guru/data-binaan/show', [
+                    'binaan' => [
+                        'student_id' => $local->id,
+                        'nik' => $local->nik,
+                        'nis' => $local->nis,
+                        'full_name' => $local->full_name,
+                        'nickname' => $local->nickname,
+                        'gender' => $local->gender,
+                        'birth_place' => $local->birth_place,
+                        'birth_date' => $local->birth_date,
+                        'school_name' => $local->school_name,
+                        'school_level' => $local->school_level,
+                        'grade' => $local->grade,
+                        'address' => $local->address,
+                        'guardian_name' => $local->mentor_name,
+                        'guardian_phone' => $local->parent_phone,
+                        'sanggar_id' => null,
+                        'sanggar_name' => null,
+                        'kantor_name' => null,
+                        'sanggar_names' => [],
+                    ],
+                    'registration' => Participant::where('mentor_id', Auth::id())->where('student_id', $local->id)->with('olimpiade:id,name')->latest()->first(),
+                ]);
+            }
+        }
 
-        return Inertia::render('admin/teacher/master/binaan/show', ['binaan' => $binaan]);
+        $found = collect($studentsRaw)->firstWhere(fn (array $s) => (int) ($s['student_id'] ?? $s['id'] ?? 0) === (int) $binaan);
+
+        if (! $found) {
+            abort(404, 'Binaan tidak ditemukan di Penyaluran.');
+        }
+
+        $sanggarMap = collect($sanggars)->keyBy('id');
+        $sanggarIds = $found['sanggar_ids'] ?? (isset($found['sanggar_id']) ? [$found['sanggar_id']] : []);
+        $sanggarNames = collect($sanggarIds)->map(fn ($sid) => $sanggarMap[$sid]['name'] ?? $sid)->filter()->values()->all();
+
+        $active = Participant::query()
+            ->where('mentor_id', Auth::id())
+            ->whereHas('student', fn ($q) => $q->where('penyaluran_id', $binaan)->orWhere('id', $binaan))
+            ->with('olimpiade:id,name')
+            ->latest()
+            ->first();
+
+        $binaanData = [
+            ...$found,
+            'sanggar_ids' => $sanggarIds,
+            'sanggar_names' => $sanggarNames,
+            'kantor_name' => $found['kantor_name'] ?? null,
+            'is_registered' => $active && in_array($active->status, ['submitted', 'verified'], true),
+            'registration_status' => $active?->status,
+            'participant_id' => $active?->id,
+            'olimpiade_name' => $active?->olimpiade?->name,
+        ];
+
+        return Inertia::render('admin/guru/data-binaan/show', [
+            'binaan' => $binaanData,
+            'registration' => $active,
+        ]);
     }
 }

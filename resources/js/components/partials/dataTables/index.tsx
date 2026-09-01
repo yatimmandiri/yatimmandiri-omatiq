@@ -37,8 +37,19 @@ export const DataTableComponent = ({
                         {table.getHeaderGroups().map((headerGroup: any) => (
                             <TableRow key={headerGroup.id}>
                                 {headerGroup.headers.map((header: any) => {
+                                    const isStickyLeft =
+                                        (header.column.columnDef as any)?.meta
+                                            ?.sticky === 'left';
+                                            
                                     return (
-                                        <TableHead key={header.id}>
+                                        <TableHead
+                                            key={header.id}
+                                            className={
+                                                isStickyLeft
+                                                    ? 'sticky left-0 z-10 border-r bg-background'
+                                                    : undefined
+                                            }
+                                        >
                                             {header.isPlaceholder
                                                 ? null
                                                 : flexRender(
@@ -82,14 +93,27 @@ export const DataTableComponent = ({
                                         row.getIsSelected() && 'selected'
                                     }
                                 >
-                                    {row.getVisibleCells().map((cell: any) => (
-                                        <TableCell key={cell.id}>
-                                            {flexRender(
-                                                cell.column.columnDef.cell,
-                                                cell.getContext(),
-                                            )}
-                                        </TableCell>
-                                    ))}
+                                    {row.getVisibleCells().map((cell: any) => {
+                                        const isStickyLeft =
+                                            (cell.column.columnDef as any)?.meta
+                                                ?.sticky === 'left';
+
+                                        return (
+                                            <TableCell
+                                                key={cell.id}
+                                                className={
+                                                    isStickyLeft
+                                                        ? 'sticky left-0 z-10 border-r bg-background'
+                                                        : undefined
+                                                }
+                                            >
+                                                {flexRender(
+                                                    cell.column.columnDef.cell,
+                                                    cell.getContext(),
+                                                )}
+                                            </TableCell>
+                                        );
+                                    })}
                                 </TableRow>
                             ))
                         )}

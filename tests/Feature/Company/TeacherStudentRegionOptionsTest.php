@@ -61,10 +61,10 @@ it('provides only olimpiades and the teacher roster on the create page', functio
     Olimpiade::create(['name' => 'Olimpiade Matematika', 'category' => 'Matematika']);
 
     $this->actingAs($teacher)
-        ->get(route('admin.teacher.students.create'))
+        ->get(route('admin.guru.data-peserta.create'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('admin/teacher/students/create')
+            ->component('admin/guru/data-peserta/create')
             ->has('olimpiades', 1)
             ->has('students', 1)
             ->where('students.0.id', $student->id)
@@ -82,10 +82,10 @@ it('excludes students assigned to another teacher from the roster', function () 
     createOptionsStudent($teacherB, '3525011505120003');
 
     $this->actingAs($teacherA)
-        ->get(route('admin.teacher.students.create'))
+        ->get(route('admin.guru.data-peserta.create'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('admin/teacher/students/create')
+            ->component('admin/guru/data-peserta/create')
             ->has('students', 1)
             ->where('students.0.id', $mine->id)
         );
@@ -110,10 +110,10 @@ it('excludes students who already have an active registration from the roster', 
     ]);
 
     $this->actingAs($teacher)
-        ->get(route('admin.teacher.students.create'))
+        ->get(route('admin.guru.data-peserta.create'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('admin/teacher/students/create')
+            ->component('admin/guru/data-peserta/create')
             ->has('students', 1)
             ->where('students.0.id', $free->id)
         );
@@ -126,11 +126,11 @@ it('lets a teacher register an assigned student from the create page', function 
     $olimpiade = Olimpiade::create(['name' => 'Olimpiade Matematika', 'category' => 'Matematika']);
 
     $this->actingAs($teacher)
-        ->post(route('admin.teacher.students.store'), [
+        ->post(route('admin.guru.data-peserta.store'), [
             'penyaluran_student_id' => $student->id,
             'olimpiade_id' => $olimpiade->id,
         ])
-        ->assertRedirect(route('admin.teacher.students.index'))
+        ->assertRedirect(route('admin.guru.data-peserta.index'))
         ->assertSessionHasNoErrors();
 
     $participant = Participant::first();
@@ -146,10 +146,10 @@ it('preselects a valid roster student when student_id is passed', function () {
     $student = createOptionsStudent($teacher, '3525011505120002');
 
     $this->actingAs($teacher)
-        ->get(route('admin.teacher.students.create', ['student_id' => $student->id]))
+        ->get(route('admin.guru.data-peserta.create', ['student_id' => $student->id]))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('admin/teacher/students/create')
+            ->component('admin/guru/data-peserta/create')
             ->where('preselected_student_id', $student->id)
         );
 });
@@ -161,10 +161,10 @@ it('ignores a student_id that is not part of the roster', function () {
     $theirStudent = createOptionsStudent($other, '3525011505120002');
 
     $this->actingAs($teacher)
-        ->get(route('admin.teacher.students.create', ['student_id' => $theirStudent->id]))
+        ->get(route('admin.guru.data-peserta.create', ['student_id' => $theirStudent->id]))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('admin/teacher/students/create')
+            ->component('admin/guru/data-peserta/create')
             ->where('preselected_student_id', null)
         );
 });
@@ -185,29 +185,29 @@ it('ignores a student_id that already has an active registration', function () {
     ]);
 
     $this->actingAs($teacher)
-        ->get(route('admin.teacher.students.create', ['student_id' => $student->id]))
+        ->get(route('admin.guru.data-peserta.create', ['student_id' => $student->id]))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('admin/teacher/students/create')
+            ->component('admin/guru/data-peserta/create')
             ->has('students', 0)
             ->where('preselected_student_id', null)
         );
 });
 
-it('lists only the teacher roster with registration info in getData', function () {
+it('lists only the teacher participants in getData (Pendaftaran)', function () {
     openRegistrationsOptions();
     $teacherA = createRegistrationOptionsTeacher();
     $teacherB = createRegistrationOptionsTeacher();
 
-    $unregistered = createOptionsStudent($teacherA, '3525011505120002');
-    $registered = createOptionsStudent($teacherA, '3525011505120003');
-    $rejected = createOptionsStudent($teacherA, '3525011505120004');
-    createOptionsStudent($teacherB, '3525011505120005');
+    $s1 = createOptionsStudent($teacherA, '3525011505120002');
+    $s2 = createOptionsStudent($teacherA, '3525011505120003');
+    $s3 = createOptionsStudent($teacherA, '3525011505120004');
+    $sOther = createOptionsStudent($teacherB, '3525011505120005');
 
     $olimpiade = Olimpiade::create(['name' => 'Olimpiade Matematika', 'category' => 'Matematika']);
 
-    Participant::create([
-        'student_id' => $registered->id,
+    $p1 = Participant::create([
+        'student_id' => $s2->id,
         'mentor_id' => $teacherA->id,
         'olimpiade_id' => $olimpiade->id,
         'registration_number' => 'OMQ-TEST-0001',
@@ -215,8 +215,8 @@ it('lists only the teacher roster with registration info in getData', function (
         'status' => 'verified',
     ]);
 
-    Participant::create([
-        'student_id' => $rejected->id,
+    $p2 = Participant::create([
+        'student_id' => $s3->id,
         'mentor_id' => $teacherA->id,
         'olimpiade_id' => $olimpiade->id,
         'registration_number' => 'OMQ-TEST-0002',
@@ -224,45 +224,65 @@ it('lists only the teacher roster with registration info in getData', function (
         'status' => 'rejected',
     ]);
 
+    // other teacher's participant should not leak
+    Participant::create([
+        'student_id' => $sOther->id,
+        'mentor_id' => $teacherB->id,
+        'olimpiade_id' => $olimpiade->id,
+        'registration_number' => 'OMQ-TEST-0003',
+        'registration_type' => 'teacher',
+        'status' => 'verified',
+    ]);
+
     $this->actingAs($teacherA)
-        ->get(route('admin.teacher.students.data'))
+        ->get(route('admin.guru.data-peserta.data'))
         ->assertOk()
-        ->assertJsonCount(3, 'data')
-        ->assertJsonPath('data.0.full_name', $unregistered->full_name)
-        ->assertJsonPath('data.0.is_registered', false)
-        ->assertJsonPath('data.1.registration_status', 'verified')
-        ->assertJsonPath('data.1.olimpiade_name', 'Olimpiade Matematika')
-        ->assertJsonPath('data.2.registration_status', 'rejected')
-        ->assertJsonMissing(['data' => [['full_name' => 'Siti Aminah 05']]]);
+        ->assertJsonPath('total', 2)
+        ->assertJsonCount(2, 'data')
+        ->assertJsonMissing(['data' => [['registration_number' => 'OMQ-TEST-0003']]]);
+
+    // s1 is unregistered roster — should NOT appear in Pendaftaran (participants only)
+    expect(Participant::where('mentor_id', $teacherA->id)->count())->toBe(2);
 });
 
-it('filters getData by registration status', function () {
+it('filters Pendaftaran getData by status, olimpiade and event_year', function () {
     openRegistrationsOptions();
     $teacher = createRegistrationOptionsTeacher();
 
-    $unregistered = createOptionsStudent($teacher, '3525011505120002');
-    $registered = createOptionsStudent($teacher, '3525011505120003');
+    $s1 = createOptionsStudent($teacher, '3525011505120002');
+    $s2 = createOptionsStudent($teacher, '3525011505120003');
 
     $olimpiade = Olimpiade::create(['name' => 'Olimpiade Matematika', 'category' => 'Matematika']);
 
     Participant::create([
-        'student_id' => $registered->id,
+        'student_id' => $s1->id,
         'mentor_id' => $teacher->id,
         'olimpiade_id' => $olimpiade->id,
         'registration_number' => 'OMQ-TEST-0001',
         'registration_type' => 'teacher',
         'status' => 'verified',
+        'event_year' => $olimpiade->event_year ?? 2026,
+    ]);
+
+    Participant::create([
+        'student_id' => $s2->id,
+        'mentor_id' => $teacher->id,
+        'olimpiade_id' => $olimpiade->id,
+        'registration_number' => 'OMQ-TEST-0002',
+        'registration_type' => 'teacher',
+        'status' => 'rejected',
+        'event_year' => $olimpiade->event_year ?? 2026,
     ]);
 
     $this->actingAs($teacher)
-        ->get(route('admin.teacher.students.data', ['filterValue' => ['registration' => 'registered']]))
+        ->get(route('admin.guru.data-peserta.data', ['filterValue' => ['status' => 'verified']]))
         ->assertOk()
         ->assertJsonCount(1, 'data')
-        ->assertJsonPath('data.0.id', $registered->id);
+        ->assertJsonPath('data.0.status', 'verified');
 
     $this->actingAs($teacher)
-        ->get(route('admin.teacher.students.data', ['filterValue' => ['registration' => 'unregistered']]))
+        ->get(route('admin.guru.data-peserta.data', ['filterValue' => ['status' => 'rejected']]))
         ->assertOk()
         ->assertJsonCount(1, 'data')
-        ->assertJsonPath('data.0.id', $unregistered->id);
+        ->assertJsonPath('data.0.status', 'rejected');
 });

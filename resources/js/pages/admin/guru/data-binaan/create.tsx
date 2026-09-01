@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { dashboard } from '@/routes/admin';
-import masterBinaan from '@/routes/admin/teacher/master/binaan';
+import binaan from '@/routes/admin/guru/data-binaan';
 import { useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, Save } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -60,7 +60,7 @@ export default function CreatePage() {
 
     const submit = (e: FormEvent) => {
         e.preventDefault();
-        form.post(masterBinaan.store().url);
+        form.post(binaan.store().url);
     };
     const error = (n: string) => form.errors[n] ? <p className="text-sm text-destructive">{form.errors[n]}</p> : null;
     return (
@@ -93,4 +93,4 @@ export default function CreatePage() {
     );
 }
 const Field = ({ label, children, error }: { label: string; children: ReactNode; error?: ReactNode }) => <div className="space-y-2"><Label>{label}</Label>{children}{error}</div>;
-CreatePage.layout = { breadcrumbs: [{ title: 'Dashboard', href: dashboard() }, { title: 'Data Binaan', href: masterBinaan.index().url }, { title: 'Tambah', href: masterBinaan.create().url }] };
+CreatePage.layout = { breadcrumbs: [{ title: 'Dashboard', href: dashboard() }, { title: 'Data Binaan', href: binaan.index().url }, { title: 'Tambah', href: binaan.create().url }] };
