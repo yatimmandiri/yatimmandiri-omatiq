@@ -2,7 +2,7 @@ import { DataTableComponent } from '@/components/partials/dataTables';
 import { DataTableProvider } from '@/components/partials/dataTables/hooks/useDataTables';
 import { renderRowHeader } from '@/components/partials/dataTables/utils/dataTable-utils';
 import { dashboard } from '@/routes/admin';
-import masterSanggar from '@/routes/admin/teacher/master/sanggar';
+import sanggar from '@/routes/admin/guru/data-sanggar';
 import { useState } from 'react';
 
 export default function ListPage() {
@@ -13,6 +13,7 @@ export default function ListPage() {
         { header: 'Kantor', accessorKey: 'kantor_name' },
         { header: 'Total Santri', accessorKey: 'total_students' },
     ];
+
     return (
         <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
             <div className="relative min-h-screen flex-1 overflow-hidden rounded-xl border border-sidebar-border/70 md:min-h-min dark:border-sidebar-border">
@@ -21,9 +22,11 @@ export default function ListPage() {
                     filterValue={{}}
                     refreshData={refreshData}
                     setRefreshData={() => {}}
-                    urlFetchData={masterSanggar.data().url}
+                    urlFetchData={sanggar.data().url}
+                    formatDataExport={(data: any[]) => data}
+                    withActions={false}
                 >
-                    <DataTableComponent buttonActive={{ create: false }} />
+                    <DataTableComponent buttonActive={{ create: false} } />
                 </DataTableProvider>
             </div>
         </div>
@@ -33,6 +36,6 @@ export default function ListPage() {
 ListPage.layout = {
     breadcrumbs: [
         { title: 'Dashboard', href: dashboard() },
-        { title: 'Data Sanggar', href: masterSanggar.index().url },
+        { title: 'Data Sanggar', href: sanggar.index().url },
     ],
 };

@@ -1,6 +1,6 @@
 import { Card } from '@/components/ui/card';
 import { dashboard } from '@/routes/admin';
-import masterSanggar from '@/routes/admin/teacher/master/sanggar';
+import sanggar from '@/routes/admin/guru/data-sanggar';
 import { usePage } from '@inertiajs/react';
 
 export default function ShowPage() {
@@ -40,7 +40,7 @@ export default function ShowPage() {
 ShowPage.layout = {
     breadcrumbs: [
         { title: 'Dashboard', href: dashboard() },
-        { title: 'Data Sanggar', href: masterSanggar.index().url },
+        { title: 'Data Sanggar', href: sanggar.index().url },
         { title: 'Detail Sanggar', href: '#' },
     ],
 };

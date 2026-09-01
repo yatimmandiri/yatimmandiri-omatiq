@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Admin\Teacher;
+namespace App\Http\Controllers\Admin\Guru;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Company\StoreTeacherParticipantRequest;
@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class TeacherStudentController extends Controller
+class DataPesertaController extends Controller
 {
     public function __construct(
         private readonly TeacherService $service,
@@ -26,19 +26,41 @@ class TeacherStudentController extends Controller
     {
         $this->authorize('viewAny', Participant::class);
 
-        $token = $request->session()->get('penyaluran_token') ?? Auth::user()?->penyaluran_token;
-        $sanggars = [];
-        if ($token) {
-            try {
-                $sanggars = $this->penyaluran->sanggars($token);
-            } catch (\Throwable $e) {
-                $sanggars = [];
-            }
-        }
+        $userId = Auth::id();
 
-        return Inertia::render('admin/teacher/students/list', [
-            'sanggars' => collect($sanggars)->map(fn (array $s) => ['id' => $s['id'] ?? null, 'name' => $s['name'] ?? '-', 'type' => $s['type'] ?? null])->values()->all(),
-            'selected_sanggar_id' => $request->integer('sanggar_id') ?: null,
+        $olimpiades = Olimpiade::query()
+            ->ordered()
+            ->get(['id', 'name', 'event_year'])
+            ->map(fn (Olimpiade $o) => [
+                'value' => (string) $o->id,
+                'label' => trim($o->name.' '.($o->event_year ? "({$o->event_year})" : '')),
+            ]);
+
+        $eventYears = collect([
+            ...Participant::query()
+                ->where('mentor_id', $userId)
+                ->where('registration_type', 'teacher')
+                ->whereNotNull('event_year')
+                ->distinct()
+                ->pluck('event_year')
+                ->all(),
+            ...Olimpiade::query()
+                ->whereNotNull('event_year')
+                ->distinct()
+                ->pluck('event_year')
+                ->all(),
+        ])
+            ->filter()
+            ->unique()
+            ->sortDesc()
+            ->values()
+            ->map(fn ($y) => ['value' => (string) $y, 'label' => (string) $y]);
+
+        return Inertia::render('admin/guru/data-peserta/list', [
+            'filterOptions' => [
+                'olimpiades' => $olimpiades,
+                'eventYears' => $eventYears,
+            ],
         ]);
     }
 
@@ -92,7 +114,7 @@ class TeacherStudentController extends Controller
         $options['sanggars'] = collect($sanggarsRaw)->map(fn (array $s) => ['id' => $s['id'] ?? null, 'name' => $s['name'] ?? '-', 'type' => $s['type'] ?? null])->values()->all();
         $options['selected_sanggar_id'] = $sanggarId;
 
-        return Inertia::render('admin/teacher/students/create', $options);
+        return Inertia::render('admin/guru/data-peserta/create', $options);
     }
 
     public function store(StoreTeacherParticipantRequest $request)
@@ -156,7 +178,7 @@ class TeacherStudentController extends Controller
         $name = $participant->student?->full_name ?? 'Unknown';
 
         return redirect()
-            ->route('admin.teacher.students.index')
+            ->route('admin.guru.data-peserta.index')
             ->with('success', "Binaan {$name} berhasil didaftarkan.");
     }
 
@@ -164,7 +186,7 @@ class TeacherStudentController extends Controller
     {
         $this->authorize('view', $participant);
 
-        return Inertia::render('admin/teacher/students/show', [
+        return Inertia::render('admin/guru/data-peserta/show', [
             'participant' => $this->service->getStudentById(Auth::user(), $participant->id),
         ]);
     }
@@ -173,96 +195,56 @@ class TeacherStudentController extends Controller
     {
         $this->authorize('data-participant', Participant::class);
 
+        $allowed = ['id', 'registration_number', 'status', 'created_at', 'updated_at', 'event_year'];
+        $orderBy = in_array($request->input('orderBy'), $allowed, true)
+            ? $request->input('orderBy')
+            : 'created_at';
+        $direction = strtolower((string) $request->input('orderDirection')) === 'asc' ? 'asc' : 'desc';
+
+        $filterValue = $request->input('filterValue', []);
+
+        $query = Participant::query()
+            ->where('mentor_id', Auth::id())
+            ->where('registration_type', 'teacher')
+            ->with([
+                'olimpiade:id,name,event_year',
+                'student:id,full_name,nik,nis,school_name,school_level,grade,gender,regency_id,penyaluran_id,parent_phone',
+                'student.regency:id,name',
+            ])
+            ->search($request->string('globalSearch')->toString())
+            ->when(data_get($filterValue, 'status'), fn ($q, $v) => $q->where('status', $v))
+            ->when(data_get($filterValue, 'olimpiade_id'), fn ($q, $v) => $q->where('olimpiade_id', $v))
+            ->when(data_get($filterValue, 'event_year'), fn ($q, $v) => $q->where('event_year', $v))
+            ->orderBy($orderBy, $direction)
+            ->orderBy('id', 'desc');
+
         $perPage = min($request->integer('perPage') ?: 10, 100);
-        $registration = $request->input('filterValue.registration');
-        $search = strtolower($request->string('globalSearch')->toString());
 
-        $token = $request->session()->get('penyaluran_token') ?? Auth::user()?->penyaluran_token;
+        $data = $query->paginate($perPage, ['*'], 'page', $request->integer('page') ?: null);
+        $data->through(fn (Participant $p) => $this->participantPayload($p));
 
-        $studentsRaw = [];
-        $sanggarMap = collect();
-        if ($token) {
-            try {
-                $studentsRaw = $this->penyaluran->students($token);
-                $sanggarsTmp = $this->penyaluran->sanggars($token);
-                $sanggarMap = collect($sanggarsTmp)->pluck('name', 'id');
-            } catch (\Throwable $e) {
-                $studentsRaw = [];
+        return response()->json($data);
+    }
+
+    private function participantPayload(Participant $participant): array
+    {
+        $payload = $participant->toArray();
+
+        if ($participant->relationLoaded('student') && $participant->student) {
+            $payload['student'] = [
+                ...$participant->student->toArray(),
+                'photo_url' => $participant->student->photo_url,
+                'student_card_url' => $participant->student->student_card_url,
+            ];
+            if ($participant->student->relationLoaded('regency') && $participant->student->regency) {
+                $payload['student']['regency'] = $participant->student->regency->toArray();
             }
         }
 
-        // Fallback for tests / local without penyaluran
-        if (empty($studentsRaw) && app()->environment('testing')) {
-            $local = Student::query()
-                ->where('mentor_id', Auth::id())
-                ->where('is_binaan', true)
-                ->get(['id as student_id', 'nik', 'full_name as name', 'school_name', 'grade as class'])
-                ->map(fn ($s) => ['student_id' => $s->student_id, 'nik' => $s->nik, 'name' => $s->name, 'school_name' => $s->school_name, 'class' => $s->class, 'status' => true])
-                ->all();
-            $studentsRaw = $local;
+        if ($participant->relationLoaded('olimpiade') && $participant->olimpiade) {
+            $payload['olimpiade'] = $participant->olimpiade->toArray();
         }
 
-        // Map active participants by Student.penyaluran_id so API roster rows can be matched.
-        $activeMap = Participant::query()
-            ->where('mentor_id', Auth::id())
-            ->whereNotNull('student_id')
-            ->with(['olimpiade:id,name', 'student:id,penyaluran_id'])
-            ->orderByDesc('created_at')
-            ->get()
-            ->groupBy(fn (Participant $p) => (int) ($p->student?->penyaluran_id ?? $p->student_id))
-            ->map(fn ($group) => $group->first());
-
-        // Pendaftaran: flat unique by NIK (binaan di >1 sanggar tampil 1x)
-        $studentsRaw = collect($studentsRaw)->unique(fn (array $s) => $s['nik'] ?? $s['student_id'] ?? $s['id'] ?? null)->values()->all();
-
-        $collection = collect($studentsRaw)
-            ->map(function (array $s) use ($activeMap, $sanggarMap) {
-                $id = (int) ($s['student_id'] ?? $s['id'] ?? 0);
-                $latest = $activeMap->get($id);
-                $sanggarIds = $s['sanggar_ids'] ?? (isset($s['sanggar_id']) ? [$s['sanggar_id']] : []);
-                $sanggarNames = collect($sanggarIds)->map(fn ($sid) => $sanggarMap[$sid] ?? $sid)->filter()->values()->all();
-                if (empty($sanggarNames) && isset($s['sanggar_id']) && $s['sanggar_id']) {
-                    $sanggarNames = [$sanggarMap[$s['sanggar_id']] ?? $s['sanggar_id']];
-                }
-
-                return [
-                    'id' => $id,
-                    'nik' => $s['nik'] ?? null,
-                    'full_name' => $s['name'] ?? $s['full_name'] ?? '-',
-                    'school_name' => $s['school_name'] ?? null,
-                    'grade' => $s['class'] ?? $s['grade'] ?? null,
-                    'sanggar_ids' => $sanggarIds,
-                    'sanggar_names' => $sanggarNames,
-                    'sanggar_terdaftar' => $latest?->penyaluran_sanggar_name,
-                    'is_registered' => $latest !== null,
-                    'participant_id' => $latest?->id,
-                    'registration_status' => $latest?->status,
-                    'registration_number' => $latest?->registration_number,
-                    'olimpiade_name' => $latest?->olimpiade?->name,
-                ];
-            })
-            ->when($search !== '', function ($c) use ($search) {
-                return $c->filter(fn (array $item) => str_contains(strtolower($item['full_name'] ?? ''), $search)
-                    || str_contains(strtolower($item['nik'] ?? ''), $search)
-                    || str_contains(strtolower($item['school_name'] ?? ''), $search)
-                    || str_contains(strtolower(implode(',', $item['sanggar_names'] ?? [])) ?? '', $search));
-            })
-            ->when($registration === 'registered', fn ($c) => $c->filter(fn (array $item) => $item['is_registered']))
-            ->when($registration === 'unregistered', fn ($c) => $c->filter(fn (array $item) => ! $item['is_registered']))
-            ->sortBy('full_name')
-            ->values();
-
-        // Manual pagination for in-memory collection
-        $page = max(1, $request->integer('page') ?: 1);
-        $total = $collection->count();
-        $items = $collection->forPage($page, $perPage)->values();
-
-        return response()->json([
-            'data' => $items,
-            'current_page' => $page,
-            'per_page' => $perPage,
-            'total' => $total,
-            'last_page' => (int) ceil($total / $perPage),
-        ]);
+        return $payload;
     }
 }

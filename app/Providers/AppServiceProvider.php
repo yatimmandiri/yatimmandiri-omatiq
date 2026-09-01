@@ -40,13 +40,11 @@ class AppServiceProvider extends ServiceProvider
         );
 
         Password::defaults(
-            fn(): ?Password => app()->isProduction()
-                ? Password::min(12)
-                ->mixedCase()
-                ->letters()
-                ->numbers()
-                ->symbols()
-                ->uncompromised()
+            fn (): ?Password => app()->isProduction()
+                ? Password::min(8)
+                    ->mixedCase()
+                    ->letters()
+                    ->uncompromised()
                 : null,
         );
 
@@ -56,8 +54,8 @@ class AppServiceProvider extends ServiceProvider
             $view->with('settings', [
                 'site_name' => $settings->site_name,
                 'site_description' => $settings->site_description,
-                'logo' => $settings->logo ? asset('storage/' . $settings->logo) : null,
-                'favicon' => $settings->favicon ? asset('storage/' . $settings->favicon) : null,
+                'logo' => $settings->logo ? asset('storage/'.$settings->logo) : null,
+                'favicon' => $settings->favicon ? asset('storage/'.$settings->favicon) : null,
             ]);
         });
     }

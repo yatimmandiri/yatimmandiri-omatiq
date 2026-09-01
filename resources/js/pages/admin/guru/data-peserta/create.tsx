@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { dashboard } from '@/routes/admin';
-import teacherStudents from '@/routes/admin/teacher/students';
+import dataPeserta from '@/routes/admin/guru/data-peserta';
 import { useForm, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
@@ -79,7 +79,7 @@ export default function CreatePage() {
 
     const submit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        form.post(teacherStudents.store().url, {
+        form.post(dataPeserta.store().url, {
             preserveScroll: true,
         });
     };
@@ -400,12 +400,12 @@ CreatePage.layout = {
             href: dashboard(),
         },
         {
-            title: 'Binaan',
-            href: teacherStudents.index().url,
+            title: 'Data Peserta',
+            href: dataPeserta.index().url,
         },
         {
             title: 'Daftarkan Binaan',
-            href: teacherStudents.create().url,
+            href: dataPeserta.create().url,
         },
     ],
 };

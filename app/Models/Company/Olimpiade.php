@@ -33,7 +33,6 @@ use Spatie\Sluggable\Attributes\Sluggable;
     'status',
     'recommended',
     'sort_order',
-    'show_on_registration',
     'event_year',
 ])]
 #[Sluggable(from: 'name', to: 'slug')]
@@ -44,7 +43,6 @@ class Olimpiade extends Model
     protected $attributes = [
         'status' => true,
         'recommended' => false,
-        'show_on_registration' => false,
         'sort_order' => 0,
     ];
 
@@ -70,7 +68,6 @@ class Olimpiade extends Model
             'videos' => 'array',
             'status' => 'boolean',
             'recommended' => 'boolean',
-            'show_on_registration' => 'boolean',
             'sort_order' => 'integer',
         ];
     }

@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { login } from '@/routes';
+import loginStore from '@/routes/guru/login';
 import { Form, Head } from '@inertiajs/react';
 
 export default function GuruLogin() {
@@ -15,7 +16,7 @@ export default function GuruLogin() {
 
             <Form
                 method="post"
-                action="/guru/login"
+                action={loginStore.store().url}
                 className="flex flex-col gap-6"
             >
                 {({ processing, errors }) => (

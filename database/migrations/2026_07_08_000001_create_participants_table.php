@@ -13,15 +13,6 @@ return new class extends Migration
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('student_id')->nullable()->constrained()->nullOnDelete();
             $table->char('nik', 16)->nullable();
-            $table->unsignedBigInteger('penyaluran_student_id')->nullable()->index();
-            $table->string('penyaluran_student_name')->nullable();
-            $table->char('penyaluran_student_nik', 16)->nullable();
-            $table->string('penyaluran_student_nis', 20)->nullable();
-            $table->string('penyaluran_student_gender', 10)->nullable();
-            $table->string('penyaluran_student_school_name')->nullable();
-            $table->string('penyaluran_student_school_level', 30)->nullable();
-            $table->string('penyaluran_student_class', 20)->nullable();
-            $table->date('penyaluran_student_birth_date')->nullable();
             $table->unsignedBigInteger('penyaluran_sanggar_id')->nullable()->index();
             $table->string('penyaluran_sanggar_name')->nullable();
             $table->string('registration_number')->unique();
@@ -54,7 +45,6 @@ return new class extends Migration
             $table->index(['registration_type', 'status']);
             $table->index(['payment_status', 'status']);
             $table->index(['mentor_id', 'created_at']);
-            $table->index(['penyaluran_student_id', 'created_at']);
             $table->index('created_at');
             $table->timestamps();
         });

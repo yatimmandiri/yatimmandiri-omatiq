@@ -19,16 +19,16 @@ use App\Http\Controllers\Admin\Core\Region\VillageController;
 use App\Http\Controllers\Admin\Core\RoleController;
 use App\Http\Controllers\Admin\Core\UserController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\Guru\AbsensiController;
+use App\Http\Controllers\Admin\Guru\BinaanController;
+use App\Http\Controllers\Admin\Guru\DataPesertaController;
+use App\Http\Controllers\Admin\Guru\SanggarController;
 use App\Http\Controllers\Admin\Settings\LogActivityController;
 use App\Http\Controllers\Admin\Settings\SiteSettingsController;
-use App\Http\Controllers\Admin\Teacher\AbsensiController;
-use App\Http\Controllers\Admin\Teacher\MasterBinaanController;
-use App\Http\Controllers\Admin\Teacher\MasterSanggarController;
-use App\Http\Controllers\Admin\Teacher\TeacherStudentController;
 use App\Http\Controllers\Auth\AuthController;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'auth.admin', 'teacher.profile.completed'])->group(function () {
+Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'auth.admin', 'guru.profile.completed'])->group(function () {
     Route::redirect('/', '/admin/dashboard')->name('index');
 
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -92,20 +92,18 @@ Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'auth.admi
         Route::resource('teachers', TeacherController::class)->parameters(['teachers' => 'teacher'])->only(['index', 'show']);
     });
 
-    Route::prefix('teacher')->as('teacher.')->group(function () {
-        Route::get('students/data', [TeacherStudentController::class, 'getData'])->name('students.data');
-        Route::resource('students', TeacherStudentController::class)
-            ->parameters(['students' => 'participant'])
+    Route::prefix('guru')->as('guru.')->group(function () {
+        Route::get('data-peserta/data', [DataPesertaController::class, 'getData'])->name('data-peserta.data');
+        Route::resource('data-peserta', DataPesertaController::class)
+            ->parameters(['data-peserta' => 'participant'])
             ->only(['index', 'create', 'store', 'show']);
 
-        Route::prefix('master')->as('master.')->group(function () {
-            Route::get('binaan/data', [MasterBinaanController::class, 'getData'])->name('binaan.data');
-            Route::resource('binaan', MasterBinaanController::class)->parameters(['binaan' => 'binaan']);
+        Route::get('data-binaan/data', [BinaanController::class, 'getData'])->name('data-binaan.data');
+        Route::resource('data-binaan', BinaanController::class)->parameters(['data-binaan' => 'binaan']);
 
-            Route::get('sanggar/data', [MasterSanggarController::class, 'getData'])->name('sanggar.data');
-            Route::get('sanggar/{sanggar}', [MasterSanggarController::class, 'show'])->name('sanggar.show');
-            Route::get('sanggar', [MasterSanggarController::class, 'index'])->name('sanggar.index');
-        });
+        Route::get('data-sanggar/data', [SanggarController::class, 'getData'])->name('data-sanggar.data');
+        Route::get('data-sanggar/{sanggar}', [SanggarController::class, 'show'])->name('data-sanggar.show');
+        Route::get('data-sanggar', [SanggarController::class, 'index'])->name('data-sanggar.index');
 
         Route::get('absensi', [AbsensiController::class, 'index'])->name('absensi.index');
     });

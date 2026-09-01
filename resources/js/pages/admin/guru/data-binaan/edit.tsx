@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { dashboard } from '@/routes/admin';
-import masterBinaan from '@/routes/admin/teacher/master/binaan';
+import binaan from '@/routes/admin/guru/data-binaan';
 import { useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, Save } from 'lucide-react';
 import type { FormEvent, ReactNode } from 'react';
@@ -25,7 +25,7 @@ export default function EditPage() {
     });
     const submit = (e: FormEvent) => {
         e.preventDefault();
-        form.post(masterBinaan.update(binaan.id).url, { forceFormData: true });
+        form.post(binaan.update(binaan.id).url, { forceFormData: true });
     };
     const error = (n: string) => form.errors[n] ? <p className="text-sm text-destructive">{form.errors[n]}</p> : null;
     return (
@@ -51,4 +51,4 @@ export default function EditPage() {
     );
 }
 const Field = ({ label, children, error }: { label: string; children: ReactNode; error?: ReactNode }) => <div className="space-y-2"><Label>{label}</Label>{children}{error}</div>;
-EditPage.layout = { breadcrumbs: [{ title: 'Dashboard', href: dashboard() }, { title: 'Data Binaan', href: masterBinaan.index().url }, { title: 'Edit', href: '#' }] };
+EditPage.layout = { breadcrumbs: [{ title: 'Dashboard', href: dashboard() }, { title: 'Data Binaan', href: binaan.index().url }, { title: 'Edit', href: '#' }] };

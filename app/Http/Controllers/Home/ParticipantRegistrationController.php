@@ -52,7 +52,7 @@ class ParticipantRegistrationController extends Controller
 
         return Inertia::render('home/registration/index', [
             'pageTitle' => 'Pendaftaran OMATIQ',
-            'olimpiades' => Olimpiade::query()->active()->where('show_on_registration', true)->ordered()->get(['id', 'name', 'category', 'slug']),
+            'olimpiades' => Olimpiade::query()->active()->ordered()->get(['id', 'name', 'category', 'slug']),
             'provinces' => Province::query()->orderBy('name')->get(['id', 'name']),
             'regencies' => Regency::query()
                 ->orderBy('name')

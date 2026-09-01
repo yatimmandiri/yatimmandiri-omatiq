@@ -29,10 +29,10 @@ import reviews from '@/routes/admin/companies/reviews';
 import sliders from '@/routes/admin/companies/sliders';
 import teachers from '@/routes/admin/companies/teachers';
 import faqCompanies from '@/routes/admin/companies/faq-companies';
-import teacherStudents from '@/routes/admin/teacher/students';
-import masterBinaan from '@/routes/admin/teacher/master/binaan';
-import masterSanggar from '@/routes/admin/teacher/master/sanggar';
-import absensi from '@/routes/admin/teacher/absensi';
+import dataPeserta from '@/routes/admin/guru/data-peserta';
+import binaan from '@/routes/admin/guru/data-binaan';
+import sanggar from '@/routes/admin/guru/data-sanggar';
+import absensi from '@/routes/admin/guru/absensi';
 
 export const NavigationList = [
     {
@@ -55,19 +55,12 @@ export const NavigationList = [
                 icon: Users,
             },
             {
-                title: 'Pendaftaran',
-                href: teacherStudents.index().url,
+                title: 'Data Peserta',
+                href: dataPeserta.index().url,
                 permission: 'view-participant',
                 roles: ['Teacher'],
                 icon: GraduationCap,
             },
-            // {
-            //     title: 'Riwayat Pendaftar',
-            //     href: teacherStudents.index({ query: { filter: 'registered' } }).url,
-            //     permission: 'view-participant',
-            //     roles: ['Teacher'],
-            //     icon: Users,
-            // },
         ],
     },
     {
@@ -77,14 +70,14 @@ export const NavigationList = [
         children: [
             {
                 title: 'Data Binaan',
-                href: masterBinaan.index().url,
+                href: binaan.index().url,
                 permission: 'view-participant',
                 roles: ['Teacher'],
                 icon: Users,
             },
             {
                 title: 'Data Sanggar',
-                href: masterSanggar.index().url,
+                href: sanggar.index().url,
                 permission: 'view-participant',
                 roles: ['Teacher'],
                 icon: MapIcon,

@@ -1,6 +1,6 @@
 import { Card } from '@/components/ui/card';
 import { dashboard } from '@/routes/admin';
-import teacherStudents from '@/routes/admin/teacher/students';
+import binaan from '@/routes/admin/guru/data-binaan';
 import { Head, Link, usePage } from '@inertiajs/react';
 import {
     BookOpenCheck,
@@ -17,15 +17,11 @@ export default function Dashboard() {
         studentCount,
         penyaluranTotal,
         sanggarCount,
-        sanggarSum,
-        overlapCount,
         registeredCount,
     } = usePage<{
         studentCount: number;
         penyaluranTotal?: number | null;
         sanggarCount?: number;
-        sanggarSum?: number | null;
-        overlapCount?: number | null;
         registeredCount?: number;
     }>().props;
 
@@ -54,7 +50,7 @@ export default function Dashboard() {
                             </p>
                         </div>
 
-                        <Link href={teacherStudents.index().url} prefetch>
+                        <Link href={binaan.index().url} prefetch>
                             <div className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90">
                                 Kelola Binaan
                                 <ExternalLink className="size-4" />
@@ -68,33 +64,22 @@ export default function Dashboard() {
                         icon={<Users className="size-6" />}
                         label="Total Binaan"
                         value={totalBinaan}
-                        description={
-                            overlapCount && overlapCount > 0
-                                ? `${overlapCount} binaan berada di lebih dari satu sanggar`
-                                : 'Data unik dari Penyaluran'
-                        }
+
                     />
                     <MetricCard
                         icon={<Building2 className="size-6" />}
                         label="Total Sanggar"
                         value={sanggarCount ?? 0}
-                        description={
-                            sanggarSum !== null && sanggarSum !== undefined
-                                ? `${sanggarSum} total data di seluruh sanggar`
-                                : 'Terhubung dengan akun guru'
-                        }
                     />
                     <MetricCard
                         icon={<CheckCircle2 className="size-6" />}
                         label="Sudah Terdaftar"
                         value={totalRegistered}
-                        description="Pendaftaran aktif tahun ini"
                     />
                     <MetricCard
                         icon={<UserPlus className="size-6" />}
                         label="Belum Terdaftar"
                         value={unregisteredCount}
-                        description="Estimasi binaan yang masih bisa didaftarkan"
                     />
                 </div>
 
@@ -109,7 +94,7 @@ export default function Dashboard() {
                                 mendaftarkan anak ke kategori olimpiade.
                             </p>
                         </div>
-                        <Link href={teacherStudents.index().url} prefetch>
+                        <Link href={binaan.index().url} prefetch>
                             <div className="inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-2 text-sm font-semibold transition hover:bg-accent">
                                 Lihat Daftar Binaan
                                 <ExternalLink className="size-4" />
@@ -126,12 +111,10 @@ const MetricCard = ({
     icon,
     label,
     value,
-    description,
 }: {
     icon: ReactNode;
     label: string;
     value: number;
-    description: string;
 }) => (
     <Card className="rounded-3xl p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
         <div className="flex items-start justify-between gap-4">
@@ -147,9 +130,6 @@ const MetricCard = ({
                 {icon}
             </div>
         </div>
-        <p className="mt-4 text-sm leading-6 text-muted-foreground">
-            {description}
-        </p>
     </Card>
 );
 

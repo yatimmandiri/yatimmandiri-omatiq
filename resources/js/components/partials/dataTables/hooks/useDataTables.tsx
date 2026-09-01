@@ -202,12 +202,12 @@ export const DataTableProvider = ({
             (col: any) => col.id === 'actions' || col.accessorKey === 'actions',
         );
 
-        // Kolom action default (jika belum ada)
+        // Kolom action default (jika belum ada) — di kiri setelah No (UX Indo)
         const defaultActionColumn =
             withActions && !hasCustomAction
                 ? {
                       id: 'actions',
-                      header: () => <span>Action</span>,
+                      header: () => <span>Aksi</span>,
                       cell: (info: any) => (
                           <RowActions
                               info={info}
@@ -216,6 +216,7 @@ export const DataTableProvider = ({
                       ),
                       enableSorting: false,
                       enableHiding: false,
+                      meta: { sticky: 'left' },
                   }
                 : null;
 
@@ -242,14 +243,19 @@ export const DataTableProvider = ({
             // else ignore duplicate (custom wins over baseEndColumns)
         });
 
-        // Tambahkan kolom Action di paling akhir (custom jika ada, default jika tidak)
+        // Sisipkan kolom Aksi di kiri sebelum No — Opsi A: select | Aksi | No (UX Indo kiri-ke-kanan, sticky hanya Aksi)
+        // baseStart = [select, No] → splice(1,0) = setelah select, sebelum No
         if (hasCustomAction) {
             const customAction = columns.find(
                 (c: any) => c.accessorKey === 'actions' || c.id === 'actions',
             );
-            mergedColumns.push(customAction);
+            // pastikan custom tetap Aksi + sticky kiri
+            if (customAction && !customAction.meta) {
+                customAction.meta = { sticky: 'left' };
+            }
+            mergedColumns.splice(1, 0, customAction);
         } else if (defaultActionColumn) {
-            mergedColumns.push(defaultActionColumn);
+            mergedColumns.splice(1, 0, defaultActionColumn);
         }
 
         return mergedColumns;

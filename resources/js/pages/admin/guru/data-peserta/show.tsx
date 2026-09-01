@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { dashboard } from '@/routes/admin';
-import teacherStudents from '@/routes/admin/teacher/students';
+import dataPeserta from '@/routes/admin/guru/data-peserta';
 import { usePage } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';
 
@@ -157,11 +157,11 @@ ShowPage.layout = {
             href: dashboard(),
         },
         {
-            title: 'Binaan',
-            href: teacherStudents.index().url,
+            title: 'Data Peserta',
+            href: dataPeserta.index().url,
         },
         {
-            title: 'Detail Binaan',
+            title: 'Detail Peserta',
             href: '#',
         },
     ],

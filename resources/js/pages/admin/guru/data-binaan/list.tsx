@@ -5,21 +5,21 @@ import { SelectComponent } from '@/components/partials/select-component';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { dashboard } from '@/routes/admin';
-import teacherStudents from '@/routes/admin/teacher/students';
-import { router } from '@inertiajs/react';
-import {
-    CheckCircle2,
-    CircleSlash2,
-    Clock3,
-    Eye,
-    RefreshCcw,
-    UserPlus,
-    XCircle,
-} from 'lucide-react';
+import binaan from '@/routes/admin/guru/data-binaan';
+import dataPeserta from '@/routes/admin/guru/data-peserta';
+import { router, usePage } from '@inertiajs/react';
+import { CheckCircle2, CircleSlash2, Clock3, Eye, RefreshCcw, UserPlus, XCircle } from 'lucide-react';
 import { useState } from 'react';
 
 export default function ListPage() {
-    const [filterValue, setFilterValue] = useState<any>({});
+    const { sanggars = [], selected_sanggar_id: initialSanggarId } = usePage<{
+        sanggars?: Array<{ id: number | string; name: string }>;
+        selected_sanggar_id?: number | string | null;
+    }>().props;
+
+    const [filterValue, setFilterValue] = useState<any>(() =>
+        initialSanggarId ? { sanggar_id: String(initialSanggarId) } : {},
+    );
     const [refreshData, setRefreshData] = useState(false);
 
     const columns = [
@@ -29,25 +29,15 @@ export default function ListPage() {
             cell: (info: any) => (
                 <div className="space-y-1">
                     <p className="font-semibold">{info.getValue()}</p>
-                    <p className="text-xs text-muted-foreground">
-                        {info.row.original.nik}
-                    </p>
+                    <p className="text-xs text-muted-foreground">{info.row.original.nik}</p>
                 </div>
             ),
         },
-        {
-            header: 'Sekolah',
-            accessorKey: 'school_name',
-            cell: (info: any) => info.getValue() ?? '-',
-        },
-        {
-            header: 'Kelas',
-            accessorKey: 'grade',
-            cell: (info: any) => info.getValue() ?? '-',
-        },
+        { header: 'Sekolah', accessorKey: 'school_name', cell: (info: any) => info.getValue() ?? '-' },
+        { header: 'Kelas', accessorKey: 'grade', cell: (info: any) => info.getValue() ?? '-' },
         {
             header: (info: any) => renderRowHeader(info, 'Sanggar'),
-            accessorKey: 'created_at',
+            accessorKey: 'sanggar_names',
             cell: (info: any) => {
                 const names: string[] = info.row.original.sanggar_names ?? [];
                 return names.length ? (
@@ -66,18 +56,14 @@ export default function ListPage() {
         },
         {
             header: 'Terdaftar di',
-            accessorKey: 'updated_at',
+            accessorKey: 'sanggar_terdaftar',
             cell: (info: any) => info.row.original.sanggar_terdaftar ?? '-',
             enableSorting: false,
         },
         {
             header: 'Status OMATIQ',
             accessorKey: 'registration_status',
-            cell: (info: any) => {
-                const row = info.row.original;
-
-                return <RegistrationBadge row={row} />;
-            },
+            cell: (info: any) => <RegistrationBadge row={info.row.original} />,
             enableSorting: false,
         },
         {
@@ -97,7 +83,7 @@ export default function ListPage() {
                     filterValue={filterValue}
                     refreshData={refreshData}
                     setRefreshData={setRefreshData}
-                    urlFetchData={teacherStudents.data().url}
+                    urlFetchData={binaan.data().url}
                     formatDataExport={(items: any[]) =>
                         items.map((item, index) => ({
                             No: index + 1,
@@ -109,28 +95,33 @@ export default function ListPage() {
                             'Terdaftar di': item.sanggar_terdaftar ?? '-',
                             'Status OMATIQ': item.is_registered
                                 ? `${item.olimpiade_name ?? 'Terdaftar'} (${item.registration_status ?? '-'})`
-                                : 'Belum Terdaftar',
+                                : item.registration_status === 'rejected'
+                                  ? `Ditolak (${item.olimpiade_name ?? '-'})`
+                                  : 'Belum Terdaftar',
                         }))
                     }
                 >
                     <div className="flex flex-col space-y-4 px-4 pt-8 md:px-8">
-                        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                            {sanggars.length > 0 && (
+                                <SelectComponent
+                                    label="Sanggar"
+                                    placeholder="Semua sanggar..."
+                                    data={sanggars.map((s: any) => ({ value: String(s.id), label: s.name }))}
+                                    dataSelected={filterValue.sanggar_id}
+                                    handleOnChange={(value: any) => setFilterValue((prev: any) => ({ ...prev, sanggar_id: value }))}
+                                />
+                            )}
                             <SelectComponent
                                 label="Status OMATIQ"
                                 placeholder="Semua status..."
                                 data={[
                                     { value: 'registered', label: 'Terdaftar' },
-                                    {
-                                        value: 'unregistered',
-                                        label: 'Belum Terdaftar',
-                                    },
+                                    { value: 'unregistered', label: 'Belum Terdaftar' },
                                 ]}
                                 dataSelected={filterValue.registration}
                                 handleOnChange={(value: any) =>
-                                    setFilterValue((prev: any) => ({
-                                        ...prev,
-                                        registration: value,
-                                    }))
+                                    setFilterValue((prev: any) => ({ ...prev, registration: value }))
                                 }
                             />
                         </div>
@@ -143,62 +134,65 @@ export default function ListPage() {
 }
 
 const RegistrationBadge = ({ row }: { row: any }) => {
-    if (!row.is_registered) {
+    if (!row.is_registered && row.registration_status !== 'rejected') {
         return (
             <Badge variant="secondary">
-                <CircleSlash2 />
+                <CircleSlash2 className="size-3" />
                 Belum Terdaftar
             </Badge>
         );
     }
-
     const status = row.registration_status;
-
     if (status === 'verified') {
         return (
             <div className="flex flex-col items-start gap-1">
                 <Badge>
-                    <CheckCircle2 />
+                    <CheckCircle2 className="size-3" />
                     Terdaftar · {row.olimpiade_name ?? 'OMATIQ'}
                 </Badge>
-                <span className="text-xs text-muted-foreground">
-                    {row.registration_number}
-                </span>
+                <span className="text-xs text-muted-foreground">{row.registration_number}</span>
             </div>
         );
     }
-
     if (status === 'rejected') {
         return (
             <Badge variant="destructive">
-                <XCircle />
+                <XCircle className="size-3" />
                 Ditolak · {row.olimpiade_name ?? 'OMATIQ'}
             </Badge>
         );
     }
-
+    if (row.is_registered) {
+        return (
+            <div className="flex flex-col items-start gap-1">
+                <Badge variant="secondary">
+                    <Clock3 className="size-3" />
+                    Menunggu · {row.olimpiade_name ?? 'OMATIQ'}
+                </Badge>
+                <span className="text-xs text-muted-foreground">{row.registration_number}</span>
+            </div>
+        );
+    }
     return (
-        <div className="flex flex-col items-start gap-1">
-            <Badge variant="secondary">
-                <Clock3 />
-                Menunggu · {row.olimpiade_name ?? 'OMATIQ'}
-            </Badge>
-            <span className="text-xs text-muted-foreground">
-                {row.registration_number}
-            </span>
-        </div>
+        <Badge variant="secondary">
+            <CircleSlash2 className="size-3" />
+            Belum Terdaftar
+        </Badge>
     );
 };
 
 const RowAction = ({ row }: { row: any }) => {
-    if (!row.is_registered) {
+    const isRejected = row.registration_status === 'rejected';
+    const showDaftarkan = !row.is_registered || isRejected;
+
+    if (showDaftarkan) {
         const sanggarId = row.sanggar_ids?.[0] ?? row.sanggar_id;
         return (
             <Button
                 size="sm"
                 onClick={() =>
                     router.visit(
-                        teacherStudents.create({
+                        dataPeserta.create({
                             query: {
                                 student_id: String(row.id),
                                 ...(sanggarId ? { sanggar_id: String(sanggarId) } : {}),
@@ -207,55 +201,23 @@ const RowAction = ({ row }: { row: any }) => {
                     )
                 }
             >
-                <UserPlus />
-                Daftarkan
+                {isRejected ? <RefreshCcw className="size-4" /> : <UserPlus className="size-4" />}
+                {isRejected ? 'Daftarkan Ulang' : 'Daftarkan'}
             </Button>
         );
     }
 
     return (
-        <div className="flex items-center gap-2">
-            <Button
-                size="sm"
-                variant="outline"
-                onClick={() =>
-                    router.visit(teacherStudents.show(row.participant_id).url)
-                }
-            >
-                <Eye />
-                Detail
-            </Button>
-            {row.registration_status === 'rejected' && (
-                <Button
-                    size="sm"
-                    onClick={() =>
-                        router.visit(
-                            teacherStudents.create({
-                                query: {
-                                    student_id: String(row.id),
-                                    ...(row.sanggar_ids?.[0] ? { sanggar_id: String(row.sanggar_ids[0]) } : row.sanggar_id ? { sanggar_id: String(row.sanggar_id) } : {}),
-                                },
-                            }).url,
-                        )
-                    }
-                >
-                    <RefreshCcw />
-                    Daftarkan Ulang
-                </Button>
-            )}
-        </div>
+        <Button size="sm" variant="outline" onClick={() => router.visit(binaan.show(row.id).url)}>
+            <Eye className="size-4" />
+            Detail
+        </Button>
     );
 };
 
 ListPage.layout = {
     breadcrumbs: [
-        {
-            title: 'Dashboard',
-            href: dashboard(),
-        },
-        {
-            title: 'Pendaftaran',
-            href: teacherStudents.index().url,
-        },
+        { title: 'Dashboard', href: dashboard() },
+        { title: 'Data Binaan', href: binaan.index().url },
     ],
 };
