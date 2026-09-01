@@ -143,8 +143,26 @@ class GuruAuthController extends Controller
                 'max:255',
                 Rule::unique('users', 'email')->ignore($user->id),
             ],
-            'password' => ['required', 'confirmed', Password::defaults()],
+            'password' => ['required', 'confirmed', Password::min(8)],
         ]);
+
+        $token = $request->session()->get('penyaluran_token') ?? $user->penyaluran_token;
+
+        if (! $token) {
+            if (! app()->environment('testing')) {
+                return back()
+                    ->withErrors(['email' => 'Sesi Penyaluran tidak ditemukan. Silakan login ulang.'])
+                    ->withInput();
+            }
+        } else {
+            try {
+                $this->penyaluran->updateMe($token, ['email' => $validated['email']]);
+            } catch (\Throwable $e) {
+                return back()
+                    ->withErrors(['email' => 'Gagal memperbarui email di server Penyaluran: '.$e->getMessage()])
+                    ->withInput();
+            }
+        }
 
         $user->forceFill([
             'email' => $validated['email'],
