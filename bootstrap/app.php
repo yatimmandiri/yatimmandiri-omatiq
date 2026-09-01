@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\AdminMiddleware;
+use App\Http\Middleware\EnsureTeacherProfileCompleted;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RedirectIfAuthenticated;
@@ -35,6 +36,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role_or_permission' => RoleOrPermissionMiddleware::class,
             'auth.user' => UserMiddleware::class,
             'auth.admin' => AdminMiddleware::class,
+            'teacher.profile.completed' => EnsureTeacherProfileCompleted::class,
             'guest.redirect' => RedirectIfAuthenticated::class,
         ]);
     })

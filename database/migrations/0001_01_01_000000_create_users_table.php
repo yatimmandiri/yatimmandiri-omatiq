@@ -19,6 +19,7 @@ return new class extends Migration
             $table->unsignedBigInteger('penyaluran_id')->nullable()->unique();
             $table->text('penyaluran_token')->nullable();
             $table->timestamp('phone_verified_at')->nullable();
+            $table->timestamp('teacher_profile_completed_at')->nullable();
             $table->string('phone_otp', 6)->nullable();
             $table->timestamp('phone_otp_expires_at')->nullable();
             $table->unsignedTinyInteger('phone_otp_attempts')->default(0);

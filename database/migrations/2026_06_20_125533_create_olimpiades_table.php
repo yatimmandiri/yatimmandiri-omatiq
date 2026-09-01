@@ -28,7 +28,8 @@ return new class extends Migration
             $table->string('registration_url')->nullable();
             $table->boolean('status')->default(true)->index();
             $table->boolean('recommended')->default(false)->index();
-            $table->boolean('show_on_registration')->default(false)->index();
+            $table->boolean('show_on_registration')->default(true)->index();
+            $table->year('event_year')->nullable()->index()->default(2026);
             $table->unsignedInteger('sort_order')->default(0)->index();
             $table->timestamps();
             $table->softDeletes();

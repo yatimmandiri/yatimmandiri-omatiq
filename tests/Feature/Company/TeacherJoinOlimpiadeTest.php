@@ -4,8 +4,10 @@ use App\Models\Company\Olimpiade;
 use App\Models\Company\Participant;
 use App\Models\Company\Student;
 use App\Models\Core\Permission;
+use App\Models\Core\Region\District;
 use App\Models\Core\Region\Province;
 use App\Models\Core\Region\Regency;
+use App\Models\Core\Region\Village;
 use App\Models\Core\Role;
 use App\Models\Core\User;
 use App\Settings\SiteSettings;
@@ -45,9 +47,9 @@ function createAssignedStudent(User $teacher, string $nik = '3525011505120002'):
         'gender' => 'female',
         'birth_place' => 'Surabaya',
         'birth_date' => '2012-05-15',
-        'age' => 14,
+
         'school_name' => 'SMP Negeri 2 Surabaya',
-        'grade' => '8',
+        'grade' => 'II',
         'address' => 'Jl. Raya Darmo No. 12',
         'parent_phone' => '081234567890',
         'mentor_id' => $teacher->id,
@@ -82,10 +84,10 @@ it('lets a teacher register an assigned binaan student', function () {
     $participant = Participant::first();
 
     expect($participant)->not->toBeNull()
-        ->and($participant->penyaluran_student_id)->toBe($student->id)
+        ->and($participant->student_id)->toBe($student->id)
         ->and($participant->mentor_id)->toBe($teacher->id)
         ->and($participant->registration_type)->toBe('teacher')
-        ->and($participant->status)->toBe('submitted')
+        ->and($participant->status)->toBe('verified')
         ->and($participant->registration_number)->toStartWith('OMQ-');
 });
 
@@ -95,21 +97,21 @@ it('prevents registering a student who already has an active registration', func
     $student = createAssignedStudent($teacher);
     $olimpiade = createOlimpiade('Olimpiade IPA', 'IPA');
 
+    // Create a Student master for binaan (penyaluran) and link via student_id
+    $binaanStudent = Student::where('penyaluran_id', $student->id)->first() ?? $student;
     Participant::create([
-        'penyaluran_student_id' => $student->id,
-        'penyaluran_student_name' => $student->full_name,
-        'penyaluran_student_nik' => $student->nik,
+        'student_id' => $binaanStudent->id,
         'mentor_id' => $teacher->id,
         'olimpiade_id' => $olimpiade->id,
         'registration_number' => 'OMQ-TEST-0001',
         'registration_type' => 'teacher',
         'status' => 'verified',
+        'event_year' => $olimpiade->event_year ?? 2026,
     ]);
 
-    $next = createOlimpiade('Olimpiade Al-Quran', 'Al-Quran');
-
+    // Same olimpiade should be blocked (per-event unique)
     $this->actingAs($teacher)
-        ->post(route('admin.teacher.students.store'), registrationPayload($next->id, $student->id))
+        ->post(route('admin.teacher.students.store'), registrationPayload($olimpiade->id, $student->id))
         ->assertSessionHasErrors('penyaluran_student_id');
 
     expect(Participant::count())->toBe(1);
@@ -137,9 +139,7 @@ it('lets a teacher re-register a student whose previous registration was rejecte
     $previous = createOlimpiade('Olimpiade IPA', 'IPA');
 
     Participant::create([
-        'penyaluran_student_id' => $student->id,
-        'penyaluran_student_name' => $student->full_name,
-        'penyaluran_student_nik' => $student->nik,
+        'student_id' => $student->id,
         'mentor_id' => $teacher->id,
         'olimpiade_id' => $previous->id,
         'registration_number' => 'OMQ-TEST-0001',
@@ -154,7 +154,7 @@ it('lets a teacher re-register a student whose previous registration was rejecte
         ->assertRedirect(route('admin.teacher.students.index'))
         ->assertSessionHasNoErrors();
 
-    expect(Participant::where('penyaluran_student_id', $student->id)->count())->toBe(2);
+    expect(Participant::where('student_id', $student->id)->count())->toBe(2);
 });
 
 it('blocks public registration when the NIK already has an active registration', function () {
@@ -177,11 +177,23 @@ it('blocks public registration when the NIK already has an active registration',
         $regency->name = 'KOTA SURABAYA';
         $regency->save();
     }
+    if (! District::where('id', '3578010')->exists()) {
+        $district = new District;
+        $district->id = '3578010';
+        $district->regency_id = '3578';
+        $district->name = 'KARANG PILANG';
+        $district->save();
+    }
+    if (! Village::where('id', '3578010001')->exists()) {
+        $village = new Village;
+        $village->id = '3578010001';
+        $village->district_id = '3578010';
+        $village->name = 'WARUGUNUNG';
+        $village->save();
+    }
 
     Participant::create([
-        'penyaluran_student_id' => $student->id,
-        'penyaluran_student_name' => $student->full_name,
-        'penyaluran_student_nik' => $student->nik,
+        'student_id' => $student->id,
         'mentor_id' => $teacher->id,
         'olimpiade_id' => $olimpiade->id,
         'registration_number' => 'OMQ-TEST-0001',
@@ -197,15 +209,16 @@ it('blocks public registration when the NIK already has an active registration',
         'gender' => 'female',
         'birth_place' => 'Surabaya',
         'birth_date' => '2012-05-15',
-        'age' => 14,
         'school_name' => 'SMP Negeri 2 Surabaya',
-        'grade' => '8',
+        'grade' => 'II',
         'address' => 'Jl. Raya Darmo No. 12',
         'province_id' => '35',
         'regency_id' => '3578',
+        'district_id' => '3578010',
+        'village_id' => '3578010001',
         'parent_phone' => '081234567890',
         'referral_source' => 'Sekolah',
-        'branch' => 'Surabaya',
+        'branch' => 'PUSAT 1',
         'payment_proof' => UploadedFile::fake()->create('bukti.pdf', 100, 'application/pdf'),
         'student_card' => UploadedFile::fake()->create('kartu.pdf', 100, 'application/pdf'),
         'data_truth_consent' => true,
@@ -229,9 +242,7 @@ it('does not expose edit, update, or destroy routes to teachers', function () {
     $olimpiade = createOlimpiade();
 
     $participant = Participant::create([
-        'penyaluran_student_id' => $student->id,
-        'penyaluran_student_name' => $student->full_name,
-        'penyaluran_student_nik' => $student->nik,
+        'student_id' => $student->id,
         'mentor_id' => $teacher->id,
         'olimpiade_id' => $olimpiade->id,
         'registration_number' => 'OMQ-TEST-0001',

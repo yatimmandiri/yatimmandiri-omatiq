@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin\Teacher;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Company\StoreTeacherParticipantRequest;
+use App\Models\Company\Olimpiade;
 use App\Models\Company\Participant;
 use App\Models\Company\Student;
 use App\Services\PenyaluranService;
@@ -73,7 +74,12 @@ class TeacherStudentController extends Controller
             $studentsRaw = $local;
         }
 
-        $options = $this->service->getFormOptionsFromApi($studentsRaw, $request->integer('student_id') ?: $request->integer('penyaluran_student_id') ?: null);
+        // Determine event year from requested olimpiade or default to current year
+        $eventYear = null;
+        if ($request->filled('olimpiade_id')) {
+            $eventYear = Olimpiade::find($request->integer('olimpiade_id'))?->event_year;
+        }
+        $options = $this->service->getFormOptionsFromApi($studentsRaw, $request->integer('student_id') ?: $request->integer('penyaluran_student_id') ?: null, $eventYear);
 
         $sanggarsRaw = [];
         if ($token) {
@@ -119,7 +125,7 @@ class TeacherStudentController extends Controller
         $penyaluranStudent = null;
         if ($token) {
             try {
-                $studentsRaw = $this->penyaluran->students($token);
+                $studentsRaw = $this->penyaluran->students($token, $data['penyaluran_sanggar_id'] ?? null);
                 $penyaluranStudent = collect($studentsRaw)->firstWhere(fn (array $s) => (int) ($s['student_id'] ?? $s['id'] ?? 0) === (int) $data['penyaluran_student_id']);
             } catch (\Throwable $e) {
                 $penyaluranStudent = null;
@@ -137,9 +143,17 @@ class TeacherStudentController extends Controller
             return back()->withErrors(['penyaluran_student_id' => 'Binaan tidak ditemukan.']);
         }
 
+        if (empty($data['penyaluran_sanggar_id']) && ! empty($penyaluranStudent['sanggar_id'])) {
+            $data['penyaluran_sanggar_id'] = $penyaluranStudent['sanggar_id'];
+        }
+
+        if (empty($data['penyaluran_sanggar_name']) && ! empty($penyaluranStudent['sanggar_name'])) {
+            $data['penyaluran_sanggar_name'] = $penyaluranStudent['sanggar_name'];
+        }
+
         $participant = $this->service->registerStudent(Auth::user(), $data, $penyaluranStudent);
 
-        $name = $participant->penyaluran_student_name ?? 'Unknown';
+        $name = $participant->student?->full_name ?? 'Unknown';
 
         return redirect()
             ->route('admin.teacher.students.index')
@@ -161,15 +175,17 @@ class TeacherStudentController extends Controller
 
         $perPage = min($request->integer('perPage') ?: 10, 100);
         $registration = $request->input('filterValue.registration');
-        $sanggarId = $request->integer('filterValue.sanggar_id') ?: $request->integer('sanggar_id') ?: null;
         $search = strtolower($request->string('globalSearch')->toString());
 
         $token = $request->session()->get('penyaluran_token') ?? Auth::user()?->penyaluran_token;
 
         $studentsRaw = [];
+        $sanggarMap = collect();
         if ($token) {
             try {
-                $studentsRaw = $this->penyaluran->students($token, $sanggarId);
+                $studentsRaw = $this->penyaluran->students($token);
+                $sanggarsTmp = $this->penyaluran->sanggars($token);
+                $sanggarMap = collect($sanggarsTmp)->pluck('name', 'id');
             } catch (\Throwable $e) {
                 $studentsRaw = [];
             }
@@ -186,24 +202,28 @@ class TeacherStudentController extends Controller
             $studentsRaw = $local;
         }
 
-        // Map active participants by penyaluran_student_id + legacy student_id
+        // Map active participants by Student.penyaluran_id so API roster rows can be matched.
         $activeMap = Participant::query()
             ->where('mentor_id', Auth::id())
-            ->where(function ($q) {
-                $q->whereNotNull('penyaluran_student_id')->orWhereNotNull('student_id');
-            })
-            ->with('olimpiade:id,name')
+            ->whereNotNull('student_id')
+            ->with(['olimpiade:id,name', 'student:id,penyaluran_id'])
             ->orderByDesc('created_at')
             ->get()
-            ->groupBy(function (Participant $p) {
-                return (int) ($p->penyaluran_student_id ?? $p->student_id ?? 0);
-            })
+            ->groupBy(fn (Participant $p) => (int) ($p->student?->penyaluran_id ?? $p->student_id))
             ->map(fn ($group) => $group->first());
 
+        // Pendaftaran: flat unique by NIK (binaan di >1 sanggar tampil 1x)
+        $studentsRaw = collect($studentsRaw)->unique(fn (array $s) => $s['nik'] ?? $s['student_id'] ?? $s['id'] ?? null)->values()->all();
+
         $collection = collect($studentsRaw)
-            ->map(function (array $s) use ($activeMap) {
+            ->map(function (array $s) use ($activeMap, $sanggarMap) {
                 $id = (int) ($s['student_id'] ?? $s['id'] ?? 0);
                 $latest = $activeMap->get($id);
+                $sanggarIds = $s['sanggar_ids'] ?? (isset($s['sanggar_id']) ? [$s['sanggar_id']] : []);
+                $sanggarNames = collect($sanggarIds)->map(fn ($sid) => $sanggarMap[$sid] ?? $sid)->filter()->values()->all();
+                if (empty($sanggarNames) && isset($s['sanggar_id']) && $s['sanggar_id']) {
+                    $sanggarNames = [$sanggarMap[$s['sanggar_id']] ?? $s['sanggar_id']];
+                }
 
                 return [
                     'id' => $id,
@@ -211,6 +231,9 @@ class TeacherStudentController extends Controller
                     'full_name' => $s['name'] ?? $s['full_name'] ?? '-',
                     'school_name' => $s['school_name'] ?? null,
                     'grade' => $s['class'] ?? $s['grade'] ?? null,
+                    'sanggar_ids' => $sanggarIds,
+                    'sanggar_names' => $sanggarNames,
+                    'sanggar_terdaftar' => $latest?->penyaluran_sanggar_name,
                     'is_registered' => $latest !== null,
                     'participant_id' => $latest?->id,
                     'registration_status' => $latest?->status,
@@ -221,7 +244,8 @@ class TeacherStudentController extends Controller
             ->when($search !== '', function ($c) use ($search) {
                 return $c->filter(fn (array $item) => str_contains(strtolower($item['full_name'] ?? ''), $search)
                     || str_contains(strtolower($item['nik'] ?? ''), $search)
-                    || str_contains(strtolower($item['school_name'] ?? ''), $search));
+                    || str_contains(strtolower($item['school_name'] ?? ''), $search)
+                    || str_contains(strtolower(implode(',', $item['sanggar_names'] ?? [])) ?? '', $search));
             })
             ->when($registration === 'registered', fn ($c) => $c->filter(fn (array $item) => $item['is_registered']))
             ->when($registration === 'unregistered', fn ($c) => $c->filter(fn (array $item) => ! $item['is_registered']))

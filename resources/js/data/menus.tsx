@@ -1,4 +1,3 @@
-import { dashboard } from '@/routes/admin';
 import olimpiades from '@/routes/admin/companies/olimpiades';
 import olimpiadeGalleries from '@/routes/admin/companies/olimpiade-galleries';
 import olimpiadeObjectives from '@/routes/admin/companies/olimpiade-objectives';
@@ -21,7 +20,6 @@ import {
     CpuIcon,
     GraduationCap,
     Handshake,
-    LayoutDashboard,
     MapIcon,
     Trophy,
     UserCheck,
@@ -32,19 +30,11 @@ import sliders from '@/routes/admin/companies/sliders';
 import teachers from '@/routes/admin/companies/teachers';
 import faqCompanies from '@/routes/admin/companies/faq-companies';
 import teacherStudents from '@/routes/admin/teacher/students';
+import masterBinaan from '@/routes/admin/teacher/master/binaan';
+import masterSanggar from '@/routes/admin/teacher/master/sanggar';
+import absensi from '@/routes/admin/teacher/absensi';
 
 export const NavigationList = [
-    {
-        title: 'Umum',
-        children: [
-            {
-                title: 'Dashboard Saya',
-                href: dashboard().url,
-                permission: 'view-participant',
-                icon: LayoutDashboard,
-            },
-        ],
-    },
     {
         title: 'Partisipasi',
         roles: ['Administrators', 'Teacher'],
@@ -65,11 +55,53 @@ export const NavigationList = [
                 icon: Users,
             },
             {
-                title: 'Kelola Binaan',
+                title: 'Pendaftaran',
                 href: teacherStudents.index().url,
                 permission: 'view-participant',
                 roles: ['Teacher'],
                 icon: GraduationCap,
+            },
+            // {
+            //     title: 'Riwayat Pendaftar',
+            //     href: teacherStudents.index({ query: { filter: 'registered' } }).url,
+            //     permission: 'view-participant',
+            //     roles: ['Teacher'],
+            //     icon: Users,
+            // },
+        ],
+    },
+    {
+        title: 'Master',
+        roles: ['Teacher'],
+        icon: GraduationCap,
+        children: [
+            {
+                title: 'Data Binaan',
+                href: masterBinaan.index().url,
+                permission: 'view-participant',
+                roles: ['Teacher'],
+                icon: Users,
+            },
+            {
+                title: 'Data Sanggar',
+                href: masterSanggar.index().url,
+                permission: 'view-participant',
+                roles: ['Teacher'],
+                icon: MapIcon,
+            },
+        ],
+    },
+    {
+        title: 'Absensi',
+        roles: ['Teacher'],
+        icon: Handshake,
+        children: [
+            {
+                title: 'Absensi',
+                href: absensi.index().url,
+                permission: 'view-participant',
+                roles: ['Teacher'],
+                icon: Users,
             },
         ],
     },

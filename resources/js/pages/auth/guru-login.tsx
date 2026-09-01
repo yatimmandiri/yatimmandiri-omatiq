@@ -1,4 +1,5 @@
 import InputError from '@/components/input-error';
+import PasswordInput from '@/components/password-input';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,10 +39,29 @@ export default function GuruLogin() {
                                 <InputError message={errors.phone} />
                             </div>
 
+                            <div className="grid gap-2">
+                                <Label htmlFor="password">Password</Label>
+                                <PasswordInput
+                                    id="password"
+                                    name="password"
+                                    required
+                                    tabIndex={2}
+                                    autoComplete="current-password"
+                                    placeholder="Password dari admin"
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                    Gunakan password yang diberikan oleh tim
+                                    OMATIQ. Setelah login pertama, Anda akan
+                                    diminta mendaftarkan email dan membuat
+                                    password baru.
+                                </p>
+                                <InputError message={errors.password} />
+                            </div>
+
                             <Button
                                 type="submit"
                                 className="mt-2 w-full"
-                                tabIndex={2}
+                                tabIndex={3}
                                 disabled={processing}
                                 data-test="guru-login-button"
                             >
@@ -52,7 +72,7 @@ export default function GuruLogin() {
 
                         <div className="text-center text-sm text-muted-foreground">
                             Peserta?{' '}
-                            <TextLink href={login()} tabIndex={3}>
+                            <TextLink href={login()} tabIndex={4}>
                                 Login Peserta / Admin
                             </TextLink>
                         </div>
@@ -65,5 +85,5 @@ export default function GuruLogin() {
 
 GuruLogin.layout = {
     title: 'Login Guru',
-    description: 'Masuk dengan nomor HP terdaftar di Penyaluran',
+    description: 'Masuk dengan nomor HP dan password dari tim OMATIQ',
 };

@@ -8,12 +8,17 @@ use App\Http\Requests\Company\StoreParticipantRequest;
 use App\Models\Company\Olimpiade;
 use App\Models\Company\Participant;
 use App\Models\Company\Student;
+use App\Models\Core\Region\District;
 use App\Models\Core\Region\Province;
 use App\Models\Core\Region\Regency;
+use App\Models\Core\Region\Village;
 use App\Models\Core\User;
 use App\Settings\SiteSettings;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -37,6 +42,14 @@ class ParticipantRegistrationController extends Controller
             ]);
         }
 
+        $branches = Cache::remember('branch_offices', 3600, function () {
+            if (Storage::disk('local')->exists('branch-offices.json')) {
+                return json_decode(Storage::disk('local')->get('branch-offices.json'), true) ?? [];
+            }
+
+            return [];
+        });
+
         return Inertia::render('home/registration/index', [
             'pageTitle' => 'Pendaftaran OMATIQ',
             'olimpiades' => Olimpiade::query()->active()->where('show_on_registration', true)->ordered()->get(['id', 'name', 'category', 'slug']),
@@ -49,11 +62,36 @@ class ParticipantRegistrationController extends Controller
                     'province_id' => $regency->province_id,
                     'name' => $regency->name,
                 ]),
+            'districts' => District::query()
+                ->orderBy('name')
+                ->get(['id', 'regency_id', 'name'])
+                ->map(fn (District $d) => ['id' => $d->id, 'regency_id' => $d->regency_id, 'name' => $d->name]),
+            'villages' => [],
+            'branches' => $branches,
             'meta' => [
                 'title' => 'Pendaftaran OMATIQ',
                 'description' => 'Daftarkan peserta untuk menjadi bagian dari OMATIQ 2026.',
                 'keywords' => 'pendaftaran OMATIQ, daftar olimpiade, peserta OMATIQ',
             ],
+        ]);
+    }
+
+    public function villages(Request $request)
+    {
+        $request->validate([
+            'district_id' => ['required', 'exists:districts,id'],
+        ]);
+
+        return response()->json([
+            'data' => Village::query()
+                ->where('district_id', $request->input('district_id'))
+                ->orderBy('name')
+                ->get(['id', 'district_id', 'name'])
+                ->map(fn (Village $v) => [
+                    'id' => $v->id,
+                    'district_id' => $v->district_id,
+                    'name' => $v->name,
+                ]),
         ]);
     }
 
@@ -74,8 +112,10 @@ class ParticipantRegistrationController extends Controller
             ]);
             $user->assignRole('Participant');
 
+            $olimpiade = Olimpiade::find($request->olimpiade_id);
             $data = $this->payload($request);
             $data['user_id'] = $user->id;
+            $data['event_year'] = $olimpiade?->event_year ?? (int) date('Y');
             $data['registration_number'] = $this->registrationNumber();
             $data['status'] = 'submitted';
             $data['registration_type'] = 'public';
@@ -139,15 +179,14 @@ class ParticipantRegistrationController extends Controller
             'gender' => $request->gender,
             'birth_place' => $request->birth_place,
             'birth_date' => $request->birth_date,
-            'age' => $request->age,
             'school_name' => $request->school_name,
             'grade' => $request->grade,
             'address' => $request->address,
             'province_id' => $request->province_id,
             'regency_id' => $request->regency_id,
+            'district_id' => $request->district_id,
+            'village_id' => $request->village_id,
             'parent_phone' => $request->parent_phone,
-            'mentor_name' => $request->mentor_name,
-            'mentor_phone' => $request->mentor_phone,
             'is_binaan' => false,
         ];
     }

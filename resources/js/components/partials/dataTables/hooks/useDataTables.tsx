@@ -228,7 +228,7 @@ export const DataTableProvider = ({
             ...baseEndColumns,
         ];
 
-        // Hilangkan duplikat accessorKey/id (custom replace base)
+        // Hilangkan duplikat accessorKey/id (custom keep, base ignore)
         const mergedColumns: any[] = [];
         const seen = new Set();
 
@@ -238,12 +238,8 @@ export const DataTableProvider = ({
             if (!seen.has(key)) {
                 seen.add(key);
                 mergedColumns.push(col);
-            } else {
-                const idx = mergedColumns.findIndex(
-                    (c) => (c.accessorKey || c.id) === key,
-                );
-                mergedColumns[idx] = col; // replace existing
             }
+            // else ignore duplicate (custom wins over baseEndColumns)
         });
 
         // Tambahkan kolom Action di paling akhir (custom jika ada, default jika tidak)

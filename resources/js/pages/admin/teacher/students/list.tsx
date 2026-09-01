@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { dashboard } from '@/routes/admin';
 import teacherStudents from '@/routes/admin/teacher/students';
-import { router, usePage } from '@inertiajs/react';
+import { router } from '@inertiajs/react';
 import {
     CheckCircle2,
     CircleSlash2,
@@ -19,14 +19,7 @@ import {
 import { useState } from 'react';
 
 export default function ListPage() {
-    const { sanggars = [], selected_sanggar_id: initialSanggarId } = usePage<{
-        sanggars?: Array<{ id: number | string; name: string; type?: string }>;
-        selected_sanggar_id?: number | string | null;
-    }>().props;
-
-    const [filterValue, setFilterValue] = useState<any>(() =>
-        initialSanggarId ? { sanggar_id: String(initialSanggarId) } : {},
-    );
+    const [filterValue, setFilterValue] = useState<any>({});
     const [refreshData, setRefreshData] = useState(false);
 
     const columns = [
@@ -51,6 +44,31 @@ export default function ListPage() {
             header: 'Kelas',
             accessorKey: 'grade',
             cell: (info: any) => info.getValue() ?? '-',
+        },
+        {
+            header: (info: any) => renderRowHeader(info, 'Sanggar'),
+            accessorKey: 'created_at',
+            cell: (info: any) => {
+                const names: string[] = info.row.original.sanggar_names ?? [];
+                return names.length ? (
+                    <div className="flex flex-wrap gap-1">
+                        {names.map((n: string) => (
+                            <Badge key={n} variant="outline">
+                                {n}
+                            </Badge>
+                        ))}
+                    </div>
+                ) : (
+                    '-'
+                );
+            },
+            enableSorting: false,
+        },
+        {
+            header: 'Terdaftar di',
+            accessorKey: 'updated_at',
+            cell: (info: any) => info.row.original.sanggar_terdaftar ?? '-',
+            enableSorting: false,
         },
         {
             header: 'Status OMATIQ',
@@ -87,6 +105,8 @@ export default function ListPage() {
                             Nama: item.full_name,
                             Sekolah: item.school_name,
                             Kelas: item.grade,
+                            Sanggar: (item.sanggar_names ?? []).join(', ') || '-',
+                            'Terdaftar di': item.sanggar_terdaftar ?? '-',
                             'Status OMATIQ': item.is_registered
                                 ? `${item.olimpiade_name ?? 'Terdaftar'} (${item.registration_status ?? '-'})`
                                 : 'Belum Terdaftar',
@@ -113,26 +133,9 @@ export default function ListPage() {
                                     }))
                                 }
                             />
-                            {sanggars.length > 0 && (
-                                <SelectComponent
-                                    label="Sanggar"
-                                    placeholder="Semua sanggar..."
-                                    data={sanggars.map((s: any) => ({
-                                        value: String(s.id),
-                                        label: s.name,
-                                    }))}
-                                    dataSelected={filterValue.sanggar_id}
-                                    handleOnChange={(value: any) =>
-                                        setFilterValue((prev: any) => ({
-                                            ...prev,
-                                            sanggar_id: value,
-                                        }))
-                                    }
-                                />
-                            )}
                         </div>
                     </div>
-                    <DataTableComponent buttonActive={{ create: true }} />
+                    <DataTableComponent buttonActive={{ create: false }} />
                 </DataTableProvider>
             </div>
         </div>
@@ -189,13 +192,17 @@ const RegistrationBadge = ({ row }: { row: any }) => {
 
 const RowAction = ({ row }: { row: any }) => {
     if (!row.is_registered) {
+        const sanggarId = row.sanggar_ids?.[0] ?? row.sanggar_id;
         return (
             <Button
                 size="sm"
                 onClick={() =>
                     router.visit(
                         teacherStudents.create({
-                            query: { student_id: String(row.id) },
+                            query: {
+                                student_id: String(row.id),
+                                ...(sanggarId ? { sanggar_id: String(sanggarId) } : {}),
+                            },
                         }).url,
                     )
                 }
@@ -224,7 +231,10 @@ const RowAction = ({ row }: { row: any }) => {
                     onClick={() =>
                         router.visit(
                             teacherStudents.create({
-                                query: { student_id: String(row.id) },
+                                query: {
+                                    student_id: String(row.id),
+                                    ...(row.sanggar_ids?.[0] ? { sanggar_id: String(row.sanggar_ids[0]) } : row.sanggar_id ? { sanggar_id: String(row.sanggar_id) } : {}),
+                                },
                             }).url,
                         )
                     }
@@ -244,7 +254,7 @@ ListPage.layout = {
             href: dashboard(),
         },
         {
-            title: 'Kelola Binaan',
+            title: 'Pendaftaran',
             href: teacherStudents.index().url,
         },
     ],

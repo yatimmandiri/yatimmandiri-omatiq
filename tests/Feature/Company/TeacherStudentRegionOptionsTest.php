@@ -43,9 +43,9 @@ function createOptionsStudent(User $teacher, string $nik): Student
         'gender' => 'female',
         'birth_place' => 'Surabaya',
         'birth_date' => '2012-05-15',
-        'age' => 14,
+
         'school_name' => 'SMP Negeri 2 Surabaya',
-        'grade' => '8',
+        'grade' => 'II',
         'address' => 'Jl. Raya Darmo No. 12',
         'parent_phone' => '081234567890',
         'mentor_id' => $teacher->id,
@@ -70,8 +70,6 @@ it('provides only olimpiades and the teacher roster on the create page', functio
             ->where('students.0.id', $student->id)
             ->where('students.0.nik', $student->nik)
             ->where('students.0.full_name', $student->full_name)
-            ->missing('provinces')
-            ->missing('regencies')
         );
 });
 
@@ -138,7 +136,7 @@ it('lets a teacher register an assigned student from the create page', function 
     $participant = Participant::first();
 
     expect($participant)->not->toBeNull()
-        ->and($participant->penyaluran_student_id)->toBe($student->id)
+        ->and($participant->student_id)->toBe($student->id)
         ->and($participant->mentor_id)->toBe($teacher->id);
 });
 

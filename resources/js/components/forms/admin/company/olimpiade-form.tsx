@@ -36,6 +36,7 @@ type OlimpiadeRecord = {
     recommended: boolean;
     show_on_registration: boolean;
     sort_order: number;
+    event_year?: number | null;
 };
 
 const linesValue = (value?: string[] | null) => (value ?? []).join('\n');
@@ -89,6 +90,7 @@ export const OlimpiadeForm = ({ dataId }: { dataId?: number }) => {
         recommended: olimpiade?.recommended ?? false,
         show_on_registration: olimpiade?.show_on_registration ?? false,
         sort_order: olimpiade?.sort_order ?? 0,
+        event_year: olimpiade?.event_year ?? new Date().getFullYear(),
     });
 
     form.transform((current: any) => {
@@ -201,6 +203,16 @@ export const OlimpiadeForm = ({ dataId }: { dataId?: number }) => {
                                     Number(event.target.value),
                                 )
                             }
+                        />
+                    </Field>
+                    <Field label="Event Tahun" error={error('event_year')}>
+                        <Input
+                            type="number"
+                            min={2024}
+                            max={2030}
+                            value={form.data.event_year}
+                            onChange={(event) => form.setData('event_year', Number(event.target.value))}
+                            placeholder="2026"
                         />
                     </Field>
                     <Field

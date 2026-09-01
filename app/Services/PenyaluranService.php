@@ -115,7 +115,13 @@ class PenyaluranService
             }
         }
 
-        return $all->unique(fn (array $s) => $s['student_id'] ?? null)->values()->all();
+        // Group by student_id to keep all sanggar_ids for multi-sanggar students
+        return $all->groupBy(fn (array $s) => $s['student_id'] ?? null)->map(function ($group) {
+            $first = $group->first();
+            $first['sanggar_ids'] = $group->pluck('sanggar_id')->filter()->unique()->values()->all();
+
+            return $first;
+        })->values()->all();
     }
 
     private function fetchStudentsForSanggar(string $token, int $sanggarId): array
@@ -144,14 +150,21 @@ class PenyaluranService
             return [
                 'student_id' => $s['student_id'] ?? $s['id'] ?? null,
                 'name' => $s['name'] ?? $s['full_name'] ?? null,
+                'nickname' => $s['nickname'] ?? null,
                 'nik' => $s['nik'] ?? null,
                 'nis' => $s['nis'] ?? null,
                 'gender' => $gender,
                 'school_name' => $s['school_name'] ?? null,
                 'school_level' => $s['school_level'] ?? $s['jenjang'] ?? $s['level'] ?? $s['tingkat'] ?? null,
                 'class' => $s['class'] ?? $s['grade'] ?? null,
+                'birth_place' => $s['birth_place'] ?? $s['tempat_lahir'] ?? null,
                 'birth_date' => $s['birth_date'] ?? $s['tanggal_lahir'] ?? null,
+                'address' => $s['address'] ?? $s['alamat'] ?? null,
+                'guardian_name' => $s['guardian_name'] ?? $s['parent_name'] ?? $s['wali_name'] ?? null,
+                'guardian_phone' => $s['guardian_phone'] ?? $s['parent_phone'] ?? $s['wali_phone'] ?? null,
                 'sanggar_id' => $s['sanggar_id'] ?? $s['sanggarId'] ?? $sanggarId,
+                'sanggar_name' => $s['sanggar_name'] ?? null,
+                'kantor_name' => $s['kantor_name'] ?? $s['branch'] ?? null,
                 'status' => $s['status'] ?? true,
             ];
         });

@@ -8,6 +8,7 @@ use App\Http\Requests\Company\StoreTeacherRequest;
 use App\Http\Requests\Company\UpdateTeacherRequest;
 use App\Models\Core\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
 
 class TeacherController extends Controller
@@ -55,6 +56,17 @@ class TeacherController extends Controller
     public function destroy(User $teacher)
     {
         abort(403, 'Data guru diambil langsung dari Penyaluran, tidak bisa dihapus.');
+    }
+
+    public function resetPassword(User $teacher)
+    {
+        $this->authorize('update', $teacher);
+
+        $teacher->forceFill(['password' => Hash::make('password')])->save();
+
+        $this->logSuccess('reset-teacher-password', "Reset password guru: {$teacher->name}", ['user_id' => $teacher->id]);
+
+        return back()->with('success', "Password guru {$teacher->name} direset ke default 'password'.");
     }
 
     public function getData(Request $request)

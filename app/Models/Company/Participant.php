@@ -15,17 +15,9 @@ use Spatie\Activitylog\Support\LogOptions;
 #[Fillable([
     'registration_number',
     'olimpiade_id',
+    'event_year',
     'user_id',
     'student_id',
-    'penyaluran_student_id',
-    'penyaluran_student_name',
-    'penyaluran_student_nik',
-    'penyaluran_student_nis',
-    'penyaluran_student_gender',
-    'penyaluran_student_school_name',
-    'penyaluran_student_school_level',
-    'penyaluran_student_class',
-    'penyaluran_student_birth_date',
     'penyaluran_sanggar_id',
     'penyaluran_sanggar_name',
     'nik',
@@ -59,7 +51,7 @@ class Participant extends Model
             'data_truth_consent' => 'boolean',
             'documentation_consent' => 'boolean',
             'rules_consent' => 'boolean',
-            'penyaluran_student_birth_date' => 'date',
+            'event_year' => 'integer',
         ];
     }
 
@@ -89,9 +81,9 @@ class Participant extends Model
             $search,
             fn (Builder $query, string $search) => $query->where(function (Builder $query) use ($search) {
                 $query->where('registration_number', 'like', "%{$search}%")
-                    ->orWhere('penyaluran_student_name', 'like', "%{$search}%")
-                    ->orWhere('penyaluran_student_nik', 'like', "%{$search}%")
                     ->orWhereHas('student', fn (Builder $q) => $q->where('full_name', 'like', "%{$search}%"))
+                    ->orWhereHas('student', fn (Builder $q) => $q->where('nik', 'like', "%{$search}%"))
+                    ->orWhereHas('student', fn (Builder $q) => $q->where('nis', 'like', "%{$search}%"))
                     ->orWhereHas('student', fn (Builder $q) => $q->where('school_name', 'like', "%{$search}%"))
                     ->orWhereHas('student', fn (Builder $q) => $q->where('parent_phone', 'like', "%{$search}%"))
                     ->orWhereHas('olimpiade', fn (Builder $query) => $query->where('name', 'like', "%{$search}%"));
@@ -101,7 +93,7 @@ class Participant extends Model
 
     public function getFullNameAttribute(): ?string
     {
-        return $this->penyaluran_student_name ?? $this->student?->full_name ?? $this->user?->name;
+        return $this->student?->full_name ?? $this->user?->name;
     }
 
     public function getPaymentProofUrlAttribute(): ?string

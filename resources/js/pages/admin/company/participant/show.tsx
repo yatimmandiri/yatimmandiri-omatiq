@@ -16,6 +16,7 @@ const labels: Record<string, string> = {
 export default function ShowPage() {
     const { participant } = usePage<{ participant: Record<string, any> }>()
         .props;
+    const isBinaan = !!participant.student?.is_binaan || !!participant.student?.penyaluran_id;
 
     return (
         <div className="flex flex-1 flex-col gap-6 p-4">
@@ -67,10 +68,12 @@ export default function ShowPage() {
                             label="Tempat, Tanggal Lahir"
                             value={`${participant.student?.birth_place ?? ''}, ${participant.student?.birth_date?.slice(0, 10) ?? ''}`}
                         />
-                        <Detail
-                            label="Usia"
-                            value={`${participant.student?.age ?? ''} tahun`}
-                        />
+                        {isBinaan && (
+                            <>
+                                <Detail label="NIS" value={participant.student?.nis} />
+                                <Detail label="Jenjang" value={participant.student?.school_level} />
+                            </>
+                        )}
                         <Detail
                             label="Sekolah"
                             value={participant.student?.school_name}

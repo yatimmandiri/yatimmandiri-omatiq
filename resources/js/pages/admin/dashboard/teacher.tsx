@@ -2,118 +2,156 @@ import { Card } from '@/components/ui/card';
 import { dashboard } from '@/routes/admin';
 import teacherStudents from '@/routes/admin/teacher/students';
 import { Head, Link, usePage } from '@inertiajs/react';
-import { BookOpen, ExternalLink, Users } from 'lucide-react';
+import {
+    BookOpenCheck,
+    Building2,
+    CheckCircle2,
+    ExternalLink,
+    UserPlus,
+    Users,
+} from 'lucide-react';
+import type { ReactNode } from 'react';
 
 export default function Dashboard() {
-    const { studentCount, sanggarSum, overlapCount, penyaluranProfile, sanggars, penyaluranStudents } = usePage<{
+    const {
+        studentCount,
+        penyaluranTotal,
+        sanggarCount,
+        sanggarSum,
+        overlapCount,
+        registeredCount,
+    } = usePage<{
         studentCount: number;
+        penyaluranTotal?: number | null;
+        sanggarCount?: number;
         sanggarSum?: number | null;
         overlapCount?: number | null;
-        penyaluranProfile?: Record<string, any> | null;
-        sanggars?: Array<Record<string, any>>;
-        penyaluranStudents?: Array<Record<string, any>>;
+        registeredCount?: number;
     }>().props;
+
+    const totalBinaan = penyaluranTotal ?? studentCount;
+    const totalRegistered = registeredCount ?? 0;
+    const unregisteredCount = Math.max(totalBinaan - totalRegistered, 0);
 
     return (
         <>
             <Head title="Dashboard Guru" />
-            <div className="flex flex-1 flex-col gap-6 p-4">
-                <div>
-                    <h1 className="text-2xl font-bold">Dashboard Guru</h1>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                        Kelola data binaan Anda
-                    </p>
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    <Card className="flex items-center gap-4 p-5">
-                        <div className="flex size-12 items-center justify-center rounded-full bg-primary/10">
-                            <Users className="size-6 text-primary" />
-                        </div>
+            <div className="flex flex-1 flex-col gap-6 p-4 lg:p-6">
+                <div className="rounded-3xl border bg-gradient-to-br from-background via-orange-50/70 to-sky-50 p-5 shadow-sm lg:p-7">
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                         <div>
-                            <p className="text-2xl font-bold">{studentCount}</p>
-                            <p className="text-sm text-muted-foreground">
-                                Total Binaan (unik)
+                            <p className="mb-2 inline-flex items-center gap-2 rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-700">
+                                <BookOpenCheck className="size-4" />
+                                Ringkasan OMATIQ
                             </p>
-                            {penyaluranProfile?.kantor_name && (
-                                <p className="text-xs text-muted-foreground">
-                                    Kantor: {penyaluranProfile.kantor_name}
-                                </p>
-                            )}
-                            {overlapCount !== null && overlapCount > 0 && (
-                                <p className="text-xs text-amber-600">
-                                    {overlapCount} binaan terdata di &gt;1 sanggar
-                                </p>
-                            )}
-                            {sanggarSum !== null && sanggarSum !== studentCount && (
-                                <p className="text-xs text-muted-foreground">
-                                    Total di sanggar: {sanggarSum}
-                                </p>
-                            )}
+                            <h1 className="text-2xl font-bold tracking-tight lg:text-3xl">
+                                Dashboard Guru
+                            </h1>
+                            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+                                Pantau jumlah binaan, sanggar, dan progress
+                                pendaftaran OMATIQ dari satu tampilan yang
+                                ringkas.
+                            </p>
                         </div>
-                    </Card>
 
-                    <Link href={teacherStudents.index().url} prefetch>
-                        <Card className="flex items-center gap-4 p-5 transition-colors hover:bg-accent">
-                            <div className="flex size-12 items-center justify-center rounded-full bg-primary/10">
-                                <BookOpen className="size-6 text-primary" />
+                        <Link href={teacherStudents.index().url} prefetch>
+                            <div className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90">
+                                Kelola Binaan
+                                <ExternalLink className="size-4" />
                             </div>
-                            <div>
-                                <p className="font-semibold">Kelola Binaan</p>
-                                <p className="flex items-center gap-1 text-sm text-muted-foreground">
-                                    Lihat daftar binaan{' '}
-                                    <ExternalLink className="size-3" />
-                                </p>
-                            </div>
-                        </Card>
-                    </Link>
-
-                    {penyaluranProfile && (
-                        <Card className="p-5">
-                            <p className="text-sm font-semibold">
-                                {penyaluranProfile.name}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                                {penyaluranProfile.code} •{' '}
-                                {penyaluranProfile.positions?.[0]?.name ?? '-'}
-                            </p>
-                            <p className="mt-1 text-xs text-muted-foreground">
-                                HP: {penyaluranProfile.phone ?? '-'}
-                            </p>
-                        </Card>
-                    )}
+                        </Link>
+                    </div>
                 </div>
 
-                {sanggars && sanggars.length > 0 && (
-                    <Card className="p-5">
-                        <h3 className="mb-3 font-semibold">Sanggar</h3>
-                        <div className="grid gap-3 sm:grid-cols-2">
-                            {sanggars.map((s: any) => (
-                                <Link
-                                    key={s.id}
-                                    href={
-                                        teacherStudents.index({
-                                            query: { sanggar_id: String(s.id) },
-                                        }).url
-                                    }
-                                    prefetch
-                                >
-                                    <div className="rounded-lg border p-3 transition-colors hover:bg-accent">
-                                        <p className="font-medium">{s.name}</p>
-                                        <p className="text-xs text-muted-foreground">
-                                            {s.type} • {s.kantor_name} •{' '}
-                                            {s.total_students} santri
-                                        </p>
-                                    </div>
-                                </Link>
-                            ))}
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                    <MetricCard
+                        icon={<Users className="size-6" />}
+                        label="Total Binaan"
+                        value={totalBinaan}
+                        description={
+                            overlapCount && overlapCount > 0
+                                ? `${overlapCount} binaan berada di lebih dari satu sanggar`
+                                : 'Data unik dari Penyaluran'
+                        }
+                    />
+                    <MetricCard
+                        icon={<Building2 className="size-6" />}
+                        label="Total Sanggar"
+                        value={sanggarCount ?? 0}
+                        description={
+                            sanggarSum !== null && sanggarSum !== undefined
+                                ? `${sanggarSum} total data di seluruh sanggar`
+                                : 'Terhubung dengan akun guru'
+                        }
+                    />
+                    <MetricCard
+                        icon={<CheckCircle2 className="size-6" />}
+                        label="Sudah Terdaftar"
+                        value={totalRegistered}
+                        description="Pendaftaran aktif tahun ini"
+                    />
+                    <MetricCard
+                        icon={<UserPlus className="size-6" />}
+                        label="Belum Terdaftar"
+                        value={unregisteredCount}
+                        description="Estimasi binaan yang masih bisa didaftarkan"
+                    />
+                </div>
+
+                <Card className="rounded-3xl p-5 shadow-sm lg:p-6">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <h2 className="text-lg font-bold">
+                                Langkah Berikutnya
+                            </h2>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                                Buka daftar binaan untuk melihat status dan
+                                mendaftarkan anak ke kategori olimpiade.
+                            </p>
                         </div>
-                    </Card>
-                )}
+                        <Link href={teacherStudents.index().url} prefetch>
+                            <div className="inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-2 text-sm font-semibold transition hover:bg-accent">
+                                Lihat Daftar Binaan
+                                <ExternalLink className="size-4" />
+                            </div>
+                        </Link>
+                    </div>
+                </Card>
             </div>
         </>
     );
 }
+
+const MetricCard = ({
+    icon,
+    label,
+    value,
+    description,
+}: {
+    icon: ReactNode;
+    label: string;
+    value: number;
+    description: string;
+}) => (
+    <Card className="rounded-3xl p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+        <div className="flex items-start justify-between gap-4">
+            <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                    {label}
+                </p>
+                <p className="mt-3 text-3xl font-bold tracking-tight">
+                    {value.toLocaleString('id-ID')}
+                </p>
+            </div>
+            <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                {icon}
+            </div>
+        </div>
+        <p className="mt-4 text-sm leading-6 text-muted-foreground">
+            {description}
+        </p>
+    </Card>
+);
 
 Dashboard.layout = {
     breadcrumbs: [

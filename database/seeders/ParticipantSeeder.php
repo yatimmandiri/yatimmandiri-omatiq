@@ -17,22 +17,30 @@ class ParticipantSeeder extends Seeder
 
         $registrationNumber = 'OMQ-'.now()->format('Ymd').'-0001';
 
-        // Binaan pure API: use penyaluran snapshot (matches GET guru/students example)
+        $student = \App\Models\Company\Student::firstOrCreate(
+            ['penyaluran_id' => 2445],
+            [
+                'nik' => '3404054207160001',
+                'full_name' => 'RACHMA TALITA AZALIA',
+                'gender' => 'female',
+                'birth_date' => '2016-04-07',
+                'school_name' => 'SDN SOMPOKAN',
+                'grade' => 'II',
+                'nis' => '12345',
+                'address' => 'Jl. Contoh No. 1',
+                'province_id' => '35',
+                'regency_id' => '3578',
+                'is_binaan' => true,
+                'mentor_id' => $teacher?->id,
+            ]
+        );
+
         Participant::query()->updateOrCreate(
             ['registration_number' => $registrationNumber],
             [
                 'user_id' => $user?->id,
-                'student_id' => null,
-                'penyaluran_student_id' => 2445,
-                'penyaluran_student_name' => 'RACHMA TALITA AZALIA',
-                'penyaluran_student_nik' => '3404054207160001',
-                'penyaluran_student_nis' => '12345',
-                'penyaluran_student_gender' => 'female',
-                'penyaluran_student_school_name' => 'SDN SOMPOKAN',
-                'penyaluran_student_school_level' => 'SD',
-                'penyaluran_student_class' => 'II',
+                'student_id' => $student->id,
                 'penyaluran_sanggar_name' => 'SANGGAR GENIUS SOMPOKAN',
-                'nik' => '3404054207160001',
                 'registration_type' => 'teacher',
                 'mentor_id' => $teacher?->id,
                 'olimpiade_id' => $olimpiade?->id ?? 1,

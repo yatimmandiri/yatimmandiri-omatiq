@@ -34,9 +34,9 @@ class SiteSettings extends Settings
 
     public bool $maintenance_mode;
 
-    public bool $registration_public_open = false;
+    public bool $registration_public_open = true;
 
-    public bool $registration_binaan_open = false;
+    public bool $registration_binaan_open = true;
 
     public static function group(): string
     {

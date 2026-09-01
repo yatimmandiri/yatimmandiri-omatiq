@@ -88,17 +88,14 @@ export default function Dashboard() {
                                 value={`${participant.student?.birth_place ?? ''}, ${participant.student?.birth_date?.slice(0, 10) ?? ''}`}
                             />
                             <Detail
-                                label="Usia"
-                                value={
-                                    participant.student?.age
-                                        ? `${participant.student.age} tahun`
-                                        : null
-                                }
-                            />
-                            <Detail
                                 label="Sekolah"
                                 value={participant.student?.school_name}
                             />
+                            <Detail
+                                label="Jenjang"
+                                value={participant.student?.school_level}
+                            />
+                            <Detail label="NIS" value={participant.student?.nis} />
                             <Detail
                                 label="Kelas"
                                 value={participant.student?.grade}

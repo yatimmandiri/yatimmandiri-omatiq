@@ -34,6 +34,7 @@ use Spatie\Sluggable\Attributes\Sluggable;
     'recommended',
     'sort_order',
     'show_on_registration',
+    'event_year',
 ])]
 #[Sluggable(from: 'name', to: 'slug')]
 class Olimpiade extends Model
