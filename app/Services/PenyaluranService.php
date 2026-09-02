@@ -173,6 +173,23 @@ class PenyaluranService
     }
 
     /**
+     * Update guru profile on Penyaluran (PUT guru/me). Invalidates me cache.
+     *
+     * @param  array{email?:string}  $attributes
+     *
+     * @throws \RuntimeException
+     */
+    public function updateMe(string $token, array $attributes): array
+    {
+        $response = $this->client($token)->put('api/v1/guru/me', $attributes);
+        $this->assertSuccess($response);
+
+        Cache::forget('penyaluran:me:'.sha1($token));
+
+        return $response->json('data') ?? $response->json();
+    }
+
+    /**
      * Get sanggars list for authenticated guru.
      */
     public function sanggars(string $token): array
