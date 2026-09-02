@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\Company\Participant;
+use App\Observers\ParticipantObserver;
 use App\Settings\SiteSettings;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
@@ -53,5 +55,7 @@ class AppServiceProvider extends ServiceProvider
                 'favicon' => $settings->favicon ? asset('storage/'.$settings->favicon) : null,
             ]);
         });
+
+        Participant::observe(ParticipantObserver::class);
     }
 }

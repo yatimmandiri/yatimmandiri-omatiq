@@ -10,7 +10,9 @@ use App\Models\Company\Olimpiade;
 use App\Models\Company\Participant;
 use App\Models\Core\Region\Province;
 use App\Models\Core\Region\Regency;
+use App\Settings\SiteSettings;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -40,7 +42,15 @@ class ParticipantController extends Controller
             ->sortDesc()
             ->values();
 
+        $settings = app(SiteSettings::class);
+
         return Inertia::render('admin/company/participant/list', [
+            'sheets' => [
+                'enabled' => $settings->sheets_sync_enabled,
+                'spreadsheet_id' => $settings->sheets_spreadsheet_id,
+                'sheet_name' => $settings->sheets_sheet_name ?? config('sheets.sheet_name'),
+                'url' => $settings->sheets_spreadsheet_id ? 'https://docs.google.com/spreadsheets/d/'.$settings->sheets_spreadsheet_id : null,
+            ],
             'filterOptions' => [
                 'olimpiades' => Olimpiade::query()
                     ->ordered()
@@ -167,6 +177,20 @@ class ParticipantController extends Controller
         $participant->update($request->only(['status', 'notes']));
 
         return back()->with('success', 'Participant Status Updated Successfully');
+    }
+
+    public function syncSheet(Request $request)
+    {
+        $this->authorize('syncSheet', Participant::class);
+
+        $settings = app(SiteSettings::class);
+        if (! $settings->sheets_sync_enabled || ! $settings->sheets_spreadsheet_id) {
+            return back()->with('error', 'GSheet sync belum diaktifkan. Atur spreadsheet ID di Site Settings.');
+        }
+
+        Artisan::queue('sheets:sync', ['--chunk' => 200]);
+
+        return back()->with('success', 'Sync ke Google Sheets dimulai. Cek GSheet dalam beberapa menit (queue).');
     }
 
     public function getData(Request $request)
