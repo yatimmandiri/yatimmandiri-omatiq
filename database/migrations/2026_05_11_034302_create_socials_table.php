@@ -15,10 +15,13 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained()->cascadeOnDelete();
             $table->string('provider')->nullable();
-            $table->text('provider_id')->nullable();
+            $table->string('provider_id', 255)->nullable();
             $table->text('provider_token')->nullable();
             $table->text('provider_refresh_token')->nullable();
             $table->timestamps();
+
+            $table->unique(['provider', 'provider_id']);
+            $table->unique(['user_id', 'provider']);
         });
     }
 

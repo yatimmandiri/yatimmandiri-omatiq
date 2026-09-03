@@ -6,6 +6,7 @@ use App\Models\Company\Participant;
 use App\Settings\SiteSettings;
 use Google\Client;
 use Google\Service\Sheets;
+use Google\Service\Sheets\BatchUpdateValuesRequest;
 use Google\Service\Sheets\ValueRange;
 use Illuminate\Support\Facades\Log;
 
@@ -220,12 +221,82 @@ class GoogleSheetService
 
     public function batchUpsert(iterable $participants): void
     {
+        if (! $this->isEnabled()) {
+            return;
+        }
+
+        $service = $this->service();
+        $spreadsheetId = $this->spreadsheetId();
+        if (! $service || ! $spreadsheetId) {
+            return;
+        }
+
+        $this->ensureHeaderRow();
+
+        $sheet = $this->sheetName();
+
+        // Fetch existing Registrasi column once for batch
+        $existingMap = [];
+        $existingCount = 0;
+        try {
+            $response = $service->spreadsheets_values->get($spreadsheetId, "{$sheet}!B2:B");
+            $values = $response->getValues() ?? [];
+            $existingCount = count($values);
+            foreach ($values as $idx => $v) {
+                $reg = $v[0] ?? '';
+                if ($reg !== '') {
+                    $existingMap[$reg] = $idx + 2;
+                }
+            }
+        } catch (\Throwable $e) {
+            $existingCount = 0;
+        }
+
+        $updates = [];
+        $appends = [];
+
         foreach ($participants as $participant) {
             try {
-                $this->upsert($participant);
+                $row = $this->rowFromParticipant($participant);
+                $regNo = $participant->registration_number;
+                if (isset($existingMap[$regNo])) {
+                    $rowIndex = $existingMap[$regNo];
+                    $row[0] = $rowIndex;
+                    $updates[] = new ValueRange([
+                        'range' => "{$sheet}!A{$rowIndex}:T{$rowIndex}",
+                        'values' => [$row],
+                    ]);
+                } else {
+                    $row[0] = $existingCount + count($appends) + 2;
+                    $appends[] = $row;
+                }
             } catch (\Throwable $e) {
-                Log::warning('sheets.batchUpsert item failed', ['id' => $participant->id, 'error' => $e->getMessage()]);
+                Log::warning('sheets.batchUpsert row failed', ['id' => $participant->id ?? 'unknown', 'error' => $e->getMessage()]);
             }
+        }
+
+        try {
+            if (! empty($updates)) {
+                $service->spreadsheets_values->batchUpdate(
+                    $spreadsheetId,
+                    new BatchUpdateValuesRequest([
+                        'valueInputOption' => 'USER_ENTERED',
+                        'data' => $updates,
+                    ])
+                );
+            }
+            if (! empty($appends)) {
+                $body = new ValueRange(['values' => $appends]);
+                $service->spreadsheets_values->append(
+                    $spreadsheetId,
+                    "{$sheet}!A2",
+                    $body,
+                    ['valueInputOption' => 'USER_ENTERED', 'insertDataOption' => 'INSERT_ROWS']
+                );
+            }
+        } catch (\Throwable $e) {
+            Log::warning('sheets.batchUpsert failed', ['error' => $e->getMessage()]);
+            throw $e;
         }
     }
 }

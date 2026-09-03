@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('auth')->as('auth.')->group(function () {
     Route::get('/{provider}/redirect', [SocialiteController::class, 'redirect'])->name('redirect');
     Route::get('/{provider}/callback', [SocialiteController::class, 'callback'])->name('callback');
+    Route::get('/guru/{provider}/redirect', [SocialiteController::class, 'redirectGuru'])->name('guru.redirect');
+    Route::get('/guru/{provider}/callback', [SocialiteController::class, 'callbackGuru'])->name('guru.callback');
 });
 
 Route::middleware('guest')->group(function () {

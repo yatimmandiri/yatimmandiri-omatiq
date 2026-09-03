@@ -62,6 +62,7 @@ export default function ListPage() {
             cell: (info: any) => {
                 const row = info.row.original;
                 const name = info.getValue() ?? row.full_name ?? '-';
+
                 return (
                     <div className="space-y-1">
                         <p className="font-semibold">{name}</p>
@@ -88,6 +89,7 @@ export default function ListPage() {
             accessorKey: 'student.school_name',
             cell: (info: any) => {
                 const row = info.row.original;
+
                 return row.student?.school_name ?? info.getValue() ?? '-';
             },
         },
@@ -96,6 +98,7 @@ export default function ListPage() {
             accessorKey: 'student.regency',
             cell: (info: any) => {
                 const row = info.row.original;
+
                 return info.getValue()?.name ?? row.penyaluran_sanggar_name ?? row.student?.school_name ?? '-';
             },
         },
@@ -198,14 +201,6 @@ export default function ListPage() {
                                             </Badge>
                                         )}
                                     </div>
-                                    <p className="text-xs text-muted-foreground">
-                                        {sheets?.enabled && sheets?.url
-                                            ? `1 sheet • ${sheets.sheet_name ?? 'Data Peserta'} • Auto sync via queue + manual Sync Ulang. NIK full, public Viewer.`
-                                            : 'Aktifkan di Site Settings (spreadsheet ID) untuk sync otomatis saat ada peserta baru/update.'}
-                                    </p>
-                                    {sheets?.spreadsheet_id && (
-                                        <p className="text-xs text-muted-foreground">ID: {sheets.spreadsheet_id}</p>
-                                    )}
                                 </div>
                                 <div className="flex gap-2">
                                     {sheets?.url && (

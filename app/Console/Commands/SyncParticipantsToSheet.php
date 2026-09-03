@@ -2,7 +2,6 @@
 
 namespace App\Console\Commands;
 
-use App\Jobs\SyncParticipantToSheet;
 use App\Models\Company\Participant;
 use App\Services\GoogleSheetService;
 use Illuminate\Console\Command;
@@ -30,15 +29,13 @@ class SyncParticipantsToSheet extends Command
         $count = 0;
 
         Participant::with(['olimpiade:id,name,category', 'student:id,full_name,nik,nis,gender,school_name,grade,school_level,regency_id,parent_phone,mentor_name', 'student.regency:id,name', 'mentor:id,name'])
-            ->chunkById($chunk, function ($participants) use (&$count) {
-                foreach ($participants as $participant) {
-                    SyncParticipantToSheet::dispatch($participant->id, 'upsert');
-                    $count++;
-                }
-                $this->info("Queued {$count} participants...");
+            ->chunkById($chunk, function ($participants) use ($service, &$count) {
+                $service->batchUpsert($participants);
+                $count += $participants->count();
+                $this->info("Synced {$count} participants (batch)...");
             });
 
-        $this->info("Done. Queued {$count} jobs. Run queue:work to process.");
+        $this->info("Done. Synced {$count} participants directly (batch).");
 
         return self::SUCCESS;
     }
