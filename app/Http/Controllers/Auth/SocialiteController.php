@@ -7,6 +7,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Core\Social;
 use App\Models\Core\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 
 class SocialiteController extends Controller
