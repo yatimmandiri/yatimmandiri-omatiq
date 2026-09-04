@@ -33,6 +33,7 @@ import dataPeserta from '@/routes/admin/guru/data-peserta';
 import binaan from '@/routes/admin/guru/data-binaan';
 import sanggar from '@/routes/admin/guru/data-sanggar';
 import absensi from '@/routes/admin/guru/absensi';
+import students from '@/routes/admin/companies/students';
 
 export const NavigationList = [
     {
@@ -53,6 +54,13 @@ export const NavigationList = [
                 permission: 'view-participant',
                 roles: ['Administrators'],
                 icon: Users,
+            },
+            {
+                title: 'Data Students',
+                href: students.index().url,
+                permission: 'view-student',
+                roles: ['Administrators'],
+                icon: GraduationCap,
             },
             {
                 title: 'Data Peserta',

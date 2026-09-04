@@ -35,6 +35,7 @@ class UpdateStudentRequest extends FormRequest
             'mentor_name' => ['nullable', 'string', 'max:255'],
             'mentor_phone' => ['nullable', 'string', 'max:30'],
             'is_binaan' => ['nullable', 'boolean'],
+            'is_active' => ['nullable', 'boolean'],
             'photo' => ['nullable', 'file', 'image', 'max:2048'],
             'identity_card' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:4096'],
             'family_card' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:4096'],

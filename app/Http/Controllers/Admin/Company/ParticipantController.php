@@ -245,9 +245,6 @@ class ParticipantController extends Controller
             'regency_id',
             'parent_phone',
             'nik',
-            'photo',
-            'identity_card',
-            'family_card',
             'student_card',
         ]);
 
@@ -279,9 +276,6 @@ class ParticipantController extends Controller
     private function studentFileMap(): array
     {
         return [
-            'photo' => 'photo_path',
-            'identity_card' => 'identity_card_path',
-            'family_card' => 'family_card_path',
             'student_card' => 'student_card_path',
         ];
     }
@@ -309,9 +303,6 @@ class ParticipantController extends Controller
         if ($participant->relationLoaded('student') && $participant->student) {
             $payload['student'] = [
                 ...$participant->student->toArray(),
-                'photo_url' => $participant->student->photo_url,
-                'identity_card_url' => $participant->student->identity_card_url,
-                'family_card_url' => $participant->student->family_card_url,
                 'student_card_url' => $participant->student->student_card_url,
             ];
         }

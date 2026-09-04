@@ -1,9 +1,11 @@
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { ProofModal } from '@/components/ui/proof-modal';
 import { dashboard } from '@/routes/admin';
 import dataPeserta from '@/routes/admin/guru/data-peserta';
 import { usePage } from '@inertiajs/react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ExternalLink } from 'lucide-react';
+import { useState } from 'react';
 
 const labels: Record<string, string> = {
     male: 'Laki-laki',
@@ -17,6 +19,7 @@ export default function ShowPage() {
     const { participant } = usePage<{ participant: Record<string, any> }>()
         .props;
     const isBinaan = !!participant.student?.is_binaan || !!participant.student?.penyaluran_id;
+    const [openProof, setOpenProof] = useState(false);
 
     return (
         <div className="flex flex-1 flex-col gap-6 p-4">
@@ -115,30 +118,19 @@ export default function ShowPage() {
 
                 <Card className="space-y-5 p-5">
                     <h2 className="text-lg font-bold">Kategori dan Dokumen</h2>
-                    <Detail
-                        label="Olimpiade"
-                        value={participant.olimpiade?.name}
-                    />
-                    <Detail
-                        label="Guru / Pendamping"
-                        value={participant.student?.mentor_name}
-                    />
-                    <Detail
-                        label="HP Pendamping"
-                        value={participant.student?.mentor_phone}
-                    />
-                    <DetailFile
-                        label="Foto"
-                        url={participant.student?.photo_url}
-                    />
-                    <DetailFile
-                        label="Kartu Identitas"
-                        url={participant.student?.identity_card_url}
-                    />
-                    <DetailFile
-                        label="Kartu Keluarga"
-                        url={participant.student?.family_card_url}
-                    />
+                    <Detail label="Olimpiade" value={participant.olimpiade?.name} />
+                    <Detail label="Guru / Pendamping" value={participant.student?.mentor_name} />
+                    <Detail label="HP Pendamping" value={participant.student?.mentor_phone} />
+                    {participant.payment_proof_url && (
+                        <div>
+                            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Bukti Pembayaran</p>
+                            <Button variant="outline" size="sm" className="mt-1" onClick={() => setOpenProof(true)}>
+                                Lihat Bukti <ExternalLink className="size-4" />
+                            </Button>
+                            <ProofModal href={participant.payment_proof_url} open={openProof} onOpenChange={setOpenProof} />
+                        </div>
+                    )}
+                    <DetailFile label="Kartu Pelajar" url={participant.student?.student_card_url} />
                 </Card>
             </div>
 

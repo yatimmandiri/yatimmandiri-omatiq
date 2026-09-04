@@ -6,6 +6,7 @@ use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RedirectIfAuthenticated;
 use App\Http\Middleware\UserMiddleware;
+use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -40,6 +41,17 @@ return Application::configure(basePath: dirname(__DIR__))
             'teacher.profile.completed' => EnsureTeacherProfileCompleted::class,
             'guest.redirect' => RedirectIfAuthenticated::class,
         ]);
+
+        Authenticate::redirectUsing(function ($request) {
+            if ($request->is('guru/*') || $request->is('admin/guru/*')) {
+                return route('guru.login');
+            }
+            if ($request->is('admin/*')) {
+                return route('login');
+            }
+
+            return route('login');
+        });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

@@ -186,8 +186,10 @@ class DataPesertaController extends Controller
     {
         $this->authorize('view', $participant);
 
+        $p = $this->service->getStudentById(Auth::user(), $participant->id);
+
         return Inertia::render('admin/guru/data-peserta/show', [
-            'participant' => $this->service->getStudentById(Auth::user(), $participant->id),
+            'participant' => $this->participantPayload($p),
         ]);
     }
 
@@ -229,6 +231,7 @@ class DataPesertaController extends Controller
     private function participantPayload(Participant $participant): array
     {
         $payload = $participant->toArray();
+        $payload['payment_proof_url'] = $participant->payment_proof_url;
 
         if ($participant->relationLoaded('student') && $participant->student) {
             $payload['student'] = [

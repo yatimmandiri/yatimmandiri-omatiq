@@ -1,9 +1,11 @@
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { ProofModal } from '@/components/ui/proof-modal';
 import { dashboard } from '@/routes/admin';
 import participants from '@/routes/admin/companies/participants';
 import { router, usePage } from '@inertiajs/react';
 import { ArrowLeft, ExternalLink, Pencil } from 'lucide-react';
+import { useState } from 'react';
 
 const labels: Record<string, string> = {
     male: 'Laki-laki',
@@ -17,6 +19,7 @@ export default function ShowPage() {
     const { participant } = usePage<{ participant: Record<string, any> }>()
         .props;
     const isBinaan = !!participant.student?.is_binaan || !!participant.student?.penyaluran_id;
+    const [openProof, setOpenProof] = useState(false);
 
     return (
         <div className="flex flex-1 flex-col gap-6 p-4">
@@ -164,30 +167,22 @@ export default function ShowPage() {
                                 : null
                         }
                     />
-                    <FileLink
-                        label="Bukti Bayar"
-                        href={participant.payment_proof_url}
-                    />
+                    {participant.payment_proof_url && (
+                        <>
+                            <div>
+                                <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Bukti Bayar</p>
+                                <Button variant="outline" size="sm" className="mt-1" onClick={() => setOpenProof(true)}>
+                                    Lihat Bukti <ExternalLink className="size-4" />
+                                </Button>
+                            </div>
+                            <ProofModal href={participant.payment_proof_url} open={openProof} onOpenChange={setOpenProof} />
+                        </>
+                    )}
                     <Detail label="Catatan Admin" value={participant.notes} />
                 </Card>
                 <Card className="space-y-5 p-5">
                     <h2 className="text-lg font-bold">Dokumen</h2>
-                    <FileLink
-                        label="Pas Foto"
-                        href={participant.student?.photo_url}
-                    />
-                    <FileLink
-                        label="Kartu Identitas"
-                        href={participant.student?.identity_card_url}
-                    />
-                    <FileLink
-                        label="Kartu Keluarga"
-                        href={participant.student?.family_card_url}
-                    />
-                    <FileLink
-                        label="Kartu Pelajar"
-                        href={participant.student?.student_card_url}
-                    />
+                    <FileLink label="Kartu Pelajar" href={participant.student?.student_card_url} />
                     <Detail
                         label="Tanda Tangan Peserta"
                         value={participant.participant_signature_name}

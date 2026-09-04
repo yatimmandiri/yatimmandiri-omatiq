@@ -7,8 +7,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Core\Social;
 use App\Models\Core\User;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 
 class SocialiteController extends Controller
@@ -115,35 +113,13 @@ class SocialiteController extends Controller
         }
 
         if (! $user) {
-            $user = User::create([
-                'name' => $response->getName() ?? $response->getNickname() ?? explode('@', $email)[0],
-                'email' => $email,
-                'password' => Hash::make(Str::random(16)),
-                'email_verified_at' => now(),
-            ]);
-            $user->assignRole('Participant');
-            $user->socials()->updateOrCreate(
-                ['provider' => $provider],
-                ['provider_id' => $providerId, 'provider_token' => $response->token, 'provider_refresh_token' => $response->refreshToken]
-            );
-            Auth::login($user);
-            $this->logSuccess('login-user', "Register Peserta Google: {$user->name}", ['user_id' => $user->id]);
-
-            return redirect()->intended(route('admin.dashboard'))->with('success', 'You are logged in!');
+            return redirect()->route('login')
+                ->with('error', 'silahkan daftarkan akun anda, jika pendaftaran sudah buka')
+                ->withErrors(['email' => 'silahkan daftarkan akun anda, jika pendaftaran sudah buka']);
         }
 
-        // Existing user without Participant/Administrators/Teacher -> auto Participant (jwb 1)
-        $user->assignRole('Participant');
-        $user->socials()->updateOrCreate(
-            ['provider' => $provider],
-            ['provider_id' => $providerId, 'provider_token' => $response->token, 'provider_refresh_token' => $response->refreshToken]
-        );
-        if (! $user->hasVerifiedEmail()) {
-            $user->markEmailAsVerified();
-        }
-        Auth::login($user);
-        $this->logSuccess('login-user', "Login Peserta Google (auto Participant): {$user->name}", ['user_id' => $user->id]);
-
-        return redirect()->intended(route('admin.dashboard'))->with('success', 'You are logged in!');
+        return redirect()->route('login')
+            ->with('error', 'silahkan daftarkan akun anda, jika pendaftaran sudah buka')
+            ->withErrors(['email' => 'silahkan daftarkan akun anda, jika pendaftaran sudah buka']);
     }
 }

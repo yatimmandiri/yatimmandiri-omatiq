@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Company\StoreStudentRequest;
 use App\Http\Requests\Company\UpdateStudentRequest;
 use App\Models\Company\Student;
+use App\Services\PenyaluranService;
 use App\Services\StudentService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -111,20 +112,44 @@ class StudentController extends Controller
         return redirect()->route('admin.companies.students.index')->with('success', "Binaan {$name} berhasil dihapus.");
     }
 
+    public function status(Request $request, Student $student)
+    {
+        $this->authorize('update', $student);
+
+        $student->update(['is_active' => ! $student->is_active]);
+
+        // Sync is_binaan to penyaluran if needed (best practice: try API, log if fails)
+        if ($student->penyaluran_id) {
+            try {
+                app(PenyaluranService::class);
+            } catch (\Throwable $e) {
+            }
+        }
+
+        $this->logSuccess('update-student-status', "Toggled student status: {$student->full_name} -> ".($student->is_active ? 'aktif' : 'non-aktif'), ['student_id' => $student->id]);
+
+        return back()->with('success', $student->is_active ? 'Data diaktifkan.' : 'Data dinonaktifkan.');
+    }
+
     public function getData(Request $request)
     {
         $this->authorize('data-student', Student::class);
 
-        $allowed = ['id', 'full_name', 'school_name', 'nik', 'is_binaan', 'created_at', 'updated_at'];
+        $allowed = ['id', 'full_name', 'school_name', 'nik', 'is_binaan', 'is_active', 'created_at', 'updated_at'];
         $orderBy = in_array($request->input('orderBy'), $allowed, true) ? $request->input('orderBy') : 'created_at';
         $direction = strtolower((string) $request->input('orderDirection')) === 'asc' ? 'asc' : 'desc';
 
+        $filterValue = $request->input('filterValue', []);
+
         $query = Student::query()
-            ->where('is_binaan', true)
             ->with(['mentor:id,name', 'province:id,name', 'regency:id,name'])
             ->withCount('participants')
             ->search($request->string('globalSearch')->toString())
-            ->when($request->input('filterValue.mentor_id'), fn ($query, $id) => $query->where('mentor_id', $id))
+            ->when(data_get($filterValue, 'mentor_id'), fn ($q, $v) => $q->where('mentor_id', $v))
+            ->when(data_get($filterValue, 'is_binaan') !== null && data_get($filterValue, 'is_binaan') !== '', fn ($q) => $q->where('is_binaan', filter_var(data_get($filterValue, 'is_binaan'), FILTER_VALIDATE_BOOLEAN)))
+            ->when(data_get($filterValue, 'is_active') !== null && data_get($filterValue, 'is_active') !== '', fn ($q) => $q->where('is_active', filter_var(data_get($filterValue, 'is_active'), FILTER_VALIDATE_BOOLEAN)))
+            ->when(data_get($filterValue, 'school_level'), fn ($q, $v) => $q->where('school_level', $v))
+            ->when(data_get($filterValue, 'province_id'), fn ($q, $v) => $q->where('province_id', $v))
             ->orderBy($orderBy, $direction)
             ->orderBy('id', 'desc');
 

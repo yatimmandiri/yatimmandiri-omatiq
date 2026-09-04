@@ -39,7 +39,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function hasVerifiedEmail(): bool
     {
-        if ($this->hasRole('Teacher')) {
+        if ($this->hasRole('Teacher') || $this->hasRole('Participant')) {
             return true;
         }
 

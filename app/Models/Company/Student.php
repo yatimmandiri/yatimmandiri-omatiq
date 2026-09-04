@@ -45,6 +45,7 @@ use Spatie\Activitylog\Support\LogOptions;
     'family_card_path',
     'student_card_path',
     'is_binaan',
+    'is_active',
 ])]
 class Student extends Model
 {
@@ -55,7 +56,13 @@ class Student extends Model
         return [
             'birth_date' => 'date',
             'is_binaan' => 'boolean',
+            'is_active' => 'boolean',
         ];
+    }
+
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->where('is_active', true);
     }
 
     public function province(): BelongsTo
