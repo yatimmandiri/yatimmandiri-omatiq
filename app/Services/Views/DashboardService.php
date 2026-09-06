@@ -88,18 +88,26 @@ class DashboardService
 
     private static function participant(User $user): array
     {
-        $participant = $user->participant;
+        $participant = $user->participant?->load([
+            'olimpiade:id,name,category,slug,excerpt',
+            'student:id,full_name,nickname,gender,birth_place,birth_date,school_name,school_level,nis,grade,address,province_id,regency_id,parent_phone,mentor_name,mentor_phone,photo_path,student_card_path',
+            'student.province:id,name',
+            'student.regency:id,name',
+        ]);
+
+        if ($participant) {
+            $arr = $participant->toArray();
+            $arr['payment_proof_url'] = $participant->payment_proof_url;
+            $arr['student']['photo_url'] = $participant->student?->photo_url;
+            $arr['student']['student_card_url'] = $participant->student?->student_card_url;
+            $participant = $arr;
+        }
 
         return [
             'view' => 'admin/dashboard/participant',
             'data' => [
                 'pageTitle' => 'Dashboard Partisipan',
-                'participant' => $participant?->load([
-                    'olimpiade:id,name,category,slug,excerpt',
-                    'student:id,full_name,nickname,gender,birth_place,birth_date,school_name,school_level,nis,grade,address,province_id,regency_id,parent_phone,mentor_name,mentor_phone,photo_path,identity_card_path,family_card_path,student_card_path',
-                    'student.province:id,name',
-                    'student.regency:id,name',
-                ]),
+                'participant' => $participant,
             ],
         ];
     }

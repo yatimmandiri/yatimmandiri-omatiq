@@ -1,8 +1,11 @@
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { ProofModal } from '@/components/ui/proof-modal';
 import { dashboard } from '@/routes/admin';
 import { Head, usePage } from '@inertiajs/react';
 import { ExternalLink } from 'lucide-react';
+import { useState } from 'react';
 
 const labels: Record<string, string> = {
     male: 'Laki-laki',
@@ -22,6 +25,7 @@ const statusVariant = (status: string) =>
 export default function Dashboard() {
     const { participant } = usePage<{ participant: Record<string, any> }>()
         .props;
+    const [openProof, setOpenProof] = useState(false);
 
     if (!participant) {
         return (
@@ -149,23 +153,8 @@ export default function Dashboard() {
 
                 <Card className="space-y-5 p-5">
                     <h2 className="text-lg font-bold">Dokumen</h2>
-                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                        <FileLink
-                            label="Pas Foto"
-                            href={participant.student?.photo_url}
-                        />
-                        <FileLink
-                            label="Kartu Identitas"
-                            href={participant.student?.identity_card_url}
-                        />
-                        <FileLink
-                            label="Kartu Keluarga"
-                            href={participant.student?.family_card_url}
-                        />
-                        <FileLink
-                            label="Kartu Pelajar"
-                            href={participant.student?.student_card_url}
-                        />
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        <FileLink label="Kartu Pelajar" href={participant.student?.student_card_url} />
                     </div>
                 </Card>
 
@@ -195,10 +184,15 @@ export default function Dashboard() {
                                         : null
                                 }
                             />
-                            <FileLink
-                                label="Bukti Bayar"
-                                href={participant.payment_proof_url}
-                            />
+                            {participant.payment_proof_url && (
+                                <div>
+                                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Bukti Bayar</p>
+                                    <Button variant="outline" size="sm" className="mt-1" onClick={() => setOpenProof(true)}>
+                                        Lihat Bukti <ExternalLink className="size-4" />
+                                    </Button>
+                                    <ProofModal href={participant.payment_proof_url} open={openProof} onOpenChange={setOpenProof} />
+                                </div>
+                            )}
                         </div>
                     </Card>
                 )}

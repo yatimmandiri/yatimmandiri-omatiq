@@ -9,7 +9,7 @@ import { useCurrentUrl } from '@/hooks/use-current-url';
 import { cn } from '@/lib/utils';
 import { Link, usePage } from '@inertiajs/react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Fragment } from 'react/jsx-runtime';
 
 const filterMenuByPermissions = (
@@ -68,13 +68,12 @@ export const MainNav = ({ items }: any) => {
 
     const getPathname = (href: string) => {
         if (!href) {
-return '';
-}
+            return '';
+        }
 
         try {
-            return normalizePath(
-                new URL(href, window.location.origin).pathname,
-            );
+            const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost';
+            return normalizePath(new URL(href, origin).pathname);
         } catch {
             return normalizePath(href);
         }
@@ -122,7 +121,10 @@ return '';
 
     const [prevPath, setPrevPath] = useState(currentPath);
 
-    if (prevPath !== currentPath) {
+    useEffect(() => {
+        if (prevPath === currentPath) {
+            return;
+        }
         setPrevPath(currentPath);
 
         if (isDashboard) {
@@ -132,16 +134,11 @@ return '';
 
             const traverse = (menus: any[], parents: string[] = []) => {
                 menus.forEach((item) => {
-                    const hasMatchChild = hasExactMatchingChild(
-                        item.children || [],
-                    );
+                    const hasMatchChild = hasExactMatchingChild(item.children || []);
 
                     if (hasMatchChild) {
                         [...parents, item.title].forEach((_, idx, arr) => {
-                            const key = getMenuKey(
-                                { title: arr[idx] },
-                                arr.slice(0, idx),
-                            );
+                            const key = getMenuKey({ title: arr[idx] }, arr.slice(0, idx));
                             newOpenMenus[key] = true;
                         });
                     }
@@ -155,7 +152,7 @@ return '';
             traverse(filteredItems);
             setOpenMenus(newOpenMenus);
         }
-    }
+    }, [currentPath, prevPath, isDashboard, filteredItems]);
 
     const toggleMenu = (key: string) => {
         setOpenMenus((prev: any) => ({

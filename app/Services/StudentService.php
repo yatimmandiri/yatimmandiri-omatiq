@@ -33,6 +33,9 @@ class StudentService
         }
 
         $data['is_binaan'] = $request->boolean('is_binaan');
+        if ($request->has('is_active')) {
+            $data['is_active'] = $request->boolean('is_active');
+        }
 
         return $data;
     }

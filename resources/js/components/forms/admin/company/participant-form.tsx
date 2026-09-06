@@ -59,9 +59,6 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
         achievements: participant?.achievements ?? '',
         has_joined_before: participant?.has_joined_before ?? false,
         previous_year: participant?.previous_year ?? '',
-        photo: null,
-        identity_card: null,
-        family_card: null,
         student_card: null,
         referral_source: participant?.referral_source ?? '',
         branch: participant?.branch ?? '',
@@ -417,24 +414,6 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
                             />
                         </Field>
                     )}
-                    <FileField
-                        label="Ganti Pas Foto"
-                        current={student?.photo_url}
-                        onChange={(file) => setFile('photo', file)}
-                        error={form.errors.photo}
-                    />
-                    <FileField
-                        label="Ganti Identitas"
-                        current={student?.identity_card_url}
-                        onChange={(file) => setFile('identity_card', file)}
-                        error={form.errors.identity_card}
-                    />
-                    <FileField
-                        label="Ganti Kartu Keluarga"
-                        current={student?.family_card_url}
-                        onChange={(file) => setFile('family_card', file)}
-                        error={form.errors.family_card}
-                    />
                     <FileField
                         label="Ganti Kartu Pelajar"
                         current={student?.student_card_url}

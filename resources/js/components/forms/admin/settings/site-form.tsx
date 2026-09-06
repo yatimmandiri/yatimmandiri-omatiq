@@ -31,6 +31,9 @@ export const SiteForm = () => {
         tiktok: settings?.tiktok || '',
         registration_public_open: settings?.registration_public_open ?? true,
         registration_binaan_open: settings?.registration_binaan_open ?? true,
+        sheets_sync_enabled: settings?.sheets_sync_enabled ?? false,
+        sheets_spreadsheet_id: settings?.sheets_spreadsheet_id ?? '',
+        sheets_sheet_name: settings?.sheets_sheet_name ?? 'Data Peserta',
         _method: 'PUT',
     });
 
@@ -267,6 +270,20 @@ export const SiteForm = () => {
                                 onCheckedChange={(checked) => setData('registration_binaan_open', checked)}
                             />
                         </div>
+                    </div>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardContent className="p-4">
+                    <h3 className="mb-4 text-lg font-semibold">Google Sheets Realtime</h3>
+                    <p className="mb-4 text-xs text-muted-foreground">Hubungkan Data Peserta ke 1 sheet realtime. Upload file JSON Service Account ke <code>storage/app/google/credentials.json</code> dan set Spreadsheet ID. Sheet akan public Viewer (NIK full).</p>
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between rounded-md border p-4">
+                            <Label>Aktifkan Sync GSheet</Label>
+                            <Switch checked={data.sheets_sync_enabled} onCheckedChange={(checked) => setData('sheets_sync_enabled', checked)} />
+                        </div>
+                        <InputTextComponent type="text" label="Spreadsheet ID" name="sheets_spreadsheet_id" value={data.sheets_spreadsheet_id} handleOnChange={(value: string) => setData('sheets_spreadsheet_id', value)} color={errors.sheets_spreadsheet_id ? 'danger' : 'default'} errors={errors.sheets_spreadsheet_id} helperText="ID dari URL https://docs.google.com/spreadsheets/d/{ID}/edit" />
+                        <InputTextComponent type="text" label="Sheet Name" name="sheets_sheet_name" value={data.sheets_sheet_name} handleOnChange={(value: string) => setData('sheets_sheet_name', value)} color={errors.sheets_sheet_name ? 'danger' : 'default'} errors={errors.sheets_sheet_name} helperText="Default: Data Peserta" />
                     </div>
                 </CardContent>
             </Card>

@@ -6,8 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { login } from '@/routes';
-import loginStore from '@/routes/guru/login';
 import { Form, Head } from '@inertiajs/react';
+import { FcGoogle } from 'react-icons/fc';
+import loginStore from '@/routes/guru/login';
 
 export default function GuruLogin() {
     return (
@@ -68,6 +69,22 @@ export default function GuruLogin() {
                             >
                                 {processing && <Spinner />}
                                 Masuk sebagai Guru
+                            </Button>
+
+                            <div className="relative py-2">
+                                <div className="absolute inset-0 flex items-center">
+                                    <span className="w-full border-t" />
+                                </div>
+                                <div className="relative flex justify-center text-xs uppercase">
+                                    <span className="bg-background px-2 text-muted-foreground">Atau</span>
+                                </div>
+                            </div>
+
+                            <Button type="button" variant="outline" className="w-full" asChild>
+                                <a href="/auth/guru/google/redirect">
+                                    <FcGoogle className="size-5" />
+                                    Login dengan Google (setelah lengkapi profil)
+                                </a>
                             </Button>
                         </div>
 

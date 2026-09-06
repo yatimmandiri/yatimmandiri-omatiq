@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import participants from '@/routes/admin/companies/participants';
 import { router, usePage } from '@inertiajs/react';
-import { CheckCircle2, Clock3, Filter, RotateCcw, XCircle } from 'lucide-react';
+import { CheckCircle2, Clock3, ExternalLink, Filter, RefreshCw, RotateCcw, XCircle } from 'lucide-react';
 import { useState } from 'react';
 
 const statusLabels: Record<string, string> = {
@@ -36,11 +36,17 @@ const statusVariant = (status: string) =>
     status === 'verified' ? 'default' : status === 'rejected' ? 'destructive' : 'secondary';
 
 export default function ListPage() {
-    const { filterOptions } = usePage<{
+    const { filterOptions, sheets } = usePage<{
         filterOptions?: {
             olimpiades?: Array<{ value: string; label: string }>;
             eventYears?: Array<{ value: string; label: string }>;
             branches?: Array<{ value: string; label: string }>;
+        };
+        sheets?: {
+            enabled?: boolean;
+            spreadsheet_id?: string | null;
+            sheet_name?: string | null;
+            url?: string | null;
         };
     }>().props;
 
@@ -56,6 +62,7 @@ export default function ListPage() {
             cell: (info: any) => {
                 const row = info.row.original;
                 const name = info.getValue() ?? row.full_name ?? '-';
+
                 return (
                     <div className="space-y-1">
                         <p className="font-semibold">{name}</p>
@@ -82,6 +89,7 @@ export default function ListPage() {
             accessorKey: 'student.school_name',
             cell: (info: any) => {
                 const row = info.row.original;
+
                 return row.student?.school_name ?? info.getValue() ?? '-';
             },
         },
@@ -90,6 +98,7 @@ export default function ListPage() {
             accessorKey: 'student.regency',
             cell: (info: any) => {
                 const row = info.row.original;
+
                 return info.getValue()?.name ?? row.penyaluran_sanggar_name ?? row.student?.school_name ?? '-';
             },
         },
@@ -176,6 +185,44 @@ export default function ListPage() {
                     }
                 >
                     <div className="flex flex-col gap-4 px-4 pt-8 md:px-8">
+                        <div className="rounded-xl border bg-muted/20 p-4">
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                <div className="space-y-1">
+                                    <div className="flex items-center gap-2 text-sm font-semibold">
+                                        <ExternalLink className="size-4 text-primary" />
+                                        Google Sheets Realtime
+                                        {sheets?.enabled ? (
+                                            <Badge variant="default" className="ml-2">
+                                                Live
+                                            </Badge>
+                                        ) : (
+                                            <Badge variant="secondary" className="ml-2">
+                                                Off
+                                            </Badge>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="flex gap-2">
+                                    {sheets?.url && (
+                                        <Button size="sm" variant="outline" asChild>
+                                            <a href={sheets.url} target="_blank" rel="noopener noreferrer">
+                                                <ExternalLink className="size-4" />
+                                                Buka GSheet
+                                            </a>
+                                        </Button>
+                                    )}
+                                    <Button
+                                        size="sm"
+                                        onClick={() => router.post(participants.syncSheet().url)}
+                                        disabled={!sheets?.enabled}
+                                    >
+                                        <RefreshCw className="size-4" />
+                                        Sync Ulang
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                             <div>
                                 <div className="flex items-center gap-2 text-sm font-semibold">

@@ -29,6 +29,15 @@ class HandleInertiaRequests extends Middleware
         return parent::version($request);
     }
 
+    public function handle(Request $request, \Closure $next)
+    {
+        if ($request->is('admin/*')) {
+            config(['inertia.ssr.enabled' => false]);
+        }
+
+        return parent::handle($request, $next);
+    }
+
     /**
      * Define the props that are shared by default.
      *

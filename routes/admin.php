@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\Company\OlimpiadeVideoController;
 use App\Http\Controllers\Admin\Company\ParticipantController;
 use App\Http\Controllers\Admin\Company\ReviewController;
 use App\Http\Controllers\Admin\Company\SliderController;
+use App\Http\Controllers\Admin\Company\StudentController;
 use App\Http\Controllers\Admin\Company\TeacherController;
 use App\Http\Controllers\Admin\Company\TestimonialController;
 use App\Http\Controllers\Admin\Core\PermissionController;
@@ -69,7 +70,12 @@ Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'auth.admi
 
         Route::put('participants/{participant}/status', [ParticipantController::class, 'status'])->name('participants.status');
         Route::get('participants/data', [ParticipantController::class, 'getData'])->name('participants.data');
+        Route::post('participants/sync-sheet', [ParticipantController::class, 'syncSheet'])->name('participants.sync-sheet');
         Route::resource('participants', ParticipantController::class)->except(['create', 'store']);
+
+        Route::get('students/data', [StudentController::class, 'getData'])->name('students.data');
+        Route::put('students/{student}/status', [StudentController::class, 'status'])->name('students.status');
+        Route::resource('students', StudentController::class)->only(['index', 'show', 'edit', 'update']);
 
         Route::put('testimonials/{testimonial}/status', [TestimonialController::class, 'status'])->name('testimonials.status');
         Route::get('testimonials/data', [TestimonialController::class, 'getData'])->name('testimonials.data');
