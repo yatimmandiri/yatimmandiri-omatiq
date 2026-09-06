@@ -173,9 +173,9 @@ class PenyaluranService
     }
 
     /**
-     * Update guru profile on Penyaluran (PUT guru/me). Invalidates me cache.
+     * Update guru profile on Penyaluran (PUT api/v1/guru/me). Invalidates me cache.
      *
-     * @param  array{email?:string}  $attributes
+     * @param  array{name?:string, email?:string}  $attributes
      *
      * @throws \RuntimeException
      */

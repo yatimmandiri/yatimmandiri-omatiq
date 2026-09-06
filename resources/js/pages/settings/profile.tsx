@@ -12,9 +12,11 @@ import { Form, Head, Link, usePage } from '@inertiajs/react';
 export default function Profile({
     mustVerifyEmail,
     status,
+    isTeacher,
 }: {
     mustVerifyEmail: boolean;
     status?: string;
+    isTeacher?: boolean;
 }) {
     const { auth } = usePage().props;
 
@@ -28,7 +30,11 @@ export default function Profile({
                 <Heading
                     variant="small"
                     title="Profile information"
-                    description="Update your name and email address"
+                    description={
+                        isTeacher
+                            ? 'Perbarui nama dan alamat email akun guru Anda (tersinkronisasi ke Penyaluran)'
+                            : 'Update your name and email address'
+                    }
                 />
 
                 <Form
@@ -117,7 +123,7 @@ export default function Profile({
                 </Form>
             </div>
 
-            <DeleteUser />
+            {!isTeacher && <DeleteUser />}
         </>
     );
 }

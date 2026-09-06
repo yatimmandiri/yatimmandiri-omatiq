@@ -38,7 +38,17 @@ class GoogleSheetService
     private function client(): ?Client
     {
         $credentials = config('sheets.credentials');
-        if (! $credentials || ! file_exists($credentials)) {
+        if (! $credentials) {
+            Log::warning('sheets.credentials not configured');
+
+            return null;
+        }
+
+        if (! file_exists($credentials) && file_exists(base_path($credentials))) {
+            $credentials = base_path($credentials);
+        }
+
+        if (! file_exists($credentials)) {
             Log::warning('sheets.credentials not found', ['path' => $credentials]);
 
             return null;
