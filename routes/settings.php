@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Route;
 | sebagian butuh verified.
 */
 
-Route::middleware(['auth', 'guru.profile.completed'])->as('admin.')->group(function () {
+Route::middleware(['auth', 'teacher.profile.completed'])->as('admin.')->group(function () {
     Route::redirect('settings', '/settings/profile');
 
     // Tiptap editor uploads (dipakai di SiteSettings & konten lain)

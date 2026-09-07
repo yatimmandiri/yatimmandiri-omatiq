@@ -111,7 +111,7 @@ export default function GuruBiodata() {
 
     const submit = (e: FormEvent) => {
         e.preventDefault();
-        form.put('/guru/biodata', {
+        form.put('/teacher/biodata', {
             preserveScroll: true,
         });
     };
@@ -301,7 +301,7 @@ export default function GuruBiodata() {
 
 GuruBiodata.layout = {
     breadcrumbs: [
-        { title: 'Dashboard', href: '/guru/dashboard' },
-        { title: 'Biodata', href: '/guru/biodata' },
+        { title: 'Dashboard', href: '/admin/dashboard' },
+        { title: 'Biodata', href: '/teacher/biodata' },
     ],
 };

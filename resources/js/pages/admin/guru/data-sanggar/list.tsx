@@ -2,7 +2,7 @@ import { DataTableComponent } from '@/components/partials/dataTables';
 import { DataTableProvider } from '@/components/partials/dataTables/hooks/useDataTables';
 import { renderRowHeader } from '@/components/partials/dataTables/utils/dataTable-utils';
 import { dashboard } from '@/routes/admin';
-import sanggar from '@/routes/admin/guru/data-sanggar';
+import sanggar from '@/routes/admin/data-sanggar';
 import { useState } from 'react';
 
 export default function ListPage() {

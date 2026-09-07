@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { dashboard } from '@/routes/admin';
-import dataPeserta from '@/routes/admin/guru/data-peserta';
+import dataPeserta from '@/routes/admin/data-peserta';
 import { useForm, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,

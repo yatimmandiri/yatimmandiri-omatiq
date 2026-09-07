@@ -13,8 +13,12 @@ class StudentAuthController extends Controller
 {
     use LogActivity;
 
-    public function create(): Response
+    public function create(Request $request): Response|\Illuminate\Http\RedirectResponse
     {
+        if (Auth::check()) {
+            return redirect()->route('admin.dashboard');
+        }
+
         return Inertia::render('auth/student-login');
     }
 
@@ -53,7 +57,7 @@ class StudentAuthController extends Controller
         // Jika role masih Users tapi belum punya participant, izinkan masuk (akan lihat empty state)
         $this->logSuccess('login-student', "Login Student: {$user->email}", ['user_id' => $user->id]);
 
-        return redirect()->intended(route('student.dashboard'));
+        return redirect()->intended(route('admin.dashboard'));
     }
 
     public function destroy(Request $request)

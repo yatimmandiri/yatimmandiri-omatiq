@@ -42,20 +42,12 @@ class GuruAuthController extends Controller
         if (Auth::check()) {
             $user = $request->user() ?? Auth::user();
 
-            if ($user && $user->hasRole('Teacher')) {
-                return redirect()->route('guru.dashboard');
-            }
-
-            // Jika sudah login sebagai role lain, arahkan ke dashboard sesuai role
-            if ($user && $user->hasRole('Administrators')) {
+            // Semua role diarahkan ke dashboard terpadu /admin/dashboard
+            if ($user) {
                 return redirect()->route('admin.dashboard');
             }
 
-            if ($user && $user->hasRole('Participant')) {
-                return redirect()->route('student.dashboard');
-            }
-
-            return redirect()->route('guru.dashboard');
+            return redirect()->route('admin.dashboard');
         }
 
         return Inertia::render('auth/guru-login');
@@ -129,7 +121,7 @@ class GuruAuthController extends Controller
             $request->session()->put('penyaluran_token', $token);
             $request->session()->put('penyaluran_id', $penyaluranId);
 
-            return redirect()->route('guru.verify');
+            return redirect()->route('teacher.verify');
         }
 
         Auth::login($user, $request->boolean('remember'));
@@ -138,10 +130,10 @@ class GuruAuthController extends Controller
         $request->session()->regenerate();
 
         if ($user->needsTeacherProfileCompletion()) {
-            return redirect()->route('guru.profile.edit');
+            return redirect()->route('teacher.profile.edit');
         }
 
-        return redirect()->intended(route('guru.dashboard'));
+        return redirect()->intended(route('admin.dashboard'));
     }
 
     public function completeProfile(Request $request)
@@ -153,7 +145,7 @@ class GuruAuthController extends Controller
         }
 
         if (! $user->needsTeacherProfileCompletion()) {
-            return redirect()->route('guru.dashboard');
+            return redirect()->route('admin.dashboard');
         }
 
         return Inertia::render('auth/guru-complete-profile', [
@@ -210,7 +202,7 @@ class GuruAuthController extends Controller
         ])->save();
 
         return redirect()
-            ->route('guru.dashboard')
+            ->route('admin.dashboard')
             ->with('success', 'Akun guru berhasil dilengkapi. Selamat datang di dashboard.');
     }
 
@@ -218,7 +210,7 @@ class GuruAuthController extends Controller
     {
         $userId = $request->session()->get('otp_user_id');
         if (! $userId) {
-            return redirect()->route('guru.login');
+            return redirect()->route('teacher.login');
         }
 
         return Inertia::render('auth/guru-verify-otp', [
@@ -233,7 +225,7 @@ class GuruAuthController extends Controller
         $userId = $request->session()->get('otp_user_id');
         $user = $userId ? User::find($userId) : null;
         if (! $user) {
-            return redirect()->route('guru.login')->withErrors(['otp' => 'Sesi OTP tidak ditemukan. Silakan login ulang.']);
+            return redirect()->route('teacher.login')->withErrors(['otp' => 'Sesi OTP tidak ditemukan. Silakan login ulang.']);
         }
 
         $service = app(PhoneOtpService::class);
@@ -246,10 +238,10 @@ class GuruAuthController extends Controller
         $request->session()->regenerate();
 
         if ($user->needsTeacherProfileCompletion()) {
-            return redirect()->route('guru.profile.edit');
+            return redirect()->route('teacher.profile.edit');
         }
 
-        return redirect()->intended(route('guru.dashboard'));
+        return redirect()->intended(route('admin.dashboard'));
     }
 
     public function resend(Request $request)
@@ -257,7 +249,7 @@ class GuruAuthController extends Controller
         $userId = $request->session()->get('otp_user_id');
         $user = $userId ? User::find($userId) : null;
         if (! $user) {
-            return redirect()->route('guru.login');
+            return redirect()->route('teacher.login');
         }
 
         $service = app(PhoneOtpService::class);
@@ -277,6 +269,6 @@ class GuruAuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('guru.login');
+        return redirect()->route('teacher.login');
     }
 }

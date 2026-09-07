@@ -1,17 +1,17 @@
 <?php
 
-use App\Http\Controllers\Student\DashboardController;
 use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
 | Student Routes — /student/*
 |--------------------------------------------------------------------------
-| Dashboard Student terpisah dari admin/dashboard.
-| Guard: auth + verified + role:Participant (atau Users dengan participant)
+| Dashboard unified di /admin/dashboard (role-based).
 | Login student ada di routes/auth.php (student/login)
+| File ini dipertahankan untuk future student-specific routes.
+| Dashboard legacy /student/dashboard di-redirect ke /admin/dashboard.
 */
 
 Route::prefix('student')->as('student.')->middleware(['auth', 'verified'])->group(function () {
-    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('dashboard', fn () => redirect('/admin/dashboard', 301))->name('dashboard');
 });

@@ -1,6 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { dashboard } from '@/routes/student';
+import { dashboard } from '@/routes/admin';
 import { Head, usePage } from '@inertiajs/react';
 import { Award, CheckCircle2, Clock3, FileText, GraduationCap, MapPin, Phone, Sparkles } from 'lucide-react';
 
@@ -139,7 +139,7 @@ export default function Dashboard() {
     );
 }
 
-Dashboard.layout = { breadcrumbs: [{ title: 'Dashboard', href: dashboard() }] };
+Dashboard.layout = { breadcrumbs: [{ title: 'Dashboard', href: dashboard().url }] };
 
 const Detail = ({ label, value, icon, full }: { label: string; value?: any; icon?: React.ReactNode; full?: boolean }) => (
     <div className={full ? 'sm:col-span-2' : ''}>

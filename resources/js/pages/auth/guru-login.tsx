@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
-import loginStore from '@/routes/guru/login';
 import { Form, Head } from '@inertiajs/react';
 import { FcGoogle } from 'react-icons/fc';
 
@@ -16,7 +15,7 @@ export default function GuruLogin() {
 
             <Form
                 method="post"
-                action={loginStore.store().url}
+                action="/teacher/login"
                 className="flex flex-col gap-6"
             >
                 {({ processing, errors }) => (
@@ -86,8 +85,8 @@ export default function GuruLogin() {
             </div>
 
             <Button asChild type="button" variant="outline" className="w-full">
-                {/* Wayfinder akan generate guru.google.redirect setelah `php artisan wayfinder:generate`; fallback href hardcode agar tetap jalan */}
-                <a href="/guru/google/redirect" className="w-full">
+                {/* Wayfinder akan generate teacher.google.redirect setelah `php artisan wayfinder:generate`; fallback href hardcode agar tetap jalan */}
+                <a href="/teacher/google/redirect" className="w-full">
                     <FcGoogle />
                     Login dengan Google (Guru)
                 </a>

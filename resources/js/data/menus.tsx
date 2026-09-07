@@ -29,10 +29,10 @@ import reviews from '@/routes/admin/companies/reviews';
 import sliders from '@/routes/admin/companies/sliders';
 import teachers from '@/routes/admin/companies/teachers';
 import faqCompanies from '@/routes/admin/companies/faq-companies';
-import dataPeserta from '@/routes/admin/guru/data-peserta';
-import binaan from '@/routes/admin/guru/data-binaan';
-import sanggar from '@/routes/admin/guru/data-sanggar';
-import absensi from '@/routes/admin/guru/absensi';
+import dataPeserta from '@/routes/admin/data-peserta';
+import binaan from '@/routes/admin/data-binaan';
+import sanggar from '@/routes/admin/data-sanggar';
+import absensi from '@/routes/admin/absensi';
 
 export const NavigationList = [
     {

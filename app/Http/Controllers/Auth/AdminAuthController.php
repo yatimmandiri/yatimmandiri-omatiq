@@ -13,8 +13,12 @@ class AdminAuthController extends Controller
 {
     use LogActivity;
 
-    public function create(): Response
+    public function create(Request $request): Response|\Illuminate\Http\RedirectResponse
     {
+        if (Auth::check()) {
+            return redirect()->route('admin.dashboard');
+        }
+
         return Inertia::render('auth/admin-login');
     }
 

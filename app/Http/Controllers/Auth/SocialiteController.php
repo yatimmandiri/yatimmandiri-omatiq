@@ -39,7 +39,7 @@ class SocialiteController extends Controller
         $intent = $request->session()->pull('google_intent'); // guru | null
 
         if ($email === '') {
-            return redirect()->route($intent === 'guru' ? 'guru.login' : 'login')->withErrors([
+            return redirect()->route($intent === 'guru' ? 'teacher.login' : 'login')->withErrors([
                 'email' => 'Akun Google tidak memiliki email.',
             ]);
         }
@@ -48,7 +48,7 @@ class SocialiteController extends Controller
 
         // Jika intent guru tapi email belum terdaftar sebagai Teacher completed → tolak, jangan auto-create Users
         if ($intent === 'guru' && ! $existingUser) {
-            return redirect()->route('guru.login')->withErrors([
+            return redirect()->route('teacher.login')->withErrors([
                 'phone' => 'Akun guru dengan email '.$email.' tidak ditemukan. Silakan login dengan nomor HP terlebih dahulu dan lengkapi profil.',
             ]);
         }
@@ -56,7 +56,7 @@ class SocialiteController extends Controller
         if ($existingUser && $existingUser->hasRole('Teacher')) {
             // Teacher yang belum complete-profile tidak boleh login via Google (harus pakai HP dulu)
             if ($existingUser->needsTeacherProfileCompletion()) {
-                return redirect()->route('guru.login')->withErrors([
+                return redirect()->route('teacher.login')->withErrors([
                     'phone' => 'Akun guru '.$email.' belum melengkapi profil. Silakan login dengan nomor HP terlebih dahulu.',
                 ]);
             }
@@ -103,7 +103,7 @@ class SocialiteController extends Controller
         if ($user->needsTeacherProfileCompletion()) {
             $this->logSuccess('login-user-google', "Login User via Google (needs complete): {$user->email}", ['user_id' => $user->id]);
 
-            return redirect()->route('guru.profile.edit');
+            return redirect()->route('teacher.profile.edit');
         }
 
         $this->logSuccess('login-user', "Login User via Google: {$user->email}", [
@@ -111,20 +111,20 @@ class SocialiteController extends Controller
             'provider' => $provider,
         ]);
 
-        // Role-based redirect — single GOOGLE_REDIRECT_URI bercabang sesuai role
+        // Role-based redirect — semua ke /admin/dashboard (render berdasarkan role)
         if ($user->hasRole('Administrators')) {
             return redirect()->intended(route('admin.dashboard', absolute: false))->with('success', 'Berhasil masuk sebagai Admin via Google.');
         }
 
         if ($user->hasRole('Teacher')) {
-            return redirect()->intended(route('guru.dashboard', absolute: false))->with('success', 'Berhasil masuk sebagai Guru via Google.');
+            return redirect()->intended(route('admin.dashboard', absolute: false))->with('success', 'Berhasil masuk sebagai Guru via Google.');
         }
 
         if ($user->hasRole('Participant')) {
-            return redirect()->intended(route('student.dashboard', absolute: false))->with('success', 'Berhasil masuk sebagai Student via Google.');
+            return redirect()->intended(route('admin.dashboard', absolute: false))->with('success', 'Berhasil masuk sebagai Student via Google.');
         }
 
-        // Default Users → home
-        return redirect()->intended(route('home.index', absolute: false))->with('success', 'You are logged in!');
+        // Default Users → dashboard terpadu (bukan home)
+        return redirect()->intended(route('admin.dashboard', absolute: false))->with('success', 'You are logged in!');
     }
 }

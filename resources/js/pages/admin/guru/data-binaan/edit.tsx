@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { dashboard } from '@/routes/admin';
-import binaan from '@/routes/admin/guru/data-binaan';
+import binaan from '@/routes/admin/data-binaan';
 import { useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, Save } from 'lucide-react';
 import type { FormEvent, ReactNode } from 'react';

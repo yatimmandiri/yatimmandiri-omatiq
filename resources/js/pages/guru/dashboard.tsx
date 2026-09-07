@@ -64,10 +64,10 @@ export default function Dashboard() {
                             </div>
                         </div>
                         <div className="flex shrink-0 flex-col gap-3 sm:flex-row lg:flex-col">
-                            <Link href="/guru/biodata" prefetch className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#E5BE1E] px-5 py-3 text-sm font-black text-[#17524A] shadow-lg shadow-black/10 transition hover:translate-y-[-2px] hover:bg-[#d9b01c]">
+                            <Link href="/teacher/biodata" prefetch className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#E5BE1E] px-5 py-3 text-sm font-black text-[#17524A] shadow-lg shadow-black/10 transition hover:translate-y-[-2px] hover:bg-[#d9b01c]">
                                 Lengkapi Biodata <ArrowRight className="size-4" />
                             </Link>
-                            <Link href="/guru/biodata" prefetch className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white/10 px-5 py-2.5 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/15">
+                            <Link href="/admin/data-binaan" prefetch className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white/10 px-5 py-2.5 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/15">
                                 <BookOpenCheck className="size-4" /> Kelola Binaan
                             </Link>
                         </div>
@@ -120,10 +120,10 @@ export default function Dashboard() {
                             <div className="flex flex-col justify-center gap-3 rounded-2xl bg-[#17524A]/5 p-4 dark:bg-white/5">
                                 <p className="text-sm font-semibold">Aksi cepat</p>
                                 <div className="flex flex-wrap gap-2">
-                                    <Link href="/guru/biodata" prefetch className="inline-flex items-center gap-2 rounded-xl bg-[#17524A] px-4 py-2 text-sm font-bold text-white shadow hover:bg-[#14463f]">
+                                    <Link href="/teacher/biodata" prefetch className="inline-flex items-center gap-2 rounded-xl bg-[#17524A] px-4 py-2 text-sm font-bold text-white shadow hover:bg-[#14463f]">
                                         {percent === 100 ? 'Perbarui Biodata' : 'Lengkapi Sekarang'} <ArrowRight className="size-4" />
                                     </Link>
-                                    <Link href="/admin/guru/data-binaan" prefetch className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-semibold shadow-sm ring-1 ring-zinc-200 hover:bg-zinc-50 dark:bg-zinc-800 dark:ring-zinc-700">
+                                    <Link href="/admin/data-binaan" prefetch className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-semibold shadow-sm ring-1 ring-zinc-200 hover:bg-zinc-50 dark:bg-zinc-800 dark:ring-zinc-700">
                                         Lihat Binaan
                                     </Link>
                                 </div>
@@ -147,7 +147,7 @@ export default function Dashboard() {
                                 </p>
                             </div>
                         </div>
-                        <Link href="/admin/guru/data-binaan" prefetch className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#17524A] px-5 py-3 text-sm font-black text-white shadow hover:bg-[#0f3d36]">
+                        <Link href="/admin/data-binaan" prefetch className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#17524A] px-5 py-3 text-sm font-black text-white shadow hover:bg-[#0f3d36]">
                             Buka Daftar Binaan <ArrowRight className="size-4" />
                         </Link>
                     </div>

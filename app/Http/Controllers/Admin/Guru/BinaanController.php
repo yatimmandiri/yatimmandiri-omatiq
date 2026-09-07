@@ -189,7 +189,7 @@ class BinaanController extends Controller
             'is_binaan' => true,
         ]);
 
-        return redirect()->route('admin.guru.data-binaan.index')->with('success', "Binaan {$student->full_name} berhasil ditambahkan (lokal, sync Penyaluran TODO).");
+        return redirect()->route('admin.data-binaan.index')->with('success', "Binaan {$student->full_name} berhasil ditambahkan (lokal, sync Penyaluran TODO).");
     }
 
     public function edit(Student $binaan)
@@ -234,7 +234,7 @@ class BinaanController extends Controller
 
         $binaan->update($request->only(['full_name', 'gender', 'birth_date', 'school_name', 'grade', 'address', 'province_id', 'regency_id', 'district_id', 'village_id', 'birth_place', 'parent_phone', 'nickname', 'school_level', 'nis']));
 
-        return redirect()->route('admin.guru.data-binaan.index')->with('success', "Binaan {$binaan->full_name} diperbarui.");
+        return redirect()->route('admin.data-binaan.index')->with('success', "Binaan {$binaan->full_name} diperbarui.");
     }
 
     public function destroy(Student $binaan)
@@ -248,7 +248,7 @@ class BinaanController extends Controller
         }
         $binaan->delete();
 
-        return redirect()->route('admin.guru.data-binaan.index')->with('success', 'Binaan dihapus.');
+        return redirect()->route('admin.data-binaan.index')->with('success', 'Binaan dihapus.');
     }
 
     public function show(int $binaan)

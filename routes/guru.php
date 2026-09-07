@@ -1,22 +1,26 @@
 <?php
 
 use App\Http\Controllers\Guru\BiodataController;
-use App\Http\Controllers\Guru\DashboardController;
 use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| Guru Routes — /guru/*
+| Teacher Routes — /teacher/*
 |--------------------------------------------------------------------------
-| Dashboard Guru terpisah dari admin/dashboard.
-| Guard: auth + verified (Teacher bypass via hasVerifiedEmail) + role:Teacher + guru.profile.completed
-| Login guru ada di routes/auth.php (guru/login)
+| Biodata Teacher. Dashboard unified di /admin/dashboard (role-based).
+| Guard: auth + verified (Teacher bypass via hasVerifiedEmail) + role:Teacher + teacher.profile.completed
+| Login teacher ada di routes/auth.php (teacher/login)
 */
 
-Route::prefix('guru')->as('guru.')->middleware(['auth', 'verified', 'guru.profile.completed', 'role:Teacher'])->group(function () {
-    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+Route::prefix('teacher')->as('teacher.')->middleware(['auth', 'verified', 'teacher.profile.completed', 'role:Teacher'])->group(function () {
+    // Biodata guru — kelengkapan & update (URL konsisten /teacher/biodata)
+    Route::get('biodata', [BiodataController::class, 'edit'])->name('biodata.edit');
+    Route::put('biodata', [BiodataController::class, 'update'])->name('biodata.update');
+});
 
-    // Biodata guru — kelengkapan & update
+// Legacy guru alias → tetap dukung route('guru.*') dengan handler sama (backward compat)
+Route::prefix('guru')->as('guru.')->middleware(['auth', 'verified', 'teacher.profile.completed', 'role:Teacher'])->group(function () {
+    Route::get('dashboard', fn () => redirect('/admin/dashboard', 301))->name('dashboard');
     Route::get('biodata', [BiodataController::class, 'edit'])->name('biodata.edit');
     Route::put('biodata', [BiodataController::class, 'update'])->name('biodata.update');
 });

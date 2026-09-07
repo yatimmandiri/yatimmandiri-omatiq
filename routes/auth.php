@@ -27,8 +27,9 @@ Route::prefix('auth')->as('auth.')->group(function () {
 // Admin Auth — prefix admin/*  (login admin terpisah)
 // ---------------------------------------------------------------------
 Route::prefix('admin')->group(function () {
+    // GET login boleh diakses guest maupun auth — controller yang redirect ke dashboard jika sudah login (bukan ke home)
+    Route::get('login', [AdminAuthController::class, 'create'])->name('admin.login');
     Route::middleware('guest')->group(function () {
-        Route::get('login', [AdminAuthController::class, 'create'])->name('admin.login');
         Route::post('login', [AdminAuthController::class, 'store'])->name('admin.login.store')->middleware('throttle:5,1');
     });
     Route::middleware('auth')->group(function () {
@@ -37,27 +38,45 @@ Route::prefix('admin')->group(function () {
 });
 
 // ---------------------------------------------------------------------
-// Guru Auth — prefix guru/*
+// Teacher Auth — prefix teacher/*  (menggantikan guru/* — guru di-redirect)
 // ---------------------------------------------------------------------
-Route::prefix('guru')->group(function () {
-    // Halaman login guru — boleh diakses guest maupun auth (jika sudah login akan redirect ke dashboard di controller)
-    Route::get('login', [GuruAuthController::class, 'create'])->name('guru.login');
+Route::prefix('teacher')->group(function () {
+    // Halaman login teacher — boleh diakses guest maupun auth (jika sudah login akan redirect ke dashboard di controller)
+    Route::get('login', [GuruAuthController::class, 'create'])->name('teacher.login');
 
     // Guest — login + OTP (throttled) + Google OAuth (single GOOGLE_REDIRECT_URI, diarahkan sesuai role)
     Route::middleware('guest')->group(function () {
-        // Login Google Guru — set intent guru lalu redirect ke GOOGLE_REDIRECT_URI tunggal (/auth/google/callback)
+        // Login Google Teacher — set intent guru lalu redirect ke GOOGLE_REDIRECT_URI tunggal (/auth/google/callback)
         // Callback ditangani terpusat di SocialiteController@callback dengan branch role
-        Route::get('google/redirect', [GuruAuthController::class, 'redirectToGoogle'])->name('guru.google.redirect');
+        Route::get('google/redirect', [GuruAuthController::class, 'redirectToGoogle'])->name('teacher.google.redirect');
 
-        Route::post('login', [GuruAuthController::class, 'store'])->name('guru.login.store')->middleware('throttle:5,1');
+        Route::post('login', [GuruAuthController::class, 'store'])->name('teacher.login.store')->middleware('throttle:5,1');
 
         // OTP scaffold (aktif saat PENYALURAN_OTP_ENABLED=true)
+        Route::get('verify-otp', [GuruAuthController::class, 'showOtpForm'])->name('teacher.verify');
+        Route::post('verify-otp', [GuruAuthController::class, 'verify'])->name('teacher.verify.store')->middleware('throttle:5,1');
+        Route::post('resend-otp', [GuruAuthController::class, 'resend'])->name('teacher.resend')->middleware('throttle:3,1');
+    });
+
+    // Auth — complete-profile wajib Teacher incomplete + logout
+    Route::middleware('auth')->group(function () {
+        Route::get('complete-profile', [GuruAuthController::class, 'completeProfile'])->name('teacher.profile.edit');
+        Route::put('complete-profile', [GuruAuthController::class, 'updateProfile'])->name('teacher.profile.update');
+        Route::post('logout', [GuruAuthController::class, 'destroy'])->name('teacher.logout');
+    });
+});
+
+// Legacy guru/* alias → tetap dukung route('guru.*') agar tidak 404 (backward compat, handler sama)
+// URL utama adalah /teacher/*, tapi /guru/* tetap valid sebagai alias.
+Route::prefix('guru')->group(function () {
+    Route::get('login', [GuruAuthController::class, 'create'])->name('guru.login');
+    Route::middleware('guest')->group(function () {
+        Route::get('google/redirect', [GuruAuthController::class, 'redirectToGoogle'])->name('guru.google.redirect');
+        Route::post('login', [GuruAuthController::class, 'store'])->name('guru.login.store')->middleware('throttle:5,1');
         Route::get('verify-otp', [GuruAuthController::class, 'showOtpForm'])->name('guru.verify');
         Route::post('verify-otp', [GuruAuthController::class, 'verify'])->name('guru.verify.store')->middleware('throttle:5,1');
         Route::post('resend-otp', [GuruAuthController::class, 'resend'])->name('guru.resend')->middleware('throttle:3,1');
     });
-
-    // Auth — complete-profile wajib Teacher incomplete + logout
     Route::middleware('auth')->group(function () {
         Route::get('complete-profile', [GuruAuthController::class, 'completeProfile'])->name('guru.profile.edit');
         Route::put('complete-profile', [GuruAuthController::class, 'updateProfile'])->name('guru.profile.update');
@@ -69,8 +88,9 @@ Route::prefix('guru')->group(function () {
 // Student Auth — prefix student/*
 // ---------------------------------------------------------------------
 Route::prefix('student')->group(function () {
+    // GET login boleh diakses guest maupun auth — controller yang redirect ke dashboard jika sudah login (bukan ke home)
+    Route::get('login', [StudentAuthController::class, 'create'])->name('student.login');
     Route::middleware('guest')->group(function () {
-        Route::get('login', [StudentAuthController::class, 'create'])->name('student.login');
         Route::post('login', [StudentAuthController::class, 'store'])->name('student.login.store')->middleware('throttle:5,1');
     });
     Route::middleware('auth')->group(function () {

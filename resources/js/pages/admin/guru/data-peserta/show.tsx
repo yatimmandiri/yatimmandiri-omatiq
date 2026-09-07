@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { dashboard } from '@/routes/admin';
-import dataPeserta from '@/routes/admin/guru/data-peserta';
+import dataPeserta from '@/routes/admin/data-peserta';
 import { usePage } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';
 

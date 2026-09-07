@@ -52,7 +52,7 @@ export default function AdminLogin() {
                             </Button>
                         </div>
                         <div className="text-center text-sm text-muted-foreground">
-                            Guru? <TextLink href="/guru/login" tabIndex={5}>Login Guru</TextLink> · Student?{' '}
+                            Guru? <TextLink href="/teacher/login" tabIndex={5}>Login Guru</TextLink> · Student?{' '}
                             <TextLink href="/student/login" tabIndex={5}>Login Student</TextLink>
                         </div>
                     </>

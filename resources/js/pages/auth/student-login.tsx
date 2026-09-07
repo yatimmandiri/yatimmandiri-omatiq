@@ -53,7 +53,7 @@ export default function StudentLogin() {
                         </div>
                         <div className="text-center text-sm text-muted-foreground">
                             Admin? <TextLink href="/admin/login" tabIndex={5}>Login Admin</TextLink> · Guru?{' '}
-                            <TextLink href="/guru/login" tabIndex={5}>Login Guru</TextLink>
+                            <TextLink href="/teacher/login" tabIndex={5}>Login Guru</TextLink>
                         </div>
                     </>
                 )}

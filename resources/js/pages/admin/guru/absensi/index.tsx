@@ -15,7 +15,7 @@ export default function AbsensiPage() {
 
 AbsensiPage.layout = {
     breadcrumbs: [
-        { title: 'Dashboard', href: dashboard() },
-        { title: 'Absensi', href: route('admin.teacher.absensi.index') },
+        { title: 'Dashboard', href: dashboard().url },
+        { title: 'Absensi', href: '/admin/absensi' },
     ],
 };

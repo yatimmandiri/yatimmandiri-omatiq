@@ -149,6 +149,6 @@ class BiodataController extends Controller
             $user->forceFill(['name' => $validated['name']])->save();
         }
 
-        return redirect()->route('guru.dashboard')->with('success', 'Biodata guru berhasil diperbarui di Penyaluran.');
+        return redirect()->route('admin.dashboard')->with('success', 'Biodata guru berhasil diperbarui di Penyaluran.');
     }
 }

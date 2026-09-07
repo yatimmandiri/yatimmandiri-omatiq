@@ -10,19 +10,11 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { NavigationList } from '@/data/menus';
-import { Link, usePage } from '@inertiajs/react';
+import { Link } from '@inertiajs/react';
 import { MainNav } from './nav-main';
 
 function useDashboardHref(): string {
-    const { auth } = usePage<{ auth?: { user?: { roles?: string[] } } }>().props as any;
-    const roles: string[] = auth?.user?.roles ?? [];
-
-    if (roles.includes('Administrators')) return '/admin/dashboard';
-    if (roles.includes('Teacher')) return '/guru/dashboard';
-    if (roles.includes('Participant')) return '/student/dashboard';
-
-    // fallback: guest or Users
-    if (roles.length === 0) return '/';
+    // Semua role memakai dashboard terpadu /admin/dashboard (render berdasarkan role)
     return '/admin/dashboard';
 }
 
