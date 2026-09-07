@@ -20,7 +20,7 @@ use Spatie\Permission\Traits\HasRoles;
 #[Fillable(['name', 'email', 'password', 'phone', 'penyaluran_id', 'penyaluran_token', 'phone_verified_at', 'teacher_profile_completed_at', 'phone_otp', 'phone_otp_expires_at', 'phone_otp_attempts', 'phone_otp_last_sent_at'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token', 'penyaluran_token', 'phone_otp'])]
 
-class User extends Authenticatable implements MustVerifyEmail
+class User extends Authenticatable
 {
     use HasFactory, HasRoles, LogsActivity, Notifiable, TwoFactorAuthenticatable;
 
@@ -78,7 +78,7 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->roles()
             ->with('permissions')
             ->get()
-            ->flatMap(fn ($role) => $role->permissions)
+            ->flatMap(fn($role) => $role->permissions)
             ->pluck('name')
             ->unique()
             ->values();
