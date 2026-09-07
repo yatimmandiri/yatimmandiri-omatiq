@@ -84,12 +84,15 @@ export default function CreatePage() {
         });
     };
 
-    const error = (name: keyof typeof form.data | string) =>
-        form.errors[name] ? (
+    const error = (name: string) => {
+        const err = (form.errors as Record<string, string | undefined>)[name];
+
+        return err ? (
             <p className="text-sm font-medium text-destructive">
-                {form.errors[name]}
+                {err}
             </p>
         ) : null;
+    };
 
     return (
         <form

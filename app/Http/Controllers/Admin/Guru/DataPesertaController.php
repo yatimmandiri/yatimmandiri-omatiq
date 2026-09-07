@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Admin\Guru;
 
+use App\Concerns\Traits\LogActivity;
+use App\Concerns\Traits\UploadFiles;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Company\StoreTeacherParticipantRequest;
 use App\Models\Company\Olimpiade;
@@ -12,11 +14,14 @@ use App\Services\TeacherService;
 use App\Settings\SiteSettings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class DataPesertaController extends Controller
 {
+    use LogActivity, UploadFiles;
+
     public function __construct(
         private readonly TeacherService $service,
         private readonly PenyaluranService $penyaluran,
@@ -191,6 +196,30 @@ class DataPesertaController extends Controller
         return Inertia::render('admin/guru/data-peserta/show', [
             'participant' => $this->participantPayload($p),
         ]);
+    }
+
+    public function destroy(Participant $participant)
+    {
+        $this->authorize('delete', $participant);
+
+        $name = $participant->student?->full_name ?? $participant->user?->name ?? 'Unknown';
+
+        DB::transaction(function () use ($participant) {
+            if ($participant->payment_proof_path) {
+                $this->deleteFile($participant->payment_proof_path);
+            }
+
+            $participant->delete();
+        });
+
+        $this->logSuccess('delete-participant', "Guru membatalkan pendaftaran peserta: {$name}", [
+            'participant_id' => $participant->id,
+            'mentor_id' => Auth::id(),
+        ]);
+
+        return redirect()
+            ->route('admin.guru.data-peserta.index')
+            ->with('success', "Pendaftaran {$name} berhasil dibatalkan.");
     }
 
     public function getData(Request $request)

@@ -107,33 +107,46 @@ class ParticipantController extends Controller
 
         $data = $this->payload($request);
 
-        DB::transaction(function () use ($request, $participant, $data) {
-            if ($participant->student) {
-                $studentData = $this->studentPayload($request);
-                foreach ($this->studentFileMap() as $input => $column) {
+        $studentService = app(StudentService::class);
+
+        try {
+            DB::transaction(function () use ($request, $participant, $data, $studentService) {
+                if ($participant->student) {
+                    $studentData = $this->studentPayload($request);
+                    foreach ($this->studentFileMap() as $input => $column) {
+                        if ($request->hasFile($input)) {
+                            $studentData[$column] = $this->replaceFile(
+                                $participant->student->{$column},
+                                $request->file($input),
+                                'uploads/students/'.$input,
+                            );
+                        }
+                    }
+
+                    if ($participant->student->penyaluran_id) {
+                        $studentService->syncToPenyaluran($participant->student, $studentData);
+                    }
+
+                    $participant->student->update($studentData);
+                }
+
+                foreach ($this->fileMap() as $input => $column) {
                     if ($request->hasFile($input)) {
-                        $studentData[$column] = $this->replaceFile(
-                            $participant->student->{$column},
+                        $data[$column] = $this->replaceFile(
+                            $participant->{$column},
                             $request->file($input),
-                            'uploads/students/'.$input,
+                            'uploads/participants/'.$input,
                         );
                     }
                 }
-                $participant->student->update($studentData);
-            }
 
-            foreach ($this->fileMap() as $input => $column) {
-                if ($request->hasFile($input)) {
-                    $data[$column] = $this->replaceFile(
-                        $participant->{$column},
-                        $request->file($input),
-                        'uploads/participants/'.$input,
-                    );
-                }
-            }
-
-            $participant->update($data);
-        });
+                $participant->update($data);
+            });
+        } catch (\Throwable $e) {
+            return back()
+                ->withErrors(['student' => 'Gagal memperbarui data santri di server Penyaluran: '.$e->getMessage()])
+                ->withInput();
+        }
 
         $this->logSuccess('update-participant', "Updated participant: {$participant->full_name}", [
             'participant_id' => $participant->id,

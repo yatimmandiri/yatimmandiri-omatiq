@@ -4,11 +4,19 @@ import { renderRowHeader } from '@/components/partials/dataTables/utils/dataTabl
 import { SelectComponent } from '@/components/partials/select-component';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { dashboard } from '@/routes/admin';
 import dataPeserta from '@/routes/admin/guru/data-peserta';
 import { router } from '@inertiajs/react';
 import { usePage } from '@inertiajs/react';
-import { CheckCircle2, Clock3, Eye, XCircle } from 'lucide-react';
+import { CheckCircle2, Clock3, Eye, Trash2, XCircle } from 'lucide-react';
 import { useState } from 'react';
 
 export default function ListPage() {
@@ -110,7 +118,12 @@ export default function ListPage() {
         {
             id: 'actions',
             header: 'Aksi',
-            cell: (info: any) => <RowAction row={info.row.original} />,
+            cell: (info: any) => (
+                <RowAction
+                    row={info.row.original}
+                    onDeleted={() => setRefreshData(true)}
+                />
+            ),
             enableSorting: false,
             enableHiding: false,
         },
@@ -181,12 +194,61 @@ export default function ListPage() {
     );
 }
 
-const RowAction = ({ row }: { row: any }) => {
+const RowAction = ({ row, onDeleted }: { row: any; onDeleted: () => void }) => {
+    const [openDelete, setOpenDelete] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const name = row.student?.full_name ?? row.full_name ?? 'Peserta';
+
+    const handleDelete = () => {
+        setIsDeleting(true);
+        router.delete(dataPeserta.destroy(row.id).url, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setOpenDelete(false);
+                setIsDeleting(false);
+                onDeleted();
+            },
+            onError: () => {
+                setIsDeleting(false);
+            },
+        });
+    };
+
     return (
-        <Button size="sm" variant="outline" onClick={() => router.visit(dataPeserta.show(row.id).url)}>
-            <Eye className="size-4" />
-            Detail
-        </Button>
+        <div className="flex items-center gap-2">
+            <Button size="sm" variant="outline" onClick={() => router.visit(dataPeserta.show(row.id).url)}>
+                <Eye className="size-4" />
+                Detail
+            </Button>
+            <Button size="sm" variant="destructive" onClick={() => setOpenDelete(true)}>
+                <Trash2 className="size-4" />
+                Hapus
+            </Button>
+
+            <Dialog open={openDelete} onOpenChange={setOpenDelete}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Batalkan Pendaftaran Peserta</DialogTitle>
+                        <DialogDescription className="space-y-2 pt-2">
+                            <p>
+                                Apakah Anda yakin ingin membatalkan pendaftaran untuk <strong>{name}</strong> ({row.registration_number})?
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                                Data binaan tidak akan terhapus dan dapat didaftarkan kembali ke olimpiade jika pendaftaran masih dibuka.
+                            </p>
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="gap-2 sm:gap-0">
+                        <Button variant="outline" onClick={() => setOpenDelete(false)} disabled={isDeleting}>
+                            Batal
+                        </Button>
+                        <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
+                            {isDeleting ? 'Membatalkan...' : 'Batalkan Pendaftaran'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        </div>
     );
 };
 

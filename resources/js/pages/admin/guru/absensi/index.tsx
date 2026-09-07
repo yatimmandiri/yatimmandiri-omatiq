@@ -1,5 +1,6 @@
 import { Card } from '@/components/ui/card';
 import { dashboard } from '@/routes/admin';
+import absensi from '@/routes/admin/guru/absensi';
 
 export default function AbsensiPage() {
     return (
@@ -16,6 +17,6 @@ export default function AbsensiPage() {
 AbsensiPage.layout = {
     breadcrumbs: [
         { title: 'Dashboard', href: dashboard() },
-        { title: 'Absensi', href: route('admin.teacher.absensi.index') },
+        { title: 'Absensi', href: absensi.index().url },
     ],
 };

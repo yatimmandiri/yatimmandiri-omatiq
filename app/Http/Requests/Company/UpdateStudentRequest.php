@@ -21,7 +21,7 @@ class UpdateStudentRequest extends FormRequest
             'full_name' => ['required', 'string', 'max:255'],
             'nickname' => ['nullable', 'string', 'max:120'],
             'gender' => ['required', Rule::in(['male', 'female'])],
-            'birth_place' => ['required', 'string', 'max:120'],
+            'birth_place' => ['nullable', 'string', 'max:120'],
             'birth_date' => ['required', 'date', 'before:today'],
             'school_level' => ['nullable', 'string', 'max:30'],
             'nis' => ['nullable', 'string', 'max:20'],

@@ -8,7 +8,15 @@ import { router, usePage } from '@inertiajs/react';
 import { ArrowLeft, CheckCircle2, Clock3, Eye, RefreshCcw, UserPlus, XCircle } from 'lucide-react';
 
 export default function ShowPage() {
-    const { binaan, registration } = usePage<{ binaan: Record<string, any>; registration?: Record<string, any> | null }>().props;
+    const {
+        binaan,
+        registration,
+        registration_binaan_open = true,
+    } = usePage<{
+        binaan: Record<string, any>;
+        registration?: Record<string, any> | null;
+        registration_binaan_open?: boolean;
+    }>().props;
 
     const fullName = binaan.full_name ?? binaan.name ?? '-';
     const isRegistered = !!binaan.is_registered;
@@ -29,7 +37,7 @@ export default function ShowPage() {
                         <ArrowLeft className="size-4" />
                         Kembali
                     </Button>
-                    {!isRegistered || status === 'rejected' ? (
+                    {(!isRegistered || status === 'rejected') && registration_binaan_open ? (
                         <Button
                             onClick={() =>
                                 router.visit(

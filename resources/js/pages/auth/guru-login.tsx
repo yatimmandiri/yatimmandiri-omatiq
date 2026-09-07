@@ -83,7 +83,7 @@ export default function GuruLogin() {
                             <Button type="button" variant="outline" className="w-full" asChild>
                                 <a href="/auth/guru/google/redirect">
                                     <FcGoogle className="size-5" />
-                                    Login dengan Google (setelah lengkapi profil)
+                                    Login dengan Google (lengkapi profil)
                                 </a>
                             </Button>
                         </div>

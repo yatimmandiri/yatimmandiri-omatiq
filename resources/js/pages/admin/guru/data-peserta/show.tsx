@@ -1,10 +1,18 @@
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { ProofModal } from '@/components/ui/proof-modal';
 import { dashboard } from '@/routes/admin';
 import dataPeserta from '@/routes/admin/guru/data-peserta';
-import { usePage } from '@inertiajs/react';
-import { ArrowLeft, ExternalLink } from 'lucide-react';
+import { router, usePage } from '@inertiajs/react';
+import { ArrowLeft, ExternalLink, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 const labels: Record<string, string> = {
@@ -20,6 +28,15 @@ export default function ShowPage() {
         .props;
     const isBinaan = !!participant.student?.is_binaan || !!participant.student?.penyaluran_id;
     const [openProof, setOpenProof] = useState(false);
+    const [openDelete, setOpenDelete] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const handleDelete = () => {
+        setIsDeleting(true);
+        router.delete(dataPeserta.destroy(participant.id).url, {
+            onFinish: () => setIsDeleting(false),
+        });
+    };
 
     return (
         <div className="flex flex-1 flex-col gap-6 p-4">
@@ -31,7 +48,7 @@ export default function ShowPage() {
                         {participant.student?.full_name ?? participant.nik}
                     </p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex items-center gap-2">
                     <Button
                         variant="outline"
                         onClick={() => window.history.back()}
@@ -39,8 +56,41 @@ export default function ShowPage() {
                         <ArrowLeft />
                         Kembali
                     </Button>
+                    <Button
+                        variant="destructive"
+                        onClick={() => setOpenDelete(true)}
+                    >
+                        <Trash2 className="size-4" />
+                        Batalkan Pendaftaran
+                    </Button>
                 </div>
             </div>
+
+            <Dialog open={openDelete} onOpenChange={setOpenDelete}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Batalkan Pendaftaran Peserta</DialogTitle>
+                        <DialogDescription className="space-y-2 pt-2">
+                            <p>
+                                Apakah Anda yakin ingin membatalkan pendaftaran untuk{' '}
+                                <strong>{participant.student?.full_name ?? participant.nik}</strong>{' '}
+                                ({participant.registration_number})?
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                                Data binaan tidak akan terhapus dan dapat didaftarkan kembali ke olimpiade jika pendaftaran masih dibuka.
+                            </p>
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="gap-2 sm:gap-0">
+                        <Button variant="outline" onClick={() => setOpenDelete(false)} disabled={isDeleting}>
+                            Batal
+                        </Button>
+                        <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
+                            {isDeleting ? 'Membatalkan...' : 'Batalkan Pendaftaran'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             <div className="grid gap-6 lg:grid-cols-[1fr_0.8fr]">
                 <Card className="space-y-5 p-5">

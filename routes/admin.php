@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\Company\OlimpiadeObjectiveController;
 use App\Http\Controllers\Admin\Company\OlimpiadeScheduleController;
 use App\Http\Controllers\Admin\Company\OlimpiadeVideoController;
 use App\Http\Controllers\Admin\Company\ParticipantController;
+use App\Http\Controllers\Admin\Company\PeriodController;
 use App\Http\Controllers\Admin\Company\ReviewController;
 use App\Http\Controllers\Admin\Company\SliderController;
 use App\Http\Controllers\Admin\Company\StudentController;
@@ -46,6 +47,10 @@ Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'auth.admi
     });
 
     Route::prefix('companies')->as('companies.')->group(function () {
+        Route::put('periods/{period}/status', [PeriodController::class, 'status'])->name('periods.status');
+        Route::get('periods/data', [PeriodController::class, 'getData'])->name('periods.data');
+        Route::resource('periods', PeriodController::class);
+
         Route::put('olimpiades/{olimpiade}/recommended', [OlimpiadeController::class, 'recommended'])->name('olimpiades.recommended');
         Route::put('olimpiades/{olimpiade}/status', [OlimpiadeController::class, 'status'])->name('olimpiades.status');
         Route::get('olimpiades/data', [OlimpiadeController::class, 'getData'])->name('olimpiades.data');
@@ -102,7 +107,7 @@ Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'auth.admi
         Route::get('data-peserta/data', [DataPesertaController::class, 'getData'])->name('data-peserta.data');
         Route::resource('data-peserta', DataPesertaController::class)
             ->parameters(['data-peserta' => 'participant'])
-            ->only(['index', 'create', 'store', 'show']);
+            ->only(['index', 'create', 'store', 'show', 'destroy']);
 
         Route::get('data-binaan/data', [BinaanController::class, 'getData'])->name('data-binaan.data');
         Route::resource('data-binaan', BinaanController::class)->parameters(['data-binaan' => 'binaan']);

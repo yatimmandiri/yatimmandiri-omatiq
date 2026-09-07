@@ -98,6 +98,11 @@ class UserRolePermissionSeeder extends Seeder
             ['name' => 'update-olimpiade-schedule', 'guard_name' => 'web'],
             ['name' => 'delete-olimpiade-schedule', 'guard_name' => 'web'],
             ['name' => 'data-olimpiade-schedule', 'guard_name' => 'web'],
+            ['name' => 'view-period', 'guard_name' => 'web'],
+            ['name' => 'create-period', 'guard_name' => 'web'],
+            ['name' => 'update-period', 'guard_name' => 'web'],
+            ['name' => 'delete-period', 'guard_name' => 'web'],
+            ['name' => 'data-period', 'guard_name' => 'web'],
             ['name' => 'view-teacher', 'guard_name' => 'web'],
             ['name' => 'create-teacher', 'guard_name' => 'web'],
             ['name' => 'update-teacher', 'guard_name' => 'web'],
@@ -150,7 +155,7 @@ class UserRolePermissionSeeder extends Seeder
         $teacherRole = Role::where('name', 'Teacher')->first();
         if ($teacherRole) {
             $teacherRole->givePermissionTo([
-                'view-participant', 'create-participant', 'data-participant',
+                'view-participant', 'create-participant', 'delete-participant', 'data-participant',
             ]);
         }
 

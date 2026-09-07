@@ -8,7 +8,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Company\StoreStudentRequest;
 use App\Http\Requests\Company\UpdateStudentRequest;
 use App\Models\Company\Student;
-use App\Services\PenyaluranService;
 use App\Services\StudentService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -81,8 +80,20 @@ class StudentController extends Controller
     {
         $this->authorize('update', $student);
 
+        $payload = $this->service->payloadFromRequest($request, $student);
+
+        if ($student->penyaluran_id) {
+            try {
+                $this->service->syncToPenyaluran($student, $payload);
+            } catch (\Throwable $e) {
+                return back()
+                    ->withErrors(['nik' => 'Gagal memperbarui data santri di server Penyaluran: '.$e->getMessage()])
+                    ->withInput();
+            }
+        }
+
         $oldData = $student->toArray();
-        $student->update($this->service->payloadFromRequest($request, $student));
+        $student->update($payload);
 
         $this->logSuccess('update-student', "Updated student: {$student->full_name}", [
             'student_id' => $student->id,
@@ -116,15 +127,17 @@ class StudentController extends Controller
     {
         $this->authorize('update', $student);
 
-        $student->update(['is_active' => ! $student->is_active]);
+        $newStatus = ! $student->is_active;
 
-        // Sync is_binaan to penyaluran if needed (best practice: try API, log if fails)
         if ($student->penyaluran_id) {
             try {
-                app(PenyaluranService::class);
+                $this->service->syncToPenyaluran($student, ['status' => $newStatus]);
             } catch (\Throwable $e) {
+                return back()->with('error', 'Gagal memperbarui status santri di Penyaluran: '.$e->getMessage());
             }
         }
+
+        $student->update(['is_active' => $newStatus]);
 
         $this->logSuccess('update-student-status', "Toggled student status: {$student->full_name} -> ".($student->is_active ? 'aktif' : 'non-aktif'), ['student_id' => $student->id]);
 
