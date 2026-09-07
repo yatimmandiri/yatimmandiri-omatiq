@@ -28,28 +28,53 @@ use App\Http\Controllers\Admin\Settings\SiteSettingsController;
 use App\Http\Controllers\Auth\AuthController;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'auth.admin', 'guru.profile.completed'])->group(function () {
-    Route::redirect('/', '/admin/dashboard')->name('index');
+/*
+|--------------------------------------------------------------------------
+| Admin Routes — /admin/*
+|--------------------------------------------------------------------------
+| Guard: auth + verified + auth.admin + guru.profile.completed
+| Struktur: dashboard | settings | logs | companies | guru | core
+| Pola resource: `PUT .../status` + `GET .../data` + `resource`
+| dideklarasikan berurutan agar konsisten & mudah di-scan.
+*/
 
+Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'auth.admin', 'guru.profile.completed'])->group(function () {
+
+    // -----------------------------------------------------------------
+    // Dashboard
+    // -----------------------------------------------------------------
+    Route::redirect('/', '/admin/dashboard')->name('index');
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+    // -----------------------------------------------------------------
+    // Settings — site & profile (admin scope)
+    // -----------------------------------------------------------------
     Route::prefix('settings')->as('settings.')->group(function () {
         Route::get('site', [SiteSettingsController::class, 'edit'])->name('site.edit');
         Route::put('site', [SiteSettingsController::class, 'update'])->name('site.update');
         Route::put('profile', [AuthController::class, 'updateProfile'])->name('profile.update');
     });
 
+    // -----------------------------------------------------------------
+    // Logs — activity
+    // -----------------------------------------------------------------
     Route::prefix('logs')->as('logs.')->group(function () {
         Route::get('activities/data', [LogActivityController::class, 'getData'])->name('activities.data');
         Route::get('activities', [LogActivityController::class, 'index'])->name('activities.index');
     });
 
+    // -----------------------------------------------------------------
+    // Companies — Olimpiade & konten terkait
+    // -----------------------------------------------------------------
     Route::prefix('companies')->as('companies.')->group(function () {
+
+        // Olimpiade inti
         Route::put('olimpiades/{olimpiade}/recommended', [OlimpiadeController::class, 'recommended'])->name('olimpiades.recommended');
         Route::put('olimpiades/{olimpiade}/status', [OlimpiadeController::class, 'status'])->name('olimpiades.status');
         Route::get('olimpiades/data', [OlimpiadeController::class, 'getData'])->name('olimpiades.data');
         Route::resource('olimpiades', OlimpiadeController::class);
 
+        // Olimpiade pendukung — objectives / galleries / videos / schedules
         Route::put('olimpiade-objectives/{olimpiadeObjective}/status', [OlimpiadeObjectiveController::class, 'status'])->name('olimpiade-objectives.status');
         Route::get('olimpiade-objectives/data', [OlimpiadeObjectiveController::class, 'getData'])->name('olimpiade-objectives.data');
         Route::resource('olimpiade-objectives', OlimpiadeObjectiveController::class);
@@ -67,10 +92,12 @@ Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'auth.admi
         Route::resource('olimpiade-schedules', OlimpiadeScheduleController::class)
             ->parameters(['olimpiade-schedules' => 'olimpiadeSchedule']);
 
+        // Peserta — Data Peserta (admin unified form, inline status)
         Route::put('participants/{participant}/status', [ParticipantController::class, 'status'])->name('participants.status');
         Route::get('participants/data', [ParticipantController::class, 'getData'])->name('participants.data');
         Route::resource('participants', ParticipantController::class)->except(['create', 'store']);
 
+        // Marketing — testimonials / reviews / sliders / FAQ
         Route::put('testimonials/{testimonial}/status', [TestimonialController::class, 'status'])->name('testimonials.status');
         Route::get('testimonials/data', [TestimonialController::class, 'getData'])->name('testimonials.data');
         Route::resource('testimonials', TestimonialController::class);
@@ -87,11 +114,15 @@ Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'auth.admi
         Route::get('faq-companies/data', [FaqCompanyController::class, 'getData'])->name('faq-companies.data');
         Route::resource('faq-companies', FaqCompanyController::class);
 
+        // Guru — read-only (snapshot dari Penyaluran saat login)
         Route::get('teachers/data', [TeacherController::class, 'getData'])->name('teachers.data');
         Route::put('teachers/{teacher}/reset-password', [TeacherController::class, 'resetPassword'])->name('teachers.reset-password');
         Route::resource('teachers', TeacherController::class)->parameters(['teachers' => 'teacher'])->only(['index', 'show']);
     });
 
+    // -----------------------------------------------------------------
+    // Guru area — Kelola Binaan (DataPeserta, Binaan, Sanggar, Absensi)
+    // -----------------------------------------------------------------
     Route::prefix('guru')->as('guru.')->group(function () {
         Route::get('data-peserta/data', [DataPesertaController::class, 'getData'])->name('data-peserta.data');
         Route::resource('data-peserta', DataPesertaController::class)
@@ -108,6 +139,9 @@ Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'auth.admi
         Route::get('absensi', [AbsensiController::class, 'index'])->name('absensi.index');
     });
 
+    // -----------------------------------------------------------------
+    // Core — RBAC + Regions
+    // -----------------------------------------------------------------
     Route::prefix('core')->as('core.')->group(function () {
         Route::get('permissions/data', [PermissionController::class, 'getData'])->name('permissions.data');
         Route::resource('permissions', PermissionController::class);

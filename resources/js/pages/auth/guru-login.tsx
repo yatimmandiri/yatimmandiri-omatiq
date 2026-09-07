@@ -8,6 +8,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { login } from '@/routes';
 import loginStore from '@/routes/guru/login';
 import { Form, Head } from '@inertiajs/react';
+import { FcGoogle } from 'react-icons/fc';
 
 export default function GuruLogin() {
     return (
@@ -80,6 +81,24 @@ export default function GuruLogin() {
                     </>
                 )}
             </Form>
+
+            <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
+                <span className="relative z-10 bg-background px-2 text-muted-foreground">
+                    Atau lanjutkan dengan
+                </span>
+            </div>
+
+            <Button asChild type="button" variant="outline" className="w-full">
+                {/* Wayfinder akan generate guru.google.redirect setelah `php artisan wayfinder:generate`; fallback href hardcode agar tetap jalan */}
+                <a href="/guru/google/redirect" className="w-full">
+                    <FcGoogle />
+                    Login dengan Google (Guru)
+                </a>
+            </Button>
+            <p className="text-center text-xs leading-5 text-muted-foreground">
+                Google hanya untuk guru yang sudah melengkapi profil (email
+                real). Guru baru wajib login dengan nomor HP terlebih dahulu.
+            </p>
         </>
     );
 }

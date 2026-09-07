@@ -2,21 +2,110 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Concerns\Traits\LogActivity;
 use App\Http\Controllers\Controller;
 use App\Models\Core\User;
 use App\Services\PenyaluranService;
 use App\Services\PhoneOtpService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 use Inertia\Response;
+use Laravel\Socialite\Facades\Socialite;
 
 class GuruAuthController extends Controller
 {
+    use LogActivity;
+
     public function __construct(private readonly PenyaluranService $penyaluran) {}
+
+    /**
+     * Redirect ke Google OAuth untuk Guru.
+     * Hanya untuk guru yang sudah melengkapi profil (email real, bukan @penyaluran.local).
+     */
+    public function redirectToGoogle(): RedirectResponse
+    {
+        $redirectUrl = config('services.google.guru_redirect') ?: route('guru.google.callback');
+
+        return Socialite::driver('google')->redirectUrl($redirectUrl)->redirect();
+    }
+
+    /**
+     * Callback Google OAuth untuk Guru.
+     * Binding ke email real yang sudah completed; placeholder @penyaluran.local tidak diizinkan.
+     */
+    public function handleGoogleCallback(Request $request): RedirectResponse
+    {
+        try {
+            $redirectUrl = config('services.google.guru_redirect') ?: route('guru.google.callback');
+            $googleUser = Socialite::driver('google')->redirectUrl($redirectUrl)->user();
+        } catch (\Throwable $e) {
+            Log::warning('guru.google callback failed', ['error' => $e->getMessage()]);
+
+            return redirect()->route('guru.login')->withErrors([
+                'phone' => 'Gagal login dengan Google: '.$e->getMessage(),
+            ]);
+        }
+
+        $email = strtolower(trim((string) $googleUser->getEmail()));
+
+        if ($email === '') {
+            return redirect()->route('guru.login')->withErrors([
+                'phone' => 'Akun Google tidak memiliki email. Gunakan akun Google lain.',
+            ]);
+        }
+
+        // Cari Teacher yang sudah complete-profile dengan email yang sama.
+        // Placeholder @penyaluran.local otomatis terfilter karena teacher_profile_completed_at harus not null
+        // dan email harus persis sama (lowercase).
+        $user = User::where('email', $email)
+            ->whereNotNull('teacher_profile_completed_at')
+            ->first();
+
+        if (! $user || ! $user->hasRole('Teacher')) {
+            return redirect()->route('guru.login')->withErrors([
+                'phone' => 'Akun guru dengan email '.$email.' tidak ditemukan. Silakan login dengan nomor HP terlebih dahulu dan lengkapi profil.',
+            ]);
+        }
+
+        // Simpan relasi social (provider_id/token) untuk audit & next login
+        $user->socials()->updateOrCreate(
+            ['provider' => 'google'],
+            [
+                'provider_id' => $googleUser->getId(),
+                'provider_token' => $googleUser->token,
+                'provider_refresh_token' => $googleUser->refreshToken,
+            ]
+        );
+
+        Auth::login($user, true);
+        $request->session()->regenerate();
+
+        // Restore Penyaluran session dari DB agar fitur Binaan/Sanggar tetap bisa fetch API
+        if ($user->penyaluran_token) {
+            $request->session()->put('penyaluran_token', $user->penyaluran_token);
+        }
+        if ($user->penyaluran_id) {
+            $request->session()->put('penyaluran_id', $user->penyaluran_id);
+        }
+
+        $this->logSuccess('login-guru-google', "Login Guru via Google: {$user->email}", [
+            'user_id' => $user->id,
+            'email' => $user->email,
+            'provider_id' => $googleUser->getId(),
+        ]);
+
+        if ($user->needsTeacherProfileCompletion()) {
+            return redirect()->route('guru.profile.edit');
+        }
+
+        return redirect()->intended(route('admin.dashboard'))->with('success', 'Berhasil masuk sebagai Guru via Google.');
+    }
 
     public function create(): Response
     {
@@ -42,7 +131,7 @@ class GuruAuthController extends Controller
         try {
             $profile = $this->penyaluran->me($token);
         } catch (\Throwable $e) {
-            return back()->withErrors(['phone' => 'Gagal mengambil profil guru: ' . $e->getMessage()]);
+            return back()->withErrors(['phone' => 'Gagal mengambil profil guru: '.$e->getMessage()]);
         }
 
         $penyaluranId = $profile['id'] ?? null;
@@ -54,8 +143,8 @@ class GuruAuthController extends Controller
         $user = User::firstOrCreate(
             ['penyaluran_id' => $penyaluranId],
             [
-                'name' => $profile['name'] ?? 'Guru ' . $penyaluranId,
-                'email' => 'guru' . $penyaluranId . '@penyaluran.local',
+                'name' => $profile['name'] ?? 'Guru '.$penyaluranId,
+                'email' => 'guru'.$penyaluranId.'@penyaluran.local',
                 'phone' => $phone,
                 'password' => Hash::make('password'),
             ],
@@ -159,7 +248,7 @@ class GuruAuthController extends Controller
                 $this->penyaluran->updateMe($token, ['email' => $validated['email']]);
             } catch (\Throwable $e) {
                 return back()
-                    ->withErrors(['email' => 'Gagal memperbarui email di server Penyaluran: ' . $e->getMessage()])
+                    ->withErrors(['email' => 'Gagal memperbarui email di server Penyaluran: '.$e->getMessage()])
                     ->withInput();
             }
         }
