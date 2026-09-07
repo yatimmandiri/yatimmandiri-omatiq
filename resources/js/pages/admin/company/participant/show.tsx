@@ -4,7 +4,7 @@ import { ProofModal } from '@/components/ui/proof-modal';
 import { dashboard } from '@/routes/admin';
 import participants from '@/routes/admin/companies/participants';
 import { router, usePage } from '@inertiajs/react';
-import { ArrowLeft, ExternalLink, Pencil } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Pencil, Printer } from 'lucide-react';
 import { useState } from 'react';
 
 const labels: Record<string, string> = {
@@ -40,6 +40,22 @@ export default function ShowPage() {
                         <ArrowLeft />
                         Kembali
                     </Button>
+                    {participant.status === 'verified' && (
+                        <Button
+                            variant="outline"
+                            asChild
+                            className="gap-2 border-[#17524A] text-[#17524A] hover:bg-[#17524A]/10"
+                        >
+                            <a
+                                href={`/admin/companies/participants/${participant.id}/card`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                <Printer className="size-4" />
+                                Cetak Kartu
+                            </a>
+                        </Button>
+                    )}
                     <Button
                         onClick={() =>
                             router.visit(participants.edit(participant.id).url)

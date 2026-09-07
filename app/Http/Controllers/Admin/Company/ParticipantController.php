@@ -10,6 +10,7 @@ use App\Models\Company\Olimpiade;
 use App\Models\Company\Participant;
 use App\Models\Core\Region\Province;
 use App\Models\Core\Region\Regency;
+use App\Services\StudentService;
 use App\Settings\SiteSettings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;

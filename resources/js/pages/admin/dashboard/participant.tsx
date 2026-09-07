@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { ProofModal } from '@/components/ui/proof-modal';
 import { dashboard } from '@/routes/admin';
 import { Head, usePage } from '@inertiajs/react';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, Printer } from 'lucide-react';
 import { useState } from 'react';
 
 const labels: Record<string, string> = {
@@ -69,6 +69,23 @@ export default function Dashboard() {
                             </Badge>
                         </div>
                     </div>
+                    {participant.status === 'verified' && (
+                        <div>
+                            <Button
+                                asChild
+                                className="gap-2 bg-[#17524A] font-bold text-white hover:bg-[#17524A]/90"
+                            >
+                                <a
+                                    href={`/pendaftaran/kartu/${participant.registration_number}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    <Printer className="size-4" />
+                                    Cetak Kartu Peserta
+                                </a>
+                            </Button>
+                        </div>
+                    )}
                 </div>
 
                 <div className="grid gap-6 lg:grid-cols-[1fr_0.8fr]">

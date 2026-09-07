@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Company\ParticipantCardController;
 use App\Http\Controllers\Home\MainController;
 use App\Http\Controllers\Home\ParticipantRegistrationController;
 use Illuminate\Support\Facades\Route;
@@ -12,6 +13,7 @@ Route::get('/jadwal', [MainController::class, 'schedule'])->name('home.schedule'
 Route::get('/pendaftaran', [ParticipantRegistrationController::class, 'create'])->name('home.registration.create');
 Route::post('/pendaftaran', [ParticipantRegistrationController::class, 'store'])->name('home.registration.store');
 Route::get('/pendaftaran/sukses/{registrationNumber}', [ParticipantRegistrationController::class, 'success'])->name('home.registration.success');
+Route::get('/pendaftaran/kartu/{registrationNumber}', [ParticipantCardController::class, 'print'])->name('home.registration.card');
 Route::get('/regions/villages', [ParticipantRegistrationController::class, 'villages'])->name('home.regions.villages');
 Route::get('/olimpiade/{slug}', [MainController::class, 'olimpiadeShow'])->name('home.olimpiade.show');
 Route::get('/berita', [MainController::class, 'news'])->name('home.news');

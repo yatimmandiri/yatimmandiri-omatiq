@@ -19,7 +19,7 @@ class PenyaluranService
         $client = Http::baseUrl($this->baseUrl())
             ->acceptJson()
             ->timeout(8)
-            ->retry(2, 200);
+            ->retry(2, 200, throw: false);
 
         if ($token) {
             $client = $client->withToken($token);

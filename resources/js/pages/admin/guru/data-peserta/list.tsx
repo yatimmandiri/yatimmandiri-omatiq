@@ -16,7 +16,7 @@ import { dashboard } from '@/routes/admin';
 import dataPeserta from '@/routes/admin/guru/data-peserta';
 import { router } from '@inertiajs/react';
 import { usePage } from '@inertiajs/react';
-import { CheckCircle2, Clock3, Eye, Trash2, XCircle } from 'lucide-react';
+import { CheckCircle2, Clock3, Eye, Printer, Trash2, XCircle } from 'lucide-react';
 import { useState } from 'react';
 
 export default function ListPage() {
@@ -216,6 +216,23 @@ const RowAction = ({ row, onDeleted }: { row: any; onDeleted: () => void }) => {
 
     return (
         <div className="flex items-center gap-2">
+            {row.status === 'verified' && (
+                <Button
+                    size="sm"
+                    variant="outline"
+                    asChild
+                    className="gap-1 border-[#17524A] text-[#17524A] hover:bg-[#17524A]/10"
+                >
+                    <a
+                        href={`/admin/guru/data-peserta/${row.id}/card`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        <Printer className="size-4" />
+                        Kartu
+                    </a>
+                </Button>
+            )}
             <Button size="sm" variant="outline" onClick={() => router.visit(dataPeserta.show(row.id).url)}>
                 <Eye className="size-4" />
                 Detail

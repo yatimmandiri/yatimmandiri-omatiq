@@ -28,6 +28,7 @@ use App\Http\Controllers\Admin\Guru\SanggarController;
 use App\Http\Controllers\Admin\Settings\LogActivityController;
 use App\Http\Controllers\Admin\Settings\SiteSettingsController;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Company\ParticipantCardController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'auth.admin', 'guru.profile.completed'])->group(function () {
@@ -73,6 +74,7 @@ Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'auth.admi
         Route::resource('olimpiade-schedules', OlimpiadeScheduleController::class)
             ->parameters(['olimpiade-schedules' => 'olimpiadeSchedule']);
 
+        Route::get('participants/{participant}/card', [ParticipantCardController::class, 'print'])->name('participants.card');
         Route::put('participants/{participant}/status', [ParticipantController::class, 'status'])->name('participants.status');
         Route::get('participants/data', [ParticipantController::class, 'getData'])->name('participants.data');
         Route::post('participants/sync-sheet', [ParticipantController::class, 'syncSheet'])->name('participants.sync-sheet');
@@ -80,7 +82,7 @@ Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'auth.admi
 
         Route::get('students/data', [StudentController::class, 'getData'])->name('students.data');
         Route::put('students/{student}/status', [StudentController::class, 'status'])->name('students.status');
-        Route::resource('students', StudentController::class)->only(['index', 'show', 'edit', 'update']);
+        Route::resource('students', StudentController::class)->only(['index', 'show', 'edit', 'update', 'destroy']);
 
         Route::put('testimonials/{testimonial}/status', [TestimonialController::class, 'status'])->name('testimonials.status');
         Route::get('testimonials/data', [TestimonialController::class, 'getData'])->name('testimonials.data');
@@ -104,6 +106,7 @@ Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'auth.admi
     });
 
     Route::prefix('guru')->as('guru.')->group(function () {
+        Route::get('data-peserta/{participant}/card', [ParticipantCardController::class, 'print'])->name('data-peserta.card');
         Route::get('data-peserta/data', [DataPesertaController::class, 'getData'])->name('data-peserta.data');
         Route::resource('data-peserta', DataPesertaController::class)
             ->parameters(['data-peserta' => 'participant'])

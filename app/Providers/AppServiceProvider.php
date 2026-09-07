@@ -3,7 +3,9 @@
 namespace App\Providers;
 
 use App\Models\Company\Participant;
+use App\Models\Company\Student;
 use App\Observers\ParticipantObserver;
+use App\Observers\StudentObserver;
 use App\Settings\SiteSettings;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -61,5 +63,6 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('sheets', fn () => Limit::perMinute(60)->by('sheets'));
 
         Participant::observe(ParticipantObserver::class);
+        Student::observe(StudentObserver::class);
     }
 }

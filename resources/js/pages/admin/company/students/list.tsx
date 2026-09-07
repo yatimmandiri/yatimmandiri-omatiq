@@ -5,15 +5,24 @@ import { SelectComponent } from '@/components/partials/select-component';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogOverlay,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { dashboard } from '@/routes/admin';
 import students from '@/routes/admin/companies/students';
 import { router, usePage } from '@inertiajs/react';
-import { CheckCircle2, Eye, Filter, Pencil, Power, RotateCcw, XCircle } from 'lucide-react';
+import { CheckCircle2, Eye, Filter, MoreHorizontal, Pencil, Power, RotateCcw, Trash2, XCircle } from 'lucide-react';
 import { useState } from 'react';
 
 export default function ListPage() {
@@ -123,20 +132,12 @@ export default function ListPage() {
         {
             id: 'actions',
             header: 'Aksi',
-            cell: (info: any) => {
-                const row = info.row.original;
-
-                return (
-                    <div className="flex gap-1">
-                        <Button size="sm" variant="outline" onClick={() => router.visit(students.show(row.id).url)}>
-                            <Eye className="size-4" />
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => router.visit(students.edit(row.id).url)}>
-                            <Pencil className="size-4" />
-                        </Button>
-                    </div>
-                );
-            },
+            cell: (info: any) => (
+                <RowAction
+                    row={info.row.original}
+                    setRefreshData={setRefreshData}
+                />
+            ),
             enableSorting: false,
             enableHiding: false,
         },
@@ -231,6 +232,77 @@ export default function ListPage() {
         </div>
     );
 }
+
+const RowAction = ({
+    row,
+    setRefreshData,
+}: {
+    row: any;
+    setRefreshData: (val: any) => void;
+}) => {
+    const [openDeleteModal, setOpenDeleteModal] = useState(false);
+
+    const handleDelete = () => {
+        router.delete(students.destroy(row.id).url, {
+            onSuccess: () => {
+                setOpenDeleteModal(false);
+                setRefreshData((v: any) => !v);
+            },
+        });
+    };
+
+    return (
+        <div>
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="h-8 w-8 p-0">
+                        <span className="sr-only">Buka menu aksi</span>
+                        <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Aksi Student</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => router.visit(students.show(row.id).url)}>
+                        <Eye className="mr-2 size-4" /> Detail
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => router.visit(students.edit(row.id).url)}>
+                        <Pencil className="mr-2 size-4" /> Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                        onClick={() => setOpenDeleteModal(true)}
+                        className="text-destructive focus:text-destructive"
+                    >
+                        <Trash2 className="mr-2 size-4" /> Hapus
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+
+            {openDeleteModal && (
+                <Dialog open={openDeleteModal} onOpenChange={setOpenDeleteModal}>
+                    <DialogOverlay className="fixed inset-0 bg-black/40" />
+                    <DialogContent>
+                        <DialogTitle className="text-lg font-semibold">
+                            Hapus Data Student / Binaan
+                        </DialogTitle>
+                        <DialogDescription className="mt-2">
+                            Apakah Anda yakin ingin menghapus data <strong>{row.full_name}</strong>? Tindakan ini tidak dapat dibatalkan.
+                        </DialogDescription>
+                        <div className="mt-4 flex justify-end gap-2">
+                            <Button variant="outline" onClick={() => setOpenDeleteModal(false)}>
+                                Batal
+                            </Button>
+                            <Button variant="destructive" onClick={handleDelete}>
+                                Hapus
+                            </Button>
+                        </div>
+                    </DialogContent>
+                </Dialog>
+            )}
+        </div>
+    );
+};
 
 ListPage.layout = {
     breadcrumbs: [

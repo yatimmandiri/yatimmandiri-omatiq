@@ -136,7 +136,7 @@ class GoogleSheetService
 
     public function rowFromParticipant(Participant $participant): array
     {
-        $participant->loadMissing(['olimpiade:id,name,category', 'student:id,full_name,nik,nis,gender,school_name,grade,school_level,regency_id', 'student.regency:id,name', 'mentor:id,name']);
+        $participant->loadMissing(['olimpiade:id,name,category', 'student:id,full_name,nik,nis,gender,school_name,grade,school_level,regency_id,parent_phone,mentor_name', 'student.regency:id,name', 'mentor:id,name']);
 
         $student = $participant->student;
 
@@ -218,15 +218,74 @@ class GoogleSheetService
         }
     }
 
-    public function delete(Participant $participant): void
+    public function delete(Participant|string $participantOrRegNo): void
+    {
+        if ($participantOrRegNo instanceof Participant) {
+            $regNo = $participantOrRegNo->registration_number;
+            $row = $this->rowFromParticipant($participantOrRegNo);
+            $this->deleteByRegistrationNumber($regNo, $row);
+        } else {
+            $this->deleteByRegistrationNumber($participantOrRegNo);
+        }
+    }
+
+    public function deleteByRegistrationNumber(string $registrationNumber, ?array $snapshotRow = null): void
     {
         if (! $this->isEnabled()) {
             return;
         }
 
-        // Soft delete: set Status to Dihapus instead of removing row for audit
-        $participant->status = 'deleted';
-        $this->upsert($participant);
+        $service = $this->service();
+        $spreadsheetId = $this->spreadsheetId();
+        if (! $service || ! $spreadsheetId) {
+            return;
+        }
+
+        $this->ensureHeaderRow();
+
+        $sheet = $this->sheetName();
+
+        try {
+            // Find existing row by Registrasi column B
+            $response = $service->spreadsheets_values->get($spreadsheetId, "{$sheet}!B2:B");
+            $values = $response->getValues() ?? [];
+            $rowIndex = null;
+            foreach ($values as $idx => $v) {
+                if (($v[0] ?? '') === $registrationNumber) {
+                    $rowIndex = $idx + 2; // 1-based + header
+                    break;
+                }
+            }
+
+            if (! $rowIndex) {
+                return;
+            }
+
+            if ($snapshotRow) {
+                $snapshotRow[0] = $rowIndex;
+                // Status column (index 15) -> 'deleted'
+                $snapshotRow[15] = 'deleted';
+                $body = new ValueRange(['values' => [$snapshotRow]]);
+                $service->spreadsheets_values->update(
+                    $spreadsheetId,
+                    "{$sheet}!A{$rowIndex}",
+                    $body,
+                    ['valueInputOption' => 'USER_ENTERED']
+                );
+            } else {
+                // Update status cell (column P = 16th column) to 'deleted'
+                $body = new ValueRange(['values' => [['deleted']]]);
+                $service->spreadsheets_values->update(
+                    $spreadsheetId,
+                    "{$sheet}!P{$rowIndex}",
+                    $body,
+                    ['valueInputOption' => 'USER_ENTERED']
+                );
+            }
+        } catch (\Throwable $e) {
+            Log::warning('sheets.delete failed', ['reg' => $registrationNumber, 'error' => $e->getMessage()]);
+            throw $e;
+        }
     }
 
     public function batchUpsert(iterable $participants): void

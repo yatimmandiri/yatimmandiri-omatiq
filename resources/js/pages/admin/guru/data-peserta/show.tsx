@@ -12,7 +12,7 @@ import { ProofModal } from '@/components/ui/proof-modal';
 import { dashboard } from '@/routes/admin';
 import dataPeserta from '@/routes/admin/guru/data-peserta';
 import { router, usePage } from '@inertiajs/react';
-import { ArrowLeft, ExternalLink, Trash2 } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Printer, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 const labels: Record<string, string> = {
@@ -56,6 +56,22 @@ export default function ShowPage() {
                         <ArrowLeft />
                         Kembali
                     </Button>
+                    {participant.status === 'verified' && (
+                        <Button
+                            variant="outline"
+                            asChild
+                            className="gap-2 border-[#17524A] text-[#17524A] hover:bg-[#17524A]/10"
+                        >
+                            <a
+                                href={`/admin/guru/data-peserta/${participant.id}/card`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                <Printer className="size-4" />
+                                Cetak Kartu
+                            </a>
+                        </Button>
+                    )}
                     <Button
                         variant="destructive"
                         onClick={() => setOpenDelete(true)}
