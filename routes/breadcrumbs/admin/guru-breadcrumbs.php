@@ -84,9 +84,4 @@ Breadcrumbs::for(
         ->push('Absensi', route('admin.absensi.index')),
 );
 
-// Legacy aliases: admin.guru.* → redirect to admin.* (keep for backward compat)
-Breadcrumbs::for('admin.guru.data-peserta.index', fn (BreadcrumbTrail $trail) => $trail->parent('admin.dashboard')->push('Data Peserta', route('admin.data-peserta.index')));
-Breadcrumbs::for('admin.guru.data-peserta.create', fn (BreadcrumbTrail $trail) => $trail->parent('admin.data-peserta.index')->push('Daftarkan Binaan', route('admin.data-peserta.create')));
-Breadcrumbs::for('admin.guru.data-binaan.index', fn (BreadcrumbTrail $trail) => $trail->parent('admin.dashboard')->push('Data Binaan', route('admin.data-binaan.index')));
-Breadcrumbs::for('admin.guru.data-sanggar.index', fn (BreadcrumbTrail $trail) => $trail->parent('admin.dashboard')->push('Data Sanggar', route('admin.data-sanggar.index')));
-Breadcrumbs::for('admin.guru.absensi.index', fn (BreadcrumbTrail $trail) => $trail->parent('admin.dashboard')->push('Absensi', route('admin.absensi.index')));
+

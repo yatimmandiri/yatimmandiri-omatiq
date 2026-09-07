@@ -38,8 +38,9 @@ Route::prefix('admin')->group(function () {
 });
 
 // ---------------------------------------------------------------------
-// Teacher Auth — prefix teacher/*  (menggantikan guru/* — guru di-redirect)
+// Teacher Auth — prefix teacher/*  (primary, menggantikan guru/*)
 // ---------------------------------------------------------------------
+Route::redirect('/guru/login', '/teacher/login');
 Route::prefix('teacher')->group(function () {
     // Halaman login teacher — boleh diakses guest maupun auth (jika sudah login akan redirect ke dashboard di controller)
     Route::get('login', [GuruAuthController::class, 'create'])->name('teacher.login');
@@ -63,24 +64,6 @@ Route::prefix('teacher')->group(function () {
         Route::get('complete-profile', [GuruAuthController::class, 'completeProfile'])->name('teacher.profile.edit');
         Route::put('complete-profile', [GuruAuthController::class, 'updateProfile'])->name('teacher.profile.update');
         Route::post('logout', [GuruAuthController::class, 'destroy'])->name('teacher.logout');
-    });
-});
-
-// Legacy guru/* alias → tetap dukung route('guru.*') agar tidak 404 (backward compat, handler sama)
-// URL utama adalah /teacher/*, tapi /guru/* tetap valid sebagai alias.
-Route::prefix('guru')->group(function () {
-    Route::get('login', [GuruAuthController::class, 'create'])->name('guru.login');
-    Route::middleware('guest')->group(function () {
-        Route::get('google/redirect', [GuruAuthController::class, 'redirectToGoogle'])->name('guru.google.redirect');
-        Route::post('login', [GuruAuthController::class, 'store'])->name('guru.login.store')->middleware('throttle:5,1');
-        Route::get('verify-otp', [GuruAuthController::class, 'showOtpForm'])->name('guru.verify');
-        Route::post('verify-otp', [GuruAuthController::class, 'verify'])->name('guru.verify.store')->middleware('throttle:5,1');
-        Route::post('resend-otp', [GuruAuthController::class, 'resend'])->name('guru.resend')->middleware('throttle:3,1');
-    });
-    Route::middleware('auth')->group(function () {
-        Route::get('complete-profile', [GuruAuthController::class, 'completeProfile'])->name('guru.profile.edit');
-        Route::put('complete-profile', [GuruAuthController::class, 'updateProfile'])->name('guru.profile.update');
-        Route::post('logout', [GuruAuthController::class, 'destroy'])->name('guru.logout');
     });
 });
 

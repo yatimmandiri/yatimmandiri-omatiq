@@ -37,7 +37,6 @@ return Application::configure(basePath: dirname(__DIR__))
             'role_or_permission' => RoleOrPermissionMiddleware::class,
             'auth.user' => UserMiddleware::class,
             'auth.admin' => AdminMiddleware::class,
-            'guru.profile.completed' => EnsureTeacherProfileCompleted::class,
             'teacher.profile.completed' => EnsureTeacherProfileCompleted::class,
             'guest' => RedirectIfAuthenticated::class,
             'guest.redirect' => RedirectIfAuthenticated::class,
@@ -48,7 +47,7 @@ return Application::configure(basePath: dirname(__DIR__))
             if ($request->is('admin/*')) {
                 return route('admin.login');
             }
-            if ($request->is('teacher/*') || $request->is('guru/*')) {
+            if ($request->is('teacher/*')) {
                 return route('teacher.login');
             }
             if ($request->is('student/*')) {

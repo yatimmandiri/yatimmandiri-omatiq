@@ -32,8 +32,8 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 | Admin Routes — /admin/*
 |--------------------------------------------------------------------------
-| Guard: auth + verified + auth.admin + guru.profile.completed
-| Struktur: dashboard | settings | logs | companies | guru | core
+| Guard: auth + verified + auth.admin + teacher.profile.completed
+| Struktur: dashboard | settings | logs | companies | core
 | Pola resource: `PUT .../status` + `GET .../data` + `resource`
 | dideklarasikan berurutan agar konsisten & mudah di-scan.
 */
@@ -136,23 +136,6 @@ Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'auth.admi
     Route::get('data-sanggar', [SanggarController::class, 'index'])->name('data-sanggar.index');
 
     Route::get('absensi', [AbsensiController::class, 'index'])->name('absensi.index');
-
-    // Legacy redirects: /admin/guru/* → /admin/data-* (301)
-    Route::prefix('guru')->as('guru.')->group(function () {
-        Route::redirect('data-peserta/data', '/admin/data-peserta/data', 301)->name('data-peserta.data');
-        Route::redirect('data-peserta/create', '/admin/data-peserta/create', 301)->name('data-peserta.create');
-        Route::get('data-peserta/{participant}', fn (string $participant) => redirect("/admin/data-peserta/{$participant}", 301))->name('data-peserta.show');
-        Route::redirect('data-peserta', '/admin/data-peserta', 301)->name('data-peserta.index');
-        Route::redirect('data-binaan/data', '/admin/data-binaan/data', 301)->name('data-binaan.data');
-        Route::redirect('data-binaan/create', '/admin/data-binaan/create', 301)->name('data-binaan.create');
-        Route::get('data-binaan/{binaan}', fn (string $binaan) => redirect("/admin/data-binaan/{$binaan}", 301))->name('data-binaan.show');
-        Route::get('data-binaan/{binaan}/edit', fn (string $binaan) => redirect("/admin/data-binaan/{$binaan}/edit", 301))->name('data-binaan.edit');
-        Route::redirect('data-binaan', '/admin/data-binaan', 301)->name('data-binaan.index');
-        Route::redirect('data-sanggar/data', '/admin/data-sanggar/data', 301)->name('data-sanggar.data');
-        Route::get('data-sanggar/{sanggar}', fn (string $sanggar) => redirect("/admin/data-sanggar/{$sanggar}", 301))->name('data-sanggar.show');
-        Route::redirect('data-sanggar', '/admin/data-sanggar', 301)->name('data-sanggar.index');
-        Route::redirect('absensi', '/admin/absensi', 301)->name('absensi.index');
-    });
 
     // -----------------------------------------------------------------
     // Core — RBAC + Regions
