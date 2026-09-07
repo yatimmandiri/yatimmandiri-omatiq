@@ -39,7 +39,6 @@ return [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
         'redirect' => env('GOOGLE_REDIRECT_URI'),
-        'guru_redirect' => env('GOOGLE_GURU_REDIRECT_URI', env('GOOGLE_REDIRECT_URI')),
     ],
 
     'penyaluran' => [

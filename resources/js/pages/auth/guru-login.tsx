@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
-import { login } from '@/routes';
 import loginStore from '@/routes/guru/login';
 import { Form, Head } from '@inertiajs/react';
 import { FcGoogle } from 'react-icons/fc';
@@ -73,10 +72,8 @@ export default function GuruLogin() {
                         </div>
 
                         <div className="text-center text-sm text-muted-foreground">
-                            Peserta?{' '}
-                            <TextLink href={login()} tabIndex={4}>
-                                Login Peserta / Admin
-                            </TextLink>
+                            Admin? <TextLink href="/admin/login" tabIndex={4}>Login Admin</TextLink> · Student?{' '}
+                            <TextLink href="/student/login" tabIndex={4}>Login Student</TextLink>
                         </div>
                     </>
                 )}

@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Controllers\Auth\AdminAuthController;
 use App\Http\Controllers\Auth\GuruAuthController;
 use App\Http\Controllers\Auth\SocialiteController;
+use App\Http\Controllers\Auth\StudentAuthController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -22,14 +24,27 @@ Route::prefix('auth')->as('auth.')->group(function () {
 });
 
 // ---------------------------------------------------------------------
+// Admin Auth — prefix admin/*  (login admin terpisah)
+// ---------------------------------------------------------------------
+Route::prefix('admin')->group(function () {
+    Route::middleware('guest')->group(function () {
+        Route::get('login', [AdminAuthController::class, 'create'])->name('admin.login');
+        Route::post('login', [AdminAuthController::class, 'store'])->name('admin.login.store')->middleware('throttle:5,1');
+    });
+    Route::middleware('auth')->group(function () {
+        Route::post('logout', [AdminAuthController::class, 'destroy'])->name('admin.logout');
+    });
+});
+
+// ---------------------------------------------------------------------
 // Guru Auth — prefix guru/*
 // ---------------------------------------------------------------------
 Route::prefix('guru')->group(function () {
-    // Guest — login + OTP (throttled) + Google OAuth (hanya Teacher completed)
+    // Guest — login + OTP (throttled) + Google OAuth (single GOOGLE_REDIRECT_URI, diarahkan sesuai role)
     Route::middleware('guest')->group(function () {
-        // Login Google Guru — bind ke email real (bukan @penyaluran.local placeholder)
+        // Login Google Guru — set intent guru lalu redirect ke GOOGLE_REDIRECT_URI tunggal (/auth/google/callback)
+        // Callback ditangani terpusat di SocialiteController@callback dengan branch role
         Route::get('google/redirect', [GuruAuthController::class, 'redirectToGoogle'])->name('guru.google.redirect');
-        Route::get('google/callback', [GuruAuthController::class, 'handleGoogleCallback'])->name('guru.google.callback');
 
         Route::get('login', [GuruAuthController::class, 'create'])->name('guru.login');
         Route::post('login', [GuruAuthController::class, 'store'])->name('guru.login.store')->middleware('throttle:5,1');
@@ -45,5 +60,18 @@ Route::prefix('guru')->group(function () {
         Route::get('complete-profile', [GuruAuthController::class, 'completeProfile'])->name('guru.profile.edit');
         Route::put('complete-profile', [GuruAuthController::class, 'updateProfile'])->name('guru.profile.update');
         Route::post('logout', [GuruAuthController::class, 'destroy'])->name('guru.logout');
+    });
+});
+
+// ---------------------------------------------------------------------
+// Student Auth — prefix student/*
+// ---------------------------------------------------------------------
+Route::prefix('student')->group(function () {
+    Route::middleware('guest')->group(function () {
+        Route::get('login', [StudentAuthController::class, 'create'])->name('student.login');
+        Route::post('login', [StudentAuthController::class, 'store'])->name('student.login.store')->middleware('throttle:5,1');
+    });
+    Route::middleware('auth')->group(function () {
+        Route::post('logout', [StudentAuthController::class, 'destroy'])->name('student.logout');
     });
 });
