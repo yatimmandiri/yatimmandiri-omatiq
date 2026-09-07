@@ -42,7 +42,7 @@ class GuruAuthController extends Controller
         try {
             $profile = $this->penyaluran->me($token);
         } catch (\Throwable $e) {
-            return back()->withErrors(['phone' => 'Gagal mengambil profil guru: '.$e->getMessage()]);
+            return back()->withErrors(['phone' => 'Gagal mengambil profil guru: ' . $e->getMessage()]);
         }
 
         $penyaluranId = $profile['id'] ?? null;
@@ -54,8 +54,8 @@ class GuruAuthController extends Controller
         $user = User::firstOrCreate(
             ['penyaluran_id' => $penyaluranId],
             [
-                'name' => $profile['name'] ?? 'Guru '.$penyaluranId,
-                'email' => 'guru'.$penyaluranId.'@penyaluran.local',
+                'name' => $profile['name'] ?? 'Guru ' . $penyaluranId,
+                'email' => 'guru' . $penyaluranId . '@penyaluran.local',
                 'phone' => $phone,
                 'password' => Hash::make('password'),
             ],
@@ -159,7 +159,7 @@ class GuruAuthController extends Controller
                 $this->penyaluran->updateMe($token, ['email' => $validated['email']]);
             } catch (\Throwable $e) {
                 return back()
-                    ->withErrors(['email' => 'Gagal memperbarui email di server Penyaluran: '.$e->getMessage()])
+                    ->withErrors(['email' => 'Gagal memperbarui email di server Penyaluran: ' . $e->getMessage()])
                     ->withInput();
             }
         }
@@ -239,6 +239,6 @@ class GuruAuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('login');
+        return redirect()->route('guru.login');
     }
 }
