@@ -40,13 +40,15 @@ Route::prefix('admin')->group(function () {
 // Guru Auth — prefix guru/*
 // ---------------------------------------------------------------------
 Route::prefix('guru')->group(function () {
+    // Halaman login guru — boleh diakses guest maupun auth (jika sudah login akan redirect ke dashboard di controller)
+    Route::get('login', [GuruAuthController::class, 'create'])->name('guru.login');
+
     // Guest — login + OTP (throttled) + Google OAuth (single GOOGLE_REDIRECT_URI, diarahkan sesuai role)
     Route::middleware('guest')->group(function () {
         // Login Google Guru — set intent guru lalu redirect ke GOOGLE_REDIRECT_URI tunggal (/auth/google/callback)
         // Callback ditangani terpusat di SocialiteController@callback dengan branch role
         Route::get('google/redirect', [GuruAuthController::class, 'redirectToGoogle'])->name('guru.google.redirect');
 
-        Route::get('login', [GuruAuthController::class, 'create'])->name('guru.login');
         Route::post('login', [GuruAuthController::class, 'store'])->name('guru.login.store')->middleware('throttle:5,1');
 
         // OTP scaffold (aktif saat PENYALURAN_OTP_ENABLED=true)

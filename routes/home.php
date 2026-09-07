@@ -2,6 +2,9 @@
 
 use App\Http\Controllers\Home\MainController;
 use App\Http\Controllers\Home\ParticipantRegistrationController;
+use App\Models\Core\Region\District;
+use App\Models\Core\Region\Regency;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -27,7 +30,17 @@ Route::get('/pendaftaran', [ParticipantRegistrationController::class, 'create'])
 Route::post('/pendaftaran', [ParticipantRegistrationController::class, 'store'])->name('home.registration.store');
 Route::get('/pendaftaran/sukses/{registrationNumber}', [ParticipantRegistrationController::class, 'success'])->name('home.registration.success');
 
-// API kecil untuk cascading dropdown desa (dipakai form pendaftaran)
+// API kecil untuk cascading dropdown wilayah (dipakai pendaftaran & biodata guru)
+Route::get('/regions/regencies', function (Request $request) {
+    $request->validate(['province_id' => ['required', 'exists:provinces,id']]);
+
+    return response()->json(['data' => Regency::where('province_id', $request->province_id)->orderBy('name')->get(['id', 'province_id', 'name'])]);
+})->name('home.regions.regencies');
+Route::get('/regions/districts', function (Request $request) {
+    $request->validate(['regency_id' => ['required', 'exists:regencies,id']]);
+
+    return response()->json(['data' => District::where('regency_id', $request->regency_id)->orderBy('name')->get(['id', 'regency_id', 'name'])]);
+})->name('home.regions.districts');
 Route::get('/regions/villages', [ParticipantRegistrationController::class, 'villages'])->name('home.regions.villages');
 
 // Detail dinamis — taruh paling akhir

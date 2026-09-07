@@ -1,16 +1,29 @@
+import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 import { dashboard } from '@/routes/guru';
 import binaan from '@/routes/admin/guru/data-binaan';
 import { Head, Link, usePage } from '@inertiajs/react';
-import { BookOpenCheck, Building2, CheckCircle2, ExternalLink, UserPlus, Users } from 'lucide-react';
+import { BookOpenCheck, Building2, CheckCircle2, ExternalLink, ShieldCheck, UserPlus, Users } from 'lucide-react';
 import type { ReactNode } from 'react';
 
+type BiodataCompleteness = {
+    fields: Record<string, boolean>;
+    filled: number;
+    total: number;
+    percent: number;
+    is_complete: boolean;
+    missing: string[];
+};
+
 export default function Dashboard() {
-    const { studentCount, penyaluranTotal, sanggarCount, registeredCount } = usePage<{
+    const { studentCount, penyaluranTotal, sanggarCount, registeredCount, biodata, biodataCompleteness } = usePage<{
         studentCount: number;
         penyaluranTotal?: number | null;
         sanggarCount?: number;
         registeredCount?: number;
+        biodata?: Record<string, any>;
+        biodataCompleteness?: BiodataCompleteness;
     }>().props;
 
     const totalBinaan = penyaluranTotal ?? studentCount;
@@ -45,6 +58,38 @@ export default function Dashboard() {
                     <MetricCard icon={<CheckCircle2 className="size-6" />} label="Sudah Terdaftar" value={totalRegistered} />
                     <MetricCard icon={<UserPlus className="size-6" />} label="Belum Terdaftar" value={unregisteredCount} />
                 </div>
+
+                {/* Kelengkapan Biodata Guru */}
+                {biodataCompleteness && (
+                    <Card className="rounded-3xl p-5 shadow-sm lg:p-6">
+                        <div className="flex flex-col gap-4">
+                            <div className="flex items-start justify-between gap-4">
+                                <div className="flex gap-3">
+                                    <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                                        <ShieldCheck className="size-5" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-lg font-bold">Kelengkapan Biodata</h2>
+                                        <p className="mt-1 text-sm text-muted-foreground">Lengkapi biodata untuk memaksimalkan akses fitur guru.</p>
+                                    </div>
+                                </div>
+                                <Badge variant={biodataCompleteness.is_complete ? 'default' : 'secondary'} className="shrink-0">
+                                    {biodataCompleteness.percent}%
+                                </Badge>
+                            </div>
+                            <Progress value={biodataCompleteness.percent} className="h-2" />
+                            <div className="flex gap-2">
+                                <Link href="/guru/biodata" prefetch>
+                                    <div className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90">
+                                        {biodataCompleteness.is_complete ? 'Lihat & Perbarui Biodata' : 'Lengkapi Biodata'}
+                                        <ExternalLink className="size-4" />
+                                    </div>
+                                </Link>
+                            </div>
+                        </div>
+                    </Card>
+                )}
+
                 <Card className="rounded-3xl p-5 shadow-sm lg:p-6">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div>

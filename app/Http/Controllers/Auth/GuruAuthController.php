@@ -37,8 +37,27 @@ class GuruAuthController extends Controller
         return Socialite::driver('google')->redirectUrl($redirectUrl)->redirect();
     }
 
-    public function create(): Response
+    public function create(Request $request): Response|RedirectResponse
     {
+        if (Auth::check()) {
+            $user = $request->user() ?? Auth::user();
+
+            if ($user && $user->hasRole('Teacher')) {
+                return redirect()->route('guru.dashboard');
+            }
+
+            // Jika sudah login sebagai role lain, arahkan ke dashboard sesuai role
+            if ($user && $user->hasRole('Administrators')) {
+                return redirect()->route('admin.dashboard');
+            }
+
+            if ($user && $user->hasRole('Participant')) {
+                return redirect()->route('student.dashboard');
+            }
+
+            return redirect()->route('guru.dashboard');
+        }
+
         return Inertia::render('auth/guru-login');
     }
 
