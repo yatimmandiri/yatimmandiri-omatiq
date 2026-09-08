@@ -1,11 +1,6 @@
-import type {
-    SortingState} from '@tanstack/react-table';
-import {
-    getCoreRowModel,
-    useReactTable,
-} from '@tanstack/react-table';
-import type {
-    ReactNode} from 'react';
+import type { SortingState } from '@tanstack/react-table';
+import { getCoreRowModel, useReactTable } from '@tanstack/react-table';
+import type { ReactNode } from 'react';
 import {
     createContext,
     useCallback,
@@ -249,10 +244,12 @@ export const DataTableProvider = ({
             const customAction = columns.find(
                 (c: any) => c.accessorKey === 'actions' || c.id === 'actions',
             );
+
             // pastikan custom tetap Aksi + sticky kiri
             if (customAction && !customAction.meta) {
                 customAction.meta = { sticky: 'left' };
             }
+
             mergedColumns.splice(1, 0, customAction);
         } else if (defaultActionColumn) {
             mergedColumns.splice(1, 0, defaultActionColumn);

@@ -18,7 +18,9 @@ const labels: Record<string, string> = {
 export default function ShowPage() {
     const { participant } = usePage<{ participant: Record<string, any> }>()
         .props;
-    const isBinaan = !!participant.student?.is_binaan || !!participant.student?.penyaluran_id;
+    const isBinaan =
+        !!participant.student?.is_binaan ||
+        !!participant.student?.penyaluran_id;
     const [openProof, setOpenProof] = useState(false);
 
     return (
@@ -89,8 +91,14 @@ export default function ShowPage() {
                         />
                         {isBinaan && (
                             <>
-                                <Detail label="NIS" value={participant.student?.nis} />
-                                <Detail label="Jenjang" value={participant.student?.school_level} />
+                                <Detail
+                                    label="NIS"
+                                    value={participant.student?.nis}
+                                />
+                                <Detail
+                                    label="Jenjang"
+                                    value={participant.student?.school_level}
+                                />
                             </>
                         )}
                         <Detail
@@ -186,19 +194,34 @@ export default function ShowPage() {
                     {participant.payment_proof_url && (
                         <>
                             <div>
-                                <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Bukti Bayar</p>
-                                <Button variant="outline" size="sm" className="mt-1" onClick={() => setOpenProof(true)}>
-                                    Lihat Bukti <ExternalLink className="size-4" />
+                                <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                                    Bukti Bayar
+                                </p>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="mt-1"
+                                    onClick={() => setOpenProof(true)}
+                                >
+                                    Lihat Bukti{' '}
+                                    <ExternalLink className="size-4" />
                                 </Button>
                             </div>
-                            <ProofModal href={participant.payment_proof_url} open={openProof} onOpenChange={setOpenProof} />
+                            <ProofModal
+                                href={participant.payment_proof_url}
+                                open={openProof}
+                                onOpenChange={setOpenProof}
+                            />
                         </>
                     )}
                     <Detail label="Catatan Admin" value={participant.notes} />
                 </Card>
                 <Card className="space-y-5 p-5">
                     <h2 className="text-lg font-bold">Dokumen</h2>
-                    <FileLink label="Kartu Pelajar" href={participant.student?.student_card_url} />
+                    <FileLink
+                        label="Kartu Pelajar"
+                        href={participant.student?.student_card_url}
+                    />
                     <Detail
                         label="Tanda Tangan Peserta"
                         value={participant.participant_signature_name}

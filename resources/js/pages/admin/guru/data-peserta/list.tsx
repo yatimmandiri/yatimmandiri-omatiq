@@ -13,10 +13,17 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { dashboard } from '@/routes/admin';
-import dataPeserta from '@/routes/admin/data-peserta';
+import dataPeserta from '@/routes/admin/guru/data-peserta';
 import { router } from '@inertiajs/react';
 import { usePage } from '@inertiajs/react';
-import { CheckCircle2, Clock3, Eye, Printer, Trash2, XCircle } from 'lucide-react';
+import {
+    CheckCircle2,
+    Clock3,
+    Eye,
+    Printer,
+    Trash2,
+    XCircle,
+} from 'lucide-react';
 import { useState } from 'react';
 
 export default function ListPage() {
@@ -38,7 +45,7 @@ export default function ListPage() {
                 const row = info.row.original;
                 const name = row.student?.full_name ?? row.full_name ?? '-';
                 const regNo = row.registration_number ?? '-';
-                
+
                 return (
                     <div className="space-y-1">
                         <p className="font-semibold">{name}</p>
@@ -68,7 +75,11 @@ export default function ListPage() {
             cell: (info: any) => {
                 const row = info.row.original;
 
-                return row.student?.regency?.name ?? row.penyaluran_sanggar_name ?? '-';
+                return (
+                    row.student?.regency?.name ??
+                    row.penyaluran_sanggar_name ??
+                    '-'
+                );
             },
             enableSorting: false,
         },
@@ -111,7 +122,11 @@ export default function ListPage() {
                 const v = info.getValue();
 
                 return v
-                    ? new Date(v).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
+                    ? new Date(v).toLocaleDateString('id-ID', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric',
+                      })
                     : '-';
             },
         },
@@ -147,7 +162,10 @@ export default function ListPage() {
                             Olimpiade: item.olimpiade?.name ?? '-',
                             Tahun: item.event_year ?? '-',
                             Sekolah: item.student?.school_name ?? '-',
-                            Wilayah: item.student?.regency?.name ?? item.penyaluran_sanggar_name ?? '-',
+                            Wilayah:
+                                item.student?.regency?.name ??
+                                item.penyaluran_sanggar_name ??
+                                '-',
                             Status: item.status,
                         }))
                     }
@@ -159,12 +177,18 @@ export default function ListPage() {
                                 placeholder="Semua status..."
                                 data={[
                                     { value: 'submitted', label: 'Menunggu' },
-                                    { value: 'verified', label: 'Terverifikasi' },
+                                    {
+                                        value: 'verified',
+                                        label: 'Terverifikasi',
+                                    },
                                     { value: 'rejected', label: 'Ditolak' },
                                 ]}
                                 dataSelected={filterValue.status}
                                 handleOnChange={(value: any) =>
-                                    setFilterValue((prev: any) => ({ ...prev, status: value }))
+                                    setFilterValue((prev: any) => ({
+                                        ...prev,
+                                        status: value,
+                                    }))
                                 }
                             />
                             <SelectComponent
@@ -173,7 +197,10 @@ export default function ListPage() {
                                 data={filterOptions?.olimpiades ?? []}
                                 dataSelected={filterValue.olimpiade_id}
                                 handleOnChange={(value: any) =>
-                                    setFilterValue((prev: any) => ({ ...prev, olimpiade_id: value }))
+                                    setFilterValue((prev: any) => ({
+                                        ...prev,
+                                        olimpiade_id: value,
+                                    }))
                                 }
                             />
                             <SelectComponent
@@ -182,7 +209,10 @@ export default function ListPage() {
                                 data={filterOptions?.eventYears ?? []}
                                 dataSelected={filterValue.event_year}
                                 handleOnChange={(value: any) =>
-                                    setFilterValue((prev: any) => ({ ...prev, event_year: value }))
+                                    setFilterValue((prev: any) => ({
+                                        ...prev,
+                                        event_year: value,
+                                    }))
                                 }
                             />
                         </div>
@@ -233,11 +263,19 @@ const RowAction = ({ row, onDeleted }: { row: any; onDeleted: () => void }) => {
                     </a>
                 </Button>
             )}
-            <Button size="sm" variant="outline" onClick={() => router.visit(dataPeserta.show(row.id).url)}>
+            <Button
+                size="sm"
+                variant="outline"
+                onClick={() => router.visit(dataPeserta.show(row.id).url)}
+            >
                 <Eye className="size-4" />
                 Detail
             </Button>
-            <Button size="sm" variant="destructive" onClick={() => setOpenDelete(true)}>
+            <Button
+                size="sm"
+                variant="destructive"
+                onClick={() => setOpenDelete(true)}
+            >
                 <Trash2 className="size-4" />
                 Hapus
             </Button>
@@ -248,19 +286,33 @@ const RowAction = ({ row, onDeleted }: { row: any; onDeleted: () => void }) => {
                         <DialogTitle>Batalkan Pendaftaran Peserta</DialogTitle>
                         <DialogDescription className="space-y-2 pt-2">
                             <p>
-                                Apakah Anda yakin ingin membatalkan pendaftaran untuk <strong>{name}</strong> ({row.registration_number})?
+                                Apakah Anda yakin ingin membatalkan pendaftaran
+                                untuk <strong>{name}</strong> (
+                                {row.registration_number})?
                             </p>
                             <p className="text-xs text-muted-foreground">
-                                Data binaan tidak akan terhapus dan dapat didaftarkan kembali ke olimpiade jika pendaftaran masih dibuka.
+                                Data binaan tidak akan terhapus dan dapat
+                                didaftarkan kembali ke olimpiade jika
+                                pendaftaran masih dibuka.
                             </p>
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter className="gap-2 sm:gap-0">
-                        <Button variant="outline" onClick={() => setOpenDelete(false)} disabled={isDeleting}>
+                        <Button
+                            variant="outline"
+                            onClick={() => setOpenDelete(false)}
+                            disabled={isDeleting}
+                        >
                             Batal
                         </Button>
-                        <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
-                            {isDeleting ? 'Membatalkan...' : 'Batalkan Pendaftaran'}
+                        <Button
+                            variant="destructive"
+                            onClick={handleDelete}
+                            disabled={isDeleting}
+                        >
+                            {isDeleting
+                                ? 'Membatalkan...'
+                                : 'Batalkan Pendaftaran'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -273,7 +325,7 @@ ListPage.layout = {
     breadcrumbs: [
         {
             title: 'Dashboard',
-            href: dashboard(),
+            href: dashboard().url,
         },
         {
             title: 'Data Peserta',

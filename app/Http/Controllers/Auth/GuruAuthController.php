@@ -113,6 +113,8 @@ class GuruAuthController extends Controller
             return back()->withErrors(['password' => 'Password salah. Hubungi admin untuk reset ke default.']);
         }
 
+        $isGuru = $request->is('guru/*') || str_starts_with((string) $request->route()?->getName(), 'guru.');
+
         // OTP scaffold: disabled for now (otp_enabled=false) → direct login
         // When enabled, generate OTP and redirect to verify page instead of login
         if (config('services.penyaluran.otp_enabled')) {
@@ -121,7 +123,7 @@ class GuruAuthController extends Controller
             $request->session()->put('penyaluran_token', $token);
             $request->session()->put('penyaluran_id', $penyaluranId);
 
-            return redirect()->route('teacher.verify');
+            return redirect()->route($isGuru ? 'guru.verify' : 'teacher.verify');
         }
 
         Auth::login($user, $request->boolean('remember'));
@@ -130,7 +132,7 @@ class GuruAuthController extends Controller
         $request->session()->regenerate();
 
         if ($user->needsTeacherProfileCompletion()) {
-            return redirect()->route('teacher.profile.edit');
+            return redirect()->route($isGuru ? 'guru.profile.edit' : 'teacher.profile.edit');
         }
 
         return redirect()->intended(route('admin.dashboard'));
@@ -208,9 +210,10 @@ class GuruAuthController extends Controller
 
     public function showOtpForm(Request $request): Response
     {
+        $isGuru = $request->is('guru/*') || str_starts_with((string) $request->route()?->getName(), 'guru.');
         $userId = $request->session()->get('otp_user_id');
         if (! $userId) {
-            return redirect()->route('teacher.login');
+            return redirect()->route($isGuru ? 'guru.login' : 'teacher.login');
         }
 
         return Inertia::render('auth/guru-verify-otp', [
@@ -220,12 +223,13 @@ class GuruAuthController extends Controller
 
     public function verify(Request $request)
     {
+        $isGuru = $request->is('guru/*') || str_starts_with((string) $request->route()?->getName(), 'guru.');
         $request->validate(['otp' => ['required', 'digits:6']]);
 
         $userId = $request->session()->get('otp_user_id');
         $user = $userId ? User::find($userId) : null;
         if (! $user) {
-            return redirect()->route('teacher.login')->withErrors(['otp' => 'Sesi OTP tidak ditemukan. Silakan login ulang.']);
+            return redirect()->route($isGuru ? 'guru.login' : 'teacher.login')->withErrors(['otp' => 'Sesi OTP tidak ditemukan. Silakan login ulang.']);
         }
 
         $service = app(PhoneOtpService::class);
@@ -238,7 +242,7 @@ class GuruAuthController extends Controller
         $request->session()->regenerate();
 
         if ($user->needsTeacherProfileCompletion()) {
-            return redirect()->route('teacher.profile.edit');
+            return redirect()->route($isGuru ? 'guru.profile.edit' : 'teacher.profile.edit');
         }
 
         return redirect()->intended(route('admin.dashboard'));
@@ -246,10 +250,11 @@ class GuruAuthController extends Controller
 
     public function resend(Request $request)
     {
+        $isGuru = $request->is('guru/*') || str_starts_with((string) $request->route()?->getName(), 'guru.');
         $userId = $request->session()->get('otp_user_id');
         $user = $userId ? User::find($userId) : null;
         if (! $user) {
-            return redirect()->route('teacher.login');
+            return redirect()->route($isGuru ? 'guru.login' : 'teacher.login');
         }
 
         $service = app(PhoneOtpService::class);
@@ -264,11 +269,12 @@ class GuruAuthController extends Controller
 
     public function destroy(Request $request)
     {
+        $isGuru = $request->is('guru/*') || str_starts_with((string) $request->route()?->getName(), 'guru.');
         Auth::logout();
         $request->session()->forget(['penyaluran_token', 'penyaluran_id', 'otp_user_id']);
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('teacher.login');
+        return redirect()->route($isGuru ? 'guru.login' : 'teacher.login');
     }
 }

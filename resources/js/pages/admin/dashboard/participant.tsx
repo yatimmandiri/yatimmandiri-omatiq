@@ -116,7 +116,10 @@ export default function Dashboard() {
                                 label="Jenjang"
                                 value={participant.student?.school_level}
                             />
-                            <Detail label="NIS" value={participant.student?.nis} />
+                            <Detail
+                                label="NIS"
+                                value={participant.student?.nis}
+                            />
                             <Detail
                                 label="Kelas"
                                 value={participant.student?.grade}
@@ -171,7 +174,10 @@ export default function Dashboard() {
                 <Card className="space-y-5 p-5">
                     <h2 className="text-lg font-bold">Dokumen</h2>
                     <div className="grid gap-4 sm:grid-cols-2">
-                        <FileLink label="Kartu Pelajar" href={participant.student?.student_card_url} />
+                        <FileLink
+                            label="Kartu Pelajar"
+                            href={participant.student?.student_card_url}
+                        />
                     </div>
                 </Card>
 
@@ -203,11 +209,23 @@ export default function Dashboard() {
                             />
                             {participant.payment_proof_url && (
                                 <div>
-                                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Bukti Bayar</p>
-                                    <Button variant="outline" size="sm" className="mt-1" onClick={() => setOpenProof(true)}>
-                                        Lihat Bukti <ExternalLink className="size-4" />
+                                    <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                                        Bukti Bayar
+                                    </p>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="mt-1"
+                                        onClick={() => setOpenProof(true)}
+                                    >
+                                        Lihat Bukti{' '}
+                                        <ExternalLink className="size-4" />
                                     </Button>
-                                    <ProofModal href={participant.payment_proof_url} open={openProof} onOpenChange={setOpenProof} />
+                                    <ProofModal
+                                        href={participant.payment_proof_url}
+                                        open={openProof}
+                                        onOpenChange={setOpenProof}
+                                    />
                                 </div>
                             )}
                         </div>

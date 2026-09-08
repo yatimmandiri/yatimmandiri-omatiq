@@ -227,20 +227,38 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
                             <Field label="NIS" error={error('nis')}>
                                 <Input
                                     value={form.data.nis}
-                                    onChange={(e) => form.setData('nis', e.target.value)}
+                                    onChange={(e) =>
+                                        form.setData('nis', e.target.value)
+                                    }
                                 />
                             </Field>
-                            <Field label="Jenjang" error={error('school_level')}>
+                            <Field
+                                label="Jenjang"
+                                error={error('school_level')}
+                            >
                                 <Input
                                     value={form.data.school_level}
-                                    onChange={(e) => form.setData('school_level', e.target.value)}
+                                    onChange={(e) =>
+                                        form.setData(
+                                            'school_level',
+                                            e.target.value,
+                                        )
+                                    }
                                     placeholder="SD/SMP/SMA"
                                 />
                             </Field>
-                            <Field label="Sanggar" error={error('penyaluran_sanggar_name')}>
+                            <Field
+                                label="Sanggar"
+                                error={error('penyaluran_sanggar_name')}
+                            >
                                 <Input
                                     value={form.data.penyaluran_sanggar_name}
-                                    onChange={(e) => form.setData('penyaluran_sanggar_name', e.target.value)}
+                                    onChange={(e) =>
+                                        form.setData(
+                                            'penyaluran_sanggar_name',
+                                            e.target.value,
+                                        )
+                                    }
                                 />
                             </Field>
                         </>
@@ -283,7 +301,10 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
                                 }))}
                             />
                         </Field>
-                        <Field label="Kota/Kabupaten" error={error('regency_id')}>
+                        <Field
+                            label="Kota/Kabupaten"
+                            error={error('regency_id')}
+                        >
                             <Select
                                 value={form.data.regency_id}
                                 onChange={(value) =>

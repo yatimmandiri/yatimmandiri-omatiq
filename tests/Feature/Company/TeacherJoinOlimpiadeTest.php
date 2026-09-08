@@ -77,8 +77,8 @@ it('lets a teacher register an assigned binaan student', function () {
     $olimpiade = createOlimpiade();
 
     $this->actingAs($teacher)
-        ->post(route('admin.data-peserta.store'), registrationPayload($olimpiade->id, $student->id))
-        ->assertRedirect(route('admin.data-peserta.index'))
+        ->post(route('admin.guru.data-peserta.store'), registrationPayload($olimpiade->id, $student->id))
+        ->assertRedirect(route('admin.guru.data-peserta.index'))
         ->assertSessionHasNoErrors();
 
     $participant = Participant::first();
@@ -111,7 +111,7 @@ it('prevents registering a student who already has an active registration', func
 
     // Same olimpiade should be blocked (per-event unique)
     $this->actingAs($teacher)
-        ->post(route('admin.data-peserta.store'), registrationPayload($olimpiade->id, $student->id))
+        ->post(route('admin.guru.data-peserta.store'), registrationPayload($olimpiade->id, $student->id))
         ->assertSessionHasErrors('penyaluran_student_id');
 
     expect(Participant::count())->toBe(1);
@@ -125,7 +125,7 @@ it('prevents a teacher from registering another teacher student', function () {
     $olimpiade = createOlimpiade();
 
     $this->actingAs($teacherB)
-        ->post(route('admin.data-peserta.store'), registrationPayload($olimpiade->id, $student->id))
+        ->post(route('admin.guru.data-peserta.store'), registrationPayload($olimpiade->id, $student->id))
         ->assertSessionHasErrors('penyaluran_student_id');
 
     expect(Participant::count())->toBe(0);
@@ -150,8 +150,8 @@ it('lets a teacher re-register a student whose previous registration was rejecte
     $next = createOlimpiade('Olimpiade Matematika', 'Matematika');
 
     $this->actingAs($teacher)
-        ->post(route('admin.data-peserta.store'), registrationPayload($next->id, $student->id))
-        ->assertRedirect(route('admin.data-peserta.index'))
+        ->post(route('admin.guru.data-peserta.store'), registrationPayload($next->id, $student->id))
+        ->assertRedirect(route('admin.guru.data-peserta.index'))
         ->assertSessionHasNoErrors();
 
     expect(Participant::where('student_id', $student->id)->count())->toBe(2);
@@ -251,11 +251,11 @@ it('does not expose edit or update routes to teachers', function () {
     ]);
 
     $this->actingAs($teacher)
-        ->get('/admin/data-peserta/'.$participant->id.'/edit')
+        ->get('/admin/guru/data-peserta/'.$participant->id.'/edit')
         ->assertNotFound();
 
     $this->actingAs($teacher)
-        ->put('/admin/data-peserta/'.$participant->id, ['olimpiade_id' => $olimpiade->id])
+        ->put('/admin/guru/data-peserta/'.$participant->id, ['olimpiade_id' => $olimpiade->id])
         ->assertMethodNotAllowed();
 });
 

@@ -26,7 +26,9 @@ const labels: Record<string, string> = {
 export default function ShowPage() {
     const { participant } = usePage<{ participant: Record<string, any> }>()
         .props;
-    const isBinaan = !!participant.student?.is_binaan || !!participant.student?.penyaluran_id;
+    const isBinaan =
+        !!participant.student?.is_binaan ||
+        !!participant.student?.penyaluran_id;
     const [openProof, setOpenProof] = useState(false);
     const [openDelete, setOpenDelete] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -88,21 +90,37 @@ export default function ShowPage() {
                         <DialogTitle>Batalkan Pendaftaran Peserta</DialogTitle>
                         <DialogDescription className="space-y-2 pt-2">
                             <p>
-                                Apakah Anda yakin ingin membatalkan pendaftaran untuk{' '}
-                                <strong>{participant.student?.full_name ?? participant.nik}</strong>{' '}
+                                Apakah Anda yakin ingin membatalkan pendaftaran
+                                untuk{' '}
+                                <strong>
+                                    {participant.student?.full_name ??
+                                        participant.nik}
+                                </strong>{' '}
                                 ({participant.registration_number})?
                             </p>
                             <p className="text-xs text-muted-foreground">
-                                Data binaan tidak akan terhapus dan dapat didaftarkan kembali ke olimpiade jika pendaftaran masih dibuka.
+                                Data binaan tidak akan terhapus dan dapat
+                                didaftarkan kembali ke olimpiade jika
+                                pendaftaran masih dibuka.
                             </p>
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter className="gap-2 sm:gap-0">
-                        <Button variant="outline" onClick={() => setOpenDelete(false)} disabled={isDeleting}>
+                        <Button
+                            variant="outline"
+                            onClick={() => setOpenDelete(false)}
+                            disabled={isDeleting}
+                        >
                             Batal
                         </Button>
-                        <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
-                            {isDeleting ? 'Membatalkan...' : 'Batalkan Pendaftaran'}
+                        <Button
+                            variant="destructive"
+                            onClick={handleDelete}
+                            disabled={isDeleting}
+                        >
+                            {isDeleting
+                                ? 'Membatalkan...'
+                                : 'Batalkan Pendaftaran'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -112,7 +130,10 @@ export default function ShowPage() {
                 <Card className="space-y-5 p-5">
                     <h2 className="text-lg font-bold">Data Peserta</h2>
                     <div className="grid gap-5 sm:grid-cols-2">
-                        <Detail label="NIK" value={participant.student?.nik ?? participant.nik} />
+                        <Detail
+                            label="NIK"
+                            value={participant.student?.nik ?? participant.nik}
+                        />
                         <Detail
                             label="Nama Lengkap"
                             value={participant.student?.full_name}
@@ -129,9 +150,23 @@ export default function ShowPage() {
                         />
                         {isBinaan ? (
                             <>
-                                <Detail label="NIS" value={participant.student?.nis} />
-                                <Detail label="Tanggal Lahir" value={participant.student?.birth_date?.slice(0, 10) ?? ''} />
-                                <Detail label="Jenjang" value={participant.student?.school_level} />
+                                <Detail
+                                    label="NIS"
+                                    value={participant.student?.nis}
+                                />
+                                <Detail
+                                    label="Tanggal Lahir"
+                                    value={
+                                        participant.student?.birth_date?.slice(
+                                            0,
+                                            10,
+                                        ) ?? ''
+                                    }
+                                />
+                                <Detail
+                                    label="Jenjang"
+                                    value={participant.student?.school_level}
+                                />
                             </>
                         ) : (
                             <>
@@ -166,14 +201,20 @@ export default function ShowPage() {
                             </>
                         )}
                         {isBinaan && participant.penyaluran_sanggar_name && (
-                            <Detail label="Sanggar" value={participant.penyaluran_sanggar_name} />
+                            <Detail
+                                label="Sanggar"
+                                value={participant.penyaluran_sanggar_name}
+                            />
                         )}
                         <Detail
                             label="Status"
                             value={labels[participant.status]}
                         />
                     </div>
-                    <Detail label="ID Penyaluran" value={participant.student?.penyaluran_id} />
+                    <Detail
+                        label="ID Penyaluran"
+                        value={participant.student?.penyaluran_id}
+                    />
                     {!isBinaan && (
                         <Detail
                             label="Alamat"
@@ -184,19 +225,42 @@ export default function ShowPage() {
 
                 <Card className="space-y-5 p-5">
                     <h2 className="text-lg font-bold">Kategori dan Dokumen</h2>
-                    <Detail label="Olimpiade" value={participant.olimpiade?.name} />
-                    <Detail label="Guru / Pendamping" value={participant.student?.mentor_name} />
-                    <Detail label="HP Pendamping" value={participant.student?.mentor_phone} />
+                    <Detail
+                        label="Olimpiade"
+                        value={participant.olimpiade?.name}
+                    />
+                    <Detail
+                        label="Guru / Pendamping"
+                        value={participant.student?.mentor_name}
+                    />
+                    <Detail
+                        label="HP Pendamping"
+                        value={participant.student?.mentor_phone}
+                    />
                     {participant.payment_proof_url && (
                         <div>
-                            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Bukti Pembayaran</p>
-                            <Button variant="outline" size="sm" className="mt-1" onClick={() => setOpenProof(true)}>
+                            <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                                Bukti Pembayaran
+                            </p>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="mt-1"
+                                onClick={() => setOpenProof(true)}
+                            >
                                 Lihat Bukti <ExternalLink className="size-4" />
                             </Button>
-                            <ProofModal href={participant.payment_proof_url} open={openProof} onOpenChange={setOpenProof} />
+                            <ProofModal
+                                href={participant.payment_proof_url}
+                                open={openProof}
+                                onOpenChange={setOpenProof}
+                            />
                         </div>
                     )}
-                    <DetailFile label="Kartu Pelajar" url={participant.student?.student_card_url} />
+                    <DetailFile
+                        label="Kartu Pelajar"
+                        url={participant.student?.student_card_url}
+                    />
                 </Card>
             </div>
 

@@ -43,7 +43,13 @@ export default function ListPage() {
             id: 'actions',
             header: 'Aksi',
             cell: (info: any) => (
-                <Button size="sm" variant="outline" onClick={() => router.visit(teachers.show(info.row.original.id).url)}>
+                <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() =>
+                        router.visit(teachers.show(info.row.original.id).url)
+                    }
+                >
                     <Eye className="size-4" />
                     Detail
                 </Button>

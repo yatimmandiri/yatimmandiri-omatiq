@@ -22,24 +22,20 @@ const filterMenuByPermissions = (
             const requiredRoles: string[] = item.roles ?? [];
 
             if (requiredRoles.length > 0 && !hasRole(requiredRoles)) {
-return null;
-}
+                return null;
+            }
 
             if (item.permission && !hasPermission(item.permission)) {
-return null;
-}
+                return null;
+            }
 
             const filteredChildren = Array.isArray(item.children)
-                ? filterMenuByPermissions(
-                      item.children,
-                      hasRole,
-                      hasPermission,
-                  )
+                ? filterMenuByPermissions(item.children, hasRole, hasPermission)
                 : [];
 
             if (!item.href && filteredChildren.length === 0) {
-return null;
-}
+                return null;
+            }
 
             return {
                 ...item,
@@ -72,7 +68,11 @@ export const MainNav = ({ items }: any) => {
         }
 
         try {
-            const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost';
+            const origin =
+                typeof window !== 'undefined'
+                    ? window.location.origin
+                    : 'http://localhost';
+
             return normalizePath(new URL(href, origin).pathname);
         } catch {
             return normalizePath(href);
@@ -125,6 +125,7 @@ export const MainNav = ({ items }: any) => {
         if (prevPath === currentPath) {
             return;
         }
+
         setPrevPath(currentPath);
 
         if (isDashboard) {
@@ -134,11 +135,16 @@ export const MainNav = ({ items }: any) => {
 
             const traverse = (menus: any[], parents: string[] = []) => {
                 menus.forEach((item) => {
-                    const hasMatchChild = hasExactMatchingChild(item.children || []);
+                    const hasMatchChild = hasExactMatchingChild(
+                        item.children || [],
+                    );
 
                     if (hasMatchChild) {
                         [...parents, item.title].forEach((_, idx, arr) => {
-                            const key = getMenuKey({ title: arr[idx] }, arr.slice(0, idx));
+                            const key = getMenuKey(
+                                { title: arr[idx] },
+                                arr.slice(0, idx),
+                            );
                             newOpenMenus[key] = true;
                         });
                     }

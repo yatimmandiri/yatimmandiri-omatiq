@@ -13,8 +13,8 @@ import { useState } from 'react';
 
 const imageUrl = (value?: string | null) => {
     if (!value) {
-return null;
-}
+        return null;
+    }
 
     return value.startsWith('http://') || value.startsWith('https://')
         ? value

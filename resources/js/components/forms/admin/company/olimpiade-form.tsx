@@ -48,8 +48,8 @@ const parseLines = (value: string) =>
 
 const imageUrl = (value?: string | null) => {
     if (!value) {
-return null;
-}
+        return null;
+    }
 
     return value.startsWith('http://') || value.startsWith('https://')
         ? value
@@ -208,7 +208,12 @@ export const OlimpiadeForm = ({ dataId }: { dataId?: number }) => {
                             min={2024}
                             max={2030}
                             value={form.data.event_year}
-                            onChange={(event) => form.setData('event_year', Number(event.target.value))}
+                            onChange={(event) =>
+                                form.setData(
+                                    'event_year',
+                                    Number(event.target.value),
+                                )
+                            }
                             placeholder="2026"
                         />
                     </Field>

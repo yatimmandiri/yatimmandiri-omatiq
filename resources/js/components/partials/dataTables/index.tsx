@@ -40,7 +40,7 @@ export const DataTableComponent = ({
                                     const isStickyLeft =
                                         (header.column.columnDef as any)?.meta
                                             ?.sticky === 'left';
-                                            
+
                                     return (
                                         <TableHead
                                             key={header.id}

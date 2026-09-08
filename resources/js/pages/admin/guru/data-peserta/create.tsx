@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { dashboard } from '@/routes/admin';
-import dataPeserta from '@/routes/admin/data-peserta';
+import dataPeserta from '@/routes/admin/guru/data-peserta';
 import { useForm, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
@@ -60,8 +60,12 @@ export default function CreatePage() {
         selected_sanggar_id ?? selectedStudent?.sanggar_id ?? '';
 
     const form = useForm({
-        penyaluran_student_id: selectedStudent ? String(selectedStudent.id) : '',
-        penyaluran_sanggar_id: selectedSanggarId ? String(selectedSanggarId) : '',
+        penyaluran_student_id: selectedStudent
+            ? String(selectedStudent.id)
+            : '',
+        penyaluran_sanggar_id: selectedSanggarId
+            ? String(selectedSanggarId)
+            : '',
         olimpiade_id: '',
         achievements: '',
         notes: '',
@@ -88,9 +92,7 @@ export default function CreatePage() {
         const err = (form.errors as Record<string, string | undefined>)[name];
 
         return err ? (
-            <p className="text-sm font-medium text-destructive">
-                {err}
-            </p>
+            <p className="text-sm font-medium text-destructive">{err}</p>
         ) : null;
     };
 
@@ -300,7 +302,7 @@ export default function CreatePage() {
                                     )
                                 }
                                 placeholder="Contoh: Juara kelas, hafalan juz, atau lomba yang pernah diikuti"
-                                className="min-h-28 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+                                className="min-h-28 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm transition outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
                                 rows={4}
                             />
                         </Field>
@@ -315,7 +317,7 @@ export default function CreatePage() {
                                     form.setData('notes', event.target.value)
                                 }
                                 placeholder="Catatan singkat untuk admin, bila ada"
-                                className="min-h-24 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+                                className="min-h-24 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm transition outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
                                 rows={3}
                             />
                         </Field>
@@ -360,7 +362,7 @@ const InfoCard = ({
     className?: string;
 }) => (
     <div className={`rounded-2xl border bg-muted/30 p-4 ${className}`}>
-        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
             {icon}
             {label}
         </div>
@@ -384,7 +386,7 @@ const Select = ({
     <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+        className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm transition outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
         required
     >
         <option value="">{placeholder}</option>
@@ -400,7 +402,7 @@ CreatePage.layout = {
     breadcrumbs: [
         {
             title: 'Dashboard',
-            href: dashboard(),
+            href: dashboard().url,
         },
         {
             title: 'Data Peserta',

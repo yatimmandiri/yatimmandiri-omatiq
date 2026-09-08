@@ -14,7 +14,7 @@ trait UploadFiles
             Storage::disk($disk)->delete($oldPath);
         }
 
-        $fileName = Str::uuid() . '.' . $file->getClientOriginalExtension();
+        $fileName = Str::uuid().'.'.$file->getClientOriginalExtension();
 
         return $file->storeAs($folder, $fileName, $disk);
     }

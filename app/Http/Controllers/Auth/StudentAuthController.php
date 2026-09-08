@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Concerns\Traits\LogActivity;
 use App\Http\Controllers\Controller;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -13,7 +14,7 @@ class StudentAuthController extends Controller
 {
     use LogActivity;
 
-    public function create(Request $request): Response|\Illuminate\Http\RedirectResponse
+    public function create(Request $request): Response|RedirectResponse
     {
         if (Auth::check()) {
             return redirect()->route('admin.dashboard');

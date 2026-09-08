@@ -1,7 +1,7 @@
 export const formatNumberWhatsapp = (value: string) => {
     if (!value) {
-return '';
-}
+        return '';
+    }
 
     let number = value.replace(/\D/g, '');
 
@@ -18,14 +18,14 @@ return '';
 
 export const formatRupiah = ({ value, prefix = 'Rp' }: FormatRupiahProps) => {
     if (value === null || value === undefined || value === '') {
-return '';
-}
+        return '';
+    }
 
     const number = Number(value);
 
     if (isNaN(number)) {
-return '';
-}
+        return '';
+    }
 
     return new Intl.NumberFormat('id-ID', {
         style: 'currency',
@@ -40,8 +40,8 @@ return '';
 
 export const formatNumber = (value: string | number) => {
     if (value === null || value === undefined) {
-return '';
-}
+        return '';
+    }
 
     const cleaned = String(value).replace(/\D/g, '');
 
@@ -54,8 +54,8 @@ export const onlyNumber = (value: string) => {
 
 export const parseNumber = (value: string) => {
     if (!value) {
-return 0;
-}
+        return 0;
+    }
 
     return Number(value.replace(/\./g, '').replace(/,/g, ''));
 };
@@ -68,8 +68,8 @@ export const formatCurrency = (
     const number = Number(value);
 
     if (isNaN(number)) {
-return '';
-}
+        return '';
+    }
 
     return new Intl.NumberFormat(locale, {
         style: 'currency',
@@ -80,8 +80,8 @@ return '';
 
 export const formatCompactNumber = (value: number) => {
     if (!value) {
-return '0';
-}
+        return '0';
+    }
 
     return new Intl.NumberFormat('id-ID', {
         notation: 'compact',
@@ -93,8 +93,8 @@ export const formatPercent = (value: number | string) => {
     const number = Number(value);
 
     if (isNaN(number)) {
-return '0%';
-}
+        return '0%';
+    }
 
     return new Intl.NumberFormat('id-ID', {
         style: 'percent',

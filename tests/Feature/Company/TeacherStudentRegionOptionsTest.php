@@ -61,7 +61,7 @@ it('provides only olimpiades and the teacher roster on the create page', functio
     Olimpiade::create(['name' => 'Olimpiade Matematika', 'category' => 'Matematika']);
 
     $this->actingAs($teacher)
-        ->get(route('admin.data-peserta.create'))
+        ->get(route('admin.guru.data-peserta.create'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('admin/guru/data-peserta/create')
@@ -82,7 +82,7 @@ it('excludes students assigned to another teacher from the roster', function () 
     createOptionsStudent($teacherB, '3525011505120003');
 
     $this->actingAs($teacherA)
-        ->get(route('admin.data-peserta.create'))
+        ->get(route('admin.guru.data-peserta.create'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('admin/guru/data-peserta/create')
@@ -110,7 +110,7 @@ it('excludes students who already have an active registration from the roster', 
     ]);
 
     $this->actingAs($teacher)
-        ->get(route('admin.data-peserta.create'))
+        ->get(route('admin.guru.data-peserta.create'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('admin/guru/data-peserta/create')
@@ -126,11 +126,11 @@ it('lets a teacher register an assigned student from the create page', function 
     $olimpiade = Olimpiade::create(['name' => 'Olimpiade Matematika', 'category' => 'Matematika']);
 
     $this->actingAs($teacher)
-        ->post(route('admin.data-peserta.store'), [
+        ->post(route('admin.guru.data-peserta.store'), [
             'penyaluran_student_id' => $student->id,
             'olimpiade_id' => $olimpiade->id,
         ])
-        ->assertRedirect(route('admin.data-peserta.index'))
+        ->assertRedirect(route('admin.guru.data-peserta.index'))
         ->assertSessionHasNoErrors();
 
     $participant = Participant::first();
@@ -146,7 +146,7 @@ it('preselects a valid roster student when student_id is passed', function () {
     $student = createOptionsStudent($teacher, '3525011505120002');
 
     $this->actingAs($teacher)
-        ->get(route('admin.data-peserta.create', ['student_id' => $student->id]))
+        ->get(route('admin.guru.data-peserta.create', ['student_id' => $student->id]))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('admin/guru/data-peserta/create')
@@ -161,7 +161,7 @@ it('ignores a student_id that is not part of the roster', function () {
     $theirStudent = createOptionsStudent($other, '3525011505120002');
 
     $this->actingAs($teacher)
-        ->get(route('admin.data-peserta.create', ['student_id' => $theirStudent->id]))
+        ->get(route('admin.guru.data-peserta.create', ['student_id' => $theirStudent->id]))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('admin/guru/data-peserta/create')
@@ -185,7 +185,7 @@ it('ignores a student_id that already has an active registration', function () {
     ]);
 
     $this->actingAs($teacher)
-        ->get(route('admin.data-peserta.create', ['student_id' => $student->id]))
+        ->get(route('admin.guru.data-peserta.create', ['student_id' => $student->id]))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('admin/guru/data-peserta/create')
@@ -235,7 +235,7 @@ it('lists only the teacher participants in getData (Pendaftaran)', function () {
     ]);
 
     $this->actingAs($teacherA)
-        ->get(route('admin.data-peserta.data'))
+        ->get(route('admin.guru.data-peserta.data'))
         ->assertOk()
         ->assertJsonPath('total', 2)
         ->assertJsonCount(2, 'data')
@@ -275,13 +275,13 @@ it('filters Pendaftaran getData by status, olimpiade and event_year', function (
     ]);
 
     $this->actingAs($teacher)
-        ->get(route('admin.data-peserta.data', ['filterValue' => ['status' => 'verified']]))
+        ->get(route('admin.guru.data-peserta.data', ['filterValue' => ['status' => 'verified']]))
         ->assertOk()
         ->assertJsonCount(1, 'data')
         ->assertJsonPath('data.0.status', 'verified');
 
     $this->actingAs($teacher)
-        ->get(route('admin.data-peserta.data', ['filterValue' => ['status' => 'rejected']]))
+        ->get(route('admin.guru.data-peserta.data', ['filterValue' => ['status' => 'rejected']]))
         ->assertOk()
         ->assertJsonCount(1, 'data')
         ->assertJsonPath('data.0.status', 'rejected');

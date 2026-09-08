@@ -13,7 +13,11 @@ export default function AdminLogin() {
     return (
         <>
             <Head title="Login Admin" />
-            <Form method="post" action="/admin/login" className="flex flex-col gap-6">
+            <Form
+                method="post"
+                action="/admin/login"
+                className="flex flex-col gap-6"
+            >
                 {({ processing, errors }) => (
                     <>
                         <div className="grid gap-6">
@@ -44,23 +48,41 @@ export default function AdminLogin() {
                                 <InputError message={errors.password} />
                             </div>
                             <div className="flex items-center space-x-3">
-                                <Checkbox id="remember" name="remember" tabIndex={3} />
+                                <Checkbox
+                                    id="remember"
+                                    name="remember"
+                                    tabIndex={3}
+                                />
                                 <Label htmlFor="remember">Remember me</Label>
                             </div>
-                            <Button type="submit" className="mt-2 w-full" tabIndex={4} disabled={processing} data-test="admin-login-button">
+                            <Button
+                                type="submit"
+                                className="mt-2 w-full"
+                                tabIndex={4}
+                                disabled={processing}
+                                data-test="admin-login-button"
+                            >
                                 {processing && <Spinner />} Masuk sebagai Admin
                             </Button>
                         </div>
                         <div className="text-center text-sm text-muted-foreground">
-                            Guru? <TextLink href="/teacher/login" tabIndex={5}>Login Guru</TextLink> · Student?{' '}
-                            <TextLink href="/student/login" tabIndex={5}>Login Student</TextLink>
+                            Guru?{' '}
+                            <TextLink href="/teacher/login" tabIndex={5}>
+                                Login Guru
+                            </TextLink>{' '}
+                            · Student?{' '}
+                            <TextLink href="/student/login" tabIndex={5}>
+                                Login Student
+                            </TextLink>
                         </div>
                     </>
                 )}
             </Form>
 
             <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
-                <span className="relative z-10 bg-background px-2 text-muted-foreground">Atau lanjutkan dengan</span>
+                <span className="relative z-10 bg-background px-2 text-muted-foreground">
+                    Atau lanjutkan dengan
+                </span>
             </div>
             <Button asChild type="button" variant="outline" className="w-full">
                 <a href="/auth/google/redirect?intent=admin" className="w-full">

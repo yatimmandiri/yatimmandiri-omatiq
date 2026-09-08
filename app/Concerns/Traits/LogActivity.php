@@ -11,11 +11,11 @@ trait LogActivity
     {
         $user = Auth::user();
 
-        $messageLog = strtoupper($type) . " [ACTION: {$action}]";
+        $messageLog = strtoupper($type)." [ACTION: {$action}]";
 
         $messageLog .= $user
             ? " by {$user->name} (ID: {$user->id})"
-            : " by guest";
+            : ' by guest';
 
         if ($message) {
             $messageLog .= " - {$message}";

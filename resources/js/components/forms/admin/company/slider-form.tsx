@@ -120,11 +120,11 @@ export function SliderForm({ dataId }: { dataId?: number }) {
                                 );
 
                                 if (selected && !form.data.url) {
-form.setData(
+                                    form.setData(
                                         'url',
                                         `/olimpiade/${selected.slug}`,
                                     );
-}
+                                }
                             }}
                         >
                             <SelectTrigger className="w-full">

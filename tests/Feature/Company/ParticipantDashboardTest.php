@@ -23,7 +23,7 @@ beforeEach(function () {
 
 test('guest cannot access participant dashboard', function () {
     $response = $this->get(route('admin.dashboard'));
-    $response->assertRedirect(route('login'));
+    $response->assertRedirect(route('admin.login'));
 });
 
 test('participant can view their own dashboard', function () {

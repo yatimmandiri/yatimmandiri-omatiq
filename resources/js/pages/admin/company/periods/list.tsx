@@ -1,13 +1,17 @@
 import { DataTableComponent } from '@/components/partials/dataTables';
 import { DataTableProvider } from '@/components/partials/dataTables/hooks/useDataTables';
-import {
-    renderRowHeader,
-} from '@/components/partials/dataTables/utils/dataTable-utils';
+import { renderRowHeader } from '@/components/partials/dataTables/utils/dataTable-utils';
 import { Badge } from '@/components/ui/badge';
 import periods from '@/routes/admin/companies/periods';
 import { formatDate } from '@/utils/formatDate';
 import { router } from '@inertiajs/react';
-import { CalendarDays, CheckCircle2, Trophy, Users, XCircle } from 'lucide-react';
+import {
+    CalendarDays,
+    CheckCircle2,
+    Trophy,
+    Users,
+    XCircle,
+} from 'lucide-react';
 import { useState } from 'react';
 
 const formatDisplayDate = (value?: string | null) =>
@@ -39,8 +43,11 @@ export default function ListPage() {
             header: (info: any) => renderRowHeader(info, 'Tahun'),
             accessorKey: 'year',
             cell: (info: any) => (
-                <Badge variant="outline" className="font-bold text-sm px-2.5 py-1">
-                    <CalendarDays className="size-3.5 mr-1" />
+                <Badge
+                    variant="outline"
+                    className="px-2.5 py-1 text-sm font-bold"
+                >
+                    <CalendarDays className="mr-1 size-3.5" />
                     {info.getValue()}
                 </Badge>
             ),
@@ -53,9 +60,11 @@ export default function ListPage() {
 
                 return (
                     <div className="space-y-0.5">
-                        <p className="font-semibold text-foreground">{row.name}</p>
+                        <p className="font-semibold text-foreground">
+                            {row.name}
+                        </p>
                         {row.description && (
-                            <p className="text-xs text-muted-foreground line-clamp-1 max-w-xs">
+                            <p className="line-clamp-1 max-w-xs text-xs text-muted-foreground">
                                 {row.description}
                             </p>
                         )}
@@ -68,14 +77,19 @@ export default function ListPage() {
             accessorKey: 'start_date',
             cell: (info: any) => {
                 const row = info.row.original;
+
                 if (!row.start_date && !row.end_date) {
-                    return <span className="text-muted-foreground text-sm">-</span>;
+                    return (
+                        <span className="text-sm text-muted-foreground">-</span>
+                    );
                 }
 
                 return (
                     <span className="text-sm font-medium">
                         {formatDisplayDate(row.start_date)}
-                        {row.end_date ? ` s/d ${formatDisplayDate(row.end_date)}` : ''}
+                        {row.end_date
+                            ? ` s/d ${formatDisplayDate(row.end_date)}`
+                            : ''}
                     </span>
                 );
             },

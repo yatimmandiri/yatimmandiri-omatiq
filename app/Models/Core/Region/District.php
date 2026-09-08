@@ -9,11 +9,12 @@
 
 namespace App\Models\Core\Region;
 
-use App\Models\Core\Region\Regency;
 use AzisHapidin\IndoRegion\Traits\DistrictTrait;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 
@@ -42,13 +43,13 @@ class District extends Model
      * @var array
      */
     protected $hidden = [
-        'regency_id'
+        'regency_id',
     ];
 
     /**
      * District belongs to Regency.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function regency()
     {
@@ -58,7 +59,7 @@ class District extends Model
     /**
      * District has many villages.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return HasMany
      */
     public function villages()
     {

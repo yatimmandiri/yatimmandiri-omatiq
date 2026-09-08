@@ -132,8 +132,8 @@ export const InputFileComponent = ({
                     const file = e.target.files?.[0];
 
                     if (file) {
-handleOnChange?.(file);
-}
+                        handleOnChange?.(file);
+                    }
                 }}
                 {...props}
             />

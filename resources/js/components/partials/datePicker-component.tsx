@@ -12,7 +12,7 @@ const serializeDateValue = (val: any) =>
         ? ''
         : typeof val === 'string'
           ? val
-          : val.toISOString?.() ?? String(val);
+          : (val.toISOString?.() ?? String(val));
 
 const isSameDateValue = (a: any, b: any) =>
     serializeDateValue(a) === serializeDateValue(b);
@@ -76,8 +76,8 @@ export const DatePickerComponent = ({
     const formatted = useMemo(() => {
         if (group) {
             if (!selectedRange?.from) {
-return placeholder;
-}
+                return placeholder;
+            }
 
             const from = moment(selectedRange.from)
                 .tz('Asia/Jakarta')
@@ -95,8 +95,8 @@ return placeholder;
         }
 
         if (!selectedDate) {
-return placeholder;
-}
+            return placeholder;
+        }
 
         return moment(selectedDate).tz('Asia/Jakarta').format('DD MMM YYYY');
     }, [group, selectedDate, selectedRange, placeholder]);

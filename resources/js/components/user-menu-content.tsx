@@ -21,11 +21,21 @@ type Props = {
 
 function getLogoutHref(user: User | null | undefined): string {
     const roles = (user as any)?.roles ?? [];
+
     if (Array.isArray(roles)) {
-        if (roles.includes('Teacher')) return teacherLogout().url;
-        if (roles.includes('Administrators')) return adminLogout().url;
-        if (roles.includes('Participant') || roles.includes('Student')) return studentLogout().url;
+        if (roles.includes('Teacher')) {
+            return teacherLogout().url;
+        }
+
+        if (roles.includes('Administrators')) {
+            return adminLogout().url;
+        }
+
+        if (roles.includes('Participant') || roles.includes('Student')) {
+            return studentLogout().url;
+        }
     }
+
     return genericLogout().url;
 }
 

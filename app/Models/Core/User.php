@@ -3,7 +3,6 @@
 namespace App\Models\Core;
 
 use App\Models\Company\Participant;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Builder;
@@ -78,7 +77,7 @@ class User extends Authenticatable
         return $this->roles()
             ->with('permissions')
             ->get()
-            ->flatMap(fn($role) => $role->permissions)
+            ->flatMap(fn ($role) => $role->permissions)
             ->pluck('name')
             ->unique()
             ->values();

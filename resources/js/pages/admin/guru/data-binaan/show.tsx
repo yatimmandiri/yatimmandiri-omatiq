@@ -2,10 +2,18 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { dashboard } from '@/routes/admin';
-import binaanRoute from '@/routes/admin/data-binaan';
-import dataPeserta from '@/routes/admin/data-peserta';
+import binaanRoute from '@/routes/admin/guru/data-binaan';
+import dataPeserta from '@/routes/admin/guru/data-peserta';
 import { router, usePage } from '@inertiajs/react';
-import { ArrowLeft, CheckCircle2, Clock3, Eye, RefreshCcw, UserPlus, XCircle } from 'lucide-react';
+import {
+    ArrowLeft,
+    CheckCircle2,
+    Clock3,
+    Eye,
+    RefreshCcw,
+    UserPlus,
+    XCircle,
+} from 'lucide-react';
 
 export default function ShowPage() {
     const {
@@ -29,37 +37,66 @@ export default function ShowPage() {
                     <h1 className="text-2xl font-bold">Detail Binaan</h1>
                     <p className="text-sm text-muted-foreground">
                         {fullName} — {binaan.nik ?? '-'}
-                        {binaan.sanggar_names?.length ? ` • ${binaan.sanggar_names.join(', ')}` : ''}
+                        {binaan.sanggar_names?.length
+                            ? ` • ${binaan.sanggar_names.join(', ')}`
+                            : ''}
                     </p>
                 </div>
                 <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => window.history.back()}>
+                    <Button
+                        variant="outline"
+                        onClick={() => window.history.back()}
+                    >
                         <ArrowLeft className="size-4" />
                         Kembali
                     </Button>
-                    {(!isRegistered || status === 'rejected') && registration_binaan_open ? (
+                    {(!isRegistered || status === 'rejected') &&
+                    registration_binaan_open ? (
                         <Button
                             onClick={() =>
                                 router.visit(
                                     dataPeserta.create({
                                         query: {
-                                            student_id: String(binaan.student_id ?? binaan.id),
+                                            student_id: String(
+                                                binaan.student_id ?? binaan.id,
+                                            ),
                                             ...(binaan.sanggar_ids?.[0]
-                                                ? { sanggar_id: String(binaan.sanggar_ids[0]) }
+                                                ? {
+                                                      sanggar_id: String(
+                                                          binaan.sanggar_ids[0],
+                                                      ),
+                                                  }
                                                 : binaan.sanggar_id
-                                                  ? { sanggar_id: String(binaan.sanggar_id) }
+                                                  ? {
+                                                        sanggar_id: String(
+                                                            binaan.sanggar_id,
+                                                        ),
+                                                    }
                                                   : {}),
                                         },
                                     }).url,
                                 )
                             }
                         >
-                            {status === 'rejected' ? <RefreshCcw className="size-4" /> : <UserPlus className="size-4" />}
-                            {status === 'rejected' ? 'Daftarkan Ulang' : 'Daftarkan'}
+                            {status === 'rejected' ? (
+                                <RefreshCcw className="size-4" />
+                            ) : (
+                                <UserPlus className="size-4" />
+                            )}
+                            {status === 'rejected'
+                                ? 'Daftarkan Ulang'
+                                : 'Daftarkan'}
                         </Button>
                     ) : (
                         registration?.id && (
-                            <Button variant="outline" onClick={() => router.visit(dataPeserta.show(registration.id).url)}>
+                            <Button
+                                variant="outline"
+                                onClick={() =>
+                                    router.visit(
+                                        dataPeserta.show(registration.id).url,
+                                    )
+                                }
+                            >
                                 <Eye className="size-4" />
                                 Detail Pendaftaran
                             </Button>
@@ -70,22 +107,53 @@ export default function ShowPage() {
 
             <div className="grid gap-6 lg:grid-cols-3">
                 <Card className="space-y-4 p-6 lg:col-span-2">
-                    <h2 className="text-lg font-bold">Biodata Binaan (Penyaluran API)</h2>
+                    <h2 className="text-lg font-bold">
+                        Biodata Binaan (Penyaluran API)
+                    </h2>
                     <div className="grid gap-4 md:grid-cols-2">
                         <Detail label="NIK" value={binaan.nik} />
                         <Detail label="NIS" value={binaan.nis} />
                         <Detail label="Nama Lengkap" value={fullName} />
-                        <Detail label="Nama Panggilan" value={binaan.nickname} />
+                        <Detail
+                            label="Nama Panggilan"
+                            value={binaan.nickname}
+                        />
                         <Detail label="Jenis Kelamin" value={binaan.gender} />
-                        <Detail label="Tempat, Tanggal Lahir" value={`${binaan.birth_place ?? '-'} , ${binaan.birth_date ? String(binaan.birth_date).slice(0, 10) : '-'}`} />
+                        <Detail
+                            label="Tempat, Tanggal Lahir"
+                            value={`${binaan.birth_place ?? '-'} , ${binaan.birth_date ? String(binaan.birth_date).slice(0, 10) : '-'}`}
+                        />
                         <Detail label="Sekolah" value={binaan.school_name} />
                         <Detail label="Jenjang" value={binaan.school_level} />
-                        <Detail label="Kelas" value={binaan.class ?? binaan.grade} />
-                        <Detail label="Alamat" value={binaan.address} className="md:col-span-2" />
-                        <Detail label="Wali" value={`${binaan.guardian_name ?? '-'} ${binaan.guardian_phone ? `• ${binaan.guardian_phone}` : ''}`} />
-                        <Detail label="Sanggar" value={(binaan.sanggar_names ?? []).join(', ') || binaan.sanggar_name || '-'} />
-                        <Detail label="Kantor Cabang" value={binaan.kantor_name} />
-                        <Detail label="ID Penyaluran" value={binaan.student_id ?? binaan.id} />
+                        <Detail
+                            label="Kelas"
+                            value={binaan.class ?? binaan.grade}
+                        />
+                        <Detail
+                            label="Alamat"
+                            value={binaan.address}
+                            className="md:col-span-2"
+                        />
+                        <Detail
+                            label="Wali"
+                            value={`${binaan.guardian_name ?? '-'} ${binaan.guardian_phone ? `• ${binaan.guardian_phone}` : ''}`}
+                        />
+                        <Detail
+                            label="Sanggar"
+                            value={
+                                (binaan.sanggar_names ?? []).join(', ') ||
+                                binaan.sanggar_name ||
+                                '-'
+                            }
+                        />
+                        <Detail
+                            label="Kantor Cabang"
+                            value={binaan.kantor_name}
+                        />
+                        <Detail
+                            label="ID Penyaluran"
+                            value={binaan.student_id ?? binaan.id}
+                        />
                     </div>
                 </Card>
 
@@ -95,23 +163,40 @@ export default function ShowPage() {
                         {status === 'verified' ? (
                             <Badge>
                                 <CheckCircle2 className="size-3" />
-                                Terverifikasi {binaan.olimpiade_name ? `• ${binaan.olimpiade_name}` : ''}
+                                Terverifikasi{' '}
+                                {binaan.olimpiade_name
+                                    ? `• ${binaan.olimpiade_name}`
+                                    : ''}
                             </Badge>
                         ) : status === 'rejected' ? (
                             <Badge variant="destructive">
                                 <XCircle className="size-3" />
-                                Ditolak {binaan.olimpiade_name ? `• ${binaan.olimpiade_name}` : ''}
+                                Ditolak{' '}
+                                {binaan.olimpiade_name
+                                    ? `• ${binaan.olimpiade_name}`
+                                    : ''}
                             </Badge>
                         ) : status === 'submitted' ? (
                             <Badge variant="secondary">
                                 <Clock3 className="size-3" />
-                                Menunggu {binaan.olimpiade_name ? `• ${binaan.olimpiade_name}` : ''}
+                                Menunggu{' '}
+                                {binaan.olimpiade_name
+                                    ? `• ${binaan.olimpiade_name}`
+                                    : ''}
                             </Badge>
                         ) : (
                             <Badge variant="secondary">Belum Terdaftar</Badge>
                         )}
-                        {binaan.registration_number && <p className="text-xs text-muted-foreground">No. Registrasi: {binaan.registration_number}</p>}
-                        {registration?.olimpiade?.name && <p className="text-sm">Olimpiade: {registration.olimpiade.name}</p>}
+                        {binaan.registration_number && (
+                            <p className="text-xs text-muted-foreground">
+                                No. Registrasi: {binaan.registration_number}
+                            </p>
+                        )}
+                        {registration?.olimpiade?.name && (
+                            <p className="text-sm">
+                                Olimpiade: {registration.olimpiade.name}
+                            </p>
+                        )}
                     </div>
                 </Card>
             </div>
@@ -121,15 +206,27 @@ export default function ShowPage() {
 
 ShowPage.layout = {
     breadcrumbs: [
-        { title: 'Dashboard', href: dashboard() },
+        { title: 'Dashboard', href: dashboard().url },
         { title: 'Data Binaan', href: binaanRoute.index().url },
         { title: 'Detail Binaan', href: '#' },
     ],
 };
 
-const Detail = ({ label, value, className = '' }: { label: string; value?: string | number | null; className?: string }) => (
+const Detail = ({
+    label,
+    value,
+    className = '',
+}: {
+    label: string;
+    value?: string | number | null;
+    className?: string;
+}) => (
     <div className={className}>
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
-        <p className="mt-1 text-sm leading-7 whitespace-pre-wrap">{value ?? '-'}</p>
+        <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+            {label}
+        </p>
+        <p className="mt-1 text-sm leading-7 whitespace-pre-wrap">
+            {value ?? '-'}
+        </p>
     </div>
 );

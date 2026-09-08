@@ -1,4 +1,4 @@
-import { useMediaQuery } from "@/hooks/use-media-query";
+import { useMediaQuery } from '@/hooks/use-media-query';
 
 export const useResponsiveVisibleCount = (desktopCount: number) => {
     const isDesktop = useMediaQuery('(min-width: 1024px)');
@@ -11,7 +11,7 @@ export const useResponsiveVisibleCount = (desktopCount: number) => {
     return isTablet ? Math.min(2, desktopCount) : 1;
 };
 
-export const getVisibleItems = <T,>(
+export const getVisibleItems = <T>(
     items: T[],
     startIndex: number,
     visibleCount: number,

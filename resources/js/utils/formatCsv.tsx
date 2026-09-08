@@ -1,7 +1,7 @@
 export const arrayToCSV = (data: any[]) => {
     if (!data.length) {
-return '';
-}
+        return '';
+    }
 
     const headers = Object.keys(data[0]);
 

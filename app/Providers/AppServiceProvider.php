@@ -3,6 +3,10 @@
 namespace App\Providers;
 
 use App\Http\Responses\LogoutResponse;
+use App\Models\Company\Participant;
+use App\Models\Company\Student;
+use App\Observers\ParticipantObserver;
+use App\Observers\StudentObserver;
 use App\Settings\SiteSettings;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;

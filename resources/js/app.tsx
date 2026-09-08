@@ -44,4 +44,3 @@ createInertiaApp({
 if (typeof window !== 'undefined') {
     initializeTheme();
 }
-

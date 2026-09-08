@@ -192,7 +192,6 @@ export default function RegistrationPage() {
         const districtId = form.data.district_id;
 
         if (!districtId) {
-            setVillages([]);
             return;
         }
 
@@ -1147,7 +1146,8 @@ export default function RegistrationPage() {
                                             <input
                                                 type="checkbox"
                                                 checked={
-                                                    form.data.data_truth_consent &&
+                                                    form.data
+                                                        .data_truth_consent &&
                                                     form.data
                                                         .documentation_consent &&
                                                     form.data.rules_consent
@@ -1344,35 +1344,6 @@ const FileField = ({
         </label>
         {error && (
             <p className="text-sm font-medium text-destructive">{error}</p>
-        )}
-    </div>
-);
-
-const Consent = ({
-    checked,
-    onChange,
-    text,
-    error,
-}: {
-    checked: boolean;
-    onChange: (checked: boolean) => void;
-    text: string;
-    error?: string;
-}) => (
-    <div>
-        <label className="flex cursor-pointer items-start gap-3 rounded-2xl bg-[#F8FAFC] p-4 dark:bg-slate-800">
-            <input
-                type="checkbox"
-                checked={checked}
-                onChange={(event) => onChange(event.target.checked)}
-                className="mt-1 h-4 w-4 rounded border-slate-300 text-[#17524A] dark:border-slate-600"
-            />
-            <span className="text-sm leading-7 font-bold text-[#1E293B] dark:text-white">
-                {text}
-            </span>
-        </label>
-        {error && (
-            <p className="mt-2 text-sm font-medium text-destructive">{error}</p>
         )}
     </div>
 );

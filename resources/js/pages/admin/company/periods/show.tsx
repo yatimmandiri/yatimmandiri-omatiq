@@ -3,7 +3,15 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import periods from '@/routes/admin/companies/periods';
 import { router, usePage } from '@inertiajs/react';
-import { ArrowLeft, CalendarDays, CheckCircle2, Pencil, Trophy, Users, XCircle } from 'lucide-react';
+import {
+    ArrowLeft,
+    CalendarDays,
+    CheckCircle2,
+    Pencil,
+    Trophy,
+    Users,
+    XCircle,
+} from 'lucide-react';
 
 const formatDate = (value?: string | null) =>
     value
@@ -27,11 +35,18 @@ export default function ShowPage() {
                     </p>
                 </div>
                 <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => window.history.back()}>
+                    <Button
+                        variant="outline"
+                        onClick={() => window.history.back()}
+                    >
                         <ArrowLeft className="size-4" />
                         Kembali
                     </Button>
-                    <Button onClick={() => router.visit(periods.edit(period.id).url)}>
+                    <Button
+                        onClick={() =>
+                            router.visit(periods.edit(period.id).url)
+                        }
+                    >
                         <Pencil className="size-4" />
                         Edit
                     </Button>
@@ -42,7 +57,9 @@ export default function ShowPage() {
                 <Card className="space-y-5 p-6">
                     <div className="flex items-center gap-2 border-b pb-4">
                         <CalendarDays className="size-5 text-primary" />
-                        <h2 className="text-lg font-semibold">Informasi Periode</h2>
+                        <h2 className="text-lg font-semibold">
+                            Informasi Periode
+                        </h2>
                     </div>
 
                     <div className="grid gap-5 sm:grid-cols-2">
@@ -52,50 +69,75 @@ export default function ShowPage() {
                                 Tahun Event
                             </p>
                             <div className="mt-1">
-                                <Badge variant="outline" className="font-bold text-sm">
+                                <Badge
+                                    variant="outline"
+                                    className="text-sm font-bold"
+                                >
                                     {period.year}
                                 </Badge>
                             </div>
                         </div>
-                        <Detail label="Tanggal Mulai" value={formatDate(period.start_date)} />
-                        <Detail label="Tanggal Selesai" value={formatDate(period.end_date)} />
+                        <Detail
+                            label="Tanggal Mulai"
+                            value={formatDate(period.start_date)}
+                        />
+                        <Detail
+                            label="Tanggal Selesai"
+                            value={formatDate(period.end_date)}
+                        />
                     </div>
 
-                    <Detail label="Deskripsi / Catatan" value={period.description} />
+                    <Detail
+                        label="Deskripsi / Catatan"
+                        value={period.description}
+                    />
                 </Card>
 
-                <Card className="space-y-5 p-6 h-fit">
-                    <h2 className="text-lg font-semibold border-b pb-4">Status & Statistik</h2>
+                <Card className="h-fit space-y-5 p-6">
+                    <h2 className="border-b pb-4 text-lg font-semibold">
+                        Status & Statistik
+                    </h2>
                     <div>
                         <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                             Status Aktivasi
                         </p>
                         <div className="mt-2">
-                            <Badge variant={period.is_active ? 'default' : 'secondary'} className="gap-1">
+                            <Badge
+                                variant={
+                                    period.is_active ? 'default' : 'secondary'
+                                }
+                                className="gap-1"
+                            >
                                 {period.is_active ? (
                                     <CheckCircle2 className="size-3.5" />
                                 ) : (
                                     <XCircle className="size-3.5" />
                                 )}
-                                {period.is_active ? 'Periode Aktif' : 'Nonaktif'}
+                                {period.is_active
+                                    ? 'Periode Aktif'
+                                    : 'Nonaktif'}
                             </Badge>
                         </div>
                     </div>
 
-                    <div className="pt-2 border-t space-y-4">
+                    <div className="space-y-4 border-t pt-2">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                 <Trophy className="size-4 text-primary" />
                                 <span>Total Olimpiade</span>
                             </div>
-                            <span className="font-bold text-base">{period.olimpiades_count ?? 0}</span>
+                            <span className="text-base font-bold">
+                                {period.olimpiades_count ?? 0}
+                            </span>
                         </div>
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                 <Users className="size-4 text-primary" />
                                 <span>Total Peserta</span>
                             </div>
-                            <span className="font-bold text-base">{period.participants_count ?? 0}</span>
+                            <span className="text-base font-bold">
+                                {period.participants_count ?? 0}
+                            </span>
                         </div>
                     </div>
                 </Card>
@@ -115,6 +157,8 @@ const Detail = ({
         <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
             {label}
         </p>
-        <p className="mt-1 text-sm leading-7 whitespace-pre-wrap">{value || '-'}</p>
+        <p className="mt-1 text-sm leading-7 whitespace-pre-wrap">
+            {value || '-'}
+        </p>
     </div>
 );

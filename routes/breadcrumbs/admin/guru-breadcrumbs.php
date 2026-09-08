@@ -4,84 +4,82 @@ use Diglactic\Breadcrumbs\Breadcrumbs;
 use Diglactic\Breadcrumbs\Generator as BreadcrumbTrail;
 
 Breadcrumbs::for(
-    'admin.data-peserta.index',
+    'admin.guru.data-peserta.index',
     fn (BreadcrumbTrail $trail) => $trail
         ->parent('admin.dashboard')
-        ->push('Data Peserta', route('admin.data-peserta.index')),
+        ->push('Data Peserta', route('admin.guru.data-peserta.index')),
 );
 
 Breadcrumbs::for(
-    'admin.data-peserta.create',
+    'admin.guru.data-peserta.create',
     fn (BreadcrumbTrail $trail) => $trail
-        ->parent('admin.data-peserta.index')
-        ->push('Daftarkan Binaan', route('admin.data-peserta.create')),
+        ->parent('admin.guru.data-peserta.index')
+        ->push('Daftarkan Binaan', route('admin.guru.data-peserta.create')),
 );
 
 Breadcrumbs::for(
-    'admin.data-peserta.show',
+    'admin.guru.data-peserta.show',
     fn (BreadcrumbTrail $trail, $participant) => $trail
-        ->parent('admin.data-peserta.index')
-        ->push($participant->full_name ?? $participant->student?->full_name ?? 'Detail', route('admin.data-peserta.show', $participant)),
+        ->parent('admin.guru.data-peserta.index')
+        ->push($participant->full_name ?? $participant->student?->full_name ?? 'Detail', route('admin.guru.data-peserta.show', $participant)),
 );
 
 Breadcrumbs::for(
-    'admin.data-peserta.data',
+    'admin.guru.data-peserta.data',
     fn (BreadcrumbTrail $trail) => $trail
-        ->parent('admin.data-peserta.index')
-        ->push('Data', route('admin.data-peserta.data')),
+        ->parent('admin.guru.data-peserta.index')
+        ->push('Data', route('admin.guru.data-peserta.data')),
 );
 
 Breadcrumbs::for(
-    'admin.data-binaan.index',
-    fn (BreadcrumbTrail $trail) => $trail
-        ->parent('admin.dashboard')
-        ->push('Data Binaan', route('admin.data-binaan.index')),
-);
-
-Breadcrumbs::for(
-    'admin.data-binaan.create',
-    fn (BreadcrumbTrail $trail) => $trail
-        ->parent('admin.data-binaan.index')
-        ->push('Tambah Binaan', route('admin.data-binaan.create')),
-);
-
-Breadcrumbs::for(
-    'admin.data-binaan.show',
-    fn (BreadcrumbTrail $trail, $binaan) => $trail
-        ->parent('admin.data-binaan.index')
-        ->push($binaan->full_name, route('admin.data-binaan.show', $binaan)),
-);
-
-Breadcrumbs::for(
-    'admin.data-binaan.edit',
-    fn (BreadcrumbTrail $trail, $binaan) => $trail
-        ->parent('admin.data-binaan.show', $binaan)
-        ->push('Edit', route('admin.data-binaan.edit', $binaan)),
-);
-
-Breadcrumbs::for('admin.data-binaan.data', fn (BreadcrumbTrail $trail) => $trail->parent('admin.data-binaan.index')->push('Data', route('admin.data-binaan.data')));
-
-Breadcrumbs::for(
-    'admin.data-sanggar.index',
+    'admin.guru.data-binaan.index',
     fn (BreadcrumbTrail $trail) => $trail
         ->parent('admin.dashboard')
-        ->push('Data Sanggar', route('admin.data-sanggar.index')),
+        ->push('Data Binaan', route('admin.guru.data-binaan.index')),
 );
 
 Breadcrumbs::for(
-    'admin.data-sanggar.show',
+    'admin.guru.data-binaan.create',
+    fn (BreadcrumbTrail $trail) => $trail
+        ->parent('admin.guru.data-binaan.index')
+        ->push('Tambah Binaan', route('admin.guru.data-binaan.create')),
+);
+
+Breadcrumbs::for(
+    'admin.guru.data-binaan.show',
+    fn (BreadcrumbTrail $trail, $binaan) => $trail
+        ->parent('admin.guru.data-binaan.index')
+        ->push($binaan->full_name ?? 'Detail', route('admin.guru.data-binaan.show', $binaan)),
+);
+
+Breadcrumbs::for(
+    'admin.guru.data-binaan.edit',
+    fn (BreadcrumbTrail $trail, $binaan) => $trail
+        ->parent('admin.guru.data-binaan.show', $binaan)
+        ->push('Edit', route('admin.guru.data-binaan.edit', $binaan)),
+);
+
+Breadcrumbs::for('admin.guru.data-binaan.data', fn (BreadcrumbTrail $trail) => $trail->parent('admin.guru.data-binaan.index')->push('Data', route('admin.guru.data-binaan.data')));
+
+Breadcrumbs::for(
+    'admin.guru.data-sanggar.index',
+    fn (BreadcrumbTrail $trail) => $trail
+        ->parent('admin.dashboard')
+        ->push('Data Sanggar', route('admin.guru.data-sanggar.index')),
+);
+
+Breadcrumbs::for(
+    'admin.guru.data-sanggar.show',
     fn (BreadcrumbTrail $trail, $sanggar) => $trail
-        ->parent('admin.data-sanggar.index')
-        ->push($sanggar['name'] ?? 'Detail', route('admin.data-sanggar.show', $sanggar)),
+        ->parent('admin.guru.data-sanggar.index')
+        ->push($sanggar['name'] ?? 'Detail', route('admin.guru.data-sanggar.show', $sanggar)),
 );
 
-Breadcrumbs::for('admin.data-sanggar.data', fn (BreadcrumbTrail $trail) => $trail->parent('admin.data-sanggar.index')->push('Data', route('admin.data-sanggar.data')));
+Breadcrumbs::for('admin.guru.data-sanggar.data', fn (BreadcrumbTrail $trail) => $trail->parent('admin.guru.data-sanggar.index')->push('Data', route('admin.guru.data-sanggar.data')));
 
 Breadcrumbs::for(
-    'admin.absensi.index',
+    'admin.guru.absensi.index',
     fn (BreadcrumbTrail $trail) => $trail
         ->parent('admin.dashboard')
-        ->push('Absensi', route('admin.absensi.index')),
+        ->push('Absensi', route('admin.guru.absensi.index')),
 );
-
-

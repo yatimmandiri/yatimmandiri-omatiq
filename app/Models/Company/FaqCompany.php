@@ -18,7 +18,7 @@ use Spatie\Activitylog\Support\LogOptions;
 
 class FaqCompany extends Model
 {
-    use SoftDeletes, LogsActivity;
+    use LogsActivity, SoftDeletes;
 
     public function olimpiade(): BelongsTo
     {

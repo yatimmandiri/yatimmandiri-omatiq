@@ -183,7 +183,7 @@ class DataPesertaController extends Controller
         $name = $participant->student?->full_name ?? 'Unknown';
 
         return redirect()
-            ->route('admin.data-peserta.index')
+            ->route('admin.guru.data-peserta.index')
             ->with('success', "Binaan {$name} berhasil didaftarkan.");
     }
 

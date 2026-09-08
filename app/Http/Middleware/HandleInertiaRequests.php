@@ -29,6 +29,10 @@ class HandleInertiaRequests extends Middleware
      */
     public function handle(Request $request, Closure $next): Response
     {
+        if ($request->is('admin/*')) {
+            config(['inertia.ssr.enabled' => false]);
+        }
+
         // Simpan roles SEBELUM controller logout (agar cookie terbawa di request logout)
         $rolesBefore = null;
         if (Auth::check()) {
@@ -64,15 +68,6 @@ class HandleInertiaRequests extends Middleware
     public function version(Request $request): ?string
     {
         return parent::version($request);
-    }
-
-    public function handle(Request $request, \Closure $next)
-    {
-        if ($request->is('admin/*')) {
-            config(['inertia.ssr.enabled' => false]);
-        }
-
-        return parent::handle($request, $next);
     }
 
     /**

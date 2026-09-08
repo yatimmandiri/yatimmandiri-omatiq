@@ -4,17 +4,36 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Head, useForm, usePage } from '@inertiajs/react';
 import { Save } from 'lucide-react';
-import { FormEvent, useEffect, useState } from 'react';
+import type { FormEvent } from 'react';
+import { useEffect, useState } from 'react';
 
 type Option = { id: number | string; name: string };
-type Regency = { id: number | string; province_id: number | string; name: string };
-type District = { id: number | string; regency_id: number | string; name: string };
-type Village = { id: number | string; district_id: number | string; name: string };
+type Regency = {
+    id: number | string;
+    province_id: number | string;
+    name: string;
+};
+type District = {
+    id: number | string;
+    regency_id: number | string;
+    name: string;
+};
+type Village = {
+    id: number | string;
+    district_id: number | string;
+    name: string;
+};
 
 type PageProps = {
     biodata: {
@@ -69,12 +88,15 @@ export default function GuruBiodata() {
     // Fetch regencies when province changes
     useEffect(() => {
         const pid = form.data.province_id;
+
         if (!pid) {
-            setRegencies([]);
             return;
         }
+
         setLoadingRegencies(true);
-        fetch(`/regions/regencies?province_id=${encodeURIComponent(pid)}`, { headers: { Accept: 'application/json' } })
+        fetch(`/regions/regencies?province_id=${encodeURIComponent(pid)}`, {
+            headers: { Accept: 'application/json' },
+        })
             .then((r) => (r.ok ? r.json() : { data: [] }))
             .then((p) => setRegencies(p.data ?? []))
             .catch(() => setRegencies([]))
@@ -83,12 +105,15 @@ export default function GuruBiodata() {
 
     useEffect(() => {
         const rid = form.data.regency_id;
+
         if (!rid) {
-            setDistricts([]);
             return;
         }
+
         setLoadingDistricts(true);
-        fetch(`/regions/districts?regency_id=${encodeURIComponent(rid)}`, { headers: { Accept: 'application/json' } })
+        fetch(`/regions/districts?regency_id=${encodeURIComponent(rid)}`, {
+            headers: { Accept: 'application/json' },
+        })
             .then((r) => (r.ok ? r.json() : { data: [] }))
             .then((p) => setDistricts(p.data ?? []))
             .catch(() => setDistricts([]))
@@ -97,12 +122,15 @@ export default function GuruBiodata() {
 
     useEffect(() => {
         const did = form.data.district_id;
+
         if (!did) {
-            setVillages([]);
             return;
         }
+
         setLoadingVillages(true);
-        fetch(`/regions/villages?district_id=${encodeURIComponent(did)}`, { headers: { Accept: 'application/json' } })
+        fetch(`/regions/villages?district_id=${encodeURIComponent(did)}`, {
+            headers: { Accept: 'application/json' },
+        })
             .then((r) => (r.ok ? r.json() : { data: [] }))
             .then((p) => setVillages(p.data ?? []))
             .catch(() => setVillages([]))
@@ -125,10 +153,24 @@ export default function GuruBiodata() {
                 <Card className="rounded-3xl p-5 lg:p-6">
                     <div className="flex flex-col gap-2">
                         <h1 className="text-2xl font-bold">Biodata Guru</h1>
-                        <p className="text-sm text-muted-foreground">Lengkapi biodata agar data guru valid dan sinkron dengan Penyaluran.</p>
+                        <p className="text-sm text-muted-foreground">
+                            Lengkapi biodata agar data guru valid dan sinkron
+                            dengan Penyaluran.
+                        </p>
                         <div className="mt-2 flex items-center gap-3">
-                            <Progress value={completeness.percent} className="h-2 flex-1" />
-                            <Badge variant={completeness.is_complete ? 'default' : 'secondary'}>{completeness.percent}%</Badge>
+                            <Progress
+                                value={completeness.percent}
+                                className="h-2 flex-1"
+                            />
+                            <Badge
+                                variant={
+                                    completeness.is_complete
+                                        ? 'default'
+                                        : 'secondary'
+                                }
+                            >
+                                {completeness.percent}%
+                            </Badge>
                         </div>
                     </div>
                 </Card>
@@ -137,16 +179,26 @@ export default function GuruBiodata() {
                     <div className="mb-4 grid gap-2 rounded-xl bg-muted/40 p-3 text-sm">
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">Email</span>
-                            <span className="font-medium">{initial.email ?? '-'}</span>
+                            <span className="font-medium">
+                                {initial.email ?? '-'}
+                            </span>
                         </div>
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">HP</span>
-                            <span className="font-medium">{initial.phone ?? '-'}</span>
+                            <span className="font-medium">
+                                {initial.phone ?? '-'}
+                            </span>
                         </div>
                         {initial.photo_url && (
                             <div className="mt-2">
-                                <p className="text-xs text-muted-foreground">Foto saat ini</p>
-                                <img src={initial.photo_url} alt="Foto Guru" className="mt-2 size-20 rounded-xl object-cover" />
+                                <p className="text-xs text-muted-foreground">
+                                    Foto saat ini
+                                </p>
+                                <img
+                                    src={initial.photo_url}
+                                    alt="Foto Guru"
+                                    className="mt-2 size-20 rounded-xl object-cover"
+                                />
                             </div>
                         )}
                     </div>
@@ -154,25 +206,48 @@ export default function GuruBiodata() {
                     <form onSubmit={submit} className="flex flex-col gap-5">
                         <div className="grid gap-2">
                             <Label htmlFor="name">Nama Lengkap *</Label>
-                            <Input id="name" value={form.data.name} onChange={(e) => form.setData('name', e.target.value)} required />
+                            <Input
+                                id="name"
+                                value={form.data.name}
+                                onChange={(e) =>
+                                    form.setData('name', e.target.value)
+                                }
+                                required
+                            />
                             <InputError message={form.errors.name} />
                         </div>
 
                         <div className="grid gap-2">
                             <Label htmlFor="nik">NIK (10-20 digit)</Label>
-                            <Input id="nik" value={form.data.nik} onChange={(e) => form.setData('nik', e.target.value)} placeholder="3201..." />
+                            <Input
+                                id="nik"
+                                value={form.data.nik}
+                                onChange={(e) =>
+                                    form.setData('nik', e.target.value)
+                                }
+                                placeholder="3201..."
+                            />
                             <InputError message={form.errors.nik} />
                         </div>
 
                         <div className="grid gap-2">
                             <Label>Jenis Kelamin</Label>
-                            <Select value={form.data.gender} onValueChange={(v) => form.setData('gender', v as any)}>
+                            <Select
+                                value={form.data.gender}
+                                onValueChange={(v) =>
+                                    form.setData('gender', v as any)
+                                }
+                            >
                                 <SelectTrigger>
                                     <SelectValue placeholder="Pilih gender" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="male">Laki-laki</SelectItem>
-                                    <SelectItem value="female">Perempuan</SelectItem>
+                                    <SelectItem value="male">
+                                        Laki-laki
+                                    </SelectItem>
+                                    <SelectItem value="female">
+                                        Perempuan
+                                    </SelectItem>
                                 </SelectContent>
                             </Select>
                             <InputError message={form.errors.gender} />
@@ -180,13 +255,36 @@ export default function GuruBiodata() {
 
                         <div className="grid gap-2 sm:grid-cols-2">
                             <div className="grid gap-2">
-                                <Label htmlFor="birth_place">Tempat Lahir</Label>
-                                <Input id="birth_place" value={form.data.birth_place} onChange={(e) => form.setData('birth_place', e.target.value)} />
+                                <Label htmlFor="birth_place">
+                                    Tempat Lahir
+                                </Label>
+                                <Input
+                                    id="birth_place"
+                                    value={form.data.birth_place}
+                                    onChange={(e) =>
+                                        form.setData(
+                                            'birth_place',
+                                            e.target.value,
+                                        )
+                                    }
+                                />
                                 <InputError message={form.errors.birth_place} />
                             </div>
                             <div className="grid gap-2">
-                                <Label htmlFor="birth_date">Tanggal Lahir</Label>
-                                <Input id="birth_date" type="date" value={form.data.birth_date} onChange={(e) => form.setData('birth_date', e.target.value)} />
+                                <Label htmlFor="birth_date">
+                                    Tanggal Lahir
+                                </Label>
+                                <Input
+                                    id="birth_date"
+                                    type="date"
+                                    value={form.data.birth_date}
+                                    onChange={(e) =>
+                                        form.setData(
+                                            'birth_date',
+                                            e.target.value,
+                                        )
+                                    }
+                                />
                                 <InputError message={form.errors.birth_date} />
                             </div>
                         </div>
@@ -198,7 +296,13 @@ export default function GuruBiodata() {
                                 <Select
                                     value={form.data.province_id}
                                     onValueChange={(v) => {
-                                        form.setData((d: any) => ({ ...d, province_id: v, regency_id: '', district_id: '', village_id: '' }));
+                                        form.setData((d: any) => ({
+                                            ...d,
+                                            province_id: v,
+                                            regency_id: '',
+                                            district_id: '',
+                                            village_id: '',
+                                        }));
                                     }}
                                 >
                                     <SelectTrigger>
@@ -206,7 +310,10 @@ export default function GuruBiodata() {
                                     </SelectTrigger>
                                     <SelectContent>
                                         {provinces.map((p) => (
-                                            <SelectItem key={String(p.id)} value={String(p.id)}>
+                                            <SelectItem
+                                                key={String(p.id)}
+                                                value={String(p.id)}
+                                            >
                                                 {p.name}
                                             </SelectItem>
                                         ))}
@@ -220,16 +327,33 @@ export default function GuruBiodata() {
                                 <Select
                                     value={form.data.regency_id}
                                     onValueChange={(v) => {
-                                        form.setData((d: any) => ({ ...d, regency_id: v, district_id: '', village_id: '' }));
+                                        form.setData((d: any) => ({
+                                            ...d,
+                                            regency_id: v,
+                                            district_id: '',
+                                            village_id: '',
+                                        }));
                                     }}
-                                    disabled={!form.data.province_id || loadingRegencies}
+                                    disabled={
+                                        !form.data.province_id ||
+                                        loadingRegencies
+                                    }
                                 >
                                     <SelectTrigger>
-                                        <SelectValue placeholder={loadingRegencies ? 'Memuat...' : 'Pilih kota / kabupaten'} />
+                                        <SelectValue
+                                            placeholder={
+                                                loadingRegencies
+                                                    ? 'Memuat...'
+                                                    : 'Pilih kota / kabupaten'
+                                            }
+                                        />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {regencies.map((r) => (
-                                            <SelectItem key={String(r.id)} value={String(r.id)}>
+                                            <SelectItem
+                                                key={String(r.id)}
+                                                value={String(r.id)}
+                                            >
                                                 {r.name}
                                             </SelectItem>
                                         ))}
@@ -243,16 +367,32 @@ export default function GuruBiodata() {
                                 <Select
                                     value={form.data.district_id}
                                     onValueChange={(v) => {
-                                        form.setData((d: any) => ({ ...d, district_id: v, village_id: '' }));
+                                        form.setData((d: any) => ({
+                                            ...d,
+                                            district_id: v,
+                                            village_id: '',
+                                        }));
                                     }}
-                                    disabled={!form.data.regency_id || loadingDistricts}
+                                    disabled={
+                                        !form.data.regency_id ||
+                                        loadingDistricts
+                                    }
                                 >
                                     <SelectTrigger>
-                                        <SelectValue placeholder={loadingDistricts ? 'Memuat...' : 'Pilih kecamatan'} />
+                                        <SelectValue
+                                            placeholder={
+                                                loadingDistricts
+                                                    ? 'Memuat...'
+                                                    : 'Pilih kecamatan'
+                                            }
+                                        />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {districts.map((d) => (
-                                            <SelectItem key={String(d.id)} value={String(d.id)}>
+                                            <SelectItem
+                                                key={String(d.id)}
+                                                value={String(d.id)}
+                                            >
                                                 {d.name}
                                             </SelectItem>
                                         ))}
@@ -265,15 +405,29 @@ export default function GuruBiodata() {
                                 <Label>Kelurahan / Desa</Label>
                                 <Select
                                     value={form.data.village_id}
-                                    onValueChange={(v) => form.setData('village_id', v)}
-                                    disabled={!form.data.district_id || loadingVillages}
+                                    onValueChange={(v) =>
+                                        form.setData('village_id', v)
+                                    }
+                                    disabled={
+                                        !form.data.district_id ||
+                                        loadingVillages
+                                    }
                                 >
                                     <SelectTrigger>
-                                        <SelectValue placeholder={loadingVillages ? 'Memuat...' : 'Pilih kelurahan / desa'} />
+                                        <SelectValue
+                                            placeholder={
+                                                loadingVillages
+                                                    ? 'Memuat...'
+                                                    : 'Pilih kelurahan / desa'
+                                            }
+                                        />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {villages.map((v) => (
-                                            <SelectItem key={String(v.id)} value={String(v.id)}>
+                                            <SelectItem
+                                                key={String(v.id)}
+                                                value={String(v.id)}
+                                            >
                                                 {v.name}
                                             </SelectItem>
                                         ))}
@@ -285,12 +439,26 @@ export default function GuruBiodata() {
 
                         <div className="grid gap-2">
                             <Label htmlFor="address">Alamat</Label>
-                            <Textarea id="address" value={form.data.address} onChange={(e) => form.setData('address', e.target.value)} rows={3} />
+                            <Textarea
+                                id="address"
+                                value={form.data.address}
+                                onChange={(e) =>
+                                    form.setData('address', e.target.value)
+                                }
+                                rows={3}
+                            />
                             <InputError message={form.errors.address} />
                         </div>
 
                         <Button type="submit" disabled={form.processing}>
-                            {form.processing ? 'Menyimpan...' : <><Save className="mr-2 size-4" /> Simpan Biodata</>}
+                            {form.processing ? (
+                                'Menyimpan...'
+                            ) : (
+                                <>
+                                    <Save className="mr-2 size-4" /> Simpan
+                                    Biodata
+                                </>
+                            )}
                         </Button>
                     </form>
                 </Card>

@@ -22,7 +22,17 @@ import {
 import { dashboard } from '@/routes/admin';
 import students from '@/routes/admin/companies/students';
 import { router, usePage } from '@inertiajs/react';
-import { CheckCircle2, Eye, Filter, MoreHorizontal, Pencil, Power, RotateCcw, Trash2, XCircle } from 'lucide-react';
+import {
+    CheckCircle2,
+    Eye,
+    Filter,
+    MoreHorizontal,
+    Pencil,
+    Power,
+    RotateCcw,
+    Trash2,
+    XCircle,
+} from 'lucide-react';
 import { useState } from 'react';
 
 export default function ListPage() {
@@ -45,8 +55,14 @@ export default function ListPage() {
                 return (
                     <div className="space-y-1">
                         <p className="font-semibold">{info.getValue()}</p>
-                        <p className="text-xs text-muted-foreground">{row.nik} {row.nis ? `• ${row.nis}` : ''}</p>
-                        {row.nickname && <p className="text-xs text-muted-foreground">Panggilan: {row.nickname}</p>}
+                        <p className="text-xs text-muted-foreground">
+                            {row.nik} {row.nis ? `• ${row.nis}` : ''}
+                        </p>
+                        {row.nickname && (
+                            <p className="text-xs text-muted-foreground">
+                                Panggilan: {row.nickname}
+                            </p>
+                        )}
                     </div>
                 );
             },
@@ -60,7 +76,10 @@ export default function ListPage() {
                 return (
                     <div className="space-y-1">
                         <p className="text-sm">{row.school_name ?? '-'}</p>
-                        <p className="text-xs text-muted-foreground">{row.school_level ?? ''} {row.grade ? `• ${row.grade}` : ''}</p>
+                        <p className="text-xs text-muted-foreground">
+                            {row.school_level ?? ''}{' '}
+                            {row.grade ? `• ${row.grade}` : ''}
+                        </p>
                     </div>
                 );
             },
@@ -82,7 +101,12 @@ export default function ListPage() {
         {
             header: 'Jenis',
             accessorKey: 'is_binaan',
-            cell: (info: any) => (info.getValue() ? <Badge>Binaan</Badge> : <Badge variant="secondary">Umum</Badge>),
+            cell: (info: any) =>
+                info.getValue() ? (
+                    <Badge>Binaan</Badge>
+                ) : (
+                    <Badge variant="secondary">Umum</Badge>
+                ),
         },
         {
             header: 'Status',
@@ -94,21 +118,32 @@ export default function ListPage() {
                     router.put(
                         students.status(row.id).url,
                         {},
-                        { preserveScroll: true, onSuccess: () => setRefreshData((v) => !v) },
+                        {
+                            preserveScroll: true,
+                            onSuccess: () => setRefreshData((v) => !v),
+                        },
                     );
                 };
 
                 return (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Badge variant={active ? 'default' : 'destructive'} className="cursor-pointer">
-                                {active ? <CheckCircle2 className="size-3" /> : <XCircle className="size-3" />}
+                            <Badge
+                                variant={active ? 'default' : 'destructive'}
+                                className="cursor-pointer"
+                            >
+                                {active ? (
+                                    <CheckCircle2 className="size-3" />
+                                ) : (
+                                    <XCircle className="size-3" />
+                                )}
                                 {active ? 'Aktif' : 'Non-aktif'}
                             </Badge>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="start">
                             <DropdownMenuItem onClick={toggle}>
-                                <Power className="size-4" /> {active ? 'Non-aktifkan' : 'Aktifkan'}
+                                <Power className="size-4" />{' '}
+                                {active ? 'Non-aktifkan' : 'Aktifkan'}
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
@@ -118,7 +153,9 @@ export default function ListPage() {
         {
             header: 'Peserta',
             accessorKey: 'participants_count',
-            cell: (info: any) => <Badge variant="outline">{info.getValue() ?? 0} peserta</Badge>,
+            cell: (info: any) => (
+                <Badge variant="outline">{info.getValue() ?? 0} peserta</Badge>
+            ),
         },
         {
             header: (info: any) => renderRowHeader(info, 'Tgl Daftar'),
@@ -126,7 +163,13 @@ export default function ListPage() {
             cell: (info: any) => {
                 const v = info.getValue();
 
-                return v ? new Date(v).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
+                return v
+                    ? new Date(v).toLocaleDateString('id-ID', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric',
+                      })
+                    : '-';
             },
         },
         {
@@ -160,7 +203,10 @@ export default function ListPage() {
                             Nama: item.full_name,
                             Sekolah: item.school_name ?? '-',
                             Jenjang: item.school_level ?? '-',
-                            Wilayah: item.regency?.name ?? item.province?.name ?? '-',
+                            Wilayah:
+                                item.regency?.name ??
+                                item.province?.name ??
+                                '-',
                             Mentor: item.mentor?.name ?? '-',
                             Jenis: item.is_binaan ? 'Binaan' : 'Umum',
                             Status: item.is_active ? 'Aktif' : 'Non-aktif',
@@ -175,10 +221,18 @@ export default function ListPage() {
                                     <Filter className="size-4 text-primary" />
                                     Filter Students
                                 </div>
-                                <p className="mt-1 text-xs text-muted-foreground">Server-side filter untuk Data Students keseluruhan (binaan + umum).</p>
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                    Server-side filter untuk Data Students
+                                    keseluruhan (binaan + umum).
+                                </p>
                             </div>
                             {hasActiveFilter && (
-                                <Button type="button" variant="outline" size="sm" onClick={() => setFilterValue({})}>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setFilterValue({})}
+                                >
                                     <RotateCcw /> Reset Filter
                                 </Button>
                             )}
@@ -188,9 +242,17 @@ export default function ListPage() {
                             <SelectComponent
                                 label="Mentor"
                                 placeholder="Semua mentor..."
-                                data={(mentors ?? []).map((m: any) => ({ value: String(m.id), label: m.name }))}
+                                data={(mentors ?? []).map((m: any) => ({
+                                    value: String(m.id),
+                                    label: m.name,
+                                }))}
                                 dataSelected={filterValue.mentor_id}
-                                handleOnChange={(value: string) => setFilterValue((prev) => ({ ...prev, mentor_id: value }))}
+                                handleOnChange={(value: string) =>
+                                    setFilterValue((prev) => ({
+                                        ...prev,
+                                        mentor_id: value,
+                                    }))
+                                }
                             />
                             <SelectComponent
                                 label="Jenis"
@@ -200,7 +262,12 @@ export default function ListPage() {
                                     { value: '0', label: 'Umum' },
                                 ]}
                                 dataSelected={filterValue.is_binaan}
-                                handleOnChange={(value: string) => setFilterValue((prev) => ({ ...prev, is_binaan: value }))}
+                                handleOnChange={(value: string) =>
+                                    setFilterValue((prev) => ({
+                                        ...prev,
+                                        is_binaan: value,
+                                    }))
+                                }
                             />
                             <SelectComponent
                                 label="Status Aktif"
@@ -210,7 +277,12 @@ export default function ListPage() {
                                     { value: '0', label: 'Non-aktif' },
                                 ]}
                                 dataSelected={filterValue.is_active}
-                                handleOnChange={(value: string) => setFilterValue((prev) => ({ ...prev, is_active: value }))}
+                                handleOnChange={(value: string) =>
+                                    setFilterValue((prev) => ({
+                                        ...prev,
+                                        is_active: value,
+                                    }))
+                                }
                             />
                             <SelectComponent
                                 label="Jenjang"
@@ -222,7 +294,12 @@ export default function ListPage() {
                                     { value: 'SMK', label: 'SMK' },
                                 ]}
                                 dataSelected={filterValue.school_level}
-                                handleOnChange={(value: string) => setFilterValue((prev) => ({ ...prev, school_level: value }))}
+                                handleOnChange={(value: string) =>
+                                    setFilterValue((prev) => ({
+                                        ...prev,
+                                        school_level: value,
+                                    }))
+                                }
                             />
                         </div>
                     </div>
@@ -263,10 +340,14 @@ const RowAction = ({
                 <DropdownMenuContent align="end">
                     <DropdownMenuLabel>Aksi Student</DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => router.visit(students.show(row.id).url)}>
+                    <DropdownMenuItem
+                        onClick={() => router.visit(students.show(row.id).url)}
+                    >
                         <Eye className="mr-2 size-4" /> Detail
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => router.visit(students.edit(row.id).url)}>
+                    <DropdownMenuItem
+                        onClick={() => router.visit(students.edit(row.id).url)}
+                    >
                         <Pencil className="mr-2 size-4" /> Edit
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
@@ -280,20 +361,31 @@ const RowAction = ({
             </DropdownMenu>
 
             {openDeleteModal && (
-                <Dialog open={openDeleteModal} onOpenChange={setOpenDeleteModal}>
+                <Dialog
+                    open={openDeleteModal}
+                    onOpenChange={setOpenDeleteModal}
+                >
                     <DialogOverlay className="fixed inset-0 bg-black/40" />
                     <DialogContent>
                         <DialogTitle className="text-lg font-semibold">
                             Hapus Data Student / Binaan
                         </DialogTitle>
                         <DialogDescription className="mt-2">
-                            Apakah Anda yakin ingin menghapus data <strong>{row.full_name}</strong>? Tindakan ini tidak dapat dibatalkan.
+                            Apakah Anda yakin ingin menghapus data{' '}
+                            <strong>{row.full_name}</strong>? Tindakan ini tidak
+                            dapat dibatalkan.
                         </DialogDescription>
                         <div className="mt-4 flex justify-end gap-2">
-                            <Button variant="outline" onClick={() => setOpenDeleteModal(false)}>
+                            <Button
+                                variant="outline"
+                                onClick={() => setOpenDeleteModal(false)}
+                            >
                                 Batal
                             </Button>
-                            <Button variant="destructive" onClick={handleDelete}>
+                            <Button
+                                variant="destructive"
+                                onClick={handleDelete}
+                            >
                                 Hapus
                             </Button>
                         </div>

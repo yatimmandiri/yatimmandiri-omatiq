@@ -44,10 +44,9 @@ export function PeriodForm({ dataId }: { dataId?: number }) {
 
     const submit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        form.post(
-            dataId ? periods.update(dataId).url : periods.store().url,
-            { preserveScroll: true },
-        );
+        form.post(dataId ? periods.update(dataId).url : periods.store().url, {
+            preserveScroll: true,
+        });
     };
 
     const error = (name: string) =>
@@ -65,7 +64,8 @@ export function PeriodForm({ dataId }: { dataId?: number }) {
                         {dataId ? 'Edit Periode' : 'Tambah Periode'}
                     </h1>
                     <p className="text-sm text-muted-foreground">
-                        Kelola tahun event, status aktivasi, dan masa aktif olimpiade.
+                        Kelola tahun event, status aktivasi, dan masa aktif
+                        olimpiade.
                     </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -93,20 +93,24 @@ export function PeriodForm({ dataId }: { dataId?: number }) {
                 <div className="grid gap-6 sm:grid-cols-2">
                     <div className="space-y-2">
                         <Label htmlFor="name">
-                            Nama Periode <span className="text-destructive">*</span>
+                            Nama Periode{' '}
+                            <span className="text-destructive">*</span>
                         </Label>
                         <Input
                             id="name"
                             placeholder="Contoh: OMATIQ 2026"
                             value={form.data.name}
-                            onChange={(e) => form.setData('name', e.target.value)}
+                            onChange={(e) =>
+                                form.setData('name', e.target.value)
+                            }
                         />
                         {error('name')}
                     </div>
 
                     <div className="space-y-2">
                         <Label htmlFor="year">
-                            Tahun Event <span className="text-destructive">*</span>
+                            Tahun Event{' '}
+                            <span className="text-destructive">*</span>
                         </Label>
                         <Input
                             id="year"
@@ -116,30 +120,41 @@ export function PeriodForm({ dataId }: { dataId?: number }) {
                             placeholder="Contoh: 2026"
                             value={form.data.year}
                             onChange={(e) =>
-                                form.setData('year', parseInt(e.target.value) || '')
+                                form.setData(
+                                    'year',
+                                    parseInt(e.target.value) || '',
+                                )
                             }
                         />
                         {error('year')}
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="start_date">Tanggal Mulai (Opsional)</Label>
+                        <Label htmlFor="start_date">
+                            Tanggal Mulai (Opsional)
+                        </Label>
                         <Input
                             id="start_date"
                             type="date"
                             value={form.data.start_date}
-                            onChange={(e) => form.setData('start_date', e.target.value)}
+                            onChange={(e) =>
+                                form.setData('start_date', e.target.value)
+                            }
                         />
                         {error('start_date')}
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="end_date">Tanggal Selesai (Opsional)</Label>
+                        <Label htmlFor="end_date">
+                            Tanggal Selesai (Opsional)
+                        </Label>
                         <Input
                             id="end_date"
                             type="date"
                             value={form.data.end_date}
-                            onChange={(e) => form.setData('end_date', e.target.value)}
+                            onChange={(e) =>
+                                form.setData('end_date', e.target.value)
+                            }
                         />
                         {error('end_date')}
                     </div>
@@ -152,7 +167,9 @@ export function PeriodForm({ dataId }: { dataId?: number }) {
                         rows={3}
                         placeholder="Catatan tambahan seputar periode event ini..."
                         value={form.data.description}
-                        onChange={(e) => form.setData('description', e.target.value)}
+                        onChange={(e) =>
+                            form.setData('description', e.target.value)
+                        }
                     />
                     {error('description')}
                 </div>
@@ -163,7 +180,8 @@ export function PeriodForm({ dataId }: { dataId?: number }) {
                             Periode Aktif Utama
                         </Label>
                         <p className="text-xs text-muted-foreground">
-                            Jika diaktifkan, periode ini akan menjadi periode default untuk pendaftaran dan olimpiade aktif.
+                            Jika diaktifkan, periode ini akan menjadi periode
+                            default untuk pendaftaran dan olimpiade aktif.
                         </p>
                     </div>
                     <Switch
