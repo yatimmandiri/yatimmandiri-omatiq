@@ -4,9 +4,12 @@ namespace App\Http\Middleware;
 
 use App\Services\PenyaluranService;
 use App\Settings\SiteSettings;
+use Closure;
 use Diglactic\Breadcrumbs\Breadcrumbs;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Middleware;
+use Symfony\Component\HttpFoundation\Response;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -24,6 +27,40 @@ class HandleInertiaRequests extends Middleware
      *
      * @see https://inertiajs.com/asset-versioning
      */
+    public function handle(Request $request, Closure $next): Response
+    {
+        // Simpan roles SEBELUM controller logout (agar cookie terbawa di request logout)
+        $rolesBefore = null;
+        if (Auth::check()) {
+            try {
+                $rolesBefore = Auth::user()->getRoleNames()->toArray();
+            } catch (\Throwable $e) {
+                $rolesBefore = null;
+            }
+        }
+
+        $response = parent::handle($request, $next);
+
+        // Simpan roles ke cookie untuk LogoutResponse generik bisa redirect sesuai role
+        // Gunakan rolesBefore (sebelum logout) jika ada, fallback ke Auth::check() setelah (untuk request biasa)
+        $rolesToStore = $rolesBefore;
+        if ($rolesToStore === null && Auth::check()) {
+            try {
+                $rolesToStore = Auth::user()->getRoleNames()->toArray();
+            } catch (\Throwable $e) {
+                $rolesToStore = null;
+            }
+        }
+
+        if (is_array($rolesToStore) && count($rolesToStore) > 0) {
+            $response->headers->setCookie(
+                cookie()->make('last_roles', json_encode($rolesToStore), 60 * 24 * 7, null, null, false, false)
+            );
+        }
+
+        return $response;
+    }
+
     public function version(Request $request): ?string
     {
         return parent::version($request);

@@ -10,12 +10,19 @@ use Symfony\Component\HttpFoundation\Response;
 class RedirectIfAuthenticated
 {
     /**
-     * Handle an incoming request.
-     *
-     * @param  Closure(Request): (Response)  $next
+     * Jika sudah login, semua akses ke halaman guest (login) langsung ke dashboard terpadu.
+     * Bukan ke home ("/") agar sesuai ketentuan: sudah login → dashboard.
      */
-    public function handle(Request $request, Closure $next): Response
+    public function handle(Request $request, Closure $next, string ...$guards): Response
     {
+        $guards = empty($guards) ? [null] : $guards;
+
+        foreach ($guards as $guard) {
+            if (Auth::guard($guard)->check()) {
+                return redirect()->route('admin.dashboard');
+            }
+        }
+
         return $next($request);
     }
 }

@@ -26,14 +26,14 @@ test('teacher with placeholder email must complete profile first', function () {
 
     $this->actingAs($teacher)
         ->get(route('admin.profile.edit'))
-        ->assertRedirect(route('guru.profile.edit'));
+        ->assertRedirect(route('teacher.profile.edit'));
 });
 
 test('teacher can complete email and password before entering protected area', function () {
     $teacher = createProfileCompletionTeacher();
 
     $this->actingAs($teacher)
-        ->put(route('guru.profile.update'), [
+        ->put(route('teacher.profile.update'), [
             'email' => 'guru@example.com',
             'password' => 'new-secure-password',
             'password_confirmation' => 'new-secure-password',

@@ -31,22 +31,44 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Company\ParticipantCardController;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'auth.admin', 'guru.profile.completed'])->group(function () {
-    Route::redirect('/', '/admin/dashboard')->name('index');
+/*
+|--------------------------------------------------------------------------
+| Admin Routes — /admin/*
+|--------------------------------------------------------------------------
+| Guard: auth + verified + auth.admin + teacher.profile.completed
+| Struktur: dashboard | settings | logs | companies | core
+| Pola resource: `PUT .../status` + `GET .../data` + `resource`
+| dideklarasikan berurutan agar konsisten & mudah di-scan.
+*/
 
+Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'auth.admin', 'teacher.profile.completed'])->group(function () {
+
+    // -----------------------------------------------------------------
+    // Dashboard
+    // -----------------------------------------------------------------
+    Route::redirect('/', '/admin/dashboard')->name('index');
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+    // -----------------------------------------------------------------
+    // Settings — site & profile (admin scope)
+    // -----------------------------------------------------------------
     Route::prefix('settings')->as('settings.')->group(function () {
         Route::get('site', [SiteSettingsController::class, 'edit'])->name('site.edit');
         Route::put('site', [SiteSettingsController::class, 'update'])->name('site.update');
         Route::put('profile', [AuthController::class, 'updateProfile'])->name('profile.update');
     });
 
+    // -----------------------------------------------------------------
+    // Logs — activity
+    // -----------------------------------------------------------------
     Route::prefix('logs')->as('logs.')->group(function () {
         Route::get('activities/data', [LogActivityController::class, 'getData'])->name('activities.data');
         Route::get('activities', [LogActivityController::class, 'index'])->name('activities.index');
     });
 
+    // -----------------------------------------------------------------
+    // Companies — Olimpiade & konten terkait
+    // -----------------------------------------------------------------
     Route::prefix('companies')->as('companies.')->group(function () {
         Route::put('periods/{period}/status', [PeriodController::class, 'status'])->name('periods.status');
         Route::get('periods/data', [PeriodController::class, 'getData'])->name('periods.data');
@@ -57,6 +79,7 @@ Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'auth.admi
         Route::get('olimpiades/data', [OlimpiadeController::class, 'getData'])->name('olimpiades.data');
         Route::resource('olimpiades', OlimpiadeController::class);
 
+        // Olimpiade pendukung — objectives / galleries / videos / schedules
         Route::put('olimpiade-objectives/{olimpiadeObjective}/status', [OlimpiadeObjectiveController::class, 'status'])->name('olimpiade-objectives.status');
         Route::get('olimpiade-objectives/data', [OlimpiadeObjectiveController::class, 'getData'])->name('olimpiade-objectives.data');
         Route::resource('olimpiade-objectives', OlimpiadeObjectiveController::class);
@@ -100,6 +123,7 @@ Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'auth.admi
         Route::get('faq-companies/data', [FaqCompanyController::class, 'getData'])->name('faq-companies.data');
         Route::resource('faq-companies', FaqCompanyController::class);
 
+        // Guru — read-only (snapshot dari Penyaluran saat login)
         Route::get('teachers/data', [TeacherController::class, 'getData'])->name('teachers.data');
         Route::put('teachers/{teacher}/reset-password', [TeacherController::class, 'resetPassword'])->name('teachers.reset-password');
         Route::resource('teachers', TeacherController::class)->parameters(['teachers' => 'teacher'])->only(['index', 'show']);
@@ -112,16 +136,19 @@ Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'auth.admi
             ->parameters(['data-peserta' => 'participant'])
             ->only(['index', 'create', 'store', 'show', 'destroy']);
 
-        Route::get('data-binaan/data', [BinaanController::class, 'getData'])->name('data-binaan.data');
-        Route::resource('data-binaan', BinaanController::class)->parameters(['data-binaan' => 'binaan']);
+    Route::get('data-binaan/data', [BinaanController::class, 'getData'])->name('data-binaan.data');
+    Route::resource('data-binaan', BinaanController::class)->parameters(['data-binaan' => 'binaan']);
 
-        Route::get('data-sanggar/data', [SanggarController::class, 'getData'])->name('data-sanggar.data');
-        Route::get('data-sanggar/{sanggar}', [SanggarController::class, 'show'])->name('data-sanggar.show');
-        Route::get('data-sanggar', [SanggarController::class, 'index'])->name('data-sanggar.index');
+    Route::get('data-sanggar/data', [SanggarController::class, 'getData'])->name('data-sanggar.data');
+    Route::get('data-sanggar/{sanggar}', [SanggarController::class, 'show'])->name('data-sanggar.show');
+    Route::get('data-sanggar', [SanggarController::class, 'index'])->name('data-sanggar.index');
 
-        Route::get('absensi', [AbsensiController::class, 'index'])->name('absensi.index');
+    Route::get('absensi', [AbsensiController::class, 'index'])->name('absensi.index');
     });
 
+    // -----------------------------------------------------------------
+    // Core — RBAC + Regions
+    // -----------------------------------------------------------------
     Route::prefix('core')->as('core.')->group(function () {
         Route::get('permissions/data', [PermissionController::class, 'getData'])->name('permissions.data');
         Route::resource('permissions', PermissionController::class);

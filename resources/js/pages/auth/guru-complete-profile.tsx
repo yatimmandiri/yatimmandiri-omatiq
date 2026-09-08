@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
-import profile from '@/routes/guru/profile';
 import { Head, useForm, usePage } from '@inertiajs/react';
 import { CheckCircle2, Mail, Phone, ShieldCheck } from 'lucide-react';
 import type { FormEvent } from 'react';
@@ -27,7 +26,7 @@ export default function GuruCompleteProfile() {
     const submit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
-        form.put(profile.update().url, {
+        form.put('/teacher/complete-profile', {
             preserveScroll: true,
             onSuccess: () => form.reset('password', 'password_confirmation'),
         });

@@ -19,10 +19,10 @@ class EnsureTeacherProfileCompleted
 
         if (
             $user?->needsTeacherProfileCompletion()
-            && ! $request->routeIs('guru.profile.*')
-            && ! $request->routeIs('guru.logout')
+            && ! $request->routeIs('teacher.profile.*')
+            && ! $request->routeIs('teacher.logout')
         ) {
-            return redirect()->route('guru.profile.edit');
+            return redirect()->route('teacher.profile.edit');
         }
 
         return $next($request);

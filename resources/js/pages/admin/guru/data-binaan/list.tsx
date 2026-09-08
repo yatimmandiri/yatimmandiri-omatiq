@@ -13,8 +13,8 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { dashboard } from '@/routes/admin';
-import binaan from '@/routes/admin/guru/data-binaan';
-import dataPeserta from '@/routes/admin/guru/data-peserta';
+import binaan from '@/routes/admin/data-binaan';
+import dataPeserta from '@/routes/admin/data-peserta';
 import { router, usePage } from '@inertiajs/react';
 import {
     CheckCircle2,

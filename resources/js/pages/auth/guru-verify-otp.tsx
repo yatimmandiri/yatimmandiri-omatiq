@@ -3,8 +3,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
-import verify from '@/routes/guru/verify';
-import guru from '@/routes/guru';
 import { Form, Head } from '@inertiajs/react';
 
 type Props = {
@@ -18,7 +16,7 @@ export default function GuruVerifyOtp({ phone }: Props) {
 
             <Form
                 method="post"
-                action={verify.store().url}
+                action="/teacher/verify-otp"
                 className="flex flex-col gap-6"
             >
                 {({ processing, errors }) => (
@@ -54,7 +52,7 @@ export default function GuruVerifyOtp({ phone }: Props) {
                 )}
             </Form>
 
-            <Form method="post" action={guru.resend().url}>
+            <Form method="post" action="/teacher/resend-otp">
                 {({ processing }) => (
                     <Button type="submit" variant="outline" className="w-full" disabled={processing}>
                         Kirim ulang OTP

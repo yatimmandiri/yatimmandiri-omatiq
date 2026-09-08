@@ -11,6 +11,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
+use Illuminate\Http\Request;
 use Spatie\Permission\Middleware\PermissionMiddleware;
 use Spatie\Permission\Middleware\RoleMiddleware;
 use Spatie\Permission\Middleware\RoleOrPermissionMiddleware;
@@ -37,21 +38,28 @@ return Application::configure(basePath: dirname(__DIR__))
             'role_or_permission' => RoleOrPermissionMiddleware::class,
             'auth.user' => UserMiddleware::class,
             'auth.admin' => AdminMiddleware::class,
-            'guru.profile.completed' => EnsureTeacherProfileCompleted::class,
             'teacher.profile.completed' => EnsureTeacherProfileCompleted::class,
+            'guest' => RedirectIfAuthenticated::class,
             'guest.redirect' => RedirectIfAuthenticated::class,
         ]);
 
-        Authenticate::redirectUsing(function ($request) {
-            if ($request->is('guru/*') || $request->is('admin/guru/*')) {
-                return route('guru.login');
-            }
+        // Guest yang coba akses area terproteksi diarahkan ke login sesuai area (bukan ke home)
+        $middleware->redirectGuestsTo(function (Request $request) {
             if ($request->is('admin/*')) {
-                return route('login');
+                return route('admin.login');
+            }
+            if ($request->is('teacher/*')) {
+                return route('teacher.login');
+            }
+            if ($request->is('student/*')) {
+                return route('student.login');
             }
 
             return route('login');
         });
+
+        // User yang sudah login akses halaman guest (login) diarahkan ke dashboard terpadu
+        $middleware->redirectUsersTo(fn () => route('admin.dashboard'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

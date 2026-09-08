@@ -13,7 +13,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { dashboard } from '@/routes/admin';
-import dataPeserta from '@/routes/admin/guru/data-peserta';
+import dataPeserta from '@/routes/admin/data-peserta';
 import { router } from '@inertiajs/react';
 import { usePage } from '@inertiajs/react';
 import { CheckCircle2, Clock3, Eye, Printer, Trash2, XCircle } from 'lucide-react';

@@ -1,6 +1,6 @@
 import { Card } from '@/components/ui/card';
 import { dashboard } from '@/routes/admin';
-import sanggar from '@/routes/admin/guru/data-sanggar';
+import sanggar from '@/routes/admin/data-sanggar';
 import { usePage } from '@inertiajs/react';
 
 export default function ShowPage() {

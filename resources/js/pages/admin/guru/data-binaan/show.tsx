@@ -2,8 +2,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { dashboard } from '@/routes/admin';
-import binaanRoute from '@/routes/admin/guru/data-binaan';
-import dataPeserta from '@/routes/admin/guru/data-peserta';
+import binaanRoute from '@/routes/admin/data-binaan';
+import dataPeserta from '@/routes/admin/data-peserta';
 import { router, usePage } from '@inertiajs/react';
 import { ArrowLeft, CheckCircle2, Clock3, Eye, RefreshCcw, UserPlus, XCircle } from 'lucide-react';
 

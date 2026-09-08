@@ -2,10 +2,7 @@
 
 namespace App\Providers;
 
-use App\Models\Company\Participant;
-use App\Models\Company\Student;
-use App\Observers\ParticipantObserver;
-use App\Observers\StudentObserver;
+use App\Http\Responses\LogoutResponse;
 use App\Settings\SiteSettings;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -15,6 +12,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Laravel\Fortify\Contracts\LogoutResponse as LogoutResponseContract;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -32,6 +30,9 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+
+        // Override Fortify logout redirect agar role-based (harus di boot agar setelah FortifyServiceProvider)
+        $this->app->singleton(LogoutResponseContract::class, LogoutResponse::class);
     }
 
     /**

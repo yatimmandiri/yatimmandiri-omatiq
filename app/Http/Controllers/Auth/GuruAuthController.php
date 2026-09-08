@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Concerns\Traits\LogActivity;
 use App\Http\Controllers\Controller;
 use App\Models\Core\User;
 use App\Services\PenyaluranService;
 use App\Services\PhoneOtpService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -13,13 +15,41 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 use Inertia\Response;
+use Laravel\Socialite\Facades\Socialite;
 
 class GuruAuthController extends Controller
 {
+    use LogActivity;
+
     public function __construct(private readonly PenyaluranService $penyaluran) {}
 
-    public function create(): Response
+    /**
+     * Redirect ke Google OAuth untuk Guru — single GOOGLE_REDIRECT_URI.
+     * Set intent guru di session agar callback terpusat (SocialiteController)
+     * dapat melakukan branch role + validasi Teacher completed.
+     */
+    public function redirectToGoogle(Request $request): RedirectResponse
     {
+        $request->session()->put('google_intent', 'guru');
+
+        $redirectUrl = config('services.google.redirect');
+
+        return Socialite::driver('google')->redirectUrl($redirectUrl)->redirect();
+    }
+
+    public function create(Request $request): Response|RedirectResponse
+    {
+        if (Auth::check()) {
+            $user = $request->user() ?? Auth::user();
+
+            // Semua role diarahkan ke dashboard terpadu /admin/dashboard
+            if ($user) {
+                return redirect()->route('admin.dashboard');
+            }
+
+            return redirect()->route('admin.dashboard');
+        }
+
         return Inertia::render('auth/guru-login');
     }
 
@@ -42,7 +72,7 @@ class GuruAuthController extends Controller
         try {
             $profile = $this->penyaluran->me($token);
         } catch (\Throwable $e) {
-            return back()->withErrors(['phone' => 'Gagal mengambil profil guru: ' . $e->getMessage()]);
+            return back()->withErrors(['phone' => 'Gagal mengambil profil guru: '.$e->getMessage()]);
         }
 
         $penyaluranId = $profile['id'] ?? null;
@@ -54,8 +84,8 @@ class GuruAuthController extends Controller
         $user = User::firstOrCreate(
             ['penyaluran_id' => $penyaluranId],
             [
-                'name' => $profile['name'] ?? 'Guru ' . $penyaluranId,
-                'email' => 'guru' . $penyaluranId . '@penyaluran.local',
+                'name' => $profile['name'] ?? 'Guru '.$penyaluranId,
+                'email' => 'guru'.$penyaluranId.'@penyaluran.local',
                 'phone' => $phone,
                 'password' => Hash::make('password'),
             ],
@@ -91,7 +121,7 @@ class GuruAuthController extends Controller
             $request->session()->put('penyaluran_token', $token);
             $request->session()->put('penyaluran_id', $penyaluranId);
 
-            return redirect()->route('guru.verify');
+            return redirect()->route('teacher.verify');
         }
 
         Auth::login($user, $request->boolean('remember'));
@@ -100,7 +130,7 @@ class GuruAuthController extends Controller
         $request->session()->regenerate();
 
         if ($user->needsTeacherProfileCompletion()) {
-            return redirect()->route('guru.profile.edit');
+            return redirect()->route('teacher.profile.edit');
         }
 
         return redirect()->intended(route('admin.dashboard'));
@@ -159,7 +189,7 @@ class GuruAuthController extends Controller
                 $this->penyaluran->updateMe($token, ['email' => $validated['email']]);
             } catch (\Throwable $e) {
                 return back()
-                    ->withErrors(['email' => 'Gagal memperbarui email di server Penyaluran: ' . $e->getMessage()])
+                    ->withErrors(['email' => 'Gagal memperbarui email di server Penyaluran: '.$e->getMessage()])
                     ->withInput();
             }
         }
@@ -180,7 +210,7 @@ class GuruAuthController extends Controller
     {
         $userId = $request->session()->get('otp_user_id');
         if (! $userId) {
-            return redirect()->route('guru.login');
+            return redirect()->route('teacher.login');
         }
 
         return Inertia::render('auth/guru-verify-otp', [
@@ -195,7 +225,7 @@ class GuruAuthController extends Controller
         $userId = $request->session()->get('otp_user_id');
         $user = $userId ? User::find($userId) : null;
         if (! $user) {
-            return redirect()->route('guru.login')->withErrors(['otp' => 'Sesi OTP tidak ditemukan. Silakan login ulang.']);
+            return redirect()->route('teacher.login')->withErrors(['otp' => 'Sesi OTP tidak ditemukan. Silakan login ulang.']);
         }
 
         $service = app(PhoneOtpService::class);
@@ -208,7 +238,7 @@ class GuruAuthController extends Controller
         $request->session()->regenerate();
 
         if ($user->needsTeacherProfileCompletion()) {
-            return redirect()->route('guru.profile.edit');
+            return redirect()->route('teacher.profile.edit');
         }
 
         return redirect()->intended(route('admin.dashboard'));
@@ -219,7 +249,7 @@ class GuruAuthController extends Controller
         $userId = $request->session()->get('otp_user_id');
         $user = $userId ? User::find($userId) : null;
         if (! $user) {
-            return redirect()->route('guru.login');
+            return redirect()->route('teacher.login');
         }
 
         $service = app(PhoneOtpService::class);
@@ -239,6 +269,6 @@ class GuruAuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('guru.login');
+        return redirect()->route('teacher.login');
     }
 }

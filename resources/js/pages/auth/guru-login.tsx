@@ -5,10 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
-import { login } from '@/routes';
 import { Form, Head } from '@inertiajs/react';
 import { FcGoogle } from 'react-icons/fc';
-import loginStore from '@/routes/guru/login';
 
 export default function GuruLogin() {
     return (
@@ -17,7 +15,7 @@ export default function GuruLogin() {
 
             <Form
                 method="post"
-                action={loginStore.store().url}
+                action="/teacher/login"
                 className="flex flex-col gap-6"
             >
                 {({ processing, errors }) => (
@@ -89,14 +87,30 @@ export default function GuruLogin() {
                         </div>
 
                         <div className="text-center text-sm text-muted-foreground">
-                            Peserta?{' '}
-                            <TextLink href={login()} tabIndex={4}>
-                                Login Peserta / Admin
-                            </TextLink>
+                            Admin? <TextLink href="/admin/login" tabIndex={4}>Login Admin</TextLink> · Student?{' '}
+                            <TextLink href="/student/login" tabIndex={4}>Login Student</TextLink>
                         </div>
                     </>
                 )}
             </Form>
+
+            <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
+                <span className="relative z-10 bg-background px-2 text-muted-foreground">
+                    Atau lanjutkan dengan
+                </span>
+            </div>
+
+            <Button asChild type="button" variant="outline" className="w-full">
+                {/* Wayfinder akan generate teacher.google.redirect setelah `php artisan wayfinder:generate`; fallback href hardcode agar tetap jalan */}
+                <a href="/teacher/google/redirect" className="w-full">
+                    <FcGoogle />
+                    Login dengan Google (Guru)
+                </a>
+            </Button>
+            <p className="text-center text-xs leading-5 text-muted-foreground">
+                Google hanya untuk guru yang sudah melengkapi profil (email
+                real). Guru baru wajib login dengan nomor HP terlebih dahulu.
+            </p>
         </>
     );
 }
