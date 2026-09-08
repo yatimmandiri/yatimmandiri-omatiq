@@ -25,7 +25,7 @@ class VillageController extends Controller
         $districts = District::query()->select(['id', 'name'])->get();
 
         $data = [
-            'districts' => $districts
+            'districts' => $districts,
         ];
 
         return Inertia::render('admin/core/regions/villages/list', $data);
@@ -41,7 +41,7 @@ class VillageController extends Controller
         $districts = District::query()->select(['id', 'name'])->get();
 
         $data = [
-            'districts' => $districts
+            'districts' => $districts,
         ];
 
         return Inertia::render('admin/core/regions/villages/create', $data);
@@ -89,7 +89,7 @@ class VillageController extends Controller
         $village->load(['district']);
 
         $data = [
-            'village' => $village
+            'village' => $village,
         ];
 
         return Inertia::render('admin/core/regions/villages/show', $data);
@@ -108,7 +108,7 @@ class VillageController extends Controller
 
         $data = [
             'village' => $village,
-            'districts' => $districts
+            'districts' => $districts,
         ];
 
         return Inertia::render('admin/core/regions/villages/edit', $data);
@@ -181,8 +181,7 @@ class VillageController extends Controller
             ->search($globalSearch)
             ->when(
                 data_get($filterValue, 'district_id'),
-                fn($query, $value) =>
-                $query->where('district_id', $value)
+                fn ($query, $value) => $query->where('district_id', $value)
             )
             ->orderBy($orderBy, $orderDirection);
 

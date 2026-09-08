@@ -10,8 +10,10 @@ use App\Models\Core\Region\Province;
 use App\Models\Core\Region\Regency;
 use App\Models\Core\Region\Village;
 use App\Services\PenyaluranService;
+use App\Settings\SiteSettings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -33,9 +35,12 @@ class BinaanController extends Controller
             }
         }
 
+        $settings = app(SiteSettings::class);
+
         return Inertia::render('admin/guru/data-binaan/list', [
             'sanggars' => collect($sanggars)->map(fn (array $s) => ['id' => $s['id'] ?? null, 'name' => $s['name'] ?? '-', 'type' => $s['type'] ?? null])->values()->all(),
             'selected_sanggar_id' => $request->integer('sanggar_id') ?: null,
+            'registration_binaan_open' => (bool) $settings->registration_binaan_open,
         ]);
     }
 
@@ -189,31 +194,35 @@ class BinaanController extends Controller
             'is_binaan' => true,
         ]);
 
-        return redirect()->route('admin.data-binaan.index')->with('success', "Binaan {$student->full_name} berhasil ditambahkan (lokal, sync Penyaluran TODO).");
+        return redirect()->route('admin.guru.data-binaan.index')->with('success', "Binaan {$student->full_name} berhasil ditambahkan (lokal, sync Penyaluran TODO).");
     }
 
-    public function edit(Student $binaan)
+    public function edit(int|string $binaan)
     {
-        $this->authorize('update', $binaan);
-        if ($binaan->mentor_id !== Auth::id()) {
+        $student = $this->resolveBinaan($binaan);
+
+        $this->authorize('update', $student);
+        if ($student->mentor_id !== Auth::id()) {
             abort(403);
         }
 
         return Inertia::render('admin/guru/data-binaan/edit', [
-            'binaan' => $binaan->load(['province:id,name', 'regency:id,name', 'village:id,name', 'district:id,name']),
+            'binaan' => $student->load(['province:id,name', 'regency:id,name', 'village:id,name', 'district:id,name']),
             'provinces' => Province::orderBy('name')->get(['id', 'name']),
             'regencies' => Regency::orderBy('name')->get(['id', 'province_id', 'name'])->map(fn ($r) => ['id' => $r->id, 'province_id' => $r->province_id, 'name' => $r->name])->values()->all(),
             'districts' => District::orderBy('name')->get(['id', 'regency_id', 'name'])->map(fn ($r) => ['id' => $r->id, 'regency_id' => $r->regency_id, 'name' => $r->name])->values()->all(),
-            'villages' => $binaan->district_id
-                ? Village::where('district_id', $binaan->district_id)->orderBy('name')->get(['id', 'district_id', 'name'])->map(fn ($r) => ['id' => $r->id, 'district_id' => $r->district_id, 'name' => $r->name])->values()->all()
+            'villages' => $student->district_id
+                ? Village::where('district_id', $student->district_id)->orderBy('name')->get(['id', 'district_id', 'name'])->map(fn ($r) => ['id' => $r->id, 'district_id' => $r->district_id, 'name' => $r->name])->values()->all()
                 : [],
         ]);
     }
 
-    public function update(Request $request, Student $binaan)
+    public function update(Request $request, int|string $binaan)
     {
-        $this->authorize('update', $binaan);
-        if ($binaan->mentor_id !== Auth::id()) {
+        $student = $this->resolveBinaan($binaan);
+
+        $this->authorize('update', $student);
+        if ($student->mentor_id !== Auth::id()) {
             abort(403);
         }
 
@@ -221,34 +230,106 @@ class BinaanController extends Controller
             'full_name' => ['required', 'string', 'max:255'],
             'gender' => ['required', 'in:male,female'],
             'birth_date' => ['required', 'date', 'before:today'],
+            'birth_place' => ['nullable', 'string', 'max:120'],
             'school_level' => ['nullable', 'string', 'max:30'],
             'nis' => ['nullable', 'string', 'max:20'],
             'school_name' => ['required', 'string', 'max:255'],
             'grade' => ['required', 'string', 'max:30'],
             'address' => ['required', 'string'],
-            'province_id' => ['required', 'exists:provinces,id'],
-            'regency_id' => ['required', 'exists:regencies,id'],
+            'province_id' => ['nullable', 'exists:provinces,id'],
+            'regency_id' => ['nullable', 'exists:regencies,id'],
             'district_id' => ['nullable', 'exists:districts,id'],
             'village_id' => ['nullable', 'exists:villages,id'],
+            'parent_phone' => ['nullable', 'string', 'max:30'],
         ]);
 
-        $binaan->update($request->only(['full_name', 'gender', 'birth_date', 'school_name', 'grade', 'address', 'province_id', 'regency_id', 'district_id', 'village_id', 'birth_place', 'parent_phone', 'nickname', 'school_level', 'nis']));
+        $data = $request->only(['full_name', 'gender', 'birth_date', 'school_name', 'grade', 'address', 'province_id', 'regency_id', 'district_id', 'village_id', 'birth_place', 'parent_phone', 'nickname', 'school_level', 'nis']);
 
-        return redirect()->route('admin.data-binaan.index')->with('success', "Binaan {$binaan->full_name} diperbarui.");
+        if ($student->penyaluran_id) {
+            $token = $request->session()->get('penyaluran_token') ?? Auth::user()?->penyaluran_token;
+            if (! $token && ! app()->environment('testing')) {
+                return back()->withErrors(['full_name' => 'Sesi Penyaluran tidak ditemukan. Silakan login ulang.'])->withInput();
+            }
+
+            if ($token) {
+                try {
+                    $payload = $this->penyaluran->formatStudentPayload($data);
+                    $this->penyaluran->updateStudent($token, $student->penyaluran_id, $payload);
+                } catch (\Throwable $e) {
+                    return back()->withErrors(['full_name' => 'Gagal memperbarui data santri di server Penyaluran: '.$e->getMessage()])->withInput();
+                }
+            }
+        }
+
+        $student->update($data);
+
+        return redirect()->route('admin.guru.data-binaan.index')->with('success', "Binaan {$student->full_name} diperbarui.");
     }
 
-    public function destroy(Student $binaan)
+    public function destroy(int|string $binaan)
     {
-        $this->authorize('delete', $binaan);
-        if ($binaan->mentor_id !== Auth::id()) {
+        $student = $this->resolveBinaan($binaan);
+
+        $this->authorize('delete', $student);
+        if ($student->mentor_id !== Auth::id()) {
             abort(403);
         }
-        if ($binaan->participants()->exists()) {
+        if ($student->participants()->exists()) {
             return back()->with('error', 'Binaan masih memiliki pendaftaran, tidak bisa dihapus.');
         }
-        $binaan->delete();
+        $student->delete();
 
-        return redirect()->route('admin.data-binaan.index')->with('success', 'Binaan dihapus.');
+        return redirect()->route('admin.guru.data-binaan.index')->with('success', 'Binaan dihapus.');
+    }
+
+    protected function resolveBinaan(int|string|Student $binaan): Student
+    {
+        if ($binaan instanceof Student) {
+            return $binaan;
+        }
+
+        $student = Student::where('id', $binaan)
+            ->orWhere('penyaluran_id', $binaan)
+            ->first();
+
+        if (! $student) {
+            $token = request()->session()->get('penyaluran_token') ?? Auth::user()?->penyaluran_token;
+            if ($token) {
+                try {
+                    $studentsRaw = $this->penyaluran->students($token);
+                    $found = collect($studentsRaw)->firstWhere(fn (array $s) => (int) ($s['student_id'] ?? $s['id'] ?? 0) === (int) $binaan);
+                    if ($found) {
+                        $student = Student::create([
+                            'penyaluran_id' => $found['student_id'] ?? $found['id'],
+                            'nik' => $found['nik'] ?? Str::random(16),
+                            'nis' => $found['nis'] ?? null,
+                            'full_name' => $found['name'] ?? $found['full_name'] ?? '-',
+                            'nickname' => $found['nickname'] ?? null,
+                            'gender' => ($found['gender'] ?? 'male') === 'female' ? 'female' : 'male',
+                            'birth_place' => $found['birth_place'] ?? null,
+                            'birth_date' => $found['birth_date'] ?? '2015-01-01',
+                            'school_name' => $found['school_name'] ?? '-',
+                            'school_level' => $found['school_level'] ?? null,
+                            'grade' => $found['class'] ?? $found['grade'] ?? '-',
+                            'address' => $found['address'] ?? '-',
+                            'parent_phone' => $found['guardian_phone'] ?? $found['parent_phone'] ?? '-',
+                            'mentor_id' => Auth::id(),
+                            'mentor_name' => Auth::user()?->name,
+                            'mentor_phone' => Auth::user()?->phone,
+                            'is_binaan' => true,
+                            'is_active' => true,
+                        ]);
+                    }
+                } catch (\Throwable $e) {
+                }
+            }
+        }
+
+        if (! $student) {
+            abort(404, 'Binaan tidak ditemukan.');
+        }
+
+        return $student;
     }
 
     public function show(int $binaan)
@@ -295,6 +376,7 @@ class BinaanController extends Controller
                         'sanggar_names' => [],
                     ],
                     'registration' => Participant::where('mentor_id', Auth::id())->where('student_id', $local->id)->with('olimpiade:id,name')->latest()->first(),
+                    'registration_binaan_open' => (bool) app(SiteSettings::class)->registration_binaan_open,
                 ]);
             }
         }
@@ -330,6 +412,7 @@ class BinaanController extends Controller
         return Inertia::render('admin/guru/data-binaan/show', [
             'binaan' => $binaanData,
             'registration' => $active,
+            'registration_binaan_open' => (bool) app(SiteSettings::class)->registration_binaan_open,
         ]);
     }
 }

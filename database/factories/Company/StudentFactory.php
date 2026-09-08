@@ -23,6 +23,7 @@ class StudentFactory extends Factory
             'address' => fake()->address(),
             'parent_phone' => fake()->phoneNumber(),
             'is_binaan' => false,
+            'is_active' => true,
         ];
     }
 }

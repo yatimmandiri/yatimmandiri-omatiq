@@ -33,7 +33,7 @@ class AuthController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended('/');
+        return redirect()->intended(route('admin.dashboard', absolute: false));
     }
 
     public function register()
@@ -59,7 +59,7 @@ class AuthController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect('/');
+        return redirect()->intended(route('admin.dashboard', absolute: false));
     }
 
     public function forgotPassword()

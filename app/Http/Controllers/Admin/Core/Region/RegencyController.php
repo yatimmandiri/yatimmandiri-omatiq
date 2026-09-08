@@ -25,7 +25,7 @@ class RegencyController extends Controller
         $provinces = Province::query()->select(['id', 'name'])->get();
 
         $data = [
-            'provinces' => $provinces
+            'provinces' => $provinces,
         ];
 
         return Inertia::render('admin/core/regions/regencies/list', $data);
@@ -41,7 +41,7 @@ class RegencyController extends Controller
         $provinces = Province::query()->select(['id', 'name'])->get();
 
         $data = [
-            'provinces' => $provinces
+            'provinces' => $provinces,
         ];
 
         return Inertia::render('admin/core/regions/regencies/create', $data);
@@ -87,7 +87,7 @@ class RegencyController extends Controller
         $regency->load(['province']);
 
         $data = [
-            'regency' => $regency
+            'regency' => $regency,
         ];
 
         return Inertia::render('admin/core/regions/regencies/show', $data);
@@ -106,7 +106,7 @@ class RegencyController extends Controller
 
         $data = [
             'regency' => $regency,
-            'provinces' => $provinces
+            'provinces' => $provinces,
         ];
 
         return Inertia::render('admin/core/regions/regencies/edit', $data);
@@ -180,8 +180,7 @@ class RegencyController extends Controller
             ->search($globalSearch)
             ->when(
                 data_get($filterValue, 'province_id'),
-                fn($query, $value) =>
-                $query->where('province_id', $value)
+                fn ($query, $value) => $query->where('province_id', $value)
             )
             ->orderBy($orderBy, $orderDirection);
 

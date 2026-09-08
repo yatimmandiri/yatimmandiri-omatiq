@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Company\ParticipantCardController;
 use App\Http\Controllers\Home\MainController;
 use App\Http\Controllers\Home\ParticipantRegistrationController;
 use App\Models\Core\Region\District;
@@ -29,6 +30,7 @@ Route::get('/kontak', [MainController::class, 'contact'])->name('home.contact');
 Route::get('/pendaftaran', [ParticipantRegistrationController::class, 'create'])->name('home.registration.create');
 Route::post('/pendaftaran', [ParticipantRegistrationController::class, 'store'])->name('home.registration.store');
 Route::get('/pendaftaran/sukses/{registrationNumber}', [ParticipantRegistrationController::class, 'success'])->name('home.registration.success');
+Route::get('/pendaftaran/kartu/{registrationNumber}', [ParticipantCardController::class, 'print'])->name('home.registration.card');
 
 // API kecil untuk cascading dropdown wilayah (dipakai pendaftaran & biodata guru)
 Route::get('/regions/regencies', function (Request $request) {

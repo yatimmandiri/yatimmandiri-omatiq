@@ -3,10 +3,16 @@
 namespace App\Providers;
 
 use App\Http\Responses\LogoutResponse;
+use App\Models\Company\Participant;
+use App\Models\Company\Student;
+use App\Observers\ParticipantObserver;
+use App\Observers\StudentObserver;
 use App\Settings\SiteSettings;
 use Carbon\CarbonImmutable;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
@@ -58,5 +64,10 @@ class AppServiceProvider extends ServiceProvider
                 'favicon' => $settings->favicon ? asset('storage/'.$settings->favicon) : null,
             ]);
         });
+
+        RateLimiter::for('sheets', fn () => Limit::perMinute(60)->by('sheets'));
+
+        Participant::observe(ParticipantObserver::class);
+        Student::observe(StudentObserver::class);
     }
 }

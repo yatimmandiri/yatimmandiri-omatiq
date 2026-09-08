@@ -113,12 +113,12 @@ export const SelectComponent = ({
     // ✅ fetch data (API mode)
     const fetchData = useCallback(async () => {
         if (!fetchDataUrl) {
-return;
-}
+            return;
+        }
 
         if (searchValue.length < 3) {
-return;
-}
+            return;
+        }
 
         setIsLoading(true);
 
@@ -145,8 +145,8 @@ return;
 
     useEffect(() => {
         if (!fetchDataUrl) {
-return;
-}
+            return;
+        }
 
         const delay = setTimeout(() => {
             fetchData();

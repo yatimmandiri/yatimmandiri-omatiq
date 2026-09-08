@@ -75,7 +75,7 @@ class ProvinceController extends Controller
         $this->authorize('view', $province);
 
         $data = [
-            'province' => $province
+            'province' => $province,
         ];
 
         return Inertia::render('admin/core/regions/provinces/show', $data);
@@ -89,7 +89,7 @@ class ProvinceController extends Controller
         $this->authorize('update', $province);
 
         $data = [
-            'province' => $province
+            'province' => $province,
         ];
 
         return Inertia::render('admin/core/regions/provinces/edit', $data);

@@ -2,6 +2,7 @@
 
 namespace App\Services\Views;
 
+use App\Http\Controllers\Guru\BiodataController;
 use App\Models\Company\Olimpiade;
 use App\Models\Company\Participant;
 use App\Models\Company\Student;
@@ -122,6 +123,19 @@ class DashboardService
             $gender = 'female';
         }
 
+        $provinceId = BiodataController::extractRegionId($profile, [
+            'province_id', 'provinsi_id', 'province', 'provinsi', 'province_code', 'provinsi_code', 'id_provinsi', 'id_prov', 'kode_provinsi',
+        ]);
+        $regencyId = BiodataController::extractRegionId($profile, [
+            'regency_id', 'kabupaten_id', 'kota_id', 'regency', 'kabupaten', 'kota', 'regency_code', 'kabupaten_code', 'kota_code', 'id_kabupaten', 'id_kota', 'kode_kabupaten', 'kode_kota',
+        ]);
+        $districtId = BiodataController::extractRegionId($profile, [
+            'district_id', 'kecamatan_id', 'district', 'kecamatan', 'district_code', 'kecamatan_code', 'id_kecamatan', 'kode_kecamatan',
+        ]);
+        $villageId = BiodataController::extractRegionId($profile, [
+            'village_id', 'desa_id', 'kelurahan_id', 'village', 'desa', 'kelurahan', 'village_code', 'desa_code', 'kelurahan_code', 'id_desa', 'id_kelurahan', 'kode_desa', 'kode_kelurahan',
+        ]);
+
         return [
             'name' => $profile['name'] ?? $profile['nama'] ?? $user->name,
             'email' => $profile['email'] ?? $user->email,
@@ -132,10 +146,10 @@ class DashboardService
             'birth_date' => $profile['birth_date'] ?? $profile['tanggal_lahir'] ?? $profile['tgl_lahir'] ?? null,
             'address' => $profile['address'] ?? $profile['alamat'] ?? null,
             'photo_url' => $profile['photo_url'] ?? $profile['foto'] ?? null,
-            'province_id' => $profile['province_id'] ?? $profile['provinsi_id'] ?? null,
-            'regency_id' => $profile['regency_id'] ?? $profile['kabupaten_id'] ?? $profile['kota_id'] ?? null,
-            'district_id' => $profile['district_id'] ?? $profile['kecamatan_id'] ?? null,
-            'village_id' => $profile['village_id'] ?? $profile['desa_id'] ?? $profile['kelurahan_id'] ?? null,
+            'province_id' => $provinceId,
+            'regency_id' => $regencyId,
+            'district_id' => $districtId,
+            'village_id' => $villageId,
         ];
     }
 
@@ -172,18 +186,26 @@ class DashboardService
 
     private static function participant(User $user): array
     {
-        $participant = $user->participant;
+        $participant = $user->participant?->load([
+            'olimpiade:id,name,category,slug,excerpt',
+            'student:id,full_name,nickname,gender,birth_place,birth_date,school_name,school_level,nis,grade,address,province_id,regency_id,parent_phone,mentor_name,mentor_phone,photo_path,student_card_path',
+            'student.province:id,name',
+            'student.regency:id,name',
+        ]);
+
+        if ($participant) {
+            $arr = $participant->toArray();
+            $arr['payment_proof_url'] = $participant->payment_proof_url;
+            $arr['student']['photo_url'] = $participant->student?->photo_url;
+            $arr['student']['student_card_url'] = $participant->student?->student_card_url;
+            $participant = $arr;
+        }
 
         return [
             'view' => 'admin/dashboard/participant',
             'data' => [
                 'pageTitle' => 'Dashboard Partisipan',
-                'participant' => $participant?->load([
-                    'olimpiade:id,name,category,slug,excerpt',
-                    'student:id,full_name,nickname,gender,birth_place,birth_date,school_name,school_level,nis,grade,address,province_id,regency_id,parent_phone,mentor_name,mentor_phone,photo_path,identity_card_path,family_card_path,student_card_path',
-                    'student.province:id,name',
-                    'student.regency:id,name',
-                ]),
+                'participant' => $participant,
             ],
         ];
     }

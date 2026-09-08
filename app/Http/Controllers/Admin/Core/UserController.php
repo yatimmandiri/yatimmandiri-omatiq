@@ -26,7 +26,7 @@ class UserController extends Controller
         $roles = Role::with(['permissions'])->select(['id', 'name'])->get();
 
         $data = [
-            'roles' => $roles
+            'roles' => $roles,
         ];
 
         return Inertia::render('admin/core/users/list', $data);
@@ -42,7 +42,7 @@ class UserController extends Controller
         $roles = Role::with(['permissions'])->select(['id', 'name'])->get();
 
         $data = [
-            'roles' => $roles
+            'roles' => $roles,
         ];
 
         return Inertia::render('admin/core/users/create', $data);
@@ -90,7 +90,7 @@ class UserController extends Controller
 
         $data = [
             'user' => $user,
-            'roles' => $roles
+            'roles' => $roles,
         ];
 
         return Inertia::render('admin/core/users/show', $data);
@@ -109,7 +109,7 @@ class UserController extends Controller
 
         $data = [
             'user' => $user,
-            'roles' => $roles
+            'roles' => $roles,
         ];
 
         return Inertia::render('admin/core/users/edit', $data);
@@ -188,9 +188,9 @@ class UserController extends Controller
         $query = $user->forceFill($data)->save();
 
         if ($query) {
-            $this->logSuccess('verify-user', "Verify User", $data);
+            $this->logSuccess('verify-user', 'Verify User', $data);
         } else {
-            $this->logError('verify-user', "Failed to verify user", $data);
+            $this->logError('verify-user', 'Failed to verify user', $data);
         }
 
         return redirect()->back()->with('success', 'User Verified Successfully');
@@ -201,7 +201,7 @@ class UserController extends Controller
         $this->authorize('update', $user);
 
         $user->update([
-            'referral' => str()->random(8)
+            'referral' => str()->random(8),
         ]);
 
         if ($user) {
@@ -224,15 +224,15 @@ class UserController extends Controller
         $query = User::whereIn('id', $ids);
 
         match ($action) {
-            'delete'  => $query->delete(),
-            'verify'  => $query->update(['email_verified_at' => now()]),
-            default   => null,
+            'delete' => $query->delete(),
+            'verify' => $query->update(['email_verified_at' => now()]),
+            default => null,
         };
 
         $actionText = match ($action) {
-            'delete'  => 'Deleted',
-            'verify'  => 'Verification',
-            default   => 'No Action',
+            'delete' => 'Deleted',
+            'verify' => 'Verification',
+            default => 'No Action',
         };
 
         return redirect()
@@ -266,8 +266,7 @@ class UserController extends Controller
 
             ->when(
                 data_get($filterValue, 'roles'),
-                fn($query, $value) =>
-                $query->whereHas('roles', function ($roleQuery) use ($value) {
+                fn ($query, $value) => $query->whereHas('roles', function ($roleQuery) use ($value) {
                     $roleQuery->where('id', $value);
                 })
             )

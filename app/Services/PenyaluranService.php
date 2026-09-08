@@ -19,7 +19,7 @@ class PenyaluranService
         $client = Http::baseUrl($this->baseUrl())
             ->acceptJson()
             ->timeout(8)
-            ->retry(2, 200);
+            ->retry(2, 200, throw: false);
 
         if ($token) {
             $client = $client->withToken($token);
@@ -173,9 +173,9 @@ class PenyaluranService
     }
 
     /**
-     * Update guru profile on Penyaluran (PUT guru/me). Invalidates me cache.
+     * Update guru profile on Penyaluran (PUT api/v1/guru/me). Invalidates me cache.
      *
-     * @param  array{email?:string}  $attributes
+     * @param  array{name?:string, email?:string}  $attributes
      *
      * @throws \RuntimeException
      */
@@ -187,6 +187,92 @@ class PenyaluranService
         Cache::forget('penyaluran:me:'.sha1($token));
 
         return $response->json('data') ?? $response->json();
+    }
+
+    /**
+     * Update student data on Penyaluran (PUT api/v1/guru/students/{studentId}).
+     *
+     * @throws \RuntimeException
+     */
+    public function updateStudent(string $token, int|string $studentId, array $attributes): array
+    {
+        $response = $this->client($token)->put("api/v1/guru/students/{$studentId}", $attributes);
+        $this->assertSuccess($response);
+
+        return $response->json('data') ?? $response->json();
+    }
+
+    /**
+     * Map and format student attributes to Penyaluran payload format.
+     */
+    public function formatStudentPayload(array $data): array
+    {
+        $payload = [];
+
+        if (isset($data['name'])) {
+            $payload['name'] = $data['name'];
+        } elseif (isset($data['full_name'])) {
+            $payload['name'] = $data['full_name'];
+        }
+
+        if (array_key_exists('nik', $data)) {
+            $payload['nik'] = $data['nik'];
+        }
+        if (array_key_exists('nis', $data)) {
+            $payload['nis'] = $data['nis'];
+        }
+        if (array_key_exists('nickname', $data)) {
+            $payload['nickname'] = $data['nickname'];
+        }
+        if (isset($data['gender'])) {
+            $gender = $data['gender'];
+            if ($gender === 'male' || $gender === 'L') {
+                $payload['gender'] = 'L';
+            } elseif ($gender === 'female' || $gender === 'P') {
+                $payload['gender'] = 'P';
+            }
+        }
+        if (array_key_exists('birth_place', $data)) {
+            $payload['birth_place'] = $data['birth_place'];
+        }
+        if (isset($data['birth_date'])) {
+            $payload['birth_date'] = is_string($data['birth_date'])
+                ? substr($data['birth_date'], 0, 10)
+                : $data['birth_date']?->format('Y-m-d');
+        }
+        if (array_key_exists('phone', $data)) {
+            $payload['phone'] = $data['phone'];
+        }
+        if (array_key_exists('address', $data)) {
+            $payload['address'] = $data['address'];
+        }
+        if (array_key_exists('school_name', $data)) {
+            $payload['school_name'] = $data['school_name'];
+        }
+        if (array_key_exists('school_level', $data)) {
+            $payload['school_level'] = $data['school_level'];
+        }
+        if (isset($data['class'])) {
+            $payload['class'] = (string) $data['class'];
+        } elseif (isset($data['grade'])) {
+            $payload['class'] = (string) $data['grade'];
+        }
+        if (array_key_exists('guardian_phone', $data)) {
+            $payload['guardian_phone'] = $data['guardian_phone'];
+        } elseif (array_key_exists('parent_phone', $data)) {
+            $payload['guardian_phone'] = $data['parent_phone'];
+            $payload['phone'] = $data['parent_phone'];
+        }
+        if (array_key_exists('guardian_name', $data)) {
+            $payload['guardian_name'] = $data['guardian_name'];
+        }
+        if (array_key_exists('status', $data)) {
+            $payload['status'] = (bool) $data['status'];
+        } elseif (array_key_exists('is_active', $data)) {
+            $payload['status'] = (bool) $data['is_active'];
+        }
+
+        return $payload;
     }
 
     /**

@@ -19,6 +19,7 @@ export default function VerifyEmail({ status }: { status?: string }) {
           : roles.includes('Participant')
             ? studentLogout().url
             : genericLogout().url;
+
     return (
         <>
             <Head title="Email verification" />
@@ -38,7 +39,12 @@ export default function VerifyEmail({ status }: { status?: string }) {
                             Resend verification email
                         </Button>
 
-                        <Link href={logoutHref} method="post" as="button" className="mx-auto block text-sm underline">
+                        <Link
+                            href={logoutHref}
+                            method="post"
+                            as="button"
+                            className="mx-auto block text-sm underline"
+                        >
                             Log out
                         </Link>
                     </>

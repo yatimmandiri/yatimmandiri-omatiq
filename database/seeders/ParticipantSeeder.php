@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Company\Olimpiade;
 use App\Models\Company\Participant;
+use App\Models\Company\Student;
 use App\Models\Core\User;
 use Illuminate\Database\Seeder;
 
@@ -17,7 +18,7 @@ class ParticipantSeeder extends Seeder
 
         $registrationNumber = 'OMQ-'.now()->format('Ymd').'-0001';
 
-        $student = \App\Models\Company\Student::firstOrCreate(
+        $student = Student::firstOrCreate(
             ['penyaluran_id' => 2445],
             [
                 'nik' => '3404054207160001',

@@ -1,5 +1,5 @@
 import { deletefiles, uploadfiles } from '@/routes/admin';
-import type { ChangeEvent} from 'react';
+import type { ChangeEvent } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface UseImageUploadProps {

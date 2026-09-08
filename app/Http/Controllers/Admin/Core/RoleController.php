@@ -37,7 +37,7 @@ class RoleController extends Controller
         $permissions = Permission::with(['roles'])->select(['id', 'name'])->get();
 
         $data = [
-            'permissions' => $permissions
+            'permissions' => $permissions,
         ];
 
         return Inertia::render('admin/core/roles/create', $data);
@@ -100,7 +100,7 @@ class RoleController extends Controller
 
         $data = [
             'role' => $role,
-            'permissions' => $permissions
+            'permissions' => $permissions,
         ];
 
         return Inertia::render('admin/core/roles/edit', $data);

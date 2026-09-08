@@ -23,11 +23,16 @@ class LogoutResponse implements LogoutResponseContract
             try {
                 $decoded = json_decode($cookieRoles, true);
                 if (is_array($decoded)) {
-                    if (in_array('Teacher', $decoded, true)) $role = 'Teacher';
-                    elseif (in_array('Administrators', $decoded, true)) $role = 'Administrators';
-                    elseif (in_array('Participant', $decoded, true)) $role = 'Participant';
+                    if (in_array('Teacher', $decoded, true)) {
+                        $role = 'Teacher';
+                    } elseif (in_array('Administrators', $decoded, true)) {
+                        $role = 'Administrators';
+                    } elseif (in_array('Participant', $decoded, true)) {
+                        $role = 'Participant';
+                    }
                 }
-            } catch (\Throwable $e) {}
+            } catch (\Throwable $e) {
+            }
         }
 
         if (! $role) {

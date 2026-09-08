@@ -43,7 +43,11 @@ export default function GuruVerifyOtp({ phone }: Props) {
                                 <InputError message={errors.otp} />
                             </div>
 
-                            <Button type="submit" className="w-full" disabled={processing}>
+                            <Button
+                                type="submit"
+                                className="w-full"
+                                disabled={processing}
+                            >
                                 {processing && <Spinner />}
                                 Verifikasi
                             </Button>
@@ -54,7 +58,12 @@ export default function GuruVerifyOtp({ phone }: Props) {
 
             <Form method="post" action="/teacher/resend-otp">
                 {({ processing }) => (
-                    <Button type="submit" variant="outline" className="w-full" disabled={processing}>
+                    <Button
+                        type="submit"
+                        variant="outline"
+                        className="w-full"
+                        disabled={processing}
+                    >
                         Kirim ulang OTP
                     </Button>
                 )}

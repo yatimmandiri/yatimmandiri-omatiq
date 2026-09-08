@@ -25,7 +25,7 @@ class DistrictController extends Controller
         $regencies = Regency::query()->select(['id', 'name'])->get();
 
         $data = [
-            'regencies' => $regencies
+            'regencies' => $regencies,
         ];
 
         return Inertia::render('admin/core/regions/districts/list', $data);
@@ -41,7 +41,7 @@ class DistrictController extends Controller
         $regencies = Regency::query()->select(['id', 'name'])->get();
 
         $data = [
-            'regencies' => $regencies
+            'regencies' => $regencies,
         ];
 
         return Inertia::render('admin/core/regions/districts/create', $data);
@@ -106,7 +106,7 @@ class DistrictController extends Controller
 
         $data = [
             'district' => $district,
-            'regencies' => $regencies
+            'regencies' => $regencies,
         ];
 
         return Inertia::render('admin/core/regions/districts/edit', $data);
@@ -180,8 +180,7 @@ class DistrictController extends Controller
             ->search($globalSearch)
             ->when(
                 data_get($filterValue, 'regency_id'),
-                fn($query, $value) =>
-                $query->where('regency_id', $value)
+                fn ($query, $value) => $query->where('regency_id', $value)
             )
             ->orderBy($orderBy, $orderDirection);
 

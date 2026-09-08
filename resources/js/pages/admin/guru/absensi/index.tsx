@@ -1,13 +1,18 @@
 import { Card } from '@/components/ui/card';
 import { dashboard } from '@/routes/admin';
+import absensi from '@/routes/admin/guru/absensi';
 
 export default function AbsensiPage() {
     return (
         <div className="flex flex-1 flex-col gap-6 p-4">
             <h1 className="text-2xl font-bold">Absensi</h1>
             <Card className="p-6">
-                <p className="text-muted-foreground">Fitur absensi binaan per sanggar — segera hadir.</p>
-                <p className="mt-2 text-sm text-muted-foreground">Rencana: rekap kehadiran santri per pertemuan sanggar.</p>
+                <p className="text-muted-foreground">
+                    Fitur absensi binaan per sanggar — segera hadir.
+                </p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                    Rencana: rekap kehadiran santri per pertemuan sanggar.
+                </p>
             </Card>
         </div>
     );
@@ -15,7 +20,7 @@ export default function AbsensiPage() {
 
 AbsensiPage.layout = {
     breadcrumbs: [
-        { title: 'Dashboard', href: dashboard().url },
-        { title: 'Absensi', href: '/admin/absensi' },
+        { title: 'Dashboard', href: dashboard() },
+        { title: 'Absensi', href: absensi.index().url },
     ],
 };

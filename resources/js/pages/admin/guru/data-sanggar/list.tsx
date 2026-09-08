@@ -2,14 +2,21 @@ import { DataTableComponent } from '@/components/partials/dataTables';
 import { DataTableProvider } from '@/components/partials/dataTables/hooks/useDataTables';
 import { renderRowHeader } from '@/components/partials/dataTables/utils/dataTable-utils';
 import { dashboard } from '@/routes/admin';
-import sanggar from '@/routes/admin/data-sanggar';
+import sanggar from '@/routes/admin/guru/data-sanggar';
 import { useState } from 'react';
 
 export default function ListPage() {
     const [refreshData] = useState(false);
     const columns = [
-        { header: (info: any) => renderRowHeader(info, 'Nama Sanggar'), accessorKey: 'name' },
-        { header: 'Tipe', accessorKey: 'type', cell: (info: any) => info.getValue() ?? '-' },
+        {
+            header: (info: any) => renderRowHeader(info, 'Nama Sanggar'),
+            accessorKey: 'name',
+        },
+        {
+            header: 'Tipe',
+            accessorKey: 'type',
+            cell: (info: any) => info.getValue() ?? '-',
+        },
         { header: 'Kantor', accessorKey: 'kantor_name' },
         { header: 'Total Santri', accessorKey: 'total_students' },
     ];
@@ -26,7 +33,7 @@ export default function ListPage() {
                     formatDataExport={(data: any[]) => data}
                     withActions={false}
                 >
-                    <DataTableComponent buttonActive={{ create: false} } />
+                    <DataTableComponent buttonActive={{ create: false }} />
                 </DataTableProvider>
             </div>
         </div>
@@ -35,7 +42,7 @@ export default function ListPage() {
 
 ListPage.layout = {
     breadcrumbs: [
-        { title: 'Dashboard', href: dashboard() },
+        { title: 'Dashboard', href: dashboard().url },
         { title: 'Data Sanggar', href: sanggar.index().url },
     ],
 };

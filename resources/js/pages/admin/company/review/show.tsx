@@ -5,8 +5,7 @@ import { router, usePage } from '@inertiajs/react';
 import { ArrowLeft, Pencil, Quote, Star } from 'lucide-react';
 
 export default function ShowPage() {
-    const { review } = usePage<{ review: Record<string, any> }>()
-        .props;
+    const { review } = usePage<{ review: Record<string, any> }>().props;
 
     return (
         <div className="flex flex-1 flex-col gap-6 p-4">
@@ -47,20 +46,14 @@ export default function ShowPage() {
                         <div className="h-20 w-20 rounded-2xl bg-muted" />
                     )}
                     <div>
-                        <h2 className="text-xl font-bold">
-                            {review.name}
-                        </h2>
-                        <p className="text-muted-foreground">
-                            {review.role}
-                        </p>
+                        <h2 className="text-xl font-bold">{review.name}</h2>
+                        <p className="text-muted-foreground">{review.role}</p>
                     </div>
                 </div>
                 <div className="flex gap-1 text-amber-400">
-                    {Array.from({ length: review.rating }).map(
-                        (_, index) => (
-                            <Star key={index} className="size-5 fill-current" />
-                        ),
-                    )}
+                    {Array.from({ length: review.rating }).map((_, index) => (
+                        <Star key={index} className="size-5 fill-current" />
+                    ))}
                 </div>
                 <blockquote className="relative rounded-md bg-muted p-6 text-base leading-8">
                     <Quote className="mb-3 size-6 text-primary" />

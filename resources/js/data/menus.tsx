@@ -4,6 +4,7 @@ import olimpiadeObjectives from '@/routes/admin/companies/olimpiade-objectives';
 import olimpiadeSchedules from '@/routes/admin/companies/olimpiade-schedules';
 import olimpiadeVideos from '@/routes/admin/companies/olimpiade-videos';
 import participants from '@/routes/admin/companies/participants';
+import periods from '@/routes/admin/companies/periods';
 import testimonials from '@/routes/admin/companies/testimonials';
 import permissions from '@/routes/admin/core/permissions';
 import districts from '@/routes/admin/core/regions/districts';
@@ -15,11 +16,14 @@ import users from '@/routes/admin/core/users';
 import activities from '@/routes/admin/logs/activities';
 import site from '@/routes/admin/settings/site';
 import {
+    CalendarDays,
     ChevronRight,
     CogIcon,
     CpuIcon,
+    Database,
     GraduationCap,
     Handshake,
+    Images,
     MapIcon,
     Trophy,
     UserCheck,
@@ -29,10 +33,11 @@ import reviews from '@/routes/admin/companies/reviews';
 import sliders from '@/routes/admin/companies/sliders';
 import teachers from '@/routes/admin/companies/teachers';
 import faqCompanies from '@/routes/admin/companies/faq-companies';
-import dataPeserta from '@/routes/admin/data-peserta';
-import binaan from '@/routes/admin/data-binaan';
-import sanggar from '@/routes/admin/data-sanggar';
-import absensi from '@/routes/admin/absensi';
+import dataPeserta from '@/routes/admin/guru/data-peserta';
+import binaan from '@/routes/admin/guru/data-binaan';
+import sanggar from '@/routes/admin/guru/data-sanggar';
+import absensi from '@/routes/admin/guru/absensi';
+import students from '@/routes/admin/companies/students';
 
 export const NavigationList = [
     {
@@ -53,6 +58,13 @@ export const NavigationList = [
                 permission: 'view-participant',
                 roles: ['Administrators'],
                 icon: Users,
+            },
+            {
+                title: 'Data Students',
+                href: students.index().url,
+                permission: 'view-student',
+                roles: ['Administrators'],
+                icon: GraduationCap,
             },
             {
                 title: 'Data Peserta',
@@ -164,58 +176,78 @@ export const NavigationList = [
                 icon: Trophy,
                 children: [
                     {
-                        title: 'Olimpiade',
-                        href: olimpiades.index().url,
-                        permission: 'view-olimpiade',
-                        icon: ChevronRight,
+                        title: 'Master Data',
+                        roles: ['Administrators'],
+                        icon: Database,
+                        children: [
+                            {
+                                title: 'Periode',
+                                href: periods.index().url,
+                                permission: 'view-period',
+                                icon: CalendarDays,
+                            },
+                            {
+                                title: 'Olimpiade',
+                                href: olimpiades.index().url,
+                                permission: 'view-olimpiade',
+                                icon: ChevronRight,
+                            },
+                            {
+                                title: 'Objectives',
+                                href: olimpiadeObjectives.index().url,
+                                permission: 'view-olimpiade-objective',
+                                icon: ChevronRight,
+                            },
+                            {
+                                title: 'Jadwal Olimpiade',
+                                href: olimpiadeSchedules.index().url,
+                                permission: 'view-olimpiade-schedule',
+                                icon: ChevronRight,
+                            },
+                        ],
                     },
                     {
-                        title: 'Objectives',
-                        href: olimpiadeObjectives.index().url,
-                        permission: 'view-olimpiade-objective',
-                        icon: ChevronRight,
-                    },
-                    {
-                        title: 'Gallery',
-                        href: olimpiadeGalleries.index().url,
-                        permission: 'view-olimpiade-gallery',
-                        icon: ChevronRight,
-                    },
-                    {
-                        title: 'Video',
-                        href: olimpiadeVideos.index().url,
-                        permission: 'view-olimpiade-video',
-                        icon: ChevronRight,
-                    },
-                    {
-                        title: 'Jadwal Olimpiade',
-                        href: olimpiadeSchedules.index().url,
-                        permission: 'view-olimpiade-schedule',
-                        icon: ChevronRight,
-                    },
-                    {
-                        title: 'Testimonials',
-                        href: testimonials.index().url,
-                        permission: 'view-testimonial',
-                        icon: ChevronRight,
-                    },
-                    {
-                        title: 'Reviews',
-                        href: reviews.index().url,
-                        permission: 'view-review',
-                        icon: ChevronRight,
-                    },
-                    {
-                        title: 'Sliders',
-                        href: sliders.index().url,
-                        permission: 'view-slider',
-                        icon: ChevronRight,
-                    },
-                    {
-                        title: 'FAQ Company',
-                        href: faqCompanies.index().url,
-                        permission: 'view-faq-company',
-                        icon: ChevronRight,
+                        title: 'Konten & Media',
+                        roles: ['Administrators'],
+                        icon: Images,
+                        children: [
+                            {
+                                title: 'Gallery',
+                                href: olimpiadeGalleries.index().url,
+                                permission: 'view-olimpiade-gallery',
+                                icon: ChevronRight,
+                            },
+                            {
+                                title: 'Video',
+                                href: olimpiadeVideos.index().url,
+                                permission: 'view-olimpiade-video',
+                                icon: ChevronRight,
+                            },
+                            {
+                                title: 'Sliders',
+                                href: sliders.index().url,
+                                permission: 'view-slider',
+                                icon: ChevronRight,
+                            },
+                            {
+                                title: 'Testimonials',
+                                href: testimonials.index().url,
+                                permission: 'view-testimonial',
+                                icon: ChevronRight,
+                            },
+                            {
+                                title: 'Reviews',
+                                href: reviews.index().url,
+                                permission: 'view-review',
+                                icon: ChevronRight,
+                            },
+                            {
+                                title: 'FAQ Company',
+                                href: faqCompanies.index().url,
+                                permission: 'view-faq-company',
+                                icon: ChevronRight,
+                            },
+                        ],
                     },
                 ],
             },

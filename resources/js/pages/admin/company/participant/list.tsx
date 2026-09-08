@@ -12,7 +12,15 @@ import {
 } from '@/components/ui/dropdown-menu';
 import participants from '@/routes/admin/companies/participants';
 import { router, usePage } from '@inertiajs/react';
-import { CheckCircle2, Clock3, Filter, RotateCcw, XCircle } from 'lucide-react';
+import {
+    CheckCircle2,
+    Clock3,
+    ExternalLink,
+    Filter,
+    RefreshCw,
+    RotateCcw,
+    XCircle,
+} from 'lucide-react';
 import { useState } from 'react';
 
 const statusLabels: Record<string, string> = {
@@ -33,14 +41,24 @@ const paymentStatusLabels: Record<string, string> = {
 };
 
 const statusVariant = (status: string) =>
-    status === 'verified' ? 'default' : status === 'rejected' ? 'destructive' : 'secondary';
+    status === 'verified'
+        ? 'default'
+        : status === 'rejected'
+          ? 'destructive'
+          : 'secondary';
 
 export default function ListPage() {
-    const { filterOptions } = usePage<{
+    const { filterOptions, sheets } = usePage<{
         filterOptions?: {
             olimpiades?: Array<{ value: string; label: string }>;
             eventYears?: Array<{ value: string; label: string }>;
             branches?: Array<{ value: string; label: string }>;
+        };
+        sheets?: {
+            enabled?: boolean;
+            spreadsheet_id?: string | null;
+            sheet_name?: string | null;
+            url?: string | null;
         };
     }>().props;
 
@@ -56,6 +74,7 @@ export default function ListPage() {
             cell: (info: any) => {
                 const row = info.row.original;
                 const name = info.getValue() ?? row.full_name ?? '-';
+
                 return (
                     <div className="space-y-1">
                         <p className="font-semibold">{name}</p>
@@ -75,13 +94,16 @@ export default function ListPage() {
             header: 'Jalur',
             accessorKey: 'registration_type',
             cell: (info: any) =>
-                registrationTypeLabels[info.getValue()] ?? info.getValue() ?? '-',
+                registrationTypeLabels[info.getValue()] ??
+                info.getValue() ??
+                '-',
         },
         {
             header: 'Sekolah',
             accessorKey: 'student.school_name',
             cell: (info: any) => {
                 const row = info.row.original;
+
                 return row.student?.school_name ?? info.getValue() ?? '-';
             },
         },
@@ -90,7 +112,13 @@ export default function ListPage() {
             accessorKey: 'student.regency',
             cell: (info: any) => {
                 const row = info.row.original;
-                return info.getValue()?.name ?? row.penyaluran_sanggar_name ?? row.student?.school_name ?? '-';
+
+                return (
+                    info.getValue()?.name ??
+                    row.penyaluran_sanggar_name ??
+                    row.student?.school_name ??
+                    '-'
+                );
             },
         },
         {
@@ -98,7 +126,12 @@ export default function ListPage() {
             accessorKey: 'status',
             cell: (info: any) => {
                 const status = info.getValue();
-                const Icon = status === 'verified' ? CheckCircle2 : status === 'rejected' ? XCircle : Clock3;
+                const Icon =
+                    status === 'verified'
+                        ? CheckCircle2
+                        : status === 'rejected'
+                          ? XCircle
+                          : Clock3;
                 const row = info.row.original;
 
                 const updateStatus = (newStatus: string) => {
@@ -115,19 +148,28 @@ export default function ListPage() {
                 return (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Badge variant={statusVariant(status) as any} className="cursor-pointer">
+                            <Badge
+                                variant={statusVariant(status) as any}
+                                className="cursor-pointer"
+                            >
                                 <Icon />
                                 {statusLabels[status] ?? status}
                             </Badge>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="start">
-                            <DropdownMenuItem onClick={() => updateStatus('submitted')}>
+                            <DropdownMenuItem
+                                onClick={() => updateStatus('submitted')}
+                            >
                                 <Clock3 /> Submitted
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => updateStatus('verified')}>
+                            <DropdownMenuItem
+                                onClick={() => updateStatus('verified')}
+                            >
                                 <CheckCircle2 /> Verified
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => updateStatus('rejected')}>
+                            <DropdownMenuItem
+                                onClick={() => updateStatus('rejected')}
+                            >
                                 <XCircle /> Rejected
                             </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -163,19 +205,89 @@ export default function ListPage() {
                         items.map((item, index) => ({
                             No: index + 1,
                             Registrasi: item.registration_number,
-                            Nama: item.student?.full_name ?? item.full_name ?? '-',
+                            Nama:
+                                item.student?.full_name ??
+                                item.full_name ??
+                                '-',
                             Olimpiade: item.olimpiade?.name || '-',
-                            Jalur: registrationTypeLabels[item.registration_type] ?? item.registration_type ?? '-',
+                            Jalur:
+                                registrationTypeLabels[
+                                    item.registration_type
+                                ] ??
+                                item.registration_type ??
+                                '-',
                             Sekolah: item.student?.school_name ?? '-',
-                            Wilayah: item.student?.regency?.name ?? item.penyaluran_sanggar_name ?? '-',
+                            Wilayah:
+                                item.student?.regency?.name ??
+                                item.penyaluran_sanggar_name ??
+                                '-',
                             Status: statusLabels[item.status] ?? item.status,
-                            Pembayaran: paymentStatusLabels[item.payment_status] ?? item.payment_status ?? '-',
+                            Pembayaran:
+                                paymentStatusLabels[item.payment_status] ??
+                                item.payment_status ??
+                                '-',
                             Cabang: item.branch ?? '-',
                             Tahun: item.event_year ?? '-',
                         }))
                     }
                 >
                     <div className="flex flex-col gap-4 px-4 pt-8 md:px-8">
+                        <div className="rounded-xl border bg-muted/20 p-4">
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                <div className="space-y-1">
+                                    <div className="flex items-center gap-2 text-sm font-semibold">
+                                        <ExternalLink className="size-4 text-primary" />
+                                        Google Sheets Realtime
+                                        {sheets?.enabled ? (
+                                            <Badge
+                                                variant="default"
+                                                className="ml-2"
+                                            >
+                                                Live
+                                            </Badge>
+                                        ) : (
+                                            <Badge
+                                                variant="secondary"
+                                                className="ml-2"
+                                            >
+                                                Off
+                                            </Badge>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="flex gap-2">
+                                    {sheets?.url && (
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            asChild
+                                        >
+                                            <a
+                                                href={sheets.url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                            >
+                                                <ExternalLink className="size-4" />
+                                                Buka GSheet
+                                            </a>
+                                        </Button>
+                                    )}
+                                    <Button
+                                        size="sm"
+                                        onClick={() =>
+                                            router.post(
+                                                participants.syncSheet().url,
+                                            )
+                                        }
+                                        disabled={!sheets?.enabled}
+                                    >
+                                        <RefreshCw className="size-4" />
+                                        Sync Ulang
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                             <div>
                                 <div className="flex items-center gap-2 text-sm font-semibold">

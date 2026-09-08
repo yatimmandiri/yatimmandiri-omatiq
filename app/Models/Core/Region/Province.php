@@ -9,11 +9,11 @@
 
 namespace App\Models\Core\Region;
 
-use App\Models\Core\Region\Regency;
 use AzisHapidin\IndoRegion\Traits\ProvinceTrait;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 
@@ -26,7 +26,8 @@ use Spatie\Activitylog\Support\LogOptions;
  */
 class Province extends Model
 {
-    use ProvinceTrait, LogsActivity;
+    use LogsActivity, ProvinceTrait;
+
     /**
      * Table name.
      *
@@ -37,7 +38,7 @@ class Province extends Model
     /**
      * Province has many regencies.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return HasMany
      */
     public function regencies()
     {

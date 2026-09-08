@@ -1,8 +1,16 @@
-import { NewsCard, SectionHeader } from "@/components/marketing/marketing-components"
-import type { NewsItem } from "@/components/marketing/site-data";
+import {
+    NewsCard,
+    SectionHeader,
+} from '@/components/marketing/marketing-components';
+import type { NewsItem } from '@/components/marketing/site-data';
 
-export const NewsSection = ({ data, newsLoading }: { data: NewsItem[]; newsLoading: boolean }) => {
-
+export const NewsSection = ({
+    data,
+    newsLoading,
+}: {
+    data: NewsItem[];
+    newsLoading: boolean;
+}) => {
     return (
         <section className="bg-white px-5 py-16 lg:px-8">
             <div className="mx-auto max-w-7xl">
@@ -21,20 +29,15 @@ export const NewsSection = ({ data, newsLoading }: { data: NewsItem[]; newsLoadi
                     </div>
                 ) : (
                     <div className="mt-10 space-y-6">
-                        {data[0] && (
-                            <NewsCard article={data[0]} featured />
-                        )}
+                        {data[0] && <NewsCard article={data[0]} featured />}
                         <div className="grid min-w-0 gap-6 md:grid-cols-2">
                             {data.slice(1, 3).map((article) => (
-                                <NewsCard
-                                    key={article.id}
-                                    article={article}
-                                />
+                                <NewsCard key={article.id} article={article} />
                             ))}
                         </div>
                     </div>
                 )}
             </div>
         </section>
-    )
-}
+    );
+};

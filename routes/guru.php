@@ -17,5 +17,3 @@ Route::prefix('teacher')->as('teacher.')->middleware(['auth', 'verified', 'teach
     Route::get('biodata', [BiodataController::class, 'edit'])->name('biodata.edit');
     Route::put('biodata', [BiodataController::class, 'update'])->name('biodata.update');
 });
-
-

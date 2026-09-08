@@ -10,7 +10,10 @@ use App\Models\Company\Olimpiade;
 use App\Models\Company\Participant;
 use App\Models\Core\Region\Province;
 use App\Models\Core\Region\Regency;
+use App\Services\StudentService;
+use App\Settings\SiteSettings;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -40,7 +43,15 @@ class ParticipantController extends Controller
             ->sortDesc()
             ->values();
 
+        $settings = app(SiteSettings::class);
+
         return Inertia::render('admin/company/participant/list', [
+            'sheets' => [
+                'enabled' => $settings->sheets_sync_enabled,
+                'spreadsheet_id' => $settings->sheets_spreadsheet_id,
+                'sheet_name' => $settings->sheets_sheet_name ?? config('sheets.sheet_name'),
+                'url' => $settings->sheets_spreadsheet_id ? 'https://docs.google.com/spreadsheets/d/'.$settings->sheets_spreadsheet_id : null,
+            ],
             'filterOptions' => [
                 'olimpiades' => Olimpiade::query()
                     ->ordered()
@@ -97,33 +108,46 @@ class ParticipantController extends Controller
 
         $data = $this->payload($request);
 
-        DB::transaction(function () use ($request, $participant, $data) {
-            if ($participant->student) {
-                $studentData = $this->studentPayload($request);
-                foreach ($this->studentFileMap() as $input => $column) {
+        $studentService = app(StudentService::class);
+
+        try {
+            DB::transaction(function () use ($request, $participant, $data, $studentService) {
+                if ($participant->student) {
+                    $studentData = $this->studentPayload($request);
+                    foreach ($this->studentFileMap() as $input => $column) {
+                        if ($request->hasFile($input)) {
+                            $studentData[$column] = $this->replaceFile(
+                                $participant->student->{$column},
+                                $request->file($input),
+                                'uploads/students/'.$input,
+                            );
+                        }
+                    }
+
+                    if ($participant->student->penyaluran_id) {
+                        $studentService->syncToPenyaluran($participant->student, $studentData);
+                    }
+
+                    $participant->student->update($studentData);
+                }
+
+                foreach ($this->fileMap() as $input => $column) {
                     if ($request->hasFile($input)) {
-                        $studentData[$column] = $this->replaceFile(
-                            $participant->student->{$column},
+                        $data[$column] = $this->replaceFile(
+                            $participant->{$column},
                             $request->file($input),
-                            'uploads/students/'.$input,
+                            'uploads/participants/'.$input,
                         );
                     }
                 }
-                $participant->student->update($studentData);
-            }
 
-            foreach ($this->fileMap() as $input => $column) {
-                if ($request->hasFile($input)) {
-                    $data[$column] = $this->replaceFile(
-                        $participant->{$column},
-                        $request->file($input),
-                        'uploads/participants/'.$input,
-                    );
-                }
-            }
-
-            $participant->update($data);
-        });
+                $participant->update($data);
+            });
+        } catch (\Throwable $e) {
+            return back()
+                ->withErrors(['student' => 'Gagal memperbarui data santri di server Penyaluran: '.$e->getMessage()])
+                ->withInput();
+        }
 
         $this->logSuccess('update-participant', "Updated participant: {$participant->full_name}", [
             'participant_id' => $participant->id,
@@ -167,6 +191,20 @@ class ParticipantController extends Controller
         $participant->update($request->only(['status', 'notes']));
 
         return back()->with('success', 'Participant Status Updated Successfully');
+    }
+
+    public function syncSheet(Request $request)
+    {
+        $this->authorize('syncSheet', Participant::class);
+
+        $settings = app(SiteSettings::class);
+        if (! $settings->sheets_sync_enabled || ! $settings->sheets_spreadsheet_id) {
+            return back()->with('error', 'GSheet sync belum diaktifkan. Atur spreadsheet ID di Site Settings.');
+        }
+
+        Artisan::queue('sheets:sync', ['--chunk' => 200]);
+
+        return back()->with('success', 'Sync ke Google Sheets dimulai. Cek GSheet dalam beberapa menit (queue).');
     }
 
     public function getData(Request $request)
@@ -221,9 +259,6 @@ class ParticipantController extends Controller
             'regency_id',
             'parent_phone',
             'nik',
-            'photo',
-            'identity_card',
-            'family_card',
             'student_card',
         ]);
 
@@ -255,9 +290,6 @@ class ParticipantController extends Controller
     private function studentFileMap(): array
     {
         return [
-            'photo' => 'photo_path',
-            'identity_card' => 'identity_card_path',
-            'family_card' => 'family_card_path',
             'student_card' => 'student_card_path',
         ];
     }
@@ -285,9 +317,6 @@ class ParticipantController extends Controller
         if ($participant->relationLoaded('student') && $participant->student) {
             $payload['student'] = [
                 ...$participant->student->toArray(),
-                'photo_url' => $participant->student->photo_url,
-                'identity_card_url' => $participant->student->identity_card_url,
-                'family_card_url' => $participant->student->family_card_url,
                 'student_card_url' => $participant->student->student_card_url,
             ];
         }

@@ -23,8 +23,16 @@ export default function DetailPage() {
                         <Button
                             variant="outline"
                             onClick={() => {
-                                if (confirm('Reset password guru ini ke default "password"?')) {
-                                    router.put(teachers.resetPassword(user.id).url, {}, { preserveScroll: true });
+                                if (
+                                    confirm(
+                                        'Reset password guru ini ke default "password"?',
+                                    )
+                                ) {
+                                    router.put(
+                                        teachers.resetPassword(user.id).url,
+                                        {},
+                                        { preserveScroll: true },
+                                    );
                                 }
                             }}
                         >

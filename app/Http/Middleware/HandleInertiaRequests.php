@@ -29,6 +29,10 @@ class HandleInertiaRequests extends Middleware
      */
     public function handle(Request $request, Closure $next): Response
     {
+        if ($request->is('admin/*')) {
+            config(['inertia.ssr.enabled' => false]);
+        }
+
         // Simpan roles SEBELUM controller logout (agar cookie terbawa di request logout)
         $rolesBefore = null;
         if (Auth::check()) {

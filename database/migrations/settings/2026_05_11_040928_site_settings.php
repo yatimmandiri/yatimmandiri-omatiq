@@ -22,5 +22,8 @@ return new class extends SettingsMigration
         $this->migrator->add('site.maintenance_mode', false);
         $this->migrator->add('site.registration_public_open', true);
         $this->migrator->add('site.registration_binaan_open', true);
+        $this->migrator->add('site.sheets_sync_enabled', false);
+        $this->migrator->add('site.sheets_spreadsheet_id', null);
+        $this->migrator->add('site.sheets_sheet_name', null);
     }
 };

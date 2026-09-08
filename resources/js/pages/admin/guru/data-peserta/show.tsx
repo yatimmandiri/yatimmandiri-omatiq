@@ -1,9 +1,19 @@
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { ProofModal } from '@/components/ui/proof-modal';
 import { dashboard } from '@/routes/admin';
-import dataPeserta from '@/routes/admin/data-peserta';
-import { usePage } from '@inertiajs/react';
-import { ArrowLeft } from 'lucide-react';
+import dataPeserta from '@/routes/admin/guru/data-peserta';
+import { router, usePage } from '@inertiajs/react';
+import { ArrowLeft, ExternalLink, Printer, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 
 const labels: Record<string, string> = {
     male: 'Laki-laki',
@@ -16,7 +26,19 @@ const labels: Record<string, string> = {
 export default function ShowPage() {
     const { participant } = usePage<{ participant: Record<string, any> }>()
         .props;
-    const isBinaan = !!participant.student?.is_binaan || !!participant.student?.penyaluran_id;
+    const isBinaan =
+        !!participant.student?.is_binaan ||
+        !!participant.student?.penyaluran_id;
+    const [openProof, setOpenProof] = useState(false);
+    const [openDelete, setOpenDelete] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const handleDelete = () => {
+        setIsDeleting(true);
+        router.delete(dataPeserta.destroy(participant.id).url, {
+            onFinish: () => setIsDeleting(false),
+        });
+    };
 
     return (
         <div className="flex flex-1 flex-col gap-6 p-4">
@@ -28,7 +50,7 @@ export default function ShowPage() {
                         {participant.student?.full_name ?? participant.nik}
                     </p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex items-center gap-2">
                     <Button
                         variant="outline"
                         onClick={() => window.history.back()}
@@ -36,14 +58,82 @@ export default function ShowPage() {
                         <ArrowLeft />
                         Kembali
                     </Button>
+                    {participant.status === 'verified' && (
+                        <Button
+                            variant="outline"
+                            asChild
+                            className="gap-2 border-[#17524A] text-[#17524A] hover:bg-[#17524A]/10"
+                        >
+                            <a
+                                href={`/admin/guru/data-peserta/${participant.id}/card`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                <Printer className="size-4" />
+                                Cetak Kartu
+                            </a>
+                        </Button>
+                    )}
+                    <Button
+                        variant="destructive"
+                        onClick={() => setOpenDelete(true)}
+                    >
+                        <Trash2 className="size-4" />
+                        Batalkan Pendaftaran
+                    </Button>
                 </div>
             </div>
+
+            <Dialog open={openDelete} onOpenChange={setOpenDelete}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Batalkan Pendaftaran Peserta</DialogTitle>
+                        <DialogDescription className="space-y-2 pt-2">
+                            <p>
+                                Apakah Anda yakin ingin membatalkan pendaftaran
+                                untuk{' '}
+                                <strong>
+                                    {participant.student?.full_name ??
+                                        participant.nik}
+                                </strong>{' '}
+                                ({participant.registration_number})?
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                                Data binaan tidak akan terhapus dan dapat
+                                didaftarkan kembali ke olimpiade jika
+                                pendaftaran masih dibuka.
+                            </p>
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="gap-2 sm:gap-0">
+                        <Button
+                            variant="outline"
+                            onClick={() => setOpenDelete(false)}
+                            disabled={isDeleting}
+                        >
+                            Batal
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={handleDelete}
+                            disabled={isDeleting}
+                        >
+                            {isDeleting
+                                ? 'Membatalkan...'
+                                : 'Batalkan Pendaftaran'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             <div className="grid gap-6 lg:grid-cols-[1fr_0.8fr]">
                 <Card className="space-y-5 p-5">
                     <h2 className="text-lg font-bold">Data Peserta</h2>
                     <div className="grid gap-5 sm:grid-cols-2">
-                        <Detail label="NIK" value={participant.student?.nik ?? participant.nik} />
+                        <Detail
+                            label="NIK"
+                            value={participant.student?.nik ?? participant.nik}
+                        />
                         <Detail
                             label="Nama Lengkap"
                             value={participant.student?.full_name}
@@ -60,9 +150,23 @@ export default function ShowPage() {
                         />
                         {isBinaan ? (
                             <>
-                                <Detail label="NIS" value={participant.student?.nis} />
-                                <Detail label="Tanggal Lahir" value={participant.student?.birth_date?.slice(0, 10) ?? ''} />
-                                <Detail label="Jenjang" value={participant.student?.school_level} />
+                                <Detail
+                                    label="NIS"
+                                    value={participant.student?.nis}
+                                />
+                                <Detail
+                                    label="Tanggal Lahir"
+                                    value={
+                                        participant.student?.birth_date?.slice(
+                                            0,
+                                            10,
+                                        ) ?? ''
+                                    }
+                                />
+                                <Detail
+                                    label="Jenjang"
+                                    value={participant.student?.school_level}
+                                />
                             </>
                         ) : (
                             <>
@@ -97,14 +201,20 @@ export default function ShowPage() {
                             </>
                         )}
                         {isBinaan && participant.penyaluran_sanggar_name && (
-                            <Detail label="Sanggar" value={participant.penyaluran_sanggar_name} />
+                            <Detail
+                                label="Sanggar"
+                                value={participant.penyaluran_sanggar_name}
+                            />
                         )}
                         <Detail
                             label="Status"
                             value={labels[participant.status]}
                         />
                     </div>
-                    <Detail label="ID Penyaluran" value={participant.student?.penyaluran_id} />
+                    <Detail
+                        label="ID Penyaluran"
+                        value={participant.student?.penyaluran_id}
+                    />
                     {!isBinaan && (
                         <Detail
                             label="Alamat"
@@ -127,17 +237,29 @@ export default function ShowPage() {
                         label="HP Pendamping"
                         value={participant.student?.mentor_phone}
                     />
+                    {participant.payment_proof_url && (
+                        <div>
+                            <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                                Bukti Pembayaran
+                            </p>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="mt-1"
+                                onClick={() => setOpenProof(true)}
+                            >
+                                Lihat Bukti <ExternalLink className="size-4" />
+                            </Button>
+                            <ProofModal
+                                href={participant.payment_proof_url}
+                                open={openProof}
+                                onOpenChange={setOpenProof}
+                            />
+                        </div>
+                    )}
                     <DetailFile
-                        label="Foto"
-                        url={participant.student?.photo_url}
-                    />
-                    <DetailFile
-                        label="Kartu Identitas"
-                        url={participant.student?.identity_card_url}
-                    />
-                    <DetailFile
-                        label="Kartu Keluarga"
-                        url={participant.student?.family_card_url}
+                        label="Kartu Pelajar"
+                        url={participant.student?.student_card_url}
                     />
                 </Card>
             </div>

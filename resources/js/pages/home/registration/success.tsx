@@ -5,6 +5,7 @@ import {
     ClipboardCheck,
     Home,
     Mail,
+    Printer,
     Trophy,
 } from 'lucide-react';
 
@@ -14,6 +15,7 @@ type SuccessProps = {
         full_name: string;
         olimpiade?: string | null;
         email?: string | null;
+        status?: string;
     };
 };
 
@@ -81,6 +83,17 @@ export default function RegistrationSuccessPage() {
                         <Home className="h-4 w-4" />
                         Kembali ke Home
                     </Link>
+                    {participant?.registration_number && (
+                        <a
+                            href={`/pendaftaran/kartu/${participant.registration_number}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-[#17524A] bg-[#17524A]/5 px-6 py-4 text-sm font-black text-[#17524A] transition hover:-translate-y-1 hover:bg-[#17524A]/10"
+                        >
+                            <Printer className="h-4 w-4" />
+                            Cetak Kartu Peserta
+                        </a>
+                    )}
                     <Link
                         href="/jadwal"
                         className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#17524A] px-6 py-4 text-sm font-black text-white shadow-lg shadow-[#17524A]/25 transition hover:-translate-y-1"

@@ -118,6 +118,7 @@ Breadcrumbs::for(
 );
 
 foreach ([
+    'periods' => ['label' => 'Periode', 'attribute' => 'name'],
     'sliders' => ['label' => 'Sliders', 'attribute' => 'title'],
     'faq-companies' => ['label' => 'FAQ Company', 'attribute' => 'question'],
     'participants' => ['label' => 'Peserta', 'attribute' => 'full_name'],

@@ -36,6 +36,7 @@ return new class extends Migration
             $table->string('family_card_path')->nullable();
             $table->string('student_card_path')->nullable();
             $table->boolean('is_binaan')->default(false);
+            $table->boolean('is_active')->default(true)->index();
             $table->index('province_id');
             $table->index('regency_id');
             $table->index('district_id');

@@ -1,16 +1,19 @@
 import { useSyncExternalStore } from 'react';
 
-const subscribeToMedia =
-    (query: string) => (onStoreChange: () => void) => {
-        const media = window.matchMedia(query);
+const subscribeToMedia = (query: string) => (onStoreChange: () => void) => {
+    if (typeof window === 'undefined') {
+        return () => {};
+    }
 
-        media.addEventListener('change', onStoreChange);
+    const media = window.matchMedia(query);
 
-        return () => media.removeEventListener('change', onStoreChange);
-    };
+    media.addEventListener('change', onStoreChange);
 
-const getMediaSnapshot =
-    (query: string) => () => window.matchMedia(query).matches;
+    return () => media.removeEventListener('change', onStoreChange);
+};
+
+const getMediaSnapshot = (query: string) => () =>
+    typeof window === 'undefined' ? false : window.matchMedia(query).matches;
 
 export function useMediaQuery(query: string): boolean {
     return useSyncExternalStore(

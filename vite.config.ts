@@ -6,10 +6,11 @@ import laravel from 'laravel-vite-plugin';
 import { bunny } from 'laravel-vite-plugin/fonts';
 import { defineConfig } from 'vite';
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
     plugins: [
         laravel({
             input: ['resources/css/app.css', 'resources/js/app.tsx'],
+            ssr: command === 'build' ? 'resources/js/ssr.tsx' : undefined,
             refresh: true,
             fonts: [
                 bunny('Instrument Sans', {
@@ -28,4 +29,7 @@ export default defineConfig({
             formVariants: true,
         }),
     ],
-});
+    ssr: {
+        noExternal: ['@inertiajs/react'],
+    },
+}));

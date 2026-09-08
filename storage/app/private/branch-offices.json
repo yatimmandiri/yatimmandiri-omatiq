@@ -1,19 +1,19 @@
 [
   {
     "id": 1,
-    "name": "PUSAT 1"
-  },
-  {
-    "id": 2,
-    "name": "LKPMEC"
-  },
-  {
-    "id": 3,
     "name": "BALIKPAPAN"
   },
   {
+    "id": 2,
+    "name": "BANDUNG"
+  },
+  {
+    "id": 3,
+    "name": "BANYUASIN"
+  },
+  {
     "id": 4,
-    "name": "SERANG"
+    "name": "BANYUWANGI"
   },
   {
     "id": 5,
@@ -21,123 +21,123 @@
   },
   {
     "id": 6,
-    "name": "BEKASI"
+    "name": "BATU"
   },
   {
     "id": 7,
-    "name": "BOGOR"
+    "name": "BEKASI"
   },
   {
     "id": 8,
-    "name": "BOJONEGORO"
+    "name": "BLITAR"
   },
   {
     "id": 9,
-    "name": "DENPASAR"
+    "name": "BOGOR"
   },
   {
     "id": 10,
-    "name": "GRESIK"
+    "name": "BOJONEGORO"
   },
   {
     "id": 11,
-    "name": "JAKARTA TIMUR"
+    "name": "CIREBON"
   },
   {
     "id": 12,
-    "name": "JAKARTA BARAT"
+    "name": "DENPASAR"
   },
   {
     "id": 13,
-    "name": "JEMBER"
+    "name": "DEPOK"
   },
   {
     "id": 14,
-    "name": "JOMBANG"
+    "name": "GRESIK"
   },
   {
     "id": 15,
-    "name": "KEPANJEN"
+    "name": "JAKARTA BARAT"
   },
   {
     "id": 16,
-    "name": "LAMONGAN"
-  },
-  {
-    "id": 17,
-    "name": "LUMAJANG"
-  },
-  {
-    "id": 18,
-    "name": "MOJOKERTO"
-  },
-  {
-    "id": 19,
-    "name": "YOGYAKARTA"
-  },
-  {
-    "id": 20,
-    "name": "TULUNGAGUNG"
-  },
-  {
-    "id": 21,
-    "name": "TANGERANG"
-  },
-  {
-    "id": 22,
-    "name": "MALANG"
-  },
-  {
-    "id": 23,
-    "name": "MAROS"
-  },
-  {
-    "id": 24,
-    "name": "PEKALONGAN"
-  },
-  {
-    "id": 25,
-    "name": "PONOROGO"
-  },
-  {
-    "id": 26,
-    "name": "PURWOKERTO"
-  },
-  {
-    "id": 27,
-    "name": "SOLO"
-  },
-  {
-    "id": 28,
-    "name": "SRAGEN"
-  },
-  {
-    "id": 29,
-    "name": "PUSAT 2"
-  },
-  {
-    "id": 30,
-    "name": "KEDIRI"
-  },
-  {
-    "id": 31,
-    "name": "MAGELANG"
-  },
-  {
-    "id": 32,
     "name": "JAKARTA SELATAN"
   },
   {
+    "id": 17,
+    "name": "JAKARTA TIMUR"
+  },
+  {
+    "id": 18,
+    "name": "JEMBER"
+  },
+  {
+    "id": 19,
+    "name": "JOMBANG"
+  },
+  {
+    "id": 20,
+    "name": "KEDIRI"
+  },
+  {
+    "id": 21,
+    "name": "KEPANJEN"
+  },
+  {
+    "id": 22,
+    "name": "KUDUS"
+  },
+  {
+    "id": 23,
+    "name": "LAMONGAN"
+  },
+  {
+    "id": 24,
+    "name": "LAMPUNG"
+  },
+  {
+    "id": 25,
+    "name": "LUMAJANG"
+  },
+  {
+    "id": 26,
+    "name": "MADIUN"
+  },
+  {
+    "id": 27,
+    "name": "MAGELANG"
+  },
+  {
+    "id": 28,
+    "name": "MAGETAN"
+  },
+  {
+    "id": 29,
+    "name": "MAKASSAR"
+  },
+  {
+    "id": 30,
+    "name": "MALANG"
+  },
+  {
+    "id": 31,
+    "name": "MAROS"
+  },
+  {
+    "id": 32,
+    "name": "MEDAN"
+  },
+  {
     "id": 33,
-    "name": "PASURUAN"
+    "name": "MOJOKERTO"
   },
   {
     "id": 34,
-    "name": "PROBOLINGGO"
+    "name": "NGANJUK"
   },
   {
     "id": 35,
-    "name": "MADIUN"
+    "name": "NGAWI"
   },
   {
     "id": 36,
@@ -145,158 +145,70 @@
   },
   {
     "id": 37,
-    "name": "TUBAN"
+    "name": "PASURUAN"
   },
   {
     "id": 38,
-    "name": "LAMPUNG"
+    "name": "PEKALONGAN"
   },
   {
     "id": 39,
-    "name": "BANYUWANGI"
+    "name": "PONOROGO"
   },
   {
     "id": 40,
-    "name": "KUDUS"
+    "name": "PROBOLINGGO"
   },
   {
     "id": 41,
-    "name": "MAKASSAR"
+    "name": "PURWOKERTO"
   },
   {
     "id": 42,
-    "name": "DEPOK"
-  },
-  {
-    "id": 43,
-    "name": "SIDOARJO"
-  },
-  {
-    "id": 44,
-    "name": "BLITAR"
-  },
-  {
-    "id": 45,
-    "name": "MEDAN"
-  },
-  {
-    "id": 46,
-    "name": "SEMARANG"
-  },
-  {
-    "id": 47,
-    "name": "BANDUNG"
-  },
-  {
-    "id": 48,
-    "name": "PUSAT 4"
-  },
-  {
-    "id": 49,
-    "name": "PUSAT 1 - SC"
-  },
-  {
-    "id": 50,
     "name": "SAMARINDA"
   },
   {
-    "id": 51,
-    "name": "CIREBON"
+    "id": 43,
+    "name": "SEMARANG"
   },
   {
-    "id": 52,
-    "name": "BANYUASIN"
+    "id": 44,
+    "name": "SERANG"
   },
   {
-    "id": 53,
-    "name": "PUSAT 3"
+    "id": 45,
+    "name": "SIDOARJO"
   },
   {
-    "id": 54,
-    "name": "WAKAF MANDIRI"
-  },
-  {
-    "id": 55,
-    "name": "FUNDRAISING ONLINE"
-  },
-  {
-    "id": 56,
-    "name": "NGANJUK"
-  },
-  {
-    "id": 57,
-    "name": "REGIONAL OFFICE 1"
-  },
-  {
-    "id": 58,
-    "name": "REGIONAL OFFICE 2"
-  },
-  {
-    "id": 59,
-    "name": "REGIONAL OFFICE 3"
-  },
-  {
-    "id": 60,
-    "name": "REGIONAL OFFICE 4"
-  },
-  {
-    "id": 61,
-    "name": "BATU"
-  },
-  {
-    "id": 62,
-    "name": "RSM"
-  },
-  {
-    "id": 63,
-    "name": "KAB SIDOARJO"
-  },
-  {
-    "id": 64,
-    "name": "MAGETAN"
-  },
-  {
-    "id": 65,
-    "name": "NGAWI"
-  },
-  {
-    "id": 66,
+    "id": 46,
     "name": "SLEMAN"
   },
   {
-    "id": 67,
-    "name": "MEC JAKARTA"
+    "id": 47,
+    "name": "SOLO"
   },
   {
-    "id": 68,
-    "name": "MEC SRAGEN"
+    "id": 48,
+    "name": "SRAGEN"
   },
   {
-    "id": 69,
-    "name": "GRIYA ZAKAT"
+    "id": 49,
+    "name": "SURABAYA"
   },
   {
-    "id": 70,
-    "name": "TANAM BERKAH"
+    "id": 50,
+    "name": "TANGERANG"
   },
   {
-    "id": 71,
-    "name": "REGIONAL OFFICE 5"
+    "id": 51,
+    "name": "TUBAN"
   },
   {
-    "id": 72,
-    "name": "LOKA BERDAYA AMERTA"
+    "id": 52,
+    "name": "TULUNGAGUNG"
   },
   {
-    "id": 73,
-    "name": "PUSAT 1 - GA"
-  },
-  {
-    "id": 74,
-    "name": "WAKAF MANDIRI - SECURITY"
-  },
-  {
-    "id": 75,
-    "name": "ITICM"
+    "id": 53,
+    "name": "YOGYAKARTA"
   }
 ]

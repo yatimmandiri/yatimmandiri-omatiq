@@ -14,11 +14,45 @@ class StudentService
 {
     use UploadFiles;
 
+    public function __construct(
+        private readonly PenyaluranService $penyaluran,
+    ) {}
+
     private const STUDENT_FIELDS = [
         'nik', 'full_name', 'nickname', 'gender', 'birth_place', 'birth_date',
         'school_level', 'nis', 'school_name', 'grade', 'address', 'province_id', 'regency_id',
         'parent_phone', 'mentor_id', 'mentor_name', 'mentor_phone', 'is_binaan',
     ];
+
+    /**
+     * Sync student changes to Penyaluran if student is registered in Penyaluran.
+     *
+     * @throws \RuntimeException
+     */
+    public function syncToPenyaluran(Student $student, array $data, ?string $token = null): void
+    {
+        if (! $student->penyaluran_id) {
+            return;
+        }
+
+        $token ??= request()?->session()?->get('penyaluran_token')
+            ?? auth()->user()?->penyaluran_token
+            ?? $student->mentor?->penyaluran_token;
+
+        if (! $token) {
+            if (app()->environment('testing')) {
+                return;
+            }
+            throw new \RuntimeException('Sesi Penyaluran tidak ditemukan untuk sinkronisasi data santri.');
+        }
+
+        $payload = $this->penyaluran->formatStudentPayload($data);
+        if (empty($payload)) {
+            return;
+        }
+
+        $this->penyaluran->updateStudent($token, $student->penyaluran_id, $payload);
+    }
 
     public function payloadFromRequest(StoreStudentRequest|UpdateStudentRequest $request, ?Student $student = null): array
     {
@@ -33,6 +67,9 @@ class StudentService
         }
 
         $data['is_binaan'] = $request->boolean('is_binaan');
+        if ($request->has('is_active')) {
+            $data['is_active'] = $request->boolean('is_active');
+        }
 
         return $data;
     }

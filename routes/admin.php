@@ -7,8 +7,10 @@ use App\Http\Controllers\Admin\Company\OlimpiadeObjectiveController;
 use App\Http\Controllers\Admin\Company\OlimpiadeScheduleController;
 use App\Http\Controllers\Admin\Company\OlimpiadeVideoController;
 use App\Http\Controllers\Admin\Company\ParticipantController;
+use App\Http\Controllers\Admin\Company\PeriodController;
 use App\Http\Controllers\Admin\Company\ReviewController;
 use App\Http\Controllers\Admin\Company\SliderController;
+use App\Http\Controllers\Admin\Company\StudentController;
 use App\Http\Controllers\Admin\Company\TeacherController;
 use App\Http\Controllers\Admin\Company\TestimonialController;
 use App\Http\Controllers\Admin\Core\PermissionController;
@@ -26,6 +28,7 @@ use App\Http\Controllers\Admin\Guru\SanggarController;
 use App\Http\Controllers\Admin\Settings\LogActivityController;
 use App\Http\Controllers\Admin\Settings\SiteSettingsController;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Company\ParticipantCardController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -67,8 +70,10 @@ Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'auth.admi
     // Companies — Olimpiade & konten terkait
     // -----------------------------------------------------------------
     Route::prefix('companies')->as('companies.')->group(function () {
+        Route::put('periods/{period}/status', [PeriodController::class, 'status'])->name('periods.status');
+        Route::get('periods/data', [PeriodController::class, 'getData'])->name('periods.data');
+        Route::resource('periods', PeriodController::class);
 
-        // Olimpiade inti
         Route::put('olimpiades/{olimpiade}/recommended', [OlimpiadeController::class, 'recommended'])->name('olimpiades.recommended');
         Route::put('olimpiades/{olimpiade}/status', [OlimpiadeController::class, 'status'])->name('olimpiades.status');
         Route::get('olimpiades/data', [OlimpiadeController::class, 'getData'])->name('olimpiades.data');
@@ -92,12 +97,16 @@ Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'auth.admi
         Route::resource('olimpiade-schedules', OlimpiadeScheduleController::class)
             ->parameters(['olimpiade-schedules' => 'olimpiadeSchedule']);
 
-        // Peserta — Data Peserta (admin unified form, inline status)
+        Route::get('participants/{participant}/card', [ParticipantCardController::class, 'print'])->name('participants.card');
         Route::put('participants/{participant}/status', [ParticipantController::class, 'status'])->name('participants.status');
         Route::get('participants/data', [ParticipantController::class, 'getData'])->name('participants.data');
+        Route::post('participants/sync-sheet', [ParticipantController::class, 'syncSheet'])->name('participants.sync-sheet');
         Route::resource('participants', ParticipantController::class)->except(['create', 'store']);
 
-        // Marketing — testimonials / reviews / sliders / FAQ
+        Route::get('students/data', [StudentController::class, 'getData'])->name('students.data');
+        Route::put('students/{student}/status', [StudentController::class, 'status'])->name('students.status');
+        Route::resource('students', StudentController::class)->only(['index', 'show', 'edit', 'update', 'destroy']);
+
         Route::put('testimonials/{testimonial}/status', [TestimonialController::class, 'status'])->name('testimonials.status');
         Route::get('testimonials/data', [TestimonialController::class, 'getData'])->name('testimonials.data');
         Route::resource('testimonials', TestimonialController::class);
@@ -120,22 +129,22 @@ Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'auth.admi
         Route::resource('teachers', TeacherController::class)->parameters(['teachers' => 'teacher'])->only(['index', 'show']);
     });
 
-    // -----------------------------------------------------------------
-    // Kelola Binaan — DataPeserta, Binaan, Sanggar, Absensi (URL baru /admin/data-*)
-    // -----------------------------------------------------------------
-    Route::get('data-peserta/data', [DataPesertaController::class, 'getData'])->name('data-peserta.data');
-    Route::resource('data-peserta', DataPesertaController::class)
-        ->parameters(['data-peserta' => 'participant'])
-        ->only(['index', 'create', 'store', 'show']);
+    Route::prefix('guru')->as('guru.')->group(function () {
+        Route::get('data-peserta/{participant}/card', [ParticipantCardController::class, 'print'])->name('data-peserta.card');
+        Route::get('data-peserta/data', [DataPesertaController::class, 'getData'])->name('data-peserta.data');
+        Route::resource('data-peserta', DataPesertaController::class)
+            ->parameters(['data-peserta' => 'participant'])
+            ->only(['index', 'create', 'store', 'show', 'destroy']);
 
-    Route::get('data-binaan/data', [BinaanController::class, 'getData'])->name('data-binaan.data');
-    Route::resource('data-binaan', BinaanController::class)->parameters(['data-binaan' => 'binaan']);
+        Route::get('data-binaan/data', [BinaanController::class, 'getData'])->name('data-binaan.data');
+        Route::resource('data-binaan', BinaanController::class)->parameters(['data-binaan' => 'binaan']);
 
-    Route::get('data-sanggar/data', [SanggarController::class, 'getData'])->name('data-sanggar.data');
-    Route::get('data-sanggar/{sanggar}', [SanggarController::class, 'show'])->name('data-sanggar.show');
-    Route::get('data-sanggar', [SanggarController::class, 'index'])->name('data-sanggar.index');
+        Route::get('data-sanggar/data', [SanggarController::class, 'getData'])->name('data-sanggar.data');
+        Route::get('data-sanggar/{sanggar}', [SanggarController::class, 'show'])->name('data-sanggar.show');
+        Route::get('data-sanggar', [SanggarController::class, 'index'])->name('data-sanggar.index');
 
-    Route::get('absensi', [AbsensiController::class, 'index'])->name('absensi.index');
+        Route::get('absensi', [AbsensiController::class, 'index'])->name('absensi.index');
+    });
 
     // -----------------------------------------------------------------
     // Core — RBAC + Regions

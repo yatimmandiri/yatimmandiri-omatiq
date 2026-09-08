@@ -56,11 +56,11 @@ class SiteSettingsController extends Controller
         $settings->save();
 
         if ($settings) {
-            $this->logSuccess('update-site-settings', "Update Site Settings", [
+            $this->logSuccess('update-site-settings', 'Update Site Settings', [
                 'name' => $request['site_name'],
             ]);
         } else {
-            $this->logError('update-site-settings', "Update Site Settings", [
+            $this->logError('update-site-settings', 'Update Site Settings', [
                 'name' => $request['site_name'],
             ]);
         }
@@ -96,7 +96,7 @@ class SiteSettingsController extends Controller
     public function editorDeleteFile(Request $request)
     {
         $request->validate([
-            'url' => 'required|string'
+            'url' => 'required|string',
         ]);
 
         $url = $request->input('url');
@@ -111,13 +111,13 @@ class SiteSettingsController extends Controller
             Storage::disk('public')->delete($path);
 
             return response()->json([
-                'success' => true
+                'success' => true,
             ]);
         }
 
         return response()->json([
             'success' => false,
-            'message' => 'File not found'
+            'message' => 'File not found',
         ], 404);
     }
 }

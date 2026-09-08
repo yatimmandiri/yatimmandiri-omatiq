@@ -13,8 +13,8 @@ export default function DetailPage() {
 
             // minimal harus ada action + subject
             if (parts.length < 2) {
-return acc;
-}
+                return acc;
+            }
 
             const subject = parts.slice(1).join('-'); // handle "force-delete-user"
 

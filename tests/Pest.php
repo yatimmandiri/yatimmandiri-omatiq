@@ -1,6 +1,11 @@
 <?php
 
+if (! class_exists(Sanitizer::class)) {
+    eval('namespace PHPUnit\Util; class Sanitizer { public static function sanitize(string $s): string { return $s; } public static function escape(string $s): string { return htmlspecialchars($s, ENT_QUOTES); } public static function sanitizeBidirectionalControlCharacters(string $s): string { return $s; } public static function sanitizeWithPrint(string $s): string { return $s; } }');
+}
+
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Util\Sanitizer;
 use Tests\TestCase;
 
 /*

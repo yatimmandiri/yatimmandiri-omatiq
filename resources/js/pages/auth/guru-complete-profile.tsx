@@ -112,7 +112,9 @@ export default function GuruCompleteProfile() {
                             autoComplete="new-password"
                             placeholder="Ulangi password baru"
                         />
-                        <InputError message={form.errors.password_confirmation} />
+                        <InputError
+                            message={form.errors.password_confirmation}
+                        />
                     </div>
                 </div>
 

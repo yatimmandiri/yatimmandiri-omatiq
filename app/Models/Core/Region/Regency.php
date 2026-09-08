@@ -13,6 +13,8 @@ use AzisHapidin\IndoRegion\Traits\RegencyTrait;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 
@@ -26,7 +28,7 @@ use Spatie\Activitylog\Support\LogOptions;
  */
 class Regency extends Model
 {
-    use RegencyTrait, LogsActivity;
+    use LogsActivity, RegencyTrait;
 
     /**
      * Table name.
@@ -41,13 +43,13 @@ class Regency extends Model
      * @var array
      */
     protected $hidden = [
-        'province_id'
+        'province_id',
     ];
 
     /**
      * Regency belongs to Province.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function province()
     {
@@ -57,7 +59,7 @@ class Regency extends Model
     /**
      * Regency has many districts.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return HasMany
      */
     public function districts()
     {

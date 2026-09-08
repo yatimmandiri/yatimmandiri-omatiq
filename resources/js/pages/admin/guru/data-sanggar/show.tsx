@@ -1,6 +1,6 @@
 import { Card } from '@/components/ui/card';
 import { dashboard } from '@/routes/admin';
-import sanggar from '@/routes/admin/data-sanggar';
+import sanggar from '@/routes/admin/guru/data-sanggar';
 import { usePage } from '@inertiajs/react';
 
 export default function ShowPage() {
@@ -12,23 +12,35 @@ export default function ShowPage() {
                 <h2 className="text-lg font-bold">Detail Sanggar</h2>
                 <div className="grid gap-4 md:grid-cols-2">
                     <div>
-                        <p className="text-xs font-semibold uppercase text-muted-foreground">Nama</p>
+                        <p className="text-xs font-semibold text-muted-foreground uppercase">
+                            Nama
+                        </p>
                         <p className="text-sm">{sanggar.name ?? '-'}</p>
                     </div>
                     <div>
-                        <p className="text-xs font-semibold uppercase text-muted-foreground">Tipe</p>
+                        <p className="text-xs font-semibold text-muted-foreground uppercase">
+                            Tipe
+                        </p>
                         <p className="text-sm">{sanggar.type ?? '-'}</p>
                     </div>
                     <div>
-                        <p className="text-xs font-semibold uppercase text-muted-foreground">Kantor</p>
+                        <p className="text-xs font-semibold text-muted-foreground uppercase">
+                            Kantor
+                        </p>
                         <p className="text-sm">{sanggar.kantor_name ?? '-'}</p>
                     </div>
                     <div>
-                        <p className="text-xs font-semibold uppercase text-muted-foreground">Total Santri</p>
-                        <p className="text-sm">{sanggar.total_students ?? '-'}</p>
+                        <p className="text-xs font-semibold text-muted-foreground uppercase">
+                            Total Santri
+                        </p>
+                        <p className="text-sm">
+                            {sanggar.total_students ?? '-'}
+                        </p>
                     </div>
                     <div>
-                        <p className="text-xs font-semibold uppercase text-muted-foreground">Alamat</p>
+                        <p className="text-xs font-semibold text-muted-foreground uppercase">
+                            Alamat
+                        </p>
                         <p className="text-sm">{sanggar.address ?? '-'}</p>
                     </div>
                 </div>
@@ -39,7 +51,7 @@ export default function ShowPage() {
 
 ShowPage.layout = {
     breadcrumbs: [
-        { title: 'Dashboard', href: dashboard() },
+        { title: 'Dashboard', href: dashboard().url },
         { title: 'Data Sanggar', href: sanggar.index().url },
         { title: 'Detail Sanggar', href: '#' },
     ],

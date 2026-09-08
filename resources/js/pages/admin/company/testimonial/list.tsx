@@ -103,7 +103,10 @@ export default function ListPage() {
                         items.map((item, index) => ({
                             No: index + 1,
                             Nama: item.name,
-                            Olimpiade: item.olimpiade_id === 1 ? 'Olimpiade Alquran' : 'Olimpiade Mathematics',
+                            Olimpiade:
+                                item.olimpiade_id === 1
+                                    ? 'Olimpiade Alquran'
+                                    : 'Olimpiade Mathematics',
                             Peran: item.role,
                             Rating: item.rating,
                             Status: item.status ? 'Aktif' : 'Nonaktif',

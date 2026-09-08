@@ -96,4 +96,9 @@ class ParticipantPolicy
 
         return false;
     }
+
+    public function syncSheet(User $user): bool
+    {
+        return $user->hasRole('Administrators') && $user->hasPermissionTo('update-participant');
+    }
 }

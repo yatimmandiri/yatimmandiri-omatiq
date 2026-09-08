@@ -9,7 +9,7 @@ import { useCurrentUrl } from '@/hooks/use-current-url';
 import { cn } from '@/lib/utils';
 import { Link, usePage } from '@inertiajs/react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Fragment } from 'react/jsx-runtime';
 
 const filterMenuByPermissions = (
@@ -22,24 +22,20 @@ const filterMenuByPermissions = (
             const requiredRoles: string[] = item.roles ?? [];
 
             if (requiredRoles.length > 0 && !hasRole(requiredRoles)) {
-return null;
-}
+                return null;
+            }
 
             if (item.permission && !hasPermission(item.permission)) {
-return null;
-}
+                return null;
+            }
 
             const filteredChildren = Array.isArray(item.children)
-                ? filterMenuByPermissions(
-                      item.children,
-                      hasRole,
-                      hasPermission,
-                  )
+                ? filterMenuByPermissions(item.children, hasRole, hasPermission)
                 : [];
 
             if (!item.href && filteredChildren.length === 0) {
-return null;
-}
+                return null;
+            }
 
             return {
                 ...item,
@@ -68,13 +64,16 @@ export const MainNav = ({ items }: any) => {
 
     const getPathname = (href: string) => {
         if (!href) {
-return '';
-}
+            return '';
+        }
 
         try {
-            return normalizePath(
-                new URL(href, window.location.origin).pathname,
-            );
+            const origin =
+                typeof window !== 'undefined'
+                    ? window.location.origin
+                    : 'http://localhost';
+
+            return normalizePath(new URL(href, origin).pathname);
         } catch {
             return normalizePath(href);
         }
@@ -122,7 +121,11 @@ return '';
 
     const [prevPath, setPrevPath] = useState(currentPath);
 
-    if (prevPath !== currentPath) {
+    useEffect(() => {
+        if (prevPath === currentPath) {
+            return;
+        }
+
         setPrevPath(currentPath);
 
         if (isDashboard) {
@@ -155,7 +158,7 @@ return '';
             traverse(filteredItems);
             setOpenMenus(newOpenMenus);
         }
-    }
+    }, [currentPath, prevPath, isDashboard, filteredItems]);
 
     const toggleMenu = (key: string) => {
         setOpenMenus((prev: any) => ({

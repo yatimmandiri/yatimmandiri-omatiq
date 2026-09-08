@@ -34,7 +34,8 @@ export default function GuruLogin() {
                                     placeholder="6285727344157"
                                 />
                                 <p className="text-xs text-muted-foreground">
-                                    Masukkan nomor HP yang terdaftar di Penyaluran.
+                                    Masukkan nomor HP yang terdaftar di
+                                    Penyaluran.
                                 </p>
                                 <InputError message={errors.phone} />
                             </div>
@@ -68,11 +69,40 @@ export default function GuruLogin() {
                                 {processing && <Spinner />}
                                 Masuk sebagai Guru
                             </Button>
+
+                            <div className="relative py-2">
+                                <div className="absolute inset-0 flex items-center">
+                                    <span className="w-full border-t" />
+                                </div>
+                                <div className="relative flex justify-center text-xs uppercase">
+                                    <span className="bg-background px-2 text-muted-foreground">
+                                        Atau
+                                    </span>
+                                </div>
+                            </div>
+
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="w-full"
+                                asChild
+                            >
+                                <a href="/auth/guru/google/redirect">
+                                    <FcGoogle className="size-5" />
+                                    Login dengan Google (lengkapi profil)
+                                </a>
+                            </Button>
                         </div>
 
                         <div className="text-center text-sm text-muted-foreground">
-                            Admin? <TextLink href="/admin/login" tabIndex={4}>Login Admin</TextLink> · Student?{' '}
-                            <TextLink href="/student/login" tabIndex={4}>Login Student</TextLink>
+                            Admin?{' '}
+                            <TextLink href="/admin/login" tabIndex={4}>
+                                Login Admin
+                            </TextLink>{' '}
+                            · Student?{' '}
+                            <TextLink href="/student/login" tabIndex={4}>
+                                Login Student
+                            </TextLink>
                         </div>
                     </>
                 )}
