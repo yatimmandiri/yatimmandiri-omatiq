@@ -12,14 +12,22 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { dashboard } from '@/routes/admin';
 import dataPeserta from '@/routes/admin/guru/data-peserta';
-import { router } from '@inertiajs/react';
-import { usePage } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import {
     CheckCircle2,
     Clock3,
     Eye,
+    MoreHorizontal,
     Printer,
     Trash2,
     XCircle,
@@ -245,40 +253,47 @@ const RowAction = ({ row, onDeleted }: { row: any; onDeleted: () => void }) => {
     };
 
     return (
-        <div className="flex items-center gap-2">
-            {row.status === 'verified' && (
-                <Button
-                    size="sm"
-                    variant="outline"
-                    asChild
-                    className="gap-1 border-[#17524A] text-[#17524A] hover:bg-[#17524A]/10"
-                >
-                    <a
-                        href={`/admin/guru/data-peserta/${row.id}/card`}
-                        target="_blank"
-                        rel="noopener noreferrer"
+        <div>
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="h-8 w-8 p-0">
+                        <span className="sr-only">Buka menu aksi</span>
+                        <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Aksi Peserta</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                        onClick={() =>
+                            router.visit(dataPeserta.show(row.id).url)
+                        }
                     >
-                        <Printer className="size-4" />
-                        Kartu
-                    </a>
-                </Button>
-            )}
-            <Button
-                size="sm"
-                variant="outline"
-                onClick={() => router.visit(dataPeserta.show(row.id).url)}
-            >
-                <Eye className="size-4" />
-                Detail
-            </Button>
-            <Button
-                size="sm"
-                variant="destructive"
-                onClick={() => setOpenDelete(true)}
-            >
-                <Trash2 className="size-4" />
-                Hapus
-            </Button>
+                        <Eye className="mr-2 size-4" /> Detail
+                    </DropdownMenuItem>
+                    {row.status === 'verified' && (
+                        <DropdownMenuItem asChild>
+                            <a
+                                href={dataPeserta.card(row.id).url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex cursor-pointer items-center"
+                            >
+                                <Printer className="mr-2 size-4 text-[#17524A]" />
+                                <span>Cetak Kartu</span>
+                            </a>
+                        </DropdownMenuItem>
+                    )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                        onClick={() => setOpenDelete(true)}
+                        className="text-destructive focus:text-destructive"
+                    >
+                        <Trash2 className="mr-2 size-4 text-destructive" />
+                        <span>Batalkan Pendaftaran</span>
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
 
             <Dialog open={openDelete} onOpenChange={setOpenDelete}>
                 <DialogContent>

@@ -3,7 +3,10 @@
 namespace App\Http\Controllers\Guru;
 
 use App\Http\Controllers\Controller;
+use App\Models\Core\Region\District;
 use App\Models\Core\Region\Province;
+use App\Models\Core\Region\Regency;
+use App\Models\Core\Region\Village;
 use App\Services\PenyaluranService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -11,6 +14,29 @@ use Inertia\Inertia;
 
 class BiodataController extends Controller
 {
+    public static function extractRegionId(?array $profile, array $keys): ?string
+    {
+        if (! $profile) {
+            return null;
+        }
+
+        foreach ($keys as $key) {
+            if (isset($profile[$key])) {
+                $val = $profile[$key];
+                if (is_array($val)) {
+                    $nested = $val['id'] ?? $val['code'] ?? $val['value'] ?? null;
+                    if ($nested !== null && $nested !== '') {
+                        return (string) $nested;
+                    }
+                } elseif (is_scalar($val) && $val !== '') {
+                    return (string) $val;
+                }
+            }
+        }
+
+        return null;
+    }
+
     public function edit(Request $request)
     {
         $user = $request->user();
@@ -19,10 +45,11 @@ class BiodataController extends Controller
             abort(403);
         }
 
+        $token = $request->session()->get('penyaluran_token') ?? $user->penyaluran_token;
         $profile = null;
-        if ($user->penyaluran_token) {
+        if ($token) {
             try {
-                $profile = app(PenyaluranService::class)->me($user->penyaluran_token);
+                $profile = app(PenyaluranService::class)->me($token);
             } catch (\Throwable $e) {
                 $profile = null;
             }
@@ -36,6 +63,19 @@ class BiodataController extends Controller
             $gender = 'female';
         }
 
+        $provinceId = self::extractRegionId($profile, [
+            'province_id', 'provinsi_id', 'province', 'provinsi', 'province_code', 'provinsi_code', 'id_provinsi', 'id_prov', 'kode_provinsi',
+        ]);
+        $regencyId = self::extractRegionId($profile, [
+            'regency_id', 'kabupaten_id', 'kota_id', 'regency', 'kabupaten', 'kota', 'regency_code', 'kabupaten_code', 'kota_code', 'id_kabupaten', 'id_kota', 'kode_kabupaten', 'kode_kota',
+        ]);
+        $districtId = self::extractRegionId($profile, [
+            'district_id', 'kecamatan_id', 'district', 'kecamatan', 'district_code', 'kecamatan_code', 'id_kecamatan', 'kode_kecamatan',
+        ]);
+        $villageId = self::extractRegionId($profile, [
+            'village_id', 'desa_id', 'kelurahan_id', 'village', 'desa', 'kelurahan', 'village_code', 'desa_code', 'kelurahan_code', 'id_desa', 'id_kelurahan', 'kode_desa', 'kode_kelurahan',
+        ]);
+
         $biodata = [
             'name' => $profile['name'] ?? $profile['nama'] ?? $user->name,
             'email' => $profile['email'] ?? $user->email,
@@ -47,10 +87,10 @@ class BiodataController extends Controller
             'address' => $profile['address'] ?? $profile['alamat'] ?? null,
             'photo_url' => $profile['photo_url'] ?? $profile['foto'] ?? null,
             // Wilayah — dari Penyaluran (ids)
-            'province_id' => $profile['province_id'] ?? $profile['provinsi_id'] ?? null,
-            'regency_id' => $profile['regency_id'] ?? $profile['kabupaten_id'] ?? $profile['kota_id'] ?? null,
-            'district_id' => $profile['district_id'] ?? $profile['kecamatan_id'] ?? null,
-            'village_id' => $profile['village_id'] ?? $profile['desa_id'] ?? $profile['kelurahan_id'] ?? null,
+            'province_id' => $provinceId,
+            'regency_id' => $regencyId,
+            'district_id' => $districtId,
+            'village_id' => $villageId,
         ];
 
         // Hitung kelengkapan (same logic as DashboardService) — include wilayah
@@ -72,6 +112,17 @@ class BiodataController extends Controller
         $total = count($fields);
         $percent = $total > 0 ? (int) round(($filled / $total) * 100) : 0;
 
+        $provinces = Province::orderBy('name')->get(['id', 'name']);
+        $initialRegencies = $provinceId
+            ? Regency::where('province_id', $provinceId)->orderBy('name')->get(['id', 'province_id', 'name'])
+            : [];
+        $initialDistricts = $regencyId
+            ? District::where('regency_id', $regencyId)->orderBy('name')->get(['id', 'regency_id', 'name'])
+            : [];
+        $initialVillages = $districtId
+            ? Village::where('district_id', $districtId)->orderBy('name')->get(['id', 'district_id', 'name'])
+            : [];
+
         return Inertia::render('guru/biodata', [
             'biodata' => [
                 ...$biodata,
@@ -86,7 +137,10 @@ class BiodataController extends Controller
                     'missing' => collect($fields)->filter(fn ($v) => ! $v)->keys()->all(),
                 ],
             ],
-            'provinces' => Province::orderBy('name')->get(['id', 'name']),
+            'provinces' => $provinces,
+            'initialRegencies' => $initialRegencies,
+            'initialDistricts' => $initialDistricts,
+            'initialVillages' => $initialVillages,
         ]);
     }
 
@@ -131,6 +185,11 @@ class BiodataController extends Controller
                     'regency_id' => $validated['regency_id'] ?? null,
                     'district_id' => $validated['district_id'] ?? null,
                     'village_id' => $validated['village_id'] ?? null,
+                    // Alias bilingual untuk Penyaluran API
+                    'provinsi_id' => $validated['province_id'] ?? null,
+                    'kabupaten_id' => $validated['regency_id'] ?? null,
+                    'kecamatan_id' => $validated['district_id'] ?? null,
+                    'desa_id' => $validated['village_id'] ?? null,
                 ])->filter(fn ($v) => filled($v))->all();
 
                 // Konversi gender male/female ke format Penyaluran L/P jika diperlukan

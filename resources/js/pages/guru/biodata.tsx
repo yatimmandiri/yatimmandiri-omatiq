@@ -60,10 +60,19 @@ type PageProps = {
         };
     };
     provinces: Option[];
+    initialRegencies?: Regency[];
+    initialDistricts?: District[];
+    initialVillages?: Village[];
 };
 
 export default function GuruBiodata() {
-    const { biodata: initial, provinces } = usePage<PageProps>().props;
+    const {
+        biodata: initial,
+        provinces = [],
+        initialRegencies = [],
+        initialDistricts = [],
+        initialVillages = [],
+    } = usePage<PageProps>().props;
 
     const form = useForm({
         name: initial.name ?? '',
@@ -72,15 +81,15 @@ export default function GuruBiodata() {
         birth_place: initial.birth_place ?? '',
         birth_date: initial.birth_date ?? '',
         address: initial.address ?? '',
-        province_id: String(initial.province_id ?? ''),
-        regency_id: String(initial.regency_id ?? ''),
-        district_id: String(initial.district_id ?? ''),
-        village_id: String(initial.village_id ?? ''),
+        province_id: initial.province_id ? String(initial.province_id) : '',
+        regency_id: initial.regency_id ? String(initial.regency_id) : '',
+        district_id: initial.district_id ? String(initial.district_id) : '',
+        village_id: initial.village_id ? String(initial.village_id) : '',
     });
 
-    const [regencies, setRegencies] = useState<Regency[]>([]);
-    const [districts, setDistricts] = useState<District[]>([]);
-    const [villages, setVillages] = useState<Village[]>([]);
+    const [regencies, setRegencies] = useState<Regency[]>(initialRegencies);
+    const [districts, setDistricts] = useState<District[]>(initialDistricts);
+    const [villages, setVillages] = useState<Village[]>(initialVillages);
     const [loadingRegencies, setLoadingRegencies] = useState(false);
     const [loadingDistricts, setLoadingDistricts] = useState(false);
     const [loadingVillages, setLoadingVillages] = useState(false);
@@ -90,6 +99,15 @@ export default function GuruBiodata() {
         const pid = form.data.province_id;
 
         if (!pid) {
+            setRegencies([]);
+            return;
+        }
+
+        // Jika initial regencies sudah sesuai dengan province_id saat ini, tidak perlu refetch
+        if (
+            regencies.length > 0 &&
+            String(regencies[0].province_id) === String(pid)
+        ) {
             return;
         }
 
@@ -107,6 +125,15 @@ export default function GuruBiodata() {
         const rid = form.data.regency_id;
 
         if (!rid) {
+            setDistricts([]);
+            return;
+        }
+
+        // Jika initial districts sudah sesuai dengan regency_id saat ini, tidak perlu refetch
+        if (
+            districts.length > 0 &&
+            String(districts[0].regency_id) === String(rid)
+        ) {
             return;
         }
 
@@ -124,6 +151,15 @@ export default function GuruBiodata() {
         const did = form.data.district_id;
 
         if (!did) {
+            setVillages([]);
+            return;
+        }
+
+        // Jika initial villages sudah sesuai dengan district_id saat ini, tidak perlu refetch
+        if (
+            villages.length > 0 &&
+            String(villages[0].district_id) === String(did)
+        ) {
             return;
         }
 
@@ -238,7 +274,7 @@ export default function GuruBiodata() {
                                     form.setData('gender', v as any)
                                 }
                             >
-                                <SelectTrigger>
+                                <SelectTrigger className="w-full">
                                     <SelectValue placeholder="Pilih gender" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -305,7 +341,7 @@ export default function GuruBiodata() {
                                         }));
                                     }}
                                 >
-                                    <SelectTrigger>
+                                    <SelectTrigger className="w-full">
                                         <SelectValue placeholder="Pilih provinsi" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -339,7 +375,7 @@ export default function GuruBiodata() {
                                         loadingRegencies
                                     }
                                 >
-                                    <SelectTrigger>
+                                    <SelectTrigger className="w-full">
                                         <SelectValue
                                             placeholder={
                                                 loadingRegencies
@@ -378,7 +414,7 @@ export default function GuruBiodata() {
                                         loadingDistricts
                                     }
                                 >
-                                    <SelectTrigger>
+                                    <SelectTrigger className="w-full">
                                         <SelectValue
                                             placeholder={
                                                 loadingDistricts
@@ -413,7 +449,7 @@ export default function GuruBiodata() {
                                         loadingVillages
                                     }
                                 >
-                                    <SelectTrigger>
+                                    <SelectTrigger className="w-full">
                                         <SelectValue
                                             placeholder={
                                                 loadingVillages
