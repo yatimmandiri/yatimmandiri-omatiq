@@ -56,7 +56,7 @@ test('existing participant can login with google', function () {
     $response = $this->get(route('auth.callback', ['provider' => 'google']));
 
     $this->assertAuthenticatedAs($user);
-    $response->assertRedirect(route('admin.dashboard'));
+    $response->assertRedirect(route('student.dashboard'));
 
     expect(Social::where('user_id', $user->id)->where('provider', 'google')->where('provider_id', 'google-uid-101')->exists())->toBeTrue();
 });
@@ -94,9 +94,10 @@ test('unregistered google user is redirected back to login with message', functi
     $this->assertGuest();
     $response->assertRedirect(route('login'));
     $response->assertSessionHasErrors(['email']);
+    $response->assertSessionHas('error');
 });
 
-test('completed teacher can login with google via guru callback', function () {
+test('completed teacher can login with google via unified callback', function () {
     $teacher = User::factory()->create([
         'email' => 'guru.resmi@example.com',
         'name' => 'Guru Teladan',
@@ -107,15 +108,14 @@ test('completed teacher can login with google via guru callback', function () {
     $mockUser = mockSocialiteUser('google-guru-uid-99', 'guru.resmi@example.com', 'Guru Teladan');
 
     $provider = Mockery::mock(Provider::class);
-    $provider->shouldReceive('redirectUrl')->andReturnSelf();
     $provider->shouldReceive('user')->andReturn($mockUser);
 
     Socialite::shouldReceive('driver')->with('google')->andReturn($provider);
 
-    $response = $this->get(route('auth.guru.callback', ['provider' => 'google']));
+    $response = $this->get(route('auth.callback', ['provider' => 'google']));
 
     $this->assertAuthenticatedAs($teacher);
-    $response->assertRedirect(route('admin.dashboard'));
+    $response->assertRedirect(route('teacher.dashboard'));
 });
 
 test('incomplete teacher with placeholder email is blocked from google login', function () {
@@ -129,30 +129,14 @@ test('incomplete teacher with placeholder email is blocked from google login', f
     $mockUser = mockSocialiteUser('google-guru-uid-123', 'guru123@penyaluran.local', 'Guru Incomplete');
 
     $provider = Mockery::mock(Provider::class);
-    $provider->shouldReceive('redirectUrl')->andReturnSelf();
     $provider->shouldReceive('user')->andReturn($mockUser);
 
     Socialite::shouldReceive('driver')->with('google')->andReturn($provider);
 
-    $response = $this->get(route('auth.guru.callback', ['provider' => 'google']));
+    $response = $this->get(route('auth.callback', ['provider' => 'google']));
 
     $this->assertGuest();
-    $response->assertRedirect(route('guru.login'));
+    $response->assertRedirect(route('teacher.login'));
     $response->assertSessionHasErrors(['email']);
-});
-
-test('unregistered google email on guru callback is rejected', function () {
-    $mockUser = mockSocialiteUser('google-stranger-uid', 'stranger@example.com', 'Stranger');
-
-    $provider = Mockery::mock(Provider::class);
-    $provider->shouldReceive('redirectUrl')->andReturnSelf();
-    $provider->shouldReceive('user')->andReturn($mockUser);
-
-    Socialite::shouldReceive('driver')->with('google')->andReturn($provider);
-
-    $response = $this->get(route('auth.guru.callback', ['provider' => 'google']));
-
-    $this->assertGuest();
-    $response->assertRedirect(route('guru.login'));
-    $response->assertSessionHasErrors(['email']);
+    $response->assertSessionHas('error');
 });

@@ -60,6 +60,11 @@ class Participant extends Model
         return $this->belongsTo(Olimpiade::class);
     }
 
+    public function period(): BelongsTo
+    {
+        return $this->belongsTo(Period::class, 'event_year', 'year');
+    }
+
     public function student(): BelongsTo
     {
         return $this->belongsTo(Student::class);

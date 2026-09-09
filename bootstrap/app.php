@@ -44,21 +44,31 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Guest yang coba akses area terproteksi diarahkan ke login sesuai area (bukan ke home)
         $middleware->redirectGuestsTo(function (Request $request) {
-            if ($request->is('admin/*')) {
+            if ($request->is('admin') || $request->is('admin/*')) {
                 return route('admin.login');
             }
-            if ($request->is('teacher/*')) {
+            if ($request->is('teacher') || $request->is('teacher/*') || $request->is('guru') || $request->is('guru/*')) {
                 return route('teacher.login');
             }
-            if ($request->is('student/*')) {
+            if ($request->is('student') || $request->is('student/*')) {
                 return route('student.login');
             }
 
             return route('login');
         });
 
-        // User yang sudah login akses halaman guest (login) diarahkan ke dashboard terpadu
-        $middleware->redirectUsersTo(fn () => route('admin.dashboard'));
+        // User yang sudah login akses halaman guest (login) diarahkan ke dashboard sesuai role
+        $middleware->redirectUsersTo(function (Request $request) {
+            $user = $request->user();
+            if ($user?->hasRole('Teacher')) {
+                return route('teacher.dashboard');
+            }
+            if ($user?->hasRole('Participant')) {
+                return route('student.dashboard');
+            }
+
+            return route('admin.dashboard');
+        });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

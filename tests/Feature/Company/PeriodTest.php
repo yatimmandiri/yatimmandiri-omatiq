@@ -199,18 +199,35 @@ it('blocks non-admin users from accessing period management', function () {
 });
 
 it('correctly resolves period relationships and current period helper', function () {
-    $period = Period::create([
+    $period2025 = Period::create([
+        'name' => 'OMATIQ 2025',
+        'year' => 2025,
+        'is_active' => false,
+    ]);
+
+    $period2026 = Period::create([
         'name' => 'OMATIQ 2026',
         'year' => 2026,
         'is_active' => true,
     ]);
 
-    $olimpiade = Olimpiade::create([
-        'name' => 'Olimpiade Matematika',
+    $olimpiade2025 = Olimpiade::create([
+        'name' => 'Olimpiade MTK 2025',
+        'category' => 'Matematika',
+        'event_year' => 2025,
+    ]);
+
+    $olimpiade2026 = Olimpiade::create([
+        'name' => 'Olimpiade MTK 2026',
         'category' => 'Matematika',
         'event_year' => 2026,
     ]);
 
-    expect($period->olimpiades)->toHaveCount(1)
-        ->and(Period::current()->id)->toBe($period->id);
+    expect($period2026->olimpiades)->toHaveCount(1)
+        ->and($period2025->olimpiades)->toHaveCount(1)
+        ->and(Period::current()->id)->toBe($period2026->id)
+        ->and($olimpiade2026->period->id)->toBe($period2026->id)
+        ->and(Olimpiade::forCurrentPeriod()->pluck('id')->all())->toContain($olimpiade2026->id)
+        ->and(Olimpiade::forCurrentPeriod()->pluck('id')->all())->not->toContain($olimpiade2025->id)
+        ->and(Olimpiade::forYear(2025)->pluck('id')->all())->toContain($olimpiade2025->id);
 });

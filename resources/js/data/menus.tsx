@@ -33,10 +33,10 @@ import reviews from '@/routes/admin/companies/reviews';
 import sliders from '@/routes/admin/companies/sliders';
 import teachers from '@/routes/admin/companies/teachers';
 import faqCompanies from '@/routes/admin/companies/faq-companies';
-import dataPeserta from '@/routes/admin/guru/data-peserta';
-import binaan from '@/routes/admin/guru/data-binaan';
-import sanggar from '@/routes/admin/guru/data-sanggar';
-import absensi from '@/routes/admin/guru/absensi';
+import dataPeserta from '@/routes/teacher/data-peserta';
+import binaan from '@/routes/teacher/data-binaan';
+import sanggar from '@/routes/teacher/data-sanggar';
+import absensi from '@/routes/teacher/absensi';
 import students from '@/routes/admin/companies/students';
 
 export const NavigationList = [

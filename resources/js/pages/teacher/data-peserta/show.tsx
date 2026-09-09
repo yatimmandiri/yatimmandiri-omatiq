@@ -9,8 +9,8 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { ProofModal } from '@/components/ui/proof-modal';
-import { dashboard } from '@/routes/admin';
-import dataPeserta from '@/routes/admin/guru/data-peserta';
+import { dashboard } from '@/routes/teacher';
+import dataPeserta from '@/routes/teacher/data-peserta';
 import { router, usePage } from '@inertiajs/react';
 import { ArrowLeft, ExternalLink, Printer, Trash2 } from 'lucide-react';
 import { useState } from 'react';
@@ -65,7 +65,7 @@ export default function ShowPage() {
                             className="gap-2 border-[#17524A] text-[#17524A] hover:bg-[#17524A]/10"
                         >
                             <a
-                                href={`/admin/guru/data-peserta/${participant.id}/card`}
+                                href={`/teacher/data-peserta/${participant.id}/card`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                             >

@@ -205,7 +205,7 @@ test('teacher can update their assigned binaan and syncs to penyaluran', functio
     $response = $this
         ->actingAs($teacher)
         ->withSession(['penyaluran_token' => 'teacher-token-xyz'])
-        ->put(route('admin.guru.data-binaan.update', $student), [
+        ->put(route('teacher.data-binaan.update', $student), [
             'full_name' => 'Binaan Diupdate Guru',
             'gender' => 'female',
             'birth_date' => '2016-08-15',
@@ -217,7 +217,7 @@ test('teacher can update their assigned binaan and syncs to penyaluran', functio
         ]);
 
     $response->assertSessionHasNoErrors();
-    $response->assertRedirect(route('admin.guru.data-binaan.index'));
+    $response->assertRedirect(route('teacher.data-binaan.index'));
 
     Http::assertSent(function (Request $request) {
         return str_contains($request->url(), 'api/v1/guru/students/915')
@@ -248,7 +248,7 @@ test('teacher cannot update another teacher student', function () {
 
     $response = $this
         ->actingAs($teacher1)
-        ->put(route('admin.guru.data-binaan.update', $student), [
+        ->put(route('teacher.data-binaan.update', $student), [
             'full_name' => 'Hacked Name',
             'gender' => 'male',
             'birth_date' => '2016-08-15',

@@ -100,6 +100,7 @@ export default function GuruBiodata() {
 
         if (!pid) {
             setRegencies([]);
+
             return;
         }
 
@@ -126,6 +127,7 @@ export default function GuruBiodata() {
 
         if (!rid) {
             setDistricts([]);
+
             return;
         }
 
@@ -152,6 +154,7 @@ export default function GuruBiodata() {
 
         if (!did) {
             setVillages([]);
+
             return;
         }
 
@@ -269,7 +272,7 @@ export default function GuruBiodata() {
                         <div className="grid gap-2">
                             <Label>Jenis Kelamin</Label>
                             <Select
-                                value={form.data.gender}
+                                value={form.data.gender || undefined}
                                 onValueChange={(v) =>
                                     form.setData('gender', v as any)
                                 }
@@ -330,7 +333,7 @@ export default function GuruBiodata() {
                             <div className="grid gap-2">
                                 <Label>Provinsi</Label>
                                 <Select
-                                    value={form.data.province_id}
+                                    value={form.data.province_id || undefined}
                                     onValueChange={(v) => {
                                         form.setData((d: any) => ({
                                             ...d,
@@ -344,7 +347,7 @@ export default function GuruBiodata() {
                                     <SelectTrigger className="w-full">
                                         <SelectValue placeholder="Pilih provinsi" />
                                     </SelectTrigger>
-                                    <SelectContent>
+                                    <SelectContent className="max-h-60">
                                         {provinces.map((p) => (
                                             <SelectItem
                                                 key={String(p.id)}
@@ -361,7 +364,7 @@ export default function GuruBiodata() {
                             <div className="grid gap-2">
                                 <Label>Kota / Kabupaten</Label>
                                 <Select
-                                    value={form.data.regency_id}
+                                    value={form.data.regency_id || undefined}
                                     onValueChange={(v) => {
                                         form.setData((d: any) => ({
                                             ...d,
@@ -380,11 +383,13 @@ export default function GuruBiodata() {
                                             placeholder={
                                                 loadingRegencies
                                                     ? 'Memuat...'
-                                                    : 'Pilih kota / kabupaten'
+                                                    : form.data.province_id
+                                                      ? 'Pilih kota / kabupaten'
+                                                      : 'Pilih provinsi terlebih dahulu'
                                             }
                                         />
                                     </SelectTrigger>
-                                    <SelectContent>
+                                    <SelectContent className="max-h-60">
                                         {regencies.map((r) => (
                                             <SelectItem
                                                 key={String(r.id)}
@@ -401,7 +406,7 @@ export default function GuruBiodata() {
                             <div className="grid gap-2">
                                 <Label>Kecamatan</Label>
                                 <Select
-                                    value={form.data.district_id}
+                                    value={form.data.district_id || undefined}
                                     onValueChange={(v) => {
                                         form.setData((d: any) => ({
                                             ...d,
@@ -419,11 +424,13 @@ export default function GuruBiodata() {
                                             placeholder={
                                                 loadingDistricts
                                                     ? 'Memuat...'
-                                                    : 'Pilih kecamatan'
+                                                    : form.data.regency_id
+                                                      ? 'Pilih kecamatan'
+                                                      : 'Pilih kota/kabupaten terlebih dahulu'
                                             }
                                         />
                                     </SelectTrigger>
-                                    <SelectContent>
+                                    <SelectContent className="max-h-60">
                                         {districts.map((d) => (
                                             <SelectItem
                                                 key={String(d.id)}
@@ -440,7 +447,7 @@ export default function GuruBiodata() {
                             <div className="grid gap-2">
                                 <Label>Kelurahan / Desa</Label>
                                 <Select
-                                    value={form.data.village_id}
+                                    value={form.data.village_id || undefined}
                                     onValueChange={(v) =>
                                         form.setData('village_id', v)
                                     }
@@ -454,11 +461,13 @@ export default function GuruBiodata() {
                                             placeholder={
                                                 loadingVillages
                                                     ? 'Memuat...'
-                                                    : 'Pilih kelurahan / desa'
+                                                    : form.data.district_id
+                                                      ? 'Pilih kelurahan / desa'
+                                                      : 'Pilih kecamatan terlebih dahulu'
                                             }
                                         />
                                     </SelectTrigger>
-                                    <SelectContent>
+                                    <SelectContent className="max-h-60">
                                         {villages.map((v) => (
                                             <SelectItem
                                                 key={String(v.id)}
@@ -505,7 +514,7 @@ export default function GuruBiodata() {
 
 GuruBiodata.layout = {
     breadcrumbs: [
-        { title: 'Dashboard', href: '/admin/dashboard' },
+        { title: 'Dashboard', href: '/teacher/dashboard' },
         { title: 'Biodata', href: '/teacher/biodata' },
     ],
 };

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
@@ -69,7 +70,25 @@ class Olimpiade extends Model
             'status' => 'boolean',
             'recommended' => 'boolean',
             'sort_order' => 'integer',
+            'event_year' => 'integer',
         ];
+    }
+
+    public function period(): BelongsTo
+    {
+        return $this->belongsTo(Period::class, 'event_year', 'year');
+    }
+
+    public function scopeForCurrentPeriod(Builder $query): Builder
+    {
+        $currentYear = Period::current()?->year ?? (int) date('Y');
+
+        return $query->where('event_year', $currentYear);
+    }
+
+    public function scopeForYear(Builder $query, ?int $year): Builder
+    {
+        return $query->when($year, fn (Builder $q, int $y) => $q->where('event_year', $y));
     }
 
     public function scopeActive(Builder $query): Builder

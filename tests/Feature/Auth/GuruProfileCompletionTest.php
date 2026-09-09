@@ -38,7 +38,7 @@ test('teacher can complete email and password before entering protected area', f
             'password' => 'new-secure-password',
             'password_confirmation' => 'new-secure-password',
         ])
-        ->assertRedirect(route('admin.dashboard'));
+        ->assertRedirect(route('teacher.dashboard'));
 
     $teacher->refresh();
 

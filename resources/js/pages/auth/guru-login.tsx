@@ -69,29 +69,6 @@ export default function GuruLogin() {
                                 {processing && <Spinner />}
                                 Masuk sebagai Guru
                             </Button>
-
-                            <div className="relative py-2">
-                                <div className="absolute inset-0 flex items-center">
-                                    <span className="w-full border-t" />
-                                </div>
-                                <div className="relative flex justify-center text-xs uppercase">
-                                    <span className="bg-background px-2 text-muted-foreground">
-                                        Atau
-                                    </span>
-                                </div>
-                            </div>
-
-                            <Button
-                                type="button"
-                                variant="outline"
-                                className="w-full"
-                                asChild
-                            >
-                                <a href="/auth/guru/google/redirect">
-                                    <FcGoogle className="size-5" />
-                                    Login dengan Google (lengkapi profil)
-                                </a>
-                            </Button>
                         </div>
 
                         <div className="text-center text-sm text-muted-foreground">
@@ -115,15 +92,14 @@ export default function GuruLogin() {
             </div>
 
             <Button asChild type="button" variant="outline" className="w-full">
-                {/* Wayfinder akan generate teacher.google.redirect setelah `php artisan wayfinder:generate`; fallback href hardcode agar tetap jalan */}
-                <a href="/teacher/google/redirect" className="w-full">
-                    <FcGoogle />
+                <a href="/auth/google/redirect" className="w-full">
+                    <FcGoogle className="size-5" />
                     Login dengan Google (Guru)
                 </a>
             </Button>
             <p className="text-center text-xs leading-5 text-muted-foreground">
                 Google hanya untuk guru yang sudah melengkapi profil (email
-                real). Guru baru wajib login dengan nomor HP terlebih dahulu.
+                aktif). Guru baru wajib login dengan nomor HP terlebih dahulu.
             </p>
         </>
     );

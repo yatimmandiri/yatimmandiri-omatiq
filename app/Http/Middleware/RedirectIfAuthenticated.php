@@ -19,6 +19,14 @@ class RedirectIfAuthenticated
 
         foreach ($guards as $guard) {
             if (Auth::guard($guard)->check()) {
+                $user = Auth::guard($guard)->user();
+                if ($user?->hasRole('Teacher')) {
+                    return redirect()->route('teacher.dashboard');
+                }
+                if ($user?->hasRole('Participant')) {
+                    return redirect()->route('student.dashboard');
+                }
+
                 return redirect()->route('admin.dashboard');
             }
         }

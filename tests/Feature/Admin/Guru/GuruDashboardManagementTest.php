@@ -81,11 +81,11 @@ test('teacher can view data peserta list and only retrieves own participants in 
     ]);
 
     $this->actingAs($teacher1)
-        ->get(route('admin.guru.data-peserta.index'))
+        ->get(route('teacher.data-peserta.index'))
         ->assertOk();
 
     $response = $this->actingAs($teacher1)
-        ->getJson(route('admin.guru.data-peserta.data'));
+        ->getJson(route('teacher.data-peserta.data'));
 
     $response->assertOk();
     $data = $response->json('data');
@@ -121,13 +121,13 @@ test('teacher can view participant details and delete (cancel) registration', fu
     ]);
 
     $this->actingAs($teacher)
-        ->get(route('admin.guru.data-peserta.show', $participant))
+        ->get(route('teacher.data-peserta.show', $participant))
         ->assertOk();
 
     $response = $this->actingAs($teacher)
-        ->delete(route('admin.guru.data-peserta.destroy', $participant));
+        ->delete(route('teacher.data-peserta.destroy', $participant));
 
-    $response->assertRedirect(route('admin.guru.data-peserta.index'));
+    $response->assertRedirect(route('teacher.data-peserta.index'));
     $response->assertSessionHas('success');
 
     expect(Participant::find($participant->id))->toBeNull()
@@ -158,7 +158,7 @@ test('teacher cannot delete participant of another teacher', function () {
     ]);
 
     $this->actingAs($teacher2)
-        ->delete(route('admin.guru.data-peserta.destroy', $participant))
+        ->delete(route('teacher.data-peserta.destroy', $participant))
         ->assertForbidden();
 
     expect(Participant::find($participant->id))->not->toBeNull();
@@ -224,7 +224,7 @@ test('teacher binaan getData parses students from penyaluran with registration i
 
     $response = $this->actingAs($teacher)
         ->withSession(['penyaluran_token' => 'teacher-token-106'])
-        ->getJson(route('admin.guru.data-binaan.data'));
+        ->getJson(route('teacher.data-binaan.data'));
 
     $response->assertOk();
     $items = collect($response->json('data'));
@@ -265,7 +265,7 @@ test('teacher can update binaan details and calls penyaluran api', function () {
 
     $response = $this->actingAs($teacher)
         ->withSession(['penyaluran_token' => 'teacher-token-107'])
-        ->put(route('admin.guru.data-binaan.update', $student), [
+        ->put(route('teacher.data-binaan.update', $student), [
             'full_name' => 'Santri Updated Name',
             'gender' => 'male',
             'birth_date' => '2014-01-01',
@@ -278,7 +278,7 @@ test('teacher can update binaan details and calls penyaluran api', function () {
         ]);
 
     $response->assertSessionHasNoErrors();
-    $response->assertRedirect(route('admin.guru.data-binaan.index'));
+    $response->assertRedirect(route('teacher.data-binaan.index'));
 
     Http::assertSent(function (Request $request) {
         return str_contains($request->url(), 'api/v1/guru/students/801')
@@ -294,10 +294,10 @@ test('teacher can view sanggar and absensi pages', function () {
     $teacher = createGuruManagementTeacher(['penyaluran_id' => 108]);
 
     $this->actingAs($teacher)
-        ->get(route('admin.guru.data-sanggar.index'))
+        ->get(route('teacher.data-sanggar.index'))
         ->assertOk();
 
     $this->actingAs($teacher)
-        ->get(route('admin.guru.absensi.index'))
+        ->get(route('teacher.absensi.index'))
         ->assertOk();
 });

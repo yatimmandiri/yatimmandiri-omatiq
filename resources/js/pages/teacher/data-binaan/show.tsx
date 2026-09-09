@@ -1,9 +1,9 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { dashboard } from '@/routes/admin';
-import binaanRoute from '@/routes/admin/guru/data-binaan';
-import dataPeserta from '@/routes/admin/guru/data-peserta';
+import { dashboard } from '@/routes/teacher';
+import binaanRoute from '@/routes/teacher/data-binaan';
+import dataPeserta from '@/routes/teacher/data-peserta';
 import { router, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,

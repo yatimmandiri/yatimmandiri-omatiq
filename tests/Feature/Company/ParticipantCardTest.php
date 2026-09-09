@@ -93,7 +93,7 @@ test('teacher can view participant card for own student', function () {
         'status' => 'verified',
     ]);
 
-    $response = $this->actingAs($teacher)->get(route('admin.guru.data-peserta.card', $participant->id));
+    $response = $this->actingAs($teacher)->get(route('teacher.data-peserta.card', $participant->id));
 
     $response->assertOk()
         ->assertSee('REG-2026-TEACHER01');
@@ -121,7 +121,7 @@ test('teacher cannot view participant card of other teachers student without per
         'status' => 'verified',
     ]);
 
-    $response = $this->actingAs($teacher1)->get(route('admin.guru.data-peserta.card', $participant->id));
+    $response = $this->actingAs($teacher1)->get(route('teacher.data-peserta.card', $participant->id));
 
     $response->assertForbidden();
 });

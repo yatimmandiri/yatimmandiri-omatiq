@@ -77,8 +77,8 @@ it('lets a teacher register an assigned binaan student', function () {
     $olimpiade = createOlimpiade();
 
     $this->actingAs($teacher)
-        ->post(route('admin.guru.data-peserta.store'), registrationPayload($olimpiade->id, $student->id))
-        ->assertRedirect(route('admin.guru.data-peserta.index'))
+        ->post(route('teacher.data-peserta.store'), registrationPayload($olimpiade->id, $student->id))
+        ->assertRedirect(route('teacher.data-peserta.index'))
         ->assertSessionHasNoErrors();
 
     $participant = Participant::first();
@@ -111,7 +111,7 @@ it('prevents registering a student who already has an active registration', func
 
     // Same olimpiade should be blocked (per-event unique)
     $this->actingAs($teacher)
-        ->post(route('admin.guru.data-peserta.store'), registrationPayload($olimpiade->id, $student->id))
+        ->post(route('teacher.data-peserta.store'), registrationPayload($olimpiade->id, $student->id))
         ->assertSessionHasErrors('penyaluran_student_id');
 
     expect(Participant::count())->toBe(1);
@@ -125,7 +125,7 @@ it('prevents a teacher from registering another teacher student', function () {
     $olimpiade = createOlimpiade();
 
     $this->actingAs($teacherB)
-        ->post(route('admin.guru.data-peserta.store'), registrationPayload($olimpiade->id, $student->id))
+        ->post(route('teacher.data-peserta.store'), registrationPayload($olimpiade->id, $student->id))
         ->assertSessionHasErrors('penyaluran_student_id');
 
     expect(Participant::count())->toBe(0);
@@ -150,8 +150,8 @@ it('lets a teacher re-register a student whose previous registration was rejecte
     $next = createOlimpiade('Olimpiade Matematika', 'Matematika');
 
     $this->actingAs($teacher)
-        ->post(route('admin.guru.data-peserta.store'), registrationPayload($next->id, $student->id))
-        ->assertRedirect(route('admin.guru.data-peserta.index'))
+        ->post(route('teacher.data-peserta.store'), registrationPayload($next->id, $student->id))
+        ->assertRedirect(route('teacher.data-peserta.index'))
         ->assertSessionHasNoErrors();
 
     expect(Participant::where('student_id', $student->id)->count())->toBe(2);
@@ -251,11 +251,11 @@ it('does not expose edit or update routes to teachers', function () {
     ]);
 
     $this->actingAs($teacher)
-        ->get('/admin/guru/data-peserta/'.$participant->id.'/edit')
+        ->get('/teacher/data-peserta/'.$participant->id.'/edit')
         ->assertNotFound();
 
     $this->actingAs($teacher)
-        ->put('/admin/guru/data-peserta/'.$participant->id, ['olimpiade_id' => $olimpiade->id])
+        ->put('/teacher/data-peserta/'.$participant->id, ['olimpiade_id' => $olimpiade->id])
         ->assertMethodNotAllowed();
 });
 
@@ -275,8 +275,8 @@ it('lets a teacher delete (cancel registration) of their assigned binaan partici
     ]);
 
     $this->actingAs($teacher)
-        ->delete(route('admin.guru.data-peserta.destroy', $participant->id))
-        ->assertRedirect(route('admin.guru.data-peserta.index'))
+        ->delete(route('teacher.data-peserta.destroy', $participant->id))
+        ->assertRedirect(route('teacher.data-peserta.index'))
         ->assertSessionHas('success');
 
     expect(Participant::find($participant->id))->toBeNull()
@@ -300,7 +300,7 @@ it('prevents a teacher from deleting a participant belonging to another teacher'
     ]);
 
     $this->actingAs($teacherB)
-        ->delete(route('admin.guru.data-peserta.destroy', $participant->id))
+        ->delete(route('teacher.data-peserta.destroy', $participant->id))
         ->assertForbidden();
 
     expect(Participant::find($participant->id))->not->toBeNull();
@@ -315,18 +315,18 @@ it('passes registration_binaan_open flag to binaan list and show views', functio
     $student = createAssignedStudent($teacher);
 
     $this->actingAs($teacher)
-        ->get(route('admin.guru.data-binaan.index'))
+        ->get(route('teacher.data-binaan.index'))
         ->assertOk()
         ->assertInertia(fn ($page) => $page
-            ->component('admin/guru/data-binaan/list')
+            ->component('teacher/data-binaan/list')
             ->where('registration_binaan_open', false)
         );
 
     $this->actingAs($teacher)
-        ->get(route('admin.guru.data-binaan.show', $student->id))
+        ->get(route('teacher.data-binaan.show', $student->id))
         ->assertOk()
         ->assertInertia(fn ($page) => $page
-            ->component('admin/guru/data-binaan/show')
+            ->component('teacher/data-binaan/show')
             ->where('registration_binaan_open', false)
         );
 });
@@ -341,10 +341,10 @@ it('blocks binaan registration when registration_binaan_open is false', function
     $olimpiade = createOlimpiade();
 
     $this->actingAs($teacher)
-        ->get(route('admin.guru.data-peserta.create'))
+        ->get(route('teacher.data-peserta.create'))
         ->assertForbidden();
 
     $this->actingAs($teacher)
-        ->post(route('admin.guru.data-peserta.store'), registrationPayload($olimpiade->id, $student->id))
+        ->post(route('teacher.data-peserta.store'), registrationPayload($olimpiade->id, $student->id))
         ->assertForbidden();
 });

@@ -8,9 +8,7 @@ use App\Http\Requests\Company\StoreParticipantRequest;
 use App\Models\Company\Olimpiade;
 use App\Models\Company\Participant;
 use App\Models\Company\Student;
-use App\Models\Core\Region\District;
 use App\Models\Core\Region\Province;
-use App\Models\Core\Region\Regency;
 use App\Models\Core\Region\Village;
 use App\Models\Core\User;
 use App\Settings\SiteSettings;
@@ -52,21 +50,8 @@ class ParticipantRegistrationController extends Controller
 
         return Inertia::render('home/registration/index', [
             'pageTitle' => 'Pendaftaran OMATIQ',
-            'olimpiades' => Olimpiade::query()->active()->ordered()->get(['id', 'name', 'category', 'slug']),
+            'olimpiades' => Olimpiade::query()->active()->forCurrentPeriod()->ordered()->get(['id', 'name', 'category', 'slug']),
             'provinces' => Province::query()->orderBy('name')->get(['id', 'name']),
-            'regencies' => Regency::query()
-                ->orderBy('name')
-                ->get(['id', 'province_id', 'name'])
-                ->map(fn (Regency $regency) => [
-                    'id' => $regency->id,
-                    'province_id' => $regency->province_id,
-                    'name' => $regency->name,
-                ]),
-            'districts' => District::query()
-                ->orderBy('name')
-                ->get(['id', 'regency_id', 'name'])
-                ->map(fn (District $d) => ['id' => $d->id, 'regency_id' => $d->regency_id, 'name' => $d->name]),
-            'villages' => [],
             'branches' => $branches,
             'meta' => [
                 'title' => 'Pendaftaran OMATIQ',

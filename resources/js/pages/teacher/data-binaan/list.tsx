@@ -12,9 +12,9 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { dashboard } from '@/routes/admin';
-import binaan from '@/routes/admin/guru/data-binaan';
-import dataPeserta from '@/routes/admin/guru/data-peserta';
+import { dashboard } from '@/routes/teacher';
+import binaan from '@/routes/teacher/data-binaan';
+import dataPeserta from '@/routes/teacher/data-peserta';
 import { router, usePage } from '@inertiajs/react';
 import {
     CheckCircle2,

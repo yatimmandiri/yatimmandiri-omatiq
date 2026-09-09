@@ -1,19 +1,33 @@
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
     Popover,
     PopoverContent,
     PopoverTrigger,
 } from '@/components/ui/popover';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import olimpiades from '@/routes/admin/companies/olimpiades';
 import { useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, ChevronsUpDown, Save } from 'lucide-react';
 import type { FormEvent } from 'react';
+
+type PeriodOption = {
+    id: number;
+    name: string;
+    year: number;
+    is_active: boolean;
+};
 
 type OlimpiadeRecord = {
     id: number;
@@ -62,11 +76,15 @@ export const OlimpiadeForm = ({ dataId }: { dataId?: number }) => {
         objectives = [],
         galleries = [],
         videos = [],
+        periods = [],
+        defaultYear = new Date().getFullYear(),
     } = usePage<{
         olimpiade?: OlimpiadeRecord;
         objectives?: RelationOption[];
         galleries?: RelationOption[];
         videos?: RelationOption[];
+        periods?: PeriodOption[];
+        defaultYear?: number;
     }>().props;
 
     const form = useForm<any>({
@@ -88,7 +106,8 @@ export const OlimpiadeForm = ({ dataId }: { dataId?: number }) => {
         status: olimpiade?.status ?? true,
         recommended: olimpiade?.recommended ?? false,
         sort_order: olimpiade?.sort_order ?? 0,
-        event_year: olimpiade?.event_year ?? new Date().getFullYear(),
+        event_year:
+            olimpiade?.event_year ?? defaultYear ?? new Date().getFullYear(),
     });
 
     form.transform((current: any) => {
@@ -202,20 +221,47 @@ export const OlimpiadeForm = ({ dataId }: { dataId?: number }) => {
                             }
                         />
                     </Field>
-                    <Field label="Event Tahun" error={error('event_year')}>
-                        <Input
-                            type="number"
-                            min={2024}
-                            max={2030}
-                            value={form.data.event_year}
-                            onChange={(event) =>
-                                form.setData(
-                                    'event_year',
-                                    Number(event.target.value),
-                                )
+                    <Field
+                        label="Periode Event (Tahun)"
+                        error={error('event_year')}
+                    >
+                        <Select
+                            value={
+                                form.data.event_year
+                                    ? String(form.data.event_year)
+                                    : undefined
                             }
-                            placeholder="2026"
-                        />
+                            onValueChange={(val) =>
+                                form.setData('event_year', Number(val))
+                            }
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Pilih Periode Event" />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-60">
+                                {periods && periods.length > 0 ? (
+                                    periods.map((p: PeriodOption) => (
+                                        <SelectItem
+                                            key={p.id}
+                                            value={String(p.year)}
+                                        >
+                                            {p.name} ({p.year})
+                                            {p.is_active ? ' • Aktif' : ''}
+                                        </SelectItem>
+                                    ))
+                                ) : (
+                                    <SelectItem
+                                        value={String(
+                                            form.data.event_year ||
+                                                new Date().getFullYear(),
+                                        )}
+                                    >
+                                        {form.data.event_year ||
+                                            new Date().getFullYear()}
+                                    </SelectItem>
+                                )}
+                            </SelectContent>
+                        </Select>
                     </Field>
                     <Field
                         label="URL pendaftaran"

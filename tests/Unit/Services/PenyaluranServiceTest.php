@@ -1,13 +1,15 @@
 <?php
 
+use App\Http\Controllers\Teacher\BiodataController;
 use App\Services\PenyaluranService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
-uses(TestCase::class);
+uses(TestCase::class, RefreshDatabase::class);
 
 beforeEach(function () {
     Config::set('services.penyaluran.url', 'https://penyaluran-test.example.com');
@@ -179,4 +181,25 @@ it('formats student payload according to penyaluran contract', function () {
         ->and($formatted['phone'])->toBe('081234567899')
         ->and($formatted['birth_date'])->toBe('2012-07-20')
         ->and($formatted['status'])->toBeTrue();
+});
+
+it('resolves region names from penyaluran me payload into local region ids', function () {
+    DB::table('provinces')->insertOrIgnore(['id' => '35', 'name' => 'JAWA TIMUR', 'created_at' => now(), 'updated_at' => now()]);
+    DB::table('regencies')->insertOrIgnore(['id' => '3507', 'province_id' => '35', 'name' => 'KABUPATEN MALANG', 'created_at' => now(), 'updated_at' => now()]);
+    DB::table('districts')->insertOrIgnore(['id' => '3507170', 'regency_id' => '3507', 'name' => 'SUMBER PUCUNG', 'created_at' => now(), 'updated_at' => now()]);
+    DB::table('villages')->insertOrIgnore(['id' => '3507170001', 'district_id' => '3507170', 'name' => 'KARANGKATES', 'created_at' => now(), 'updated_at' => now()]);
+
+    $profile = [
+        'province_name' => 'JAWA TIMUR',
+        'regency_name' => 'KABUPATEN MALANG',
+        'district_name' => 'SUMBER PUCUNG',
+        'village_name' => 'KARANGKATES',
+    ];
+
+    $regions = BiodataController::resolveRegionIds($profile);
+
+    expect($regions['province_id'])->toBe('35')
+        ->and($regions['regency_id'])->toBe('3507')
+        ->and($regions['district_id'])->toBe('3507170')
+        ->and($regions['village_id'])->toBe('3507170001');
 });

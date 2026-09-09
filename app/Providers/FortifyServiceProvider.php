@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
+use Laravel\Fortify\Contracts\LoginResponse as LoginResponseContract;
 use Laravel\Fortify\Contracts\LogoutResponse as LogoutResponseContract;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
@@ -32,7 +33,31 @@ class FortifyServiceProvider extends ServiceProvider
         $this->configureActions();
         $this->configureViews();
         $this->configureRateLimiting();
+        $this->configureLoginResponse();
         $this->configureLogoutResponse();
+    }
+
+    private function configureLoginResponse(): void
+    {
+        $this->app->singleton(LoginResponseContract::class, function () {
+            return new class implements LoginResponseContract
+            {
+                public function toResponse($request)
+                {
+                    $user = $request->user();
+
+                    if ($user?->hasRole('Teacher')) {
+                        return redirect()->intended(route('teacher.dashboard'));
+                    }
+
+                    if ($user?->hasRole('Participant') || $user?->hasRole('Student')) {
+                        return redirect()->intended(route('student.dashboard'));
+                    }
+
+                    return redirect()->intended(route('admin.dashboard'));
+                }
+            };
+        });
     }
 
     private function configureLogoutResponse(): void
@@ -43,10 +68,10 @@ class FortifyServiceProvider extends ServiceProvider
                 public function toResponse($request)
                 {
                     $referer = $request->headers->get('referer', '');
-                    $isGuru = str_contains($referer, '/guru') || str_contains($referer, 'guru.login') || $request->session()->has('penyaluran_id') || $request->session()->has('penyaluran_token');
+                    $isTeacher = str_contains($referer, '/teacher') || str_contains($referer, 'teacher.login') || $request->session()->has('penyaluran_id') || $request->session()->has('penyaluran_token');
 
-                    if ($isGuru) {
-                        return redirect()->route('guru.login');
+                    if ($isTeacher) {
+                        return redirect()->route('teacher.login');
                     }
 
                     return redirect()->route('login');

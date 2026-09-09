@@ -8,16 +8,37 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { dashboard } from '@/routes/admin';
-import binaanRoutes from '@/routes/admin/guru/data-binaan';
+import { dashboard } from '@/routes/teacher';
+import binaanRoutes from '@/routes/teacher/data-binaan';
 import { useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, GraduationCap, MapPin, Save, User } from 'lucide-react';
 import type { FormEvent, ReactNode } from 'react';
-import { useMemo } from 'react';
+import { useEffect, useState } from 'react';
 
 type Option = { id: number | string; name: string };
-type Regency = { id: string; province_id: string; name: string };
+type Regency = {
+    id: string | number;
+    province_id?: string | number;
+    name: string;
+};
+type District = {
+    id: string | number;
+    regency_id?: string | number;
+    name: string;
+};
+type Village = {
+    id: string | number;
+    district_id?: string | number;
+    name: string;
+};
 
 const dateValue = (value?: string | null) =>
     value ? String(value).slice(0, 10) : '';
@@ -26,12 +47,24 @@ export default function EditPage() {
     const {
         binaan: student,
         provinces = [],
-        regencies = [],
+        initialRegencies = [],
+        initialDistricts = [],
+        initialVillages = [],
     } = usePage<{
         binaan: Record<string, any>;
         provinces?: Option[];
-        regencies?: Regency[];
+        initialRegencies?: Regency[];
+        initialDistricts?: District[];
+        initialVillages?: Village[];
     }>().props;
+
+    const [regencies, setRegencies] = useState<Regency[]>(initialRegencies);
+    const [districts, setDistricts] = useState<District[]>(initialDistricts);
+    const [villages, setVillages] = useState<Village[]>(initialVillages);
+
+    const [loadingRegencies, setLoadingRegencies] = useState(false);
+    const [loadingDistricts, setLoadingDistricts] = useState(false);
+    const [loadingVillages, setLoadingVillages] = useState(false);
 
     const form = useForm<any>({
         full_name: student.full_name ?? student.name ?? '',
@@ -47,6 +80,8 @@ export default function EditPage() {
         address: student.address ?? '',
         province_id: student.province_id ? String(student.province_id) : '',
         regency_id: student.regency_id ? String(student.regency_id) : '',
+        district_id: student.district_id ? String(student.district_id) : '',
+        village_id: student.village_id ? String(student.village_id) : '',
         parent_phone: student.parent_phone ?? student.guardian_phone ?? '',
     });
 
@@ -55,15 +90,83 @@ export default function EditPage() {
         _method: 'put',
     }));
 
-    const filteredRegencies = useMemo(
-        () =>
-            regencies.filter(
-                (regency) =>
-                    String(regency.province_id) ===
-                    String(form.data.province_id),
-            ),
-        [form.data.province_id, regencies],
-    );
+    useEffect(() => {
+        const pid = form.data.province_id;
+
+        if (!pid) {
+            setRegencies([]);
+
+            return;
+        }
+
+        if (
+            regencies.length > 0 &&
+            String(regencies[0].province_id) === String(pid)
+        ) {
+            return;
+        }
+
+        setLoadingRegencies(true);
+        fetch(`/regions/regencies?province_id=${encodeURIComponent(pid)}`, {
+            headers: { Accept: 'application/json' },
+        })
+            .then((r) => (r.ok ? r.json() : { data: [] }))
+            .then((p) => setRegencies(p.data ?? []))
+            .catch(() => setRegencies([]))
+            .finally(() => setLoadingRegencies(false));
+    }, [form.data.province_id]);
+
+    useEffect(() => {
+        const rid = form.data.regency_id;
+
+        if (!rid) {
+            setDistricts([]);
+
+            return;
+        }
+
+        if (
+            districts.length > 0 &&
+            String(districts[0].regency_id) === String(rid)
+        ) {
+            return;
+        }
+
+        setLoadingDistricts(true);
+        fetch(`/regions/districts?regency_id=${encodeURIComponent(rid)}`, {
+            headers: { Accept: 'application/json' },
+        })
+            .then((r) => (r.ok ? r.json() : { data: [] }))
+            .then((p) => setDistricts(p.data ?? []))
+            .catch(() => setDistricts([]))
+            .finally(() => setLoadingDistricts(false));
+    }, [form.data.regency_id]);
+
+    useEffect(() => {
+        const did = form.data.district_id;
+
+        if (!did) {
+            setVillages([]);
+
+            return;
+        }
+
+        if (
+            villages.length > 0 &&
+            String(villages[0].district_id) === String(did)
+        ) {
+            return;
+        }
+
+        setLoadingVillages(true);
+        fetch(`/regions/villages?district_id=${encodeURIComponent(did)}`, {
+            headers: { Accept: 'application/json' },
+        })
+            .then((r) => (r.ok ? r.json() : { data: [] }))
+            .then((p) => setVillages(p.data ?? []))
+            .catch(() => setVillages([]))
+            .finally(() => setLoadingVillages(false));
+    }, [form.data.district_id]);
 
     const submit = (e: FormEvent) => {
         e.preventDefault();
@@ -168,17 +271,22 @@ export default function EditPage() {
                         </Field>
 
                         <Field label="Jenis Kelamin *" error={error('gender')}>
-                            <select
+                            <Select
                                 value={form.data.gender}
-                                onChange={(e) =>
-                                    form.setData('gender', e.target.value)
-                                }
-                                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs focus:ring-2 focus:ring-ring focus:outline-none"
-                                required
+                                onValueChange={(v) => form.setData('gender', v)}
                             >
-                                <option value="male">Laki-laki (L)</option>
-                                <option value="female">Perempuan (P)</option>
-                            </select>
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Pilih Jenis Kelamin" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="male">
+                                        Laki-laki (L)
+                                    </SelectItem>
+                                    <SelectItem value="female">
+                                        Perempuan (P)
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
                         </Field>
 
                         <Field
@@ -256,19 +364,26 @@ export default function EditPage() {
                         </div>
 
                         <Field label="Jenjang" error={error('school_level')}>
-                            <select
-                                value={form.data.school_level}
-                                onChange={(e) =>
-                                    form.setData('school_level', e.target.value)
+                            <Select
+                                value={form.data.school_level || undefined}
+                                onValueChange={(v) =>
+                                    form.setData('school_level', v)
                                 }
-                                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs focus:ring-2 focus:ring-ring focus:outline-none"
                             >
-                                <option value="">Pilih Jenjang</option>
-                                <option value="SD">SD / MI</option>
-                                <option value="SMP">SMP / MTs</option>
-                                <option value="SMA">SMA / MA</option>
-                                <option value="SMK">SMK</option>
-                            </select>
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Pilih Jenjang" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="SD">SD / MI</SelectItem>
+                                    <SelectItem value="SMP">
+                                        SMP / MTs
+                                    </SelectItem>
+                                    <SelectItem value="SMA">
+                                        SMA / MA
+                                    </SelectItem>
+                                    <SelectItem value="SMK">SMK</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </Field>
 
                         <Field label="Kelas / Tingkat *" error={error('grade')}>
@@ -310,42 +425,149 @@ export default function EditPage() {
 
                     <div className="grid gap-4 md:grid-cols-2">
                         <Field label="Provinsi" error={error('province_id')}>
-                            <select
-                                value={form.data.province_id}
-                                onChange={(e) => {
-                                    form.setData('province_id', e.target.value);
-                                    form.setData('regency_id', '');
+                            <Select
+                                value={form.data.province_id || undefined}
+                                onValueChange={(v) => {
+                                    form.setData((d: any) => ({
+                                        ...d,
+                                        province_id: v,
+                                        regency_id: '',
+                                        district_id: '',
+                                        village_id: '',
+                                    }));
                                 }}
-                                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs focus:ring-2 focus:ring-ring focus:outline-none"
                             >
-                                <option value="">Pilih Provinsi</option>
-                                {provinces.map((p) => (
-                                    <option key={p.id} value={p.id}>
-                                        {p.name}
-                                    </option>
-                                ))}
-                            </select>
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Pilih Provinsi" />
+                                </SelectTrigger>
+                                <SelectContent className="max-h-60">
+                                    {provinces.map((p) => (
+                                        <SelectItem
+                                            key={String(p.id)}
+                                            value={String(p.id)}
+                                        >
+                                            {p.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </Field>
 
                         <Field
                             label="Kabupaten / Kota"
                             error={error('regency_id')}
                         >
-                            <select
-                                value={form.data.regency_id}
-                                onChange={(e) =>
-                                    form.setData('regency_id', e.target.value)
+                            <Select
+                                value={form.data.regency_id || undefined}
+                                onValueChange={(v) => {
+                                    form.setData((d: any) => ({
+                                        ...d,
+                                        regency_id: v,
+                                        district_id: '',
+                                        village_id: '',
+                                    }));
+                                }}
+                                disabled={
+                                    !form.data.province_id || loadingRegencies
                                 }
-                                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs focus:ring-2 focus:ring-ring focus:outline-none"
-                                disabled={!form.data.province_id}
                             >
-                                <option value="">Pilih Kabupaten / Kota</option>
-                                {filteredRegencies.map((r) => (
-                                    <option key={r.id} value={r.id}>
-                                        {r.name}
-                                    </option>
-                                ))}
-                            </select>
+                                <SelectTrigger className="w-full">
+                                    <SelectValue
+                                        placeholder={
+                                            loadingRegencies
+                                                ? 'Memuat...'
+                                                : form.data.province_id
+                                                  ? 'Pilih Kabupaten / Kota'
+                                                  : 'Pilih provinsi terlebih dahulu'
+                                        }
+                                    />
+                                </SelectTrigger>
+                                <SelectContent className="max-h-60">
+                                    {regencies.map((r) => (
+                                        <SelectItem
+                                            key={String(r.id)}
+                                            value={String(r.id)}
+                                        >
+                                            {r.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </Field>
+
+                        <Field label="Kecamatan" error={error('district_id')}>
+                            <Select
+                                value={form.data.district_id || undefined}
+                                onValueChange={(v) => {
+                                    form.setData((d: any) => ({
+                                        ...d,
+                                        district_id: v,
+                                        village_id: '',
+                                    }));
+                                }}
+                                disabled={
+                                    !form.data.regency_id || loadingDistricts
+                                }
+                            >
+                                <SelectTrigger className="w-full">
+                                    <SelectValue
+                                        placeholder={
+                                            loadingDistricts
+                                                ? 'Memuat...'
+                                                : form.data.regency_id
+                                                  ? 'Pilih Kecamatan'
+                                                  : 'Pilih kota/kabupaten terlebih dahulu'
+                                        }
+                                    />
+                                </SelectTrigger>
+                                <SelectContent className="max-h-60">
+                                    {districts.map((d) => (
+                                        <SelectItem
+                                            key={String(d.id)}
+                                            value={String(d.id)}
+                                        >
+                                            {d.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </Field>
+
+                        <Field
+                            label="Kelurahan / Desa"
+                            error={error('village_id')}
+                        >
+                            <Select
+                                value={form.data.village_id || undefined}
+                                onValueChange={(v) =>
+                                    form.setData('village_id', v)
+                                }
+                                disabled={
+                                    !form.data.district_id || loadingVillages
+                                }
+                            >
+                                <SelectTrigger className="w-full">
+                                    <SelectValue
+                                        placeholder={
+                                            loadingVillages
+                                                ? 'Memuat...'
+                                                : form.data.district_id
+                                                  ? 'Pilih Kelurahan / Desa'
+                                                  : 'Pilih kecamatan terlebih dahulu'
+                                        }
+                                    />
+                                </SelectTrigger>
+                                <SelectContent className="max-h-60">
+                                    {villages.map((v) => (
+                                        <SelectItem
+                                            key={String(v.id)}
+                                            value={String(v.id)}
+                                        >
+                                            {v.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </Field>
                     </div>
                 </CardContent>

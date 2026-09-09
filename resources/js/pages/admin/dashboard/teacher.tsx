@@ -1,10 +1,10 @@
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { dashboard } from '@/routes/admin';
-import binaan from '@/routes/admin/guru/data-binaan';
-import dataPeserta from '@/routes/admin/guru/data-peserta';
-import sanggarRoute from '@/routes/admin/guru/data-sanggar';
+import { dashboard } from '@/routes/teacher';
+import binaan from '@/routes/teacher/data-binaan';
+import dataPeserta from '@/routes/teacher/data-peserta';
+import sanggarRoute from '@/routes/teacher/data-sanggar';
 import { Head, Link, usePage } from '@inertiajs/react';
 import {
     ArrowRight,

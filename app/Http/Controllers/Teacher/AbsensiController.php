@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Admin\Guru;
+namespace App\Http\Controllers\Teacher;
 
 use App\Http\Controllers\Controller;
 use App\Models\Company\Participant;
@@ -13,6 +13,6 @@ class AbsensiController extends Controller
     {
         $this->authorize('viewAny', Participant::class);
 
-        return Inertia::render('admin/guru/absensi/index');
+        return Inertia::render('teacher/absensi/index');
     }
 }
