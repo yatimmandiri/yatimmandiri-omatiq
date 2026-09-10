@@ -262,3 +262,52 @@ test('teacher cannot update another teacher student', function () {
     $response->assertForbidden();
     expect($student->fresh()->full_name)->toBe('Binaan Milik Guru 2');
 });
+
+test('resolveBinaan updates local student with fresh data from penyaluran api on edit', function () {
+    Http::fake([
+        '*/api/v1/guru/students' => Http::response([
+            'success' => true,
+            'data' => [
+                [
+                    'student_id' => 999,
+                    'name' => 'Nama Baru Dari Penyaluran',
+                    'nik' => '3578010101010999',
+                    'gender' => 'P',
+                    'school_name' => 'SMP Penyaluran Baru',
+                    'class' => '7',
+                    'address' => 'Alamat Baru',
+                    'guardian_phone' => '089999999999',
+                ],
+            ],
+        ], 200),
+    ]);
+
+    $teacher = User::factory()->create([
+        'penyaluran_id' => 30,
+        'penyaluran_token' => 'teacher-token-sync',
+    ]);
+    $teacher->assignRole('Teacher');
+
+    $student = Student::factory()->create([
+        'penyaluran_id' => 999,
+        'full_name' => 'Nama Lama Lokal',
+        'nik' => '3578010101010999',
+        'gender' => 'male',
+        'mentor_id' => $teacher->id,
+        'is_binaan' => true,
+    ]);
+
+    $response = $this
+        ->actingAs($teacher)
+        ->withSession(['penyaluran_token' => 'teacher-token-sync'])
+        ->get(route('teacher.data-binaan.edit', $student));
+
+    $response->assertOk();
+
+    $student->refresh();
+    expect($student->full_name)->toBe('Nama Baru Dari Penyaluran')
+        ->and($student->gender)->toBe('female')
+        ->and($student->grade)->toBe('7')
+        ->and($student->school_name)->toBe('SMP Penyaluran Baru')
+        ->and($student->address)->toBe('Alamat Baru');
+});

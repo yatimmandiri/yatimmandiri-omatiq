@@ -288,49 +288,65 @@ class BinaanController extends Controller
 
     protected function resolveBinaan(int|string|Student $binaan): Student
     {
-        if ($binaan instanceof Student) {
-            return $binaan;
+        $student = $binaan instanceof Student
+            ? $binaan
+            : Student::where('id', $binaan)->orWhere('penyaluran_id', $binaan)->first();
+
+        $token = request()->session()->get('penyaluran_token') ?? Auth::user()?->penyaluran_token;
+        $found = null;
+
+        if ($token) {
+            try {
+                $studentsRaw = $this->penyaluran->students($token);
+                $found = collect($studentsRaw)->firstWhere(function (array $s) use ($binaan, $student) {
+                    $sid = (int) ($s['student_id'] ?? $s['id'] ?? 0);
+                    $nik = $s['nik'] ?? null;
+
+                    if ($student) {
+                        return ($student->penyaluran_id && $sid === (int) $student->penyaluran_id)
+                            || ($nik && $nik === $student->nik)
+                            || $sid === (int) $student->id;
+                    }
+
+                    return $sid === (int) $binaan || ($nik && $nik === (string) $binaan);
+                });
+            } catch (\Throwable $e) {
+                $found = null;
+            }
         }
 
-        $student = Student::where('id', $binaan)
-            ->orWhere('penyaluran_id', $binaan)
-            ->first();
+        if ($found) {
+            $regions = BiodataController::resolveRegionIds($found);
+            $gender = ($found['gender'] ?? 'male') === 'female' || ($found['gender'] ?? 'male') === 'P' ? 'female' : 'male';
+            $attributes = [
+                'penyaluran_id' => $found['student_id'] ?? $found['id'] ?? ($student?->penyaluran_id),
+                'nik' => $found['nik'] ?? $student?->nik ?? Str::random(16),
+                'nis' => $found['nis'] ?? $student?->nis,
+                'full_name' => $found['name'] ?? $found['full_name'] ?? $student?->full_name ?? '-',
+                'nickname' => $found['nickname'] ?? $student?->nickname,
+                'gender' => $gender,
+                'birth_place' => $found['birth_place'] ?? $student?->birth_place,
+                'birth_date' => $found['birth_date'] ?? $student?->birth_date ?? '2015-01-01',
+                'school_name' => $found['school_name'] ?? $student?->school_name ?? '-',
+                'school_level' => $found['school_level'] ?? $student?->school_level,
+                'grade' => $found['class'] ?? $found['grade'] ?? $student?->grade ?? '-',
+                'address' => $found['address'] ?? $student?->address ?? '-',
+                'province_id' => $regions['province_id'] ?? $student?->province_id,
+                'regency_id' => $regions['regency_id'] ?? $student?->regency_id,
+                'district_id' => $regions['district_id'] ?? $student?->district_id,
+                'village_id' => $regions['village_id'] ?? $student?->village_id,
+                'parent_phone' => $found['guardian_phone'] ?? $found['parent_phone'] ?? $student?->parent_phone ?? '-',
+                'mentor_id' => Auth::id(),
+                'mentor_name' => Auth::user()?->name,
+                'mentor_phone' => Auth::user()?->phone,
+                'is_binaan' => true,
+                'is_active' => true,
+            ];
 
-        if (! $student) {
-            $token = request()->session()->get('penyaluran_token') ?? Auth::user()?->penyaluran_token;
-            if ($token) {
-                try {
-                    $studentsRaw = $this->penyaluran->students($token);
-                    $found = collect($studentsRaw)->firstWhere(fn (array $s) => (int) ($s['student_id'] ?? $s['id'] ?? 0) === (int) $binaan);
-                    if ($found) {
-                        $regions = BiodataController::resolveRegionIds($found);
-                        $student = Student::create([
-                            'penyaluran_id' => $found['student_id'] ?? $found['id'],
-                            'nik' => $found['nik'] ?? Str::random(16),
-                            'nis' => $found['nis'] ?? null,
-                            'full_name' => $found['name'] ?? $found['full_name'] ?? '-',
-                            'nickname' => $found['nickname'] ?? null,
-                            'gender' => ($found['gender'] ?? 'male') === 'female' ? 'female' : 'male',
-                            'birth_place' => $found['birth_place'] ?? null,
-                            'birth_date' => $found['birth_date'] ?? '2015-01-01',
-                            'school_name' => $found['school_name'] ?? '-',
-                            'school_level' => $found['school_level'] ?? null,
-                            'grade' => $found['class'] ?? $found['grade'] ?? '-',
-                            'address' => $found['address'] ?? '-',
-                            'province_id' => $regions['province_id'],
-                            'regency_id' => $regions['regency_id'],
-                            'district_id' => $regions['district_id'],
-                            'village_id' => $regions['village_id'],
-                            'parent_phone' => $found['guardian_phone'] ?? $found['parent_phone'] ?? '-',
-                            'mentor_id' => Auth::id(),
-                            'mentor_name' => Auth::user()?->name,
-                            'mentor_phone' => Auth::user()?->phone,
-                            'is_binaan' => true,
-                            'is_active' => true,
-                        ]);
-                    }
-                } catch (\Throwable $e) {
-                }
+            if ($student) {
+                $student->update($attributes);
+            } else {
+                $student = Student::create($attributes);
             }
         }
 

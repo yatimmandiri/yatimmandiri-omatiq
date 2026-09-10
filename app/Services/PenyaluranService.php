@@ -73,55 +73,75 @@ class PenyaluranService
      */
     public function students(string $token, ?int $sanggarId = null): array
     {
-        if ($sanggarId !== null) {
-            return $this->fetchStudentsForSanggar($token, $sanggarId);
-        }
+        $cacheKey = 'penyaluran:students:'.sha1($token).':'.($sanggarId ?? 'all');
 
-        // Backward-compatible aggregation: fetch per sanggar and merge deduped
-        // If API still allows without sanggar_id, try direct first
+        return Cache::remember($cacheKey, 120, function () use ($token, $sanggarId) {
+            if ($sanggarId !== null) {
+                return $this->fetchStudentsForSanggar($token, $sanggarId);
+            }
+
+            // Backward-compatible aggregation: fetch per sanggar and merge deduped
+            // If API still allows without sanggar_id, try direct first
+            try {
+                $response = $this->client($token)->get('api/v1/guru/students');
+                if ($response->successful()) {
+                    $data = $response->json('data');
+                    if (is_array($data) && ! empty($data)) {
+                        return $this->normalizeStudents($data);
+                    }
+                }
+            } catch (\Throwable $e) {
+                // fall through to per-sanggar aggregation
+            }
+
+            // Aggregate per sanggar
+            try {
+                $sanggars = $this->sanggars($token);
+            } catch (\Throwable $e) {
+                return [];
+            }
+
+            if (empty($sanggars)) {
+                return [];
+            }
+
+            $all = collect();
+            foreach ($sanggars as $sanggar) {
+                $sid = (int) ($sanggar['id'] ?? 0);
+                if (! $sid) {
+                    continue;
+                }
+                $students = $this->fetchStudentsForSanggar($token, $sid);
+                foreach ($students as $s) {
+                    $s['sanggar_id'] = $sid;
+                    $all->push($s);
+                }
+            }
+
+            // Group by student_id to keep all sanggar_ids for multi-sanggar students
+            return $all->groupBy(fn (array $s) => $s['student_id'] ?? null)->map(function ($group) {
+                $first = $group->first();
+                $first['sanggar_ids'] = $group->pluck('sanggar_id')->filter()->unique()->values()->all();
+
+                return $first;
+            })->values()->all();
+        });
+    }
+
+    public function forgetStudentsCache(string $token): void
+    {
+        $baseKey = 'penyaluran:students:'.sha1($token);
+        Cache::forget($baseKey.':all');
+
         try {
-            $response = $this->client($token)->get('api/v1/guru/students');
-            if ($response->successful()) {
-                $data = $response->json('data');
-                if (is_array($data) && ! empty($data)) {
-                    return $this->normalizeStudents($data);
+            $sanggars = $this->sanggars($token);
+            foreach ($sanggars as $s) {
+                if (isset($s['id'])) {
+                    Cache::forget($baseKey.':'.$s['id']);
                 }
             }
         } catch (\Throwable $e) {
-            // fall through to per-sanggar aggregation
         }
-
-        // Aggregate per sanggar
-        try {
-            $sanggars = $this->sanggars($token);
-        } catch (\Throwable $e) {
-            return [];
-        }
-
-        if (empty($sanggars)) {
-            return [];
-        }
-
-        $all = collect();
-        foreach ($sanggars as $sanggar) {
-            $sid = (int) ($sanggar['id'] ?? 0);
-            if (! $sid) {
-                continue;
-            }
-            $students = $this->fetchStudentsForSanggar($token, $sid);
-            foreach ($students as $s) {
-                $s['sanggar_id'] = $sid;
-                $all->push($s);
-            }
-        }
-
-        // Group by student_id to keep all sanggar_ids for multi-sanggar students
-        return $all->groupBy(fn (array $s) => $s['student_id'] ?? null)->map(function ($group) {
-            $first = $group->first();
-            $first['sanggar_ids'] = $group->pluck('sanggar_id')->filter()->unique()->values()->all();
-
-            return $first;
-        })->values()->all();
     }
 
     private function fetchStudentsForSanggar(string $token, int $sanggarId): array
@@ -202,6 +222,8 @@ class PenyaluranService
     {
         $response = $this->client($token)->put("api/v1/guru/students/{$studentId}", $attributes);
         $this->assertSuccess($response);
+
+        $this->forgetStudentsCache($token);
 
         return $response->json('data') ?? $response->json();
     }

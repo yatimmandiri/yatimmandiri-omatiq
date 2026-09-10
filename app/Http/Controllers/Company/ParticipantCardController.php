@@ -53,20 +53,23 @@ class ParticipantCardController extends Controller
         }
 
         $regNo = $participant->registration_number;
-        $barcodeSvg = $this->barcodeService->generateCode128Svg($regNo, height: 36, barWidth: 1.2, color: '#17524A');
+        $barcodeSvg = $this->barcodeService->generateCode128Svg($regNo, height: 30, barWidth: 1.1, color: '#17524A');
         $verifyUrl = url('/pendaftaran/kartu/'.$regNo);
-        $qrCodeSvg = $this->barcodeService->generateQrCodeSvg($verifyUrl, size: 85, color: '#17524A');
+        $qrCodeSvg = $this->barcodeService->generateQrCodeSvg($verifyUrl, size: 75, color: '#17524A');
+
+        $isPdf = $request->query('format') === 'pdf';
 
         $data = [
             'participant' => $participant,
             'student' => $participant->student,
             'barcodeSvg' => $barcodeSvg,
             'qrCodeSvg' => $qrCodeSvg,
+            'isPdf' => $isPdf,
         ];
 
         if ($request->query('format') === 'pdf') {
             $pdf = Pdf::loadView('cards.participant-card', $data)
-                ->setPaper('a5', 'landscape');
+                ->setPaper('a5', 'portrait');
 
             return $pdf->stream("Kartu-OMATIQ-{$regNo}.pdf");
         }

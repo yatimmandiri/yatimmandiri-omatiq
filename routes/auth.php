@@ -60,6 +60,18 @@ Route::prefix('teacher')->group(function () {
 });
 
 // ---------------------------------------------------------------------
+// Legacy Guru Aliases & Redirects (Backward Compatibility)
+// ---------------------------------------------------------------------
+Route::redirect('/guru/login', '/teacher/login');
+Route::redirect('/guru', '/teacher/login');
+Route::redirect('/guru/dashboard', '/teacher/dashboard');
+Route::redirect('/guru/biodata', '/teacher/biodata');
+Route::redirect('/guru/data-peserta', '/teacher/data-peserta');
+Route::redirect('/guru/data-binaan', '/teacher/data-binaan');
+Route::redirect('/guru/data-sanggar', '/teacher/data-sanggar');
+Route::redirect('/guru/absensi', '/teacher/absensi');
+
+// ---------------------------------------------------------------------
 // Student Auth — prefix student/*
 // ---------------------------------------------------------------------
 Route::prefix('student')->group(function () {

@@ -172,3 +172,14 @@ test('teacher can logout from guru portal', function () {
     $this->assertGuest();
     $response->assertRedirect(route('teacher.login'));
 });
+
+test('legacy guru routes redirect to teacher routes', function () {
+    $this->get('/guru/login')->assertRedirect('/teacher/login');
+    $this->get('/guru')->assertRedirect('/teacher/login');
+    $this->get('/guru/dashboard')->assertRedirect('/teacher/dashboard');
+    $this->get('/guru/biodata')->assertRedirect('/teacher/biodata');
+    $this->get('/guru/data-peserta')->assertRedirect('/teacher/data-peserta');
+    $this->get('/guru/data-binaan')->assertRedirect('/teacher/data-binaan');
+    $this->get('/guru/data-sanggar')->assertRedirect('/teacher/data-sanggar');
+    $this->get('/guru/absensi')->assertRedirect('/teacher/absensi');
+});
