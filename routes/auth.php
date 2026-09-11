@@ -21,8 +21,6 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('auth')->as('auth.')->group(function () {
     Route::get('/{provider}/redirect', [SocialiteController::class, 'redirect'])->name('redirect');
     Route::get('/{provider}/callback', [SocialiteController::class, 'callback'])->name('callback');
-    Route::get('/guru/{provider}/redirect', [SocialiteController::class, 'redirectGuru'])->name('guru.redirect');
-    Route::get('/guru/{provider}/callback', [SocialiteController::class, 'callbackGuru'])->name('guru.callback');
 });
 
 // ---------------------------------------------------------------------
@@ -40,25 +38,8 @@ Route::prefix('admin')->group(function () {
 });
 
 // ---------------------------------------------------------------------
-// Guru / Teacher Auth — prefix guru/* & teacher/*
+// Teacher Auth — prefix teacher/*
 // ---------------------------------------------------------------------
-Route::prefix('guru')->group(function () {
-    Route::get('login', [GuruAuthController::class, 'create'])->name('guru.login');
-
-    Route::middleware('guest')->group(function () {
-        Route::get('google/redirect', [GuruAuthController::class, 'redirectToGoogle'])->name('guru.google.redirect');
-        Route::post('login', [GuruAuthController::class, 'store'])->name('guru.login.store')->middleware('throttle:5,1');
-        Route::get('verify-otp', [GuruAuthController::class, 'showOtpForm'])->name('guru.verify');
-        Route::post('verify-otp', [GuruAuthController::class, 'verify'])->name('guru.verify.store')->middleware('throttle:5,1');
-        Route::post('resend-otp', [GuruAuthController::class, 'resend'])->name('guru.resend')->middleware('throttle:3,1');
-    });
-
-    Route::middleware('auth')->group(function () {
-        Route::get('complete-profile', [GuruAuthController::class, 'completeProfile'])->name('guru.profile.edit');
-        Route::put('complete-profile', [GuruAuthController::class, 'updateProfile'])->name('guru.profile.update');
-        Route::post('logout', [GuruAuthController::class, 'destroy'])->name('guru.logout');
-    });
-});
 
 Route::prefix('teacher')->group(function () {
     Route::get('login', [GuruAuthController::class, 'create'])->name('teacher.login');
@@ -77,6 +58,18 @@ Route::prefix('teacher')->group(function () {
         Route::post('logout', [GuruAuthController::class, 'destroy'])->name('teacher.logout');
     });
 });
+
+// ---------------------------------------------------------------------
+// Legacy Guru Aliases & Redirects (Backward Compatibility)
+// ---------------------------------------------------------------------
+Route::redirect('/guru/login', '/teacher/login');
+Route::redirect('/guru', '/teacher/login');
+Route::redirect('/guru/dashboard', '/teacher/dashboard');
+Route::redirect('/guru/biodata', '/teacher/biodata');
+Route::redirect('/guru/data-peserta', '/teacher/data-peserta');
+Route::redirect('/guru/data-binaan', '/teacher/data-binaan');
+Route::redirect('/guru/data-sanggar', '/teacher/data-sanggar');
+Route::redirect('/guru/absensi', '/teacher/absensi');
 
 // ---------------------------------------------------------------------
 // Student Auth — prefix student/*

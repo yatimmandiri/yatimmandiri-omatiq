@@ -121,14 +121,13 @@ export default function Login({
                 </span>
             </div>
 
-            <Button asChild type="button" variant="outline">
+            <Button asChild type="button" variant="outline" className="w-full">
                 <a
                     href={redirect({ provider: 'google' }).url}
-                    // href={route('google.redirect', { provider: 'google' })}
                     className="w-full"
                 >
-                    <FcGoogle />
-                    Login with Google
+                    <FcGoogle className="size-5" />
+                    Masuk dengan Google
                 </a>
             </Button>
         </>

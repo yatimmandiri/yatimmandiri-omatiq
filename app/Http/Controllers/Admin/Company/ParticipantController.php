@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Company\UpdateParticipantRequest;
 use App\Models\Company\Olimpiade;
 use App\Models\Company\Participant;
+use App\Models\Company\Period;
 use App\Models\Core\Region\Province;
 use App\Models\Core\Region\Regency;
 use App\Services\StudentService;
@@ -26,22 +27,20 @@ class ParticipantController extends Controller
     {
         $this->authorize('viewAny', Participant::class);
 
-        $eventYears = collect([
-            ...Participant::query()
-                ->whereNotNull('event_year')
-                ->distinct()
-                ->pluck('event_year')
-                ->all(),
-            ...Olimpiade::query()
-                ->whereNotNull('event_year')
-                ->distinct()
-                ->pluck('event_year')
-                ->all(),
-        ])
-            ->filter()
-            ->unique()
-            ->sortDesc()
-            ->values();
+        $periods = Period::ordered()->get(['id', 'name', 'year', 'is_active']);
+
+        $eventYearsOptions = $periods->isNotEmpty()
+            ? $periods->map(fn (Period $p) => [
+                'value' => (string) $p->year,
+                'label' => "{$p->name} ({$p->year})".($p->is_active ? ' • Aktif' : ''),
+            ])
+            : collect([
+                ...Participant::query()->whereNotNull('event_year')->distinct()->pluck('event_year')->all(),
+                ...Olimpiade::query()->whereNotNull('event_year')->distinct()->pluck('event_year')->all(),
+            ])->filter()->unique()->sortDesc()->values()->map(fn ($year) => [
+                'value' => (string) $year,
+                'label' => (string) $year,
+            ]);
 
         $settings = app(SiteSettings::class);
 
@@ -60,10 +59,7 @@ class ParticipantController extends Controller
                         'value' => (string) $olimpiade->id,
                         'label' => trim($olimpiade->name.' '.($olimpiade->event_year ? "({$olimpiade->event_year})" : '')),
                     ]),
-                'eventYears' => $eventYears->map(fn ($year) => [
-                    'value' => (string) $year,
-                    'label' => (string) $year,
-                ]),
+                'eventYears' => $eventYearsOptions,
                 'branches' => Participant::query()
                     ->whereNotNull('branch')
                     ->where('branch', '<>', '')

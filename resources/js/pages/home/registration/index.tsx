@@ -1,6 +1,13 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Select as UiSelect,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Link, useForm, usePage } from '@inertiajs/react';
 import type { LucideIcon } from 'lucide-react';
@@ -13,34 +20,23 @@ import {
     ClipboardCheck,
     FileUp,
     HeartHandshake,
+    RotateCcw,
     Save,
     Sparkles,
     Trophy,
     UserRound,
 } from 'lucide-react';
 import type { FormEvent, ReactNode } from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 type Option = {
     id: number | string;
     name: string;
     category?: string;
     slug?: string;
-};
-type Regency = {
-    id: number | string;
-    province_id: number | string;
-    name: string;
-};
-type District = {
-    id: number | string;
-    regency_id: number | string;
-    name: string;
-};
-type Village = {
-    id: number | string;
-    district_id: number | string;
-    name: string;
+    province_id?: number | string;
+    regency_id?: number | string;
+    district_id?: number | string;
 };
 type Branch = {
     id: number | string;
@@ -51,12 +47,55 @@ type RegistrationErrors = Record<string, string | undefined>;
 type RegistrationProps = {
     olimpiades?: Option[];
     provinces?: Option[];
-    regencies?: Regency[];
-    districts?: District[];
-    villages?: Village[];
     branches?: Branch[];
     registration_closed?: boolean;
 };
+
+const DRAFT_STORAGE_KEY = 'omatiq_registration_draft_v1';
+
+function getStoredDraft(): {
+    currentStep?: number;
+    form?: Record<string, any>;
+} | null {
+    if (typeof window === 'undefined') {
+        return null;
+    }
+
+    try {
+        const raw = sessionStorage.getItem(DRAFT_STORAGE_KEY);
+
+        return raw ? JSON.parse(raw) : null;
+    } catch {
+        return null;
+    }
+}
+
+function setStoredDraft(data: {
+    currentStep: number;
+    form: Record<string, any>;
+}): void {
+    if (typeof window === 'undefined') {
+        return;
+    }
+
+    try {
+        sessionStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(data));
+    } catch {
+        // ignore quota error
+    }
+}
+
+function removeStoredDraft(): void {
+    if (typeof window === 'undefined') {
+        return;
+    }
+
+    try {
+        sessionStorage.removeItem(DRAFT_STORAGE_KEY);
+    } catch {
+        // ignore
+    }
+}
 
 const steps = [
     {
@@ -116,105 +155,215 @@ export default function RegistrationPage() {
     const {
         olimpiades = [],
         provinces = [],
-        regencies = [],
-        districts = [],
-        villages: initialVillages = [],
         branches = [],
         registration_closed,
     } = usePage<RegistrationProps>().props;
 
-    const [currentStep, setCurrentStep] = useState(0);
+    const initialDraft = useMemo(() => getStoredDraft(), []);
+
+    const [currentStep, setCurrentStep] = useState<number>(() => {
+        if (
+            typeof initialDraft?.currentStep === 'number' &&
+            initialDraft.currentStep >= 0 &&
+            initialDraft.currentStep < steps.length
+        ) {
+            return initialDraft.currentStep;
+        }
+
+        return 0;
+    });
+
     const [localErrors, setLocalErrors] = useState<RegistrationErrors>({});
-    const [villages, setVillages] = useState<Village[]>(initialVillages);
-    const [isLoadingVillages, setIsLoadingVillages] = useState(false);
+
+    const [regencies, setRegencies] = useState<Option[]>([]);
+    const [districts, setDistricts] = useState<Option[]>([]);
+    const [villages, setVillages] = useState<Option[]>([]);
+
+    const [loadingRegencies, setLoadingRegencies] = useState(false);
+    const [loadingDistricts, setLoadingDistricts] = useState(false);
+    const [loadingVillages, setLoadingVillages] = useState(false);
+
+    const regionCache = useRef<{
+        regencies: Record<string, Option[]>;
+        districts: Record<string, Option[]>;
+        villages: Record<string, Option[]>;
+    }>({
+        regencies: {},
+        districts: {},
+        villages: {},
+    });
 
     const form = useForm<any>({
-        nik: '',
-        full_name: '',
-        nickname: '',
-        gender: '',
-        birth_place: '',
-        birth_date: '',
-        school_name: '',
-        grade: '',
-        address: '',
-        province_id: '',
-        regency_id: '',
-        district_id: '',
-        village_id: '',
-        parent_phone: '',
-        referral_source: '',
-        branch: '',
-        olimpiade_id: '',
+        nik: initialDraft?.form?.nik ?? '',
+        full_name: initialDraft?.form?.full_name ?? '',
+        nickname: initialDraft?.form?.nickname ?? '',
+        gender: initialDraft?.form?.gender ?? '',
+        birth_place: initialDraft?.form?.birth_place ?? '',
+        birth_date: initialDraft?.form?.birth_date ?? '',
+        school_name: initialDraft?.form?.school_name ?? '',
+        grade: initialDraft?.form?.grade ?? '',
+        address: initialDraft?.form?.address ?? '',
+        province_id: initialDraft?.form?.province_id ?? '',
+        regency_id: initialDraft?.form?.regency_id ?? '',
+        district_id: initialDraft?.form?.district_id ?? '',
+        village_id: initialDraft?.form?.village_id ?? '',
+        parent_phone: initialDraft?.form?.parent_phone ?? '',
+        referral_source: initialDraft?.form?.referral_source ?? '',
+        branch: initialDraft?.form?.branch ?? '',
+        olimpiade_id: initialDraft?.form?.olimpiade_id ?? '',
         payment_proof: null,
         student_card: null,
-        data_truth_consent: false,
-        documentation_consent: false,
-        rules_consent: false,
-        participant_signature_name: '',
-        guardian_signature_name: '',
-        email: '',
+        data_truth_consent: initialDraft?.form?.data_truth_consent ?? false,
+        documentation_consent:
+            initialDraft?.form?.documentation_consent ?? false,
+        rules_consent: initialDraft?.form?.rules_consent ?? false,
+        participant_signature_name:
+            initialDraft?.form?.participant_signature_name ?? '',
+        guardian_signature_name:
+            initialDraft?.form?.guardian_signature_name ?? '',
+        email: initialDraft?.form?.email ?? '',
         password: '',
         password_confirmation: '',
     });
 
-    const filteredRegencies = useMemo(
-        () =>
-            regencies.filter(
-                (regency) =>
-                    String(regency.province_id) ===
-                    String(form.data.province_id),
-            ),
-        [form.data.province_id, regencies],
-    );
-
-    const filteredDistricts = useMemo(
-        () =>
-            districts.filter(
-                (district) =>
-                    String(district.regency_id) ===
-                    String(form.data.regency_id),
-            ),
-        [form.data.regency_id, districts],
-    );
-
-    const filteredVillages = useMemo(
-        () =>
-            villages.filter(
-                (village) =>
-                    String(village.district_id) ===
-                    String(form.data.district_id),
-            ),
-        [form.data.district_id, villages],
-    );
-
+    // Simpan perubahan form ke sessionStorage secara otomatis
     useEffect(() => {
-        const districtId = form.data.district_id;
+        const persistable = { ...form.data };
 
-        if (!districtId) {
+        delete persistable.payment_proof;
+        delete persistable.student_card;
+        delete persistable.password;
+        delete persistable.password_confirmation;
+
+        setStoredDraft({
+            currentStep,
+            form: persistable,
+        });
+    }, [form.data, currentStep]);
+
+    // Fetch regencies saat province_id berubah
+    useEffect(() => {
+        const pid = form.data.province_id;
+
+        if (!pid) {
+            setRegencies([]);
+
+            return;
+        }
+
+        if (regionCache.current.regencies[pid]) {
+            setRegencies(regionCache.current.regencies[pid]);
+
             return;
         }
 
         const controller = new AbortController();
-        setIsLoadingVillages(true);
+        setLoadingRegencies(true);
 
-        fetch(
-            `/regions/villages?district_id=${encodeURIComponent(districtId)}`,
-            {
-                headers: { Accept: 'application/json' },
-                signal: controller.signal,
-            },
-        )
-            .then((response) => (response.ok ? response.json() : { data: [] }))
-            .then((payload) => setVillages(payload.data ?? []))
-            .catch((error) => {
-                if (error.name !== 'AbortError') {
+        fetch(`/regions/regencies?province_id=${encodeURIComponent(pid)}`, {
+            headers: { Accept: 'application/json' },
+            signal: controller.signal,
+        })
+            .then((r) => (r.ok ? r.json() : { data: [] }))
+            .then((p) => {
+                const data = p.data ?? [];
+                regionCache.current.regencies[pid] = data;
+                setRegencies(data);
+            })
+            .catch((e) => {
+                if (e.name !== 'AbortError') {
+                    setRegencies([]);
+                }
+            })
+            .finally(() => {
+                if (!controller.signal.aborted) {
+                    setLoadingRegencies(false);
+                }
+            });
+
+        return () => controller.abort();
+    }, [form.data.province_id]);
+
+    // Fetch districts saat regency_id berubah
+    useEffect(() => {
+        const rid = form.data.regency_id;
+
+        if (!rid) {
+            setDistricts([]);
+
+            return;
+        }
+
+        if (regionCache.current.districts[rid]) {
+            setDistricts(regionCache.current.districts[rid]);
+
+            return;
+        }
+
+        const controller = new AbortController();
+        setLoadingDistricts(true);
+
+        fetch(`/regions/districts?regency_id=${encodeURIComponent(rid)}`, {
+            headers: { Accept: 'application/json' },
+            signal: controller.signal,
+        })
+            .then((r) => (r.ok ? r.json() : { data: [] }))
+            .then((p) => {
+                const data = p.data ?? [];
+                regionCache.current.districts[rid] = data;
+                setDistricts(data);
+            })
+            .catch((e) => {
+                if (e.name !== 'AbortError') {
+                    setDistricts([]);
+                }
+            })
+            .finally(() => {
+                if (!controller.signal.aborted) {
+                    setLoadingDistricts(false);
+                }
+            });
+
+        return () => controller.abort();
+    }, [form.data.regency_id]);
+
+    // Fetch villages saat district_id berubah
+    useEffect(() => {
+        const did = form.data.district_id;
+
+        if (!did) {
+            setVillages([]);
+
+            return;
+        }
+
+        if (regionCache.current.villages[did]) {
+            setVillages(regionCache.current.villages[did]);
+
+            return;
+        }
+
+        const controller = new AbortController();
+        setLoadingVillages(true);
+
+        fetch(`/regions/villages?district_id=${encodeURIComponent(did)}`, {
+            headers: { Accept: 'application/json' },
+            signal: controller.signal,
+        })
+            .then((r) => (r.ok ? r.json() : { data: [] }))
+            .then((p) => {
+                const data = p.data ?? [];
+                regionCache.current.villages[did] = data;
+                setVillages(data);
+            })
+            .catch((e) => {
+                if (e.name !== 'AbortError') {
                     setVillages([]);
                 }
             })
             .finally(() => {
                 if (!controller.signal.aborted) {
-                    setIsLoadingVillages(false);
+                    setLoadingVillages(false);
                 }
             });
 
@@ -401,6 +550,23 @@ export default function RegistrationPage() {
         scrollToForm();
     };
 
+    const resetDraft = () => {
+        if (
+            window.confirm(
+                'Apakah Anda yakin ingin mengosongkan formulir dan memulai dari awal?',
+            )
+        ) {
+            removeStoredDraft();
+            form.reset();
+            setCurrentStep(0);
+            setLocalErrors({});
+            setRegencies([]);
+            setDistricts([]);
+            setVillages([]);
+            scrollToForm();
+        }
+    };
+
     const submit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
@@ -417,6 +583,9 @@ export default function RegistrationPage() {
         form.post('/pendaftaran', {
             forceFormData: true,
             preserveScroll: true,
+            onSuccess: () => {
+                removeStoredDraft();
+            },
         });
     };
 
@@ -556,6 +725,16 @@ export default function RegistrationPage() {
                                         </button>
                                     );
                                 })}
+                            </div>
+                            <div className="mt-2 border-t border-slate-100 pt-2 dark:border-slate-700">
+                                <button
+                                    type="button"
+                                    onClick={resetDraft}
+                                    className="flex w-full items-center justify-center gap-2 rounded-xl py-2 text-xs font-semibold text-[#64748B] transition hover:bg-red-50 hover:text-red-600 dark:text-slate-400 dark:hover:bg-red-950/30 dark:hover:text-red-400"
+                                >
+                                    <RotateCcw className="h-3.5 w-3.5" />
+                                    Mulai Ulang Formulir
+                                </button>
                             </div>
                         </div>
                     </aside>
@@ -771,17 +950,20 @@ export default function RegistrationPage() {
                                                 }));
                                             }}
                                             placeholder={
-                                                form.data.province_id
-                                                    ? 'Pilih kota/kabupaten'
-                                                    : 'Pilih provinsi dulu'
+                                                loadingRegencies
+                                                    ? 'Memuat kota/kabupaten...'
+                                                    : form.data.province_id
+                                                      ? 'Pilih kota/kabupaten'
+                                                      : 'Pilih provinsi dulu'
                                             }
-                                            disabled={!form.data.province_id}
-                                            options={filteredRegencies.map(
-                                                (item) => ({
-                                                    value: String(item.id),
-                                                    label: item.name,
-                                                }),
-                                            )}
+                                            disabled={
+                                                !form.data.province_id ||
+                                                loadingRegencies
+                                            }
+                                            options={regencies.map((item) => ({
+                                                value: String(item.id),
+                                                label: item.name,
+                                            }))}
                                         />
                                     </Field>
                                     <Field
@@ -805,17 +987,20 @@ export default function RegistrationPage() {
                                                 }));
                                             }}
                                             placeholder={
-                                                form.data.regency_id
-                                                    ? 'Pilih kecamatan'
-                                                    : 'Pilih kota/kabupaten dulu'
+                                                loadingDistricts
+                                                    ? 'Memuat kecamatan...'
+                                                    : form.data.regency_id
+                                                      ? 'Pilih kecamatan'
+                                                      : 'Pilih kota/kabupaten dulu'
                                             }
-                                            disabled={!form.data.regency_id}
-                                            options={filteredDistricts.map(
-                                                (item) => ({
-                                                    value: String(item.id),
-                                                    label: item.name,
-                                                }),
-                                            )}
+                                            disabled={
+                                                !form.data.regency_id ||
+                                                loadingDistricts
+                                            }
+                                            options={districts.map((item) => ({
+                                                value: String(item.id),
+                                                label: item.name,
+                                            }))}
                                         />
                                     </Field>
                                     <Field
@@ -828,7 +1013,7 @@ export default function RegistrationPage() {
                                                 setData('village_id', value)
                                             }
                                             placeholder={
-                                                isLoadingVillages
+                                                loadingVillages
                                                     ? 'Memuat desa/kelurahan...'
                                                     : form.data.district_id
                                                       ? 'Pilih desa/kelurahan'
@@ -836,14 +1021,12 @@ export default function RegistrationPage() {
                                             }
                                             disabled={
                                                 !form.data.district_id ||
-                                                isLoadingVillages
+                                                loadingVillages
                                             }
-                                            options={filteredVillages.map(
-                                                (item) => ({
-                                                    value: String(item.id),
-                                                    label: item.name,
-                                                }),
-                                            )}
+                                            options={villages.map((item) => ({
+                                                value: String(item.id),
+                                                label: item.name,
+                                            }))}
                                         />
                                     </Field>
                                 </div>
@@ -1289,25 +1472,28 @@ const Select = ({
     options,
     disabled = false,
 }: {
-    value: string;
+    value?: string;
     onChange: (value: string) => void;
     placeholder: string;
     options: Array<{ value: string; label: string }>;
     disabled?: boolean;
 }) => (
-    <select
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
+    <UiSelect
+        value={value ? String(value) : undefined}
+        onValueChange={onChange}
         disabled={disabled}
-        className="w-full rounded-xl border border-slate-200 bg-[#F8FAFC] px-4 py-3 text-sm font-semibold text-[#1E293B] transition outline-none focus:border-[#17524A] focus:bg-white disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:focus:bg-slate-800"
     >
-        <option value="">{placeholder}</option>
-        {options.map((item) => (
-            <option key={item.value} value={item.value}>
-                {item.label}
-            </option>
-        ))}
-    </select>
+        <SelectTrigger className="w-full">
+            <SelectValue placeholder={placeholder} />
+        </SelectTrigger>
+        <SelectContent>
+            {options.map((item) => (
+                <SelectItem key={item.value} value={item.value}>
+                    {item.label}
+                </SelectItem>
+            ))}
+        </SelectContent>
+    </UiSelect>
 );
 
 const FileField = ({

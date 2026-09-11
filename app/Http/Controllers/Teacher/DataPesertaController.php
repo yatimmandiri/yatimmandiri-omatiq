@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Admin\Guru;
+namespace App\Http\Controllers\Teacher;
 
 use App\Concerns\Traits\LogActivity;
 use App\Concerns\Traits\UploadFiles;
@@ -61,7 +61,7 @@ class DataPesertaController extends Controller
             ->values()
             ->map(fn ($y) => ['value' => (string) $y, 'label' => (string) $y]);
 
-        return Inertia::render('admin/guru/data-peserta/list', [
+        return Inertia::render('teacher/data-peserta/list', [
             'filterOptions' => [
                 'olimpiades' => $olimpiades,
                 'eventYears' => $eventYears,
@@ -119,7 +119,7 @@ class DataPesertaController extends Controller
         $options['sanggars'] = collect($sanggarsRaw)->map(fn (array $s) => ['id' => $s['id'] ?? null, 'name' => $s['name'] ?? '-', 'type' => $s['type'] ?? null])->values()->all();
         $options['selected_sanggar_id'] = $sanggarId;
 
-        return Inertia::render('admin/guru/data-peserta/create', $options);
+        return Inertia::render('teacher/data-peserta/create', $options);
     }
 
     public function store(StoreTeacherParticipantRequest $request)
@@ -183,7 +183,7 @@ class DataPesertaController extends Controller
         $name = $participant->student?->full_name ?? 'Unknown';
 
         return redirect()
-            ->route('admin.guru.data-peserta.index')
+            ->route('teacher.data-peserta.index')
             ->with('success', "Binaan {$name} berhasil didaftarkan.");
     }
 
@@ -193,7 +193,7 @@ class DataPesertaController extends Controller
 
         $p = $this->service->getStudentById(Auth::user(), $participant->id);
 
-        return Inertia::render('admin/guru/data-peserta/show', [
+        return Inertia::render('teacher/data-peserta/show', [
             'participant' => $this->participantPayload($p),
         ]);
     }
@@ -218,7 +218,7 @@ class DataPesertaController extends Controller
         ]);
 
         return redirect()
-            ->route('admin.guru.data-peserta.index')
+            ->route('teacher.data-peserta.index')
             ->with('success', "Pendaftaran {$name} berhasil dibatalkan.");
     }
 

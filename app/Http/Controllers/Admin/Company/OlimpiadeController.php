@@ -11,6 +11,7 @@ use App\Models\Company\Olimpiade;
 use App\Models\Company\OlimpiadeGallery;
 use App\Models\Company\OlimpiadeObjective;
 use App\Models\Company\OlimpiadeVideo;
+use App\Models\Company\Period;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -25,7 +26,12 @@ class OlimpiadeController extends Controller
     {
         $this->authorize('viewAny', Olimpiade::class);
 
-        return Inertia::render('admin/company/olimpiade/list');
+        return Inertia::render('admin/company/olimpiade/list', [
+            'filterOptions' => [
+                'periods' => Period::ordered()->get(['id', 'name', 'year', 'is_active']),
+                'currentYear' => Period::current()?->year ?? (int) date('Y'),
+            ],
+        ]);
     }
 
     public function create(): Response
@@ -211,10 +217,15 @@ class OlimpiadeController extends Controller
             : 'asc';
 
         $query = Olimpiade::query()
+            ->with('period')
             ->search($globalSearch)
             ->when(
                 data_get($filterValue, 'category'),
                 fn ($query, $category) => $query->where('category', $category),
+            )
+            ->when(
+                data_get($filterValue, 'event_year'),
+                fn ($query, $year) => $query->where('event_year', (int) $year),
             )
             ->when(
                 data_get($filterValue, 'status') !== null,
@@ -267,6 +278,10 @@ class OlimpiadeController extends Controller
             $data['recommended'] = $request->boolean('recommended');
         }
 
+        if ($request->filled('event_year')) {
+            $data['event_year'] = (int) $request->input('event_year');
+        }
+
         return $data;
     }
 
@@ -276,6 +291,8 @@ class OlimpiadeController extends Controller
             'objectives' => OlimpiadeObjective::query()->ordered()->get(['id', 'title', 'olimpiade_id']),
             'galleries' => OlimpiadeGallery::query()->ordered()->get(['id', 'title', 'image_url', 'olimpiade_id']),
             'videos' => OlimpiadeVideo::query()->ordered()->get(['id', 'title', 'olimpiade_id']),
+            'periods' => Period::ordered()->get(['id', 'name', 'year', 'is_active']),
+            'defaultYear' => Period::current()?->year ?? (int) date('Y'),
         ];
     }
 

@@ -86,11 +86,9 @@ export default function StudentLogin() {
                 </span>
             </div>
             <Button asChild type="button" variant="outline" className="w-full">
-                <a
-                    href="/auth/google/redirect?intent=student"
-                    className="w-full"
-                >
-                    <FcGoogle /> Login dengan Google (Student)
+                <a href="/auth/google/redirect" className="w-full">
+                    <FcGoogle className="size-5" /> Login dengan Google
+                    (Student)
                 </a>
             </Button>
         </>

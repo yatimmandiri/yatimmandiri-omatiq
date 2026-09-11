@@ -85,8 +85,8 @@ export default function AdminLogin() {
                 </span>
             </div>
             <Button asChild type="button" variant="outline" className="w-full">
-                <a href="/auth/google/redirect?intent=admin" className="w-full">
-                    <FcGoogle /> Login dengan Google (Admin)
+                <a href="/auth/google/redirect" className="w-full">
+                    <FcGoogle className="size-5" /> Login dengan Google (Admin)
                 </a>
             </Button>
         </>

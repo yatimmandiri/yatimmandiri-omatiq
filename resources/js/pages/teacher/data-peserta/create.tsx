@@ -1,8 +1,15 @@
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { dashboard } from '@/routes/admin';
-import dataPeserta from '@/routes/admin/guru/data-peserta';
+import {
+    Select as UiSelect,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import { dashboard } from '@/routes/teacher';
+import dataPeserta from '@/routes/teacher/data-peserta';
 import { useForm, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
@@ -378,24 +385,26 @@ const Select = ({
     options,
     placeholder,
 }: {
-    value: string;
+    value?: string;
     onChange: (value: string) => void;
     options: Array<{ value: string; label: string }>;
     placeholder: string;
 }) => (
-    <select
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm transition outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
-        required
+    <UiSelect
+        value={value ? String(value) : undefined}
+        onValueChange={onChange}
     >
-        <option value="">{placeholder}</option>
-        {options.map((option) => (
-            <option key={option.value} value={option.value}>
-                {option.label}
-            </option>
-        ))}
-    </select>
+        <SelectTrigger className="w-full">
+            <SelectValue placeholder={placeholder} />
+        </SelectTrigger>
+        <SelectContent>
+            {options.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                </SelectItem>
+            ))}
+        </SelectContent>
+    </UiSelect>
 );
 
 CreatePage.layout = {

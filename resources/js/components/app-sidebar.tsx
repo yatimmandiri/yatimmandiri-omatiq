@@ -10,16 +10,25 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { NavigationList } from '@/data/menus';
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { MainNav } from './nav-main';
 
-function useDashboardHref(): string {
-    // Semua role memakai dashboard terpadu /admin/dashboard (render berdasarkan role)
+function useDashboardHref(role?: string): string {
+    if (role === 'Teacher') {
+        return '/teacher/dashboard';
+    }
+
+    if (role === 'Participant') {
+        return '/student/dashboard';
+    }
+
     return '/admin/dashboard';
 }
 
 export function AppSidebar() {
-    const href = useDashboardHref();
+    const { auth } = usePage<any>().props;
+    const role = auth?.user?.roles?.[0] ?? auth?.roles?.[0];
+    const href = useDashboardHref(role);
 
     return (
         <Sidebar collapsible="icon" variant="inset">

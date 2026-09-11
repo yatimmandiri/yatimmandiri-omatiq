@@ -158,7 +158,7 @@ class TeacherService
         $preselected = $filtered->contains(fn (array $s) => (int) $s['id'] === (int) $studentId) ? $studentId : null;
 
         return [
-            'olimpiades' => Olimpiade::query()->active()->ordered()->get(['id', 'name', 'category', 'slug', 'event_year']),
+            'olimpiades' => Olimpiade::query()->active()->forCurrentPeriod()->ordered()->get(['id', 'name', 'category', 'slug', 'event_year']),
             'students' => $filtered,
             'preselected_student_id' => $preselected,
         ];

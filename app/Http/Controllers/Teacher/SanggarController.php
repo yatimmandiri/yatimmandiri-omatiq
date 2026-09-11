@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Admin\Guru;
+namespace App\Http\Controllers\Teacher;
 
 use App\Http\Controllers\Controller;
 use App\Models\Company\Participant;
@@ -18,7 +18,7 @@ class SanggarController extends Controller
     {
         $this->authorize('viewAny', Participant::class);
 
-        return Inertia::render('admin/guru/data-sanggar/list');
+        return Inertia::render('teacher/data-sanggar/list');
     }
 
     public function getData(Request $request)
@@ -72,6 +72,6 @@ class SanggarController extends Controller
             abort(404);
         }
 
-        return Inertia::render('admin/guru/data-sanggar/show', ['sanggar' => $sanggar]);
+        return Inertia::render('teacher/data-sanggar/show', ['sanggar' => $sanggar]);
     }
 }

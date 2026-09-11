@@ -2,7 +2,7 @@
 
 namespace App\Services\Views;
 
-use App\Http\Controllers\Guru\BiodataController;
+use App\Http\Controllers\Teacher\BiodataController;
 use App\Models\Company\Olimpiade;
 use App\Models\Company\Participant;
 use App\Models\Company\Student;
@@ -123,18 +123,11 @@ class DashboardService
             $gender = 'female';
         }
 
-        $provinceId = BiodataController::extractRegionId($profile, [
-            'province_id', 'provinsi_id', 'province', 'provinsi', 'province_code', 'provinsi_code', 'id_provinsi', 'id_prov', 'kode_provinsi',
-        ]);
-        $regencyId = BiodataController::extractRegionId($profile, [
-            'regency_id', 'kabupaten_id', 'kota_id', 'regency', 'kabupaten', 'kota', 'regency_code', 'kabupaten_code', 'kota_code', 'id_kabupaten', 'id_kota', 'kode_kabupaten', 'kode_kota',
-        ]);
-        $districtId = BiodataController::extractRegionId($profile, [
-            'district_id', 'kecamatan_id', 'district', 'kecamatan', 'district_code', 'kecamatan_code', 'id_kecamatan', 'kode_kecamatan',
-        ]);
-        $villageId = BiodataController::extractRegionId($profile, [
-            'village_id', 'desa_id', 'kelurahan_id', 'village', 'desa', 'kelurahan', 'village_code', 'desa_code', 'kelurahan_code', 'id_desa', 'id_kelurahan', 'kode_desa', 'kode_kelurahan',
-        ]);
+        $regions = BiodataController::resolveRegionIds($profile);
+        $provinceId = $regions['province_id'];
+        $regencyId = $regions['regency_id'];
+        $districtId = $regions['district_id'];
+        $villageId = $regions['village_id'];
 
         return [
             'name' => $profile['name'] ?? $profile['nama'] ?? $user->name,

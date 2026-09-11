@@ -20,8 +20,8 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { dashboard } from '@/routes/admin';
-import dataPeserta from '@/routes/admin/guru/data-peserta';
+import { dashboard } from '@/routes/teacher';
+import dataPeserta from '@/routes/teacher/data-peserta';
 import { router, usePage } from '@inertiajs/react';
 import {
     CheckCircle2,

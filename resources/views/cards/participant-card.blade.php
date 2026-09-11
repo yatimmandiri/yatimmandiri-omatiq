@@ -3,19 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kartu Peserta OMATIQ - {{ $participant->registration_number }}</title>
+    <title>Kartu-Peserta-OMATIQ-{{ $participant->registration_number }}</title>
     <style>
+        @page {
+            size: a5 portrait;
+            margin: 6mm;
+        }
+
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
         }
 
+        @if(empty($isPdf))
         body {
-            background-color: #f1f5f9;
+            background-color: #061210;
+            background-image: 
+                radial-gradient(circle at 50% 0%, rgba(23, 82, 74, 0.45) 0%, transparent 60%),
+                radial-gradient(#17524a 0.8px, transparent 0.8px);
+            background-size: 100% 100%, 20px 20px;
             color: #1e293b;
-            padding: 30px 15px;
+            padding: 24px 15px 40px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -24,444 +36,582 @@
 
         .toolbar {
             width: 100%;
-            max-width: 780px;
-            margin-bottom: 20px;
+            max-width: 440px;
+            margin-bottom: 18px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: #ffffff;
-            padding: 12px 20px;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            background: rgba(13, 40, 36, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 10px 18px;
+            border-radius: 16px;
+            border: 1px solid rgba(229, 190, 30, 0.35);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
         }
 
-        .btn {
-            display: inline-flex;
+        .toolbar-title {
+            font-weight: 800;
+            font-size: 13px;
+            color: #ffffff;
+            display: flex;
             align-items: center;
             gap: 8px;
-            padding: 10px 18px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 700;
+        }
+
+        .toolbar-badge {
+            background: #E5BE1E;
+            color: #061a17;
+            font-size: 10px;
+            font-weight: 900;
+            padding: 2px 8px;
+            border-radius: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-print {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 800;
             text-decoration: none;
             cursor: pointer;
             border: none;
-            transition: all 0.2s;
+            background: linear-gradient(135deg, #E5BE1E 0%, #d4a713 100%);
+            color: #081d1a;
+            box-shadow: 0 3px 12px rgba(229, 190, 30, 0.4);
+            transition: all 0.2s ease;
         }
 
-        .btn-primary {
-            background-color: #17524A;
-            color: #ffffff;
+        .btn-print:hover {
+            background: linear-gradient(135deg, #eed04b 0%, #e0b41c 100%);
+            transform: translateY(-1px);
         }
 
-        .btn-primary:hover {
-            background-color: #0f3732;
-        }
-
-        .btn-secondary {
-            background-color: #f8fafc;
-            color: #1e293b;
-            border: 1px solid #cbd5e1;
-        }
-
-        .btn-secondary:hover {
-            background-color: #e2e8f0;
-        }
-
-        /* Card Layout (Landscape standard badge) */
-        .card-container {
+        .badge-wrapper {
             width: 100%;
-            max-width: 780px;
+            max-width: 440px;
             background: #ffffff;
-            border-radius: 16px;
-            border: 2px solid #17524A;
-            box-shadow: 0 10px 25px rgba(23, 82, 74, 0.12);
+            border-radius: 28px;
+            border: 3px solid #17524A;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(229, 190, 30, 0.4);
             overflow: hidden;
             position: relative;
         }
+        @else
+        body {
+            background: #ffffff;
+            color: #1e293b;
+            padding: 0;
+            margin: 0;
+        }
 
-        .card-header {
-            background: linear-gradient(135deg, #17524A 0%, #1e6b60 100%);
+        .toolbar {
+            display: none;
+        }
+
+        .badge-wrapper {
+            width: 100%;
+            background: #ffffff;
+            border-radius: 20px;
+            border: 2px solid #17524A;
+            overflow: hidden;
+        }
+        @endif
+
+        /* Top Lanyard Punch Slot Simulation */
+        .lanyard-bar {
+            background-color: #061916;
+            padding: 12px 0 6px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .lanyard-slot {
+            display: inline-block;
+            width: 48px;
+            height: 6px;
+            background-color: #0b2d28;
+            border: 1.5px solid rgba(229, 190, 30, 0.6);
+            border-radius: 6px;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Event Header Banner */
+        .badge-header {
+            background: linear-gradient(145deg, #051815 0%, #0d3832 50%, #17524A 100%);
             color: #ffffff;
-            padding: 18px 25px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+            padding: 16px 20px 14px;
+            text-align: center;
+            position: relative;
             border-bottom: 4px solid #E5BE1E;
         }
 
-        .header-brand h1 {
-            font-size: 20px;
-            font-weight: 900;
-            letter-spacing: 0.5px;
-            color: #ffffff;
+        .event-tagline {
+            font-size: 9px;
+            font-weight: 800;
+            color: #E5BE1E;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 3px;
         }
 
-        .header-brand p {
-            font-size: 12px;
+        .event-title {
+            font-size: 26px;
+            font-weight: 950;
+            letter-spacing: 1px;
+            color: #ffffff;
+            line-height: 1.1;
+            text-transform: uppercase;
+        }
+
+        .event-edition-pill {
+            display: inline-block;
+            background-color: #E5BE1E;
+            color: #061916;
+            font-size: 9px;
+            font-weight: 900;
+            padding: 2px 8px;
+            border-radius: 6px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-top: 4px;
+        }
+
+        .event-org {
+            font-size: 10px;
+            color: #a3e3d9;
+            font-weight: 600;
+            margin-top: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        /* Hero Access Tier Ribbon */
+        .access-tier-ribbon {
+            background-color: #0b2824;
+            color: #ffffff;
+            padding: 6px 15px;
+            text-align: center;
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            border-bottom: 1px solid rgba(229, 190, 30, 0.3);
+        }
+
+        .access-tier-ribbon span {
             color: #E5BE1E;
-            font-weight: 700;
-            margin-top: 2px;
+        }
+
+        /* Hero Section (Avatar + Big Name + Big BIB) */
+        .badge-hero {
+            padding: 18px 20px 14px;
+            text-align: center;
+            background: radial-gradient(circle at 50% 30%, #f0fdf4 0%, #ffffff 70%);
+            border-bottom: 1.5px dashed #cbd5e1;
+        }
+
+        .avatar-wrap {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+
+        .avatar-frame {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 3px solid #17524A;
+            background-color: #f8fafc;
+            overflow: hidden;
+            margin: 0 auto;
+            box-shadow: 0 6px 16px rgba(23, 82, 74, 0.2), 0 0 0 3px rgba(229, 190, 30, 0.5);
+            text-align: center;
+        }
+
+        .avatar-img {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+
+        .avatar-empty {
+            padding-top: 25px;
+            color: #94a3b8;
+            font-size: 10px;
+            font-weight: 800;
+            line-height: 1.3;
+        }
+
+        .role-chip-tag {
+            position: absolute;
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #17524A;
+            color: #E5BE1E;
+            font-size: 9px;
+            font-weight: 900;
+            padding: 3px 10px;
+            border-radius: 12px;
+            border: 1px solid #E5BE1E;
+            white-space: nowrap;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+        }
+
+        /* Big Participant Name (Event Athlete/VIP feel) */
+        .participant-name-title {
+            font-size: 17px;
+            font-weight: 900;
+            color: #0d3832;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            line-height: 1.2;
+            margin-top: 10px;
+            margin-bottom: 8px;
+        }
+
+        /* Massive BIB / Registration Number Box */
+        .bib-container {
+            background-color: #0b2824;
+            border: 2px solid #E5BE1E;
+            border-radius: 12px;
+            padding: 6px 12px;
+            display: inline-block;
+            box-shadow: 0 4px 12px rgba(11, 40, 36, 0.25);
+            margin-bottom: 10px;
+        }
+
+        .bib-label {
+            font-size: 8px;
+            font-weight: 800;
+            color: #a3e3d9;
             text-transform: uppercase;
             letter-spacing: 1px;
+            display: block;
         }
 
-        .header-badge {
-            background: #E5BE1E;
-            color: #17524A;
-            padding: 6px 14px;
+        .bib-number {
+            font-size: 18px;
+            font-weight: 950;
+            color: #E5BE1E;
+            font-family: 'Courier New', Courier, monospace;
+            letter-spacing: 1.5px;
+            line-height: 1.1;
+        }
+
+        /* Competition Division Banner */
+        .competition-pill {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border: 1.5px solid #f59e0b;
+            color: #78350f;
+            padding: 5px 14px;
             border-radius: 20px;
             font-size: 11px;
             font-weight: 900;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
+            display: inline-block;
             text-transform: uppercase;
         }
 
-        .card-body {
-            padding: 24px;
-            display: grid;
-            grid-template-columns: 140px 1fr 170px;
-            gap: 20px;
-            background: #ffffff;
-        }
-
-        /* Photo Column */
-        .photo-column {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .photo-box {
-            width: 130px;
-            height: 160px;
-            border-radius: 10px;
-            border: 2px solid #cbd5e1;
-            background: #f8fafc;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-        }
-
-        .photo-box img {
+        /* Credentials Metadata Grid (Event Pass style) */
+        .badge-meta-table {
             width: 100%;
-            height: 100%;
-            object-fit: cover;
+            border-collapse: collapse;
+            padding: 12px 20px;
+            background-color: #ffffff;
+            font-size: 10.5px;
         }
 
-        .photo-placeholder {
-            text-align: center;
-            color: #94a3b8;
-            font-size: 12px;
-            font-weight: 700;
-            padding: 10px;
+        .meta-row td {
+            padding: 4px 20px;
+            vertical-align: top;
         }
 
-        .photo-badge {
-            margin-top: 10px;
-            font-size: 10px;
-            font-weight: 800;
-            color: #17524A;
-            background: #e6f4f1;
-            padding: 4px 10px;
-            border-radius: 12px;
-            border: 1px solid #17524A;
-            text-transform: uppercase;
-        }
-
-        /* Detail Column */
-        .detail-column {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .reg-number-banner {
-            background: #f0fdf4;
-            border-left: 4px solid #17524A;
-            padding: 6px 12px;
-            border-radius: 0 8px 8px 0;
-            margin-bottom: 6px;
-        }
-
-        .reg-number-banner .label {
-            font-size: 10px;
-            font-weight: 700;
+        .meta-lbl {
+            width: 110px;
             color: #64748b;
+            font-weight: 800;
+            font-size: 9.5px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
 
-        .reg-number-banner .value {
-            font-size: 17px;
-            font-weight: 900;
-            color: #17524A;
-            font-family: 'Courier New', Courier, monospace;
-        }
-
-        .detail-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 12px;
-        }
-
-        .detail-table td {
-            padding: 3px 0;
-            vertical-align: top;
-        }
-
-        .detail-table td.label-cell {
-            width: 120px;
-            color: #64748b;
-            font-weight: 600;
-        }
-
-        .detail-table td.colon-cell {
-            width: 12px;
-            color: #64748b;
-            font-weight: 600;
-        }
-
-        .detail-table td.value-cell {
-            color: #1e293b;
+        .meta-cln {
+            width: 10px;
+            color: #94a3b8;
             font-weight: 700;
-        }
-
-        /* Right Column (Barcode, QR, Status) */
-        .scan-column {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: space-between;
-            border-left: 1px dashed #cbd5e1;
-            padding-left: 18px;
-        }
-
-        .qr-wrapper {
-            background: #ffffff;
-            padding: 8px;
-            border-radius: 10px;
-            border: 1px solid #e2e8f0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .barcode-wrapper {
-            width: 100%;
-            margin-top: 10px;
             text-align: center;
         }
 
-        .barcode-svg {
-            width: 100%;
-            height: 38px;
+        .meta-val {
+            color: #0f172a;
+            font-weight: 800;
+            font-size: 11px;
         }
 
-        .barcode-label {
-            font-size: 9px;
-            font-family: monospace;
-            font-weight: 700;
+        /* Rapid Checkpoint Barcode & QR Access Section */
+        .badge-scan-section {
+            background-color: #f8fafc;
+            border-top: 1.5px dashed #cbd5e1;
+            padding: 12px 18px 10px;
+            text-align: center;
+        }
+
+        .scan-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .scan-qr-td {
+            width: 90px;
+            vertical-align: middle;
+            text-align: center;
+        }
+
+        .scan-barcode-td {
+            vertical-align: middle;
+            text-align: center;
+            padding-left: 12px;
+        }
+
+        .qr-box-pass {
+            display: inline-block;
+            background: #ffffff;
+            padding: 6px;
+            border-radius: 10px;
+            border: 1.5px solid #17524A;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+        }
+
+        .barcode-wrap-pass {
+            width: 100%;
+            text-align: center;
+        }
+
+        .barcode-code-pass {
+            font-size: 8.5px;
+            font-family: 'Courier New', monospace;
+            font-weight: 800;
             color: #17524A;
             margin-top: 2px;
         }
 
-        .status-badge {
-            margin-top: 8px;
-            background: #17524A;
+        .status-chip-event {
+            margin-top: 6px;
+            display: inline-block;
+            background: linear-gradient(135deg, #17524A 0%, #0d3832 100%);
             color: #ffffff;
-            padding: 4px 10px;
+            font-size: 9.5px;
+            font-weight: 900;
+            padding: 3px 12px;
             border-radius: 12px;
-            font-size: 10px;
-            font-weight: 800;
-            display: flex;
-            align-items: center;
-            gap: 4px;
+            border: 1px solid #E5BE1E;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
         }
 
-        /* Card Footer */
-        .card-footer {
-            background: #f8fafc;
-            border-top: 1px solid #e2e8f0;
-            padding: 12px 24px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            font-size: 10px;
-            color: #64748b;
-        }
-
-        .card-footer-note {
-            max-width: 480px;
-            line-height: 1.4;
-        }
-
-        .signature-box {
+        /* Hologram / Security Footer Strip */
+        .badge-footer {
+            background-color: #061916;
+            color: #94a3b8;
+            padding: 10px 18px;
+            border-top: 2px solid #E5BE1E;
             text-align: center;
-            border-left: 1px solid #e2e8f0;
-            padding-left: 20px;
+            font-size: 8.5px;
+            line-height: 1.35;
         }
 
-        .signature-box .title {
-            font-weight: 700;
-            color: #17524A;
-        }
-
-        .signature-box .stamp {
+        .footer-stamp-text {
             color: #E5BE1E;
             font-weight: 900;
-            font-size: 11px;
-            margin: 4px 0;
             letter-spacing: 1px;
+            font-size: 9px;
+            text-transform: uppercase;
+            margin-bottom: 2px;
         }
 
         @media print {
             body {
-                background: none;
-                padding: 0;
+                background: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
 
             .toolbar {
                 display: none !important;
             }
 
-            .card-container {
-                box-shadow: none;
-                border: 2px solid #17524A;
-                max-width: 100%;
-                page-break-inside: avoid;
+            .badge-wrapper {
+                box-shadow: none !important;
+                border: 2px solid #17524A !important;
+                border-radius: 18px !important;
+                max-width: 100% !important;
+                page-break-inside: avoid !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
         }
     </style>
 </head>
 <body>
 
+    @if(empty($isPdf))
+    <!-- Floating Web Action Toolbar -->
     <div class="toolbar">
-        <div>
-            <span style="font-weight: 700; font-size: 14px; color: #17524A;">Kartu Peserta OMATIQ</span>
-            <span style="font-size: 12px; color: #64748b; margin-left: 8px;">Status: Terverifikasi</span>
+        <div class="toolbar-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E5BE1E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            <span>OMATIQ {{ $participant->event_year ?? 2026 }} Pass</span>
         </div>
-        <div style="display: flex; gap: 10px;">
-            <button class="btn btn-secondary" onclick="window.print()">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
-                Cetak Kartu
+        <div>
+            <button class="btn-print" onclick="window.print()" title="Cetak langsung atau Simpan sebagai PDF">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <span>Unduh / Cetak PDF</span>
             </button>
-            <a href="?format=pdf" class="btn btn-primary">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                Unduh PDF
-            </a>
         </div>
     </div>
+    @endif
 
-    <div class="card-container">
-        <!-- Header -->
-        <div class="card-header">
-            <div class="header-brand">
-                <h1>OMATIQ {{ $participant->event_year ?? 2026 }}</h1>
-                <p>Olimpiade Matematika & Al-Qur'an &bull; Yatim Mandiri</p>
-            </div>
-            <div class="header-badge">
-                KARTU TANDA PESERTA
-            </div>
+    <!-- Official Event Lanyard Badge -->
+    <div class="badge-wrapper">
+        <!-- Top Lanyard Slot -->
+        <div class="lanyard-bar">
+            <div class="lanyard-slot"></div>
         </div>
 
-        <!-- Body -->
-        <div class="card-body">
-            <!-- Left: Photo -->
-            <div class="photo-column">
-                <div class="photo-box">
+        <!-- Event Branding Header -->
+        <div class="badge-header">
+            <div class="event-tagline">&bull; OFFICIAL PARTICIPANT CREDENTIAL &bull;</div>
+            <div class="event-title">OMATIQ {{ $participant->event_year ?? 2026 }}</div>
+            <div>
+                <span class="event-edition-pill">&#9889; AI &amp; Future Talent Edition</span>
+            </div>
+            <div class="event-org">Olimpiade Matematika &amp; Al-Qur'an &bull; Laznas Yatim Mandiri</div>
+        </div>
+
+        <!-- Access Category Ribbon -->
+        <div class="access-tier-ribbon">
+            OFFICIAL PASS &bull; <span>{{ $student?->is_binaan ? 'BINAAN SANGGAR' : 'PESERTA UMUM' }}</span>
+        </div>
+
+        <!-- Hero Section: Avatar, Big Name, BIB Number -->
+        <div class="badge-hero">
+            <div class="avatar-wrap">
+                <div class="avatar-frame">
                     @if(!empty($student->photo_url))
-                        <img src="{{ $student->photo_url }}" alt="Foto Peserta">
+                        <img src="{{ $student->photo_url }}" alt="Foto Peserta" class="avatar-img">
                     @else
-                        <div class="photo-placeholder">
-                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" style="margin: 0 auto 6px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                            <span>PAS FOTO</span>
+                        <div class="avatar-empty">
+                            <div style="font-size: 20px; margin-bottom: 2px;">👤</div>
+                            <div>PAS FOTO</div>
+                            <div style="font-size: 7.5px; color: #94a3b8;">3 &times; 4 cm</div>
                         </div>
                     @endif
                 </div>
-                <div class="photo-badge">
-                    PESERTA RESMI
-                </div>
+                <span class="role-chip-tag">
+                    {{ $student?->is_binaan ? 'Peserta Binaan' : 'Peserta Umum' }}
+                </span>
             </div>
 
-            <!-- Middle: Data -->
-            <div class="detail-column">
-                <div class="reg-number-banner">
-                    <div class="label">Nomor Registrasi Peserta</div>
-                    <div class="value">{{ $participant->registration_number }}</div>
-                </div>
-
-                <table class="detail-table">
-                    <tr>
-                        <td class="label-cell">Nama Lengkap</td>
-                        <td class="colon-cell">:</td>
-                        <td class="value-cell" style="font-size: 13px; color: #17524A;">{{ strtoupper($student->full_name ?? $participant->user?->name ?? '-') }}</td>
-                    </tr>
-                    <tr>
-                        <td class="label-cell">NIK / NIS</td>
-                        <td class="colon-cell">:</td>
-                        <td class="value-cell">{{ $student->nik ?? '-' }} {{ !empty($student->nis) ? '/ '.$student->nis : '' }}</td>
-                    </tr>
-                    <tr>
-                        <td class="label-cell">Asal Sekolah</td>
-                        <td class="colon-cell">:</td>
-                        <td class="value-cell">{{ $student->school_name ?? '-' }}</td>
-                    </tr>
-                    <tr>
-                        <td class="label-cell">Jenjang & Kelas</td>
-                        <td class="colon-cell">:</td>
-                        <td class="value-cell">{{ $student->school_level ?? 'SD/MI' }} &bull; Kelas {{ $student->grade ?? '-' }}</td>
-                    </tr>
-                    <tr>
-                        <td class="label-cell">Cabang Olimpiade</td>
-                        <td class="colon-cell">:</td>
-                        <td class="value-cell" style="color: #17524A;">{{ $participant->olimpiade?->name ?? 'OMATIQ' }} ({{ $participant->olimpiade?->category ?? 'Umum' }})</td>
-                    </tr>
-                    <tr>
-                        <td class="label-cell">Wilayah / Cabang</td>
-                        <td class="colon-cell">:</td>
-                        <td class="value-cell">{{ $student->regency?->name ?? $participant->branch ?? $participant->penyaluran_sanggar_name ?? '-' }}</td>
-                    </tr>
-                    <tr>
-                        <td class="label-cell">Pendamping / Guru</td>
-                        <td class="colon-cell">:</td>
-                        <td class="value-cell">{{ $participant->mentor?->name ?? $student->mentor_name ?? '-' }}</td>
-                    </tr>
-                </table>
+            <!-- Participant Name -->
+            <div class="participant-name-title">
+                {{ strtoupper($student->full_name ?? $participant->user?->name ?? '-') }}
             </div>
 
-            <!-- Right: Barcode & QR Code -->
-            <div class="scan-column">
-                <div class="qr-wrapper">
-                    {!! $qrCodeSvg !!}
-                </div>
+            <!-- Massive Marathon/Event BIB Code -->
+            <div class="bib-container">
+                <span class="bib-label">REGISTRATION / BIB NO.</span>
+                <span class="bib-number">{{ $participant->registration_number }}</span>
+            </div>
 
-                <div class="barcode-wrapper">
-                    <div class="barcode-svg">
-                        {!! $barcodeSvg !!}
-                    </div>
-                    <div class="barcode-label">{{ $participant->registration_number }}</div>
-                </div>
-
-                <div class="status-badge">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-                    TERVERIFIKASI
-                </div>
+            <!-- Competition Category Banner -->
+            <div>
+                <span class="competition-pill">
+                    &#127942; {{ $participant->olimpiade?->name ?? 'OMATIQ' }}
+                    @if($participant->olimpiade?->category)
+                        ({{ $participant->olimpiade->category }})
+                    @endif
+                </span>
             </div>
         </div>
 
-        <!-- Footer -->
-        <div class="card-footer">
-            <div class="card-footer-note">
-                <strong>Catatan:</strong> Kartu tanda peserta ini wajib dicetak dan dibawa saat registrasi ulang / pelaksanaan Olimpiade OMATIQ {{ $participant->event_year ?? 2026 }}. Barcode digunakan untuk absensi & verifikasi kehadiran peserta.
-            </div>
-            <div class="signature-box">
-                <div class="title">Panitia Pelaksana</div>
-                <div class="stamp">OMATIQ OFFICIAL</div>
-                <div style="font-size: 9px; color: #94a3b8;">Yatim Mandiri Pusat</div>
-            </div>
+        <!-- Credentials / Metadata Grid -->
+        <table class="badge-meta-table">
+            <tr class="meta-row">
+                <td class="meta-lbl">NIK / NIS</td>
+                <td class="meta-cln">:</td>
+                <td class="meta-val">
+                    <span>{{ $student->nik ?? '-' }}</span>
+                    @if(!empty($student->nis))
+                        <span style="color: #64748b; font-weight: normal;"> / NIS: {{ $student->nis }}</span>
+                    @endif
+                </td>
+            </tr>
+            <tr class="meta-row">
+                <td class="meta-lbl">Asal Sekolah</td>
+                <td class="meta-cln">:</td>
+                <td class="meta-val">{{ $student->school_name ?? '-' }}</td>
+            </tr>
+            <tr class="meta-row">
+                <td class="meta-lbl">Jenjang &amp; Kelas</td>
+                <td class="meta-cln">:</td>
+                <td class="meta-val">
+                    {{ $student->school_level ?? 'SD/MI' }} &bull; Kelas {{ $student->grade ?? '-' }}
+                </td>
+            </tr>
+            <tr class="meta-row">
+                <td class="meta-lbl">Cabang / Wilayah</td>
+                <td class="meta-cln">:</td>
+                <td class="meta-val">
+                    {{ $student->regency?->name ?? $participant->branch ?? $participant->penyaluran_sanggar_name ?? '-' }}
+                </td>
+            </tr>
+            <tr class="meta-row">
+                <td class="meta-lbl">Guru Pendamping</td>
+                <td class="meta-cln">:</td>
+                <td class="meta-val">
+                    {{ $participant->mentor?->name ?? $student->mentor_name ?? '-' }}
+                </td>
+            </tr>
+        </table>
+
+        <!-- Checkpoint Barcode & QR Access Scanning -->
+        <div class="badge-scan-section">
+            <table class="scan-table">
+                <tr>
+                    <td class="scan-qr-td">
+                        <div class="qr-box-pass">
+                            {!! $qrCodeSvg !!}
+                        </div>
+                    </td>
+                    <td class="scan-barcode-td">
+                        <div class="barcode-wrap-pass">
+                            {!! $barcodeSvg !!}
+                            <div class="barcode-code-pass">{{ $participant->registration_number }}</div>
+                        </div>
+                        <div>
+                            <span class="status-chip-event">
+                                &#10003; TERVERIFIKASI &bull; ACCESS GRANTED
+                            </span>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Security / Hologram Event Footer -->
+        <div class="badge-footer">
+            <div class="footer-stamp-text">&bull; OMATIQ OFFICIAL COMPETITOR PASS &bull;</div>
+            <div>Wajib dikenakan/dibawa selama rangkaian perlombaan. Barcode &amp; QR Code digunakan untuk validasi registrasi ulang dan absensi digital panitia.</div>
         </div>
     </div>
 

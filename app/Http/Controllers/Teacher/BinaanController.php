@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Admin\Guru;
+namespace App\Http\Controllers\Teacher;
 
 use App\Http\Controllers\Controller;
 use App\Models\Company\Participant;
@@ -37,7 +37,7 @@ class BinaanController extends Controller
 
         $settings = app(SiteSettings::class);
 
-        return Inertia::render('admin/guru/data-binaan/list', [
+        return Inertia::render('teacher/data-binaan/list', [
             'sanggars' => collect($sanggars)->map(fn (array $s) => ['id' => $s['id'] ?? null, 'name' => $s['name'] ?? '-', 'type' => $s['type'] ?? null])->values()->all(),
             'selected_sanggar_id' => $request->integer('sanggar_id') ?: null,
             'registration_binaan_open' => (bool) $settings->registration_binaan_open,
@@ -145,7 +145,7 @@ class BinaanController extends Controller
             }
         }
 
-        return Inertia::render('admin/guru/data-binaan/create', [
+        return Inertia::render('teacher/data-binaan/create', [
             'sanggars' => collect($sanggars)->map(fn (array $s) => ['id' => $s['id'] ?? null, 'name' => $s['name'] ?? '-'])->values()->all(),
             'provinces' => Province::orderBy('name')->get(['id', 'name']),
             'regencies' => Regency::orderBy('name')->get(['id', 'province_id', 'name'])->map(fn ($r) => ['id' => $r->id, 'province_id' => $r->province_id, 'name' => $r->name])->values()->all(),
@@ -194,7 +194,7 @@ class BinaanController extends Controller
             'is_binaan' => true,
         ]);
 
-        return redirect()->route('admin.guru.data-binaan.index')->with('success', "Binaan {$student->full_name} berhasil ditambahkan (lokal, sync Penyaluran TODO).");
+        return redirect()->route('teacher.data-binaan.index')->with('success', "Binaan {$student->full_name} berhasil ditambahkan (lokal, sync Penyaluran TODO).");
     }
 
     public function edit(int|string $binaan)
@@ -206,13 +206,17 @@ class BinaanController extends Controller
             abort(403);
         }
 
-        return Inertia::render('admin/guru/data-binaan/edit', [
+        return Inertia::render('teacher/data-binaan/edit', [
             'binaan' => $student->load(['province:id,name', 'regency:id,name', 'village:id,name', 'district:id,name']),
             'provinces' => Province::orderBy('name')->get(['id', 'name']),
-            'regencies' => Regency::orderBy('name')->get(['id', 'province_id', 'name'])->map(fn ($r) => ['id' => $r->id, 'province_id' => $r->province_id, 'name' => $r->name])->values()->all(),
-            'districts' => District::orderBy('name')->get(['id', 'regency_id', 'name'])->map(fn ($r) => ['id' => $r->id, 'regency_id' => $r->regency_id, 'name' => $r->name])->values()->all(),
-            'villages' => $student->district_id
-                ? Village::where('district_id', $student->district_id)->orderBy('name')->get(['id', 'district_id', 'name'])->map(fn ($r) => ['id' => $r->id, 'district_id' => $r->district_id, 'name' => $r->name])->values()->all()
+            'initialRegencies' => $student->province_id
+                ? Regency::where('province_id', $student->province_id)->orderBy('name')->get(['id', 'province_id', 'name'])->values()->all()
+                : [],
+            'initialDistricts' => $student->regency_id
+                ? District::where('regency_id', $student->regency_id)->orderBy('name')->get(['id', 'regency_id', 'name'])->values()->all()
+                : [],
+            'initialVillages' => $student->district_id
+                ? Village::where('district_id', $student->district_id)->orderBy('name')->get(['id', 'district_id', 'name'])->values()->all()
                 : [],
         ]);
     }
@@ -263,7 +267,7 @@ class BinaanController extends Controller
 
         $student->update($data);
 
-        return redirect()->route('admin.guru.data-binaan.index')->with('success', "Binaan {$student->full_name} diperbarui.");
+        return redirect()->route('teacher.data-binaan.index')->with('success', "Binaan {$student->full_name} diperbarui.");
     }
 
     public function destroy(int|string $binaan)
@@ -279,49 +283,70 @@ class BinaanController extends Controller
         }
         $student->delete();
 
-        return redirect()->route('admin.guru.data-binaan.index')->with('success', 'Binaan dihapus.');
+        return redirect()->route('teacher.data-binaan.index')->with('success', 'Binaan dihapus.');
     }
 
     protected function resolveBinaan(int|string|Student $binaan): Student
     {
-        if ($binaan instanceof Student) {
-            return $binaan;
+        $student = $binaan instanceof Student
+            ? $binaan
+            : Student::where('id', $binaan)->orWhere('penyaluran_id', $binaan)->first();
+
+        $token = request()->session()->get('penyaluran_token') ?? Auth::user()?->penyaluran_token;
+        $found = null;
+
+        if ($token) {
+            try {
+                $studentsRaw = $this->penyaluran->students($token);
+                $found = collect($studentsRaw)->firstWhere(function (array $s) use ($binaan, $student) {
+                    $sid = (int) ($s['student_id'] ?? $s['id'] ?? 0);
+                    $nik = $s['nik'] ?? null;
+
+                    if ($student) {
+                        return ($student->penyaluran_id && $sid === (int) $student->penyaluran_id)
+                            || ($nik && $nik === $student->nik)
+                            || $sid === (int) $student->id;
+                    }
+
+                    return $sid === (int) $binaan || ($nik && $nik === (string) $binaan);
+                });
+            } catch (\Throwable $e) {
+                $found = null;
+            }
         }
 
-        $student = Student::where('id', $binaan)
-            ->orWhere('penyaluran_id', $binaan)
-            ->first();
+        if ($found) {
+            $regions = BiodataController::resolveRegionIds($found);
+            $gender = ($found['gender'] ?? 'male') === 'female' || ($found['gender'] ?? 'male') === 'P' ? 'female' : 'male';
+            $attributes = [
+                'penyaluran_id' => $found['student_id'] ?? $found['id'] ?? ($student?->penyaluran_id),
+                'nik' => $found['nik'] ?? $student?->nik ?? Str::random(16),
+                'nis' => $found['nis'] ?? $student?->nis,
+                'full_name' => $found['name'] ?? $found['full_name'] ?? $student?->full_name ?? '-',
+                'nickname' => $found['nickname'] ?? $student?->nickname,
+                'gender' => $gender,
+                'birth_place' => $found['birth_place'] ?? $student?->birth_place,
+                'birth_date' => $found['birth_date'] ?? $student?->birth_date ?? '2015-01-01',
+                'school_name' => $found['school_name'] ?? $student?->school_name ?? '-',
+                'school_level' => $found['school_level'] ?? $student?->school_level,
+                'grade' => $found['class'] ?? $found['grade'] ?? $student?->grade ?? '-',
+                'address' => $found['address'] ?? $student?->address ?? '-',
+                'province_id' => $regions['province_id'] ?? $student?->province_id,
+                'regency_id' => $regions['regency_id'] ?? $student?->regency_id,
+                'district_id' => $regions['district_id'] ?? $student?->district_id,
+                'village_id' => $regions['village_id'] ?? $student?->village_id,
+                'parent_phone' => $found['guardian_phone'] ?? $found['parent_phone'] ?? $student?->parent_phone ?? '-',
+                'mentor_id' => Auth::id(),
+                'mentor_name' => Auth::user()?->name,
+                'mentor_phone' => Auth::user()?->phone,
+                'is_binaan' => true,
+                'is_active' => true,
+            ];
 
-        if (! $student) {
-            $token = request()->session()->get('penyaluran_token') ?? Auth::user()?->penyaluran_token;
-            if ($token) {
-                try {
-                    $studentsRaw = $this->penyaluran->students($token);
-                    $found = collect($studentsRaw)->firstWhere(fn (array $s) => (int) ($s['student_id'] ?? $s['id'] ?? 0) === (int) $binaan);
-                    if ($found) {
-                        $student = Student::create([
-                            'penyaluran_id' => $found['student_id'] ?? $found['id'],
-                            'nik' => $found['nik'] ?? Str::random(16),
-                            'nis' => $found['nis'] ?? null,
-                            'full_name' => $found['name'] ?? $found['full_name'] ?? '-',
-                            'nickname' => $found['nickname'] ?? null,
-                            'gender' => ($found['gender'] ?? 'male') === 'female' ? 'female' : 'male',
-                            'birth_place' => $found['birth_place'] ?? null,
-                            'birth_date' => $found['birth_date'] ?? '2015-01-01',
-                            'school_name' => $found['school_name'] ?? '-',
-                            'school_level' => $found['school_level'] ?? null,
-                            'grade' => $found['class'] ?? $found['grade'] ?? '-',
-                            'address' => $found['address'] ?? '-',
-                            'parent_phone' => $found['guardian_phone'] ?? $found['parent_phone'] ?? '-',
-                            'mentor_id' => Auth::id(),
-                            'mentor_name' => Auth::user()?->name,
-                            'mentor_phone' => Auth::user()?->phone,
-                            'is_binaan' => true,
-                            'is_active' => true,
-                        ]);
-                    }
-                } catch (\Throwable $e) {
-                }
+            if ($student) {
+                $student->update($attributes);
+            } else {
+                $student = Student::create($attributes);
             }
         }
 
@@ -354,7 +379,7 @@ class BinaanController extends Controller
         if (empty($studentsRaw) && app()->environment('testing')) {
             $local = Student::where('id', $binaan)->where('mentor_id', Auth::id())->where('is_binaan', true)->first();
             if ($local) {
-                return Inertia::render('admin/guru/data-binaan/show', [
+                return Inertia::render('teacher/data-binaan/show', [
                     'binaan' => [
                         'student_id' => $local->id,
                         'nik' => $local->nik,
@@ -409,7 +434,7 @@ class BinaanController extends Controller
             'olimpiade_name' => $active?->olimpiade?->name,
         ];
 
-        return Inertia::render('admin/guru/data-binaan/show', [
+        return Inertia::render('teacher/data-binaan/show', [
             'binaan' => $binaanData,
             'registration' => $active,
             'registration_binaan_open' => (bool) app(SiteSettings::class)->registration_binaan_open,

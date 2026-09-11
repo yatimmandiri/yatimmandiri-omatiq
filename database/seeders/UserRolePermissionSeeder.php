@@ -28,7 +28,9 @@ class UserRolePermissionSeeder extends Seeder
             ['name' => 'Users', 'guard_name' => 'web'],
             ['name' => 'Participant', 'guard_name' => 'web'],
             ['name' => 'Teacher', 'guard_name' => 'web'],
-        ])->each(fn ($role) => Role::create($role));
+        ])->each(fn ($role) => Role::firstOrCreate($role));
+
+        $adminRole = Role::where('name', 'Administrators')->first();
 
         collect([
             ['name' => 'view-permission', 'guard_name' => 'web'],
@@ -138,19 +140,26 @@ class UserRolePermissionSeeder extends Seeder
             ['name' => 'update-faq-company', 'guard_name' => 'web'],
             ['name' => 'delete-faq-company', 'guard_name' => 'web'],
             ['name' => 'data-faq-company', 'guard_name' => 'web'],
-        ])->each(fn ($permission) => Permission::create($permission)->assignRole('Administrators'));
+        ])->each(function ($permission) use ($adminRole) {
+            $perm = Permission::firstOrCreate($permission);
+            if ($adminRole && ! $adminRole->hasPermissionTo($perm)) {
+                $adminRole->givePermissionTo($perm);
+            }
+        });
 
         $participantRole = Role::where('name', 'Participant')->first();
         if ($participantRole) {
             $participantRole->givePermissionTo(['view-participant', 'data-participant']);
         }
 
-        User::create([
-            'name' => 'Administrator',
-            'email' => 'scrum@yatimmandiri.org',
-            'email_verified_at' => now(),
-            'password' => Hash::make('password'),
-        ])->assignRole('Administrators');
+        User::firstOrCreate(
+            ['email' => 'scrum@yatimmandiri.org'],
+            [
+                'name' => 'Administrator',
+                'email_verified_at' => now(),
+                'password' => Hash::make('password'),
+            ]
+        )->assignRole('Administrators');
 
         $teacherRole = Role::where('name', 'Teacher')->first();
         if ($teacherRole) {
@@ -159,21 +168,14 @@ class UserRolePermissionSeeder extends Seeder
             ]);
         }
 
-        // $participantUser = User::create([
-        //     'name' => 'Partisipan Demo',
-        //     'email' => 'partisipan@test.dev',
-        //     'email_verified_at' => now(),
-        //     'password' => Hash::make('password'),
-        // ]);
-        // $participantUser->assignRole('Participant');
-
-        $teacherUser = User::create([
-            'name' => 'Guru Pembimbing',
-            'email' => 'guru@test.dev',
-            'email_verified_at' => now(),
-            'password' => Hash::make('password'),
-        ]);
-        $teacherUser->assignRole('Teacher');
+        User::firstOrCreate(
+            ['email' => 'guru@test.dev'],
+            [
+                'name' => 'Guru Pembimbing',
+                'email_verified_at' => now(),
+                'password' => Hash::make('password'),
+            ]
+        )->assignRole('Teacher');
 
         // $participant = Participant::first();
         // if ($participant) {

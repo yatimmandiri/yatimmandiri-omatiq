@@ -73,55 +73,75 @@ class PenyaluranService
      */
     public function students(string $token, ?int $sanggarId = null): array
     {
-        if ($sanggarId !== null) {
-            return $this->fetchStudentsForSanggar($token, $sanggarId);
-        }
+        $cacheKey = 'penyaluran:students:'.sha1($token).':'.($sanggarId ?? 'all');
 
-        // Backward-compatible aggregation: fetch per sanggar and merge deduped
-        // If API still allows without sanggar_id, try direct first
+        return Cache::remember($cacheKey, 120, function () use ($token, $sanggarId) {
+            if ($sanggarId !== null) {
+                return $this->fetchStudentsForSanggar($token, $sanggarId);
+            }
+
+            // Backward-compatible aggregation: fetch per sanggar and merge deduped
+            // If API still allows without sanggar_id, try direct first
+            try {
+                $response = $this->client($token)->get('api/v1/guru/students');
+                if ($response->successful()) {
+                    $data = $response->json('data');
+                    if (is_array($data) && ! empty($data)) {
+                        return $this->normalizeStudents($data);
+                    }
+                }
+            } catch (\Throwable $e) {
+                // fall through to per-sanggar aggregation
+            }
+
+            // Aggregate per sanggar
+            try {
+                $sanggars = $this->sanggars($token);
+            } catch (\Throwable $e) {
+                return [];
+            }
+
+            if (empty($sanggars)) {
+                return [];
+            }
+
+            $all = collect();
+            foreach ($sanggars as $sanggar) {
+                $sid = (int) ($sanggar['id'] ?? 0);
+                if (! $sid) {
+                    continue;
+                }
+                $students = $this->fetchStudentsForSanggar($token, $sid);
+                foreach ($students as $s) {
+                    $s['sanggar_id'] = $sid;
+                    $all->push($s);
+                }
+            }
+
+            // Group by student_id to keep all sanggar_ids for multi-sanggar students
+            return $all->groupBy(fn (array $s) => $s['student_id'] ?? null)->map(function ($group) {
+                $first = $group->first();
+                $first['sanggar_ids'] = $group->pluck('sanggar_id')->filter()->unique()->values()->all();
+
+                return $first;
+            })->values()->all();
+        });
+    }
+
+    public function forgetStudentsCache(string $token): void
+    {
+        $baseKey = 'penyaluran:students:'.sha1($token);
+        Cache::forget($baseKey.':all');
+
         try {
-            $response = $this->client($token)->get('api/v1/guru/students');
-            if ($response->successful()) {
-                $data = $response->json('data');
-                if (is_array($data) && ! empty($data)) {
-                    return $this->normalizeStudents($data);
+            $sanggars = $this->sanggars($token);
+            foreach ($sanggars as $s) {
+                if (isset($s['id'])) {
+                    Cache::forget($baseKey.':'.$s['id']);
                 }
             }
         } catch (\Throwable $e) {
-            // fall through to per-sanggar aggregation
         }
-
-        // Aggregate per sanggar
-        try {
-            $sanggars = $this->sanggars($token);
-        } catch (\Throwable $e) {
-            return [];
-        }
-
-        if (empty($sanggars)) {
-            return [];
-        }
-
-        $all = collect();
-        foreach ($sanggars as $sanggar) {
-            $sid = (int) ($sanggar['id'] ?? 0);
-            if (! $sid) {
-                continue;
-            }
-            $students = $this->fetchStudentsForSanggar($token, $sid);
-            foreach ($students as $s) {
-                $s['sanggar_id'] = $sid;
-                $all->push($s);
-            }
-        }
-
-        // Group by student_id to keep all sanggar_ids for multi-sanggar students
-        return $all->groupBy(fn (array $s) => $s['student_id'] ?? null)->map(function ($group) {
-            $first = $group->first();
-            $first['sanggar_ids'] = $group->pluck('sanggar_id')->filter()->unique()->values()->all();
-
-            return $first;
-        })->values()->all();
     }
 
     private function fetchStudentsForSanggar(string $token, int $sanggarId): array
@@ -160,6 +180,10 @@ class PenyaluranService
                 'birth_place' => $s['birth_place'] ?? $s['tempat_lahir'] ?? null,
                 'birth_date' => $s['birth_date'] ?? $s['tanggal_lahir'] ?? null,
                 'address' => $s['address'] ?? $s['alamat'] ?? null,
+                'province_id' => $s['province_id'] ?? $s['provinsi_id'] ?? $s['province_name'] ?? $s['provinsi_name'] ?? $s['province'] ?? $s['provinsi'] ?? null,
+                'regency_id' => $s['regency_id'] ?? $s['kabupaten_id'] ?? $s['kota_id'] ?? $s['regency_name'] ?? $s['kabupaten_name'] ?? $s['kota_name'] ?? $s['regency'] ?? $s['kabupaten'] ?? $s['kota'] ?? null,
+                'district_id' => $s['district_id'] ?? $s['kecamatan_id'] ?? $s['district_name'] ?? $s['kecamatan_name'] ?? $s['district'] ?? $s['kecamatan'] ?? null,
+                'village_id' => $s['village_id'] ?? $s['desa_id'] ?? $s['kelurahan_id'] ?? $s['village_name'] ?? $s['desa_name'] ?? $s['kelurahan_name'] ?? $s['village'] ?? $s['desa'] ?? $s['kelurahan'] ?? null,
                 'guardian_name' => $s['guardian_name'] ?? $s['parent_name'] ?? $s['wali_name'] ?? null,
                 'guardian_phone' => $s['guardian_phone'] ?? $s['parent_phone'] ?? $s['wali_phone'] ?? null,
                 'sanggar_id' => $s['sanggar_id'] ?? $s['sanggarId'] ?? $sanggarId,
@@ -198,6 +222,8 @@ class PenyaluranService
     {
         $response = $this->client($token)->put("api/v1/guru/students/{$studentId}", $attributes);
         $this->assertSuccess($response);
+
+        $this->forgetStudentsCache($token);
 
         return $response->json('data') ?? $response->json();
     }
@@ -245,6 +271,22 @@ class PenyaluranService
         }
         if (array_key_exists('address', $data)) {
             $payload['address'] = $data['address'];
+        }
+        if (array_key_exists('province_id', $data) && filled($data['province_id'])) {
+            $payload['province_id'] = $data['province_id'];
+            $payload['provinsi_id'] = $data['province_id'];
+        }
+        if (array_key_exists('regency_id', $data) && filled($data['regency_id'])) {
+            $payload['regency_id'] = $data['regency_id'];
+            $payload['kabupaten_id'] = $data['regency_id'];
+        }
+        if (array_key_exists('district_id', $data) && filled($data['district_id'])) {
+            $payload['district_id'] = $data['district_id'];
+            $payload['kecamatan_id'] = $data['district_id'];
+        }
+        if (array_key_exists('village_id', $data) && filled($data['village_id'])) {
+            $payload['village_id'] = $data['village_id'];
+            $payload['desa_id'] = $data['village_id'];
         }
         if (array_key_exists('school_name', $data)) {
             $payload['school_name'] = $data['school_name'];

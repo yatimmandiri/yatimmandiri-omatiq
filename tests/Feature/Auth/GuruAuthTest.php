@@ -15,7 +15,7 @@ beforeEach(function () {
 });
 
 test('guru login screen can be rendered', function () {
-    $response = $this->get(route('guru.login'));
+    $response = $this->get(route('teacher.login'));
     $response->assertOk();
 });
 
@@ -34,13 +34,13 @@ test('guru first time login creates user and redirects to complete profile', fun
         ], 200),
     ]);
 
-    $response = $this->post(route('guru.login.store'), [
+    $response = $this->post(route('teacher.login.store'), [
         'phone' => '081234567890',
         'password' => 'password',
     ]);
 
     $this->assertAuthenticated();
-    $response->assertRedirect(route('guru.profile.edit'));
+    $response->assertRedirect(route('teacher.profile.edit'));
 
     $user = User::where('penyaluran_id', 101)->first();
     expect($user)->not->toBeNull()
@@ -57,7 +57,7 @@ test('guru login with invalid phone from penyaluran shows error', function () {
         ], 404),
     ]);
 
-    $response = $this->post(route('guru.login.store'), [
+    $response = $this->post(route('teacher.login.store'), [
         'phone' => '081999999999',
         'password' => 'password',
     ]);
@@ -87,7 +87,7 @@ test('guru login with wrong local password shows error', function () {
         ], 200),
     ]);
 
-    $response = $this->post(route('guru.login.store'), [
+    $response = $this->post(route('teacher.login.store'), [
         'phone' => '081234567888',
         'password' => 'wrong-password',
     ]);
@@ -117,13 +117,13 @@ test('completed teacher login redirects directly to dashboard', function () {
         ], 200),
     ]);
 
-    $response = $this->post(route('guru.login.store'), [
+    $response = $this->post(route('teacher.login.store'), [
         'phone' => '081234567777',
         'password' => 'mypassword123',
     ]);
 
     $this->assertAuthenticatedAs($user);
-    $response->assertRedirect(route('admin.dashboard'));
+    $response->assertRedirect(route('teacher.dashboard'));
 });
 
 test('teacher can complete profile and update email to penyaluran server', function () {
@@ -145,14 +145,14 @@ test('teacher can complete profile and update email to penyaluran server', funct
     $response = $this
         ->actingAs($teacher)
         ->withSession(['penyaluran_token' => 'token-404'])
-        ->put(route('guru.profile.update'), [
+        ->put(route('teacher.profile.update'), [
             'email' => 'guru.resmi@example.com',
             'password' => 'secret12345',
             'password_confirmation' => 'secret12345',
         ]);
 
     $response->assertSessionHasNoErrors();
-    $response->assertRedirect(route('admin.dashboard'));
+    $response->assertRedirect(route('teacher.dashboard'));
 
     $teacher->refresh();
     expect($teacher->email)->toBe('guru.resmi@example.com')
@@ -167,8 +167,19 @@ test('teacher can logout from guru portal', function () {
     ]);
     $teacher->assignRole('Teacher');
 
-    $response = $this->actingAs($teacher)->post(route('guru.logout'));
+    $response = $this->actingAs($teacher)->post(route('teacher.logout'));
 
     $this->assertGuest();
-    $response->assertRedirect(route('guru.login'));
+    $response->assertRedirect(route('teacher.login'));
+});
+
+test('legacy guru routes redirect to teacher routes', function () {
+    $this->get('/guru/login')->assertRedirect('/teacher/login');
+    $this->get('/guru')->assertRedirect('/teacher/login');
+    $this->get('/guru/dashboard')->assertRedirect('/teacher/dashboard');
+    $this->get('/guru/biodata')->assertRedirect('/teacher/biodata');
+    $this->get('/guru/data-peserta')->assertRedirect('/teacher/data-peserta');
+    $this->get('/guru/data-binaan')->assertRedirect('/teacher/data-binaan');
+    $this->get('/guru/data-sanggar')->assertRedirect('/teacher/data-sanggar');
+    $this->get('/guru/absensi')->assertRedirect('/teacher/absensi');
 });

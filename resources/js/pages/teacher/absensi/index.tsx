@@ -1,6 +1,6 @@
 import { Card } from '@/components/ui/card';
-import { dashboard } from '@/routes/admin';
-import absensi from '@/routes/admin/guru/absensi';
+import { dashboard } from '@/routes/teacher';
+import absensi from '@/routes/teacher/absensi';
 
 export default function AbsensiPage() {
     return (
