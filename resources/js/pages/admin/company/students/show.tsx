@@ -110,8 +110,8 @@ export default function ShowPage() {
 
 ShowPage.layout = {
     breadcrumbs: [
-        { title: 'Dashboard', href: dashboard() },
-        { title: 'Data Students', href: students.index().url },
+        { title: 'Dashboard', href: dashboard().url },
+        { title: 'Data Binaan', href: students.index().url },
         { title: 'Detail', href: '#' },
     ],
 };

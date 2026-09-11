@@ -28,6 +28,8 @@ class StoreStudentRequest extends FormRequest
             'address' => ['required', 'string'],
             'province_id' => ['required', 'exists:provinces,id'],
             'regency_id' => ['required', 'exists:regencies,id'],
+            'district_id' => ['nullable', 'exists:districts,id'],
+            'village_id' => ['nullable', 'exists:villages,id'],
             'parent_phone' => ['required', 'string', 'max:30'],
             'mentor_id' => ['nullable', 'integer', 'exists:users,id'],
             'mentor_name' => ['nullable', 'string', 'max:255'],
