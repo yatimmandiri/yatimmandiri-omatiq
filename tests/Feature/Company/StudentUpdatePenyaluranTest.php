@@ -311,3 +311,54 @@ test('resolveBinaan updates local student with fresh data from penyaluran api on
         ->and($student->school_name)->toBe('SMP Penyaluran Baru')
         ->and($student->address)->toBe('Alamat Baru');
 });
+
+test('admin edit resolves and updates local student with fresh data from penyaluran api', function () {
+    Http::fake([
+        '*/api/v1/guru/students' => Http::response([
+            'success' => true,
+            'data' => [
+                [
+                    'student_id' => 888,
+                    'name' => 'Santri Terupdate Dari Penyaluran',
+                    'nik' => '3578010101010888',
+                    'gender' => 'L',
+                    'school_name' => 'SD Penyaluran Maju',
+                    'class' => '6',
+                    'address' => 'Jl. Penyaluran No. 8',
+                    'guardian_phone' => '088888888888',
+                ],
+            ],
+        ], 200),
+    ]);
+
+    $admin = User::factory()->create();
+    $admin->assignRole('Administrators');
+
+    $teacher = User::factory()->create([
+        'penyaluran_id' => 30,
+        'penyaluran_token' => 'teacher-token-sync',
+    ]);
+    $teacher->assignRole('Teacher');
+
+    $student = Student::factory()->create([
+        'penyaluran_id' => 888,
+        'full_name' => 'Nama Lama Santri Lokal',
+        'nik' => '3578010101010888',
+        'gender' => 'female',
+        'mentor_id' => $teacher->id,
+        'is_binaan' => true,
+    ]);
+
+    $response = $this
+        ->actingAs($admin)
+        ->get(route('admin.companies.students.edit', $student));
+
+    $response->assertOk();
+
+    $student->refresh();
+    expect($student->full_name)->toBe('Santri Terupdate Dari Penyaluran')
+        ->and($student->gender)->toBe('male')
+        ->and($student->grade)->toBe('6')
+        ->and($student->school_name)->toBe('SD Penyaluran Maju')
+        ->and($student->address)->toBe('Jl. Penyaluran No. 8');
+});

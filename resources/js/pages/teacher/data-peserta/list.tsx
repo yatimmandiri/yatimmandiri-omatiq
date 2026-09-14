@@ -5,14 +5,6 @@ import { SelectComponent } from '@/components/partials/select-component';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
-import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
@@ -22,6 +14,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { dashboard } from '@/routes/teacher';
 import dataPeserta from '@/routes/teacher/data-peserta';
+import { confirmAction } from '@/utils/sweetalert';
 import { router, usePage } from '@inertiajs/react';
 import {
     CheckCircle2,
@@ -233,23 +226,26 @@ export default function ListPage() {
 }
 
 const RowAction = ({ row, onDeleted }: { row: any; onDeleted: () => void }) => {
-    const [openDelete, setOpenDelete] = useState(false);
-    const [isDeleting, setIsDeleting] = useState(false);
     const name = row.student?.full_name ?? row.full_name ?? 'Peserta';
 
-    const handleDelete = () => {
-        setIsDeleting(true);
-        router.delete(dataPeserta.destroy(row.id).url, {
-            preserveScroll: true,
-            onSuccess: () => {
-                setOpenDelete(false);
-                setIsDeleting(false);
-                onDeleted();
-            },
-            onError: () => {
-                setIsDeleting(false);
-            },
+    const handleDelete = async () => {
+        const isConfirmed = await confirmAction({
+            title: 'Batalkan Pendaftaran Peserta?',
+            html: `Apakah Anda yakin ingin membatalkan pendaftaran untuk <strong>${name}</strong> (${row.registration_number})?<br/><br/><span class="text-xs text-muted-foreground">Data binaan tidak akan terhapus dan dapat didaftarkan kembali ke olimpiade jika pendaftaran masih dibuka.</span>`,
+            icon: 'warning',
+            confirmButtonText: 'Ya, Batalkan Pendaftaran',
+            cancelButtonText: 'Kembali',
+            isDanger: true,
         });
+
+        if (isConfirmed) {
+            router.delete(dataPeserta.destroy(row.id).url, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    onDeleted();
+                },
+            });
+        }
     };
 
     return (
@@ -286,7 +282,7 @@ const RowAction = ({ row, onDeleted }: { row: any; onDeleted: () => void }) => {
                     )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
-                        onClick={() => setOpenDelete(true)}
+                        onClick={handleDelete}
                         className="text-destructive focus:text-destructive"
                     >
                         <Trash2 className="mr-2 size-4 text-destructive" />
@@ -294,44 +290,6 @@ const RowAction = ({ row, onDeleted }: { row: any; onDeleted: () => void }) => {
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
-
-            <Dialog open={openDelete} onOpenChange={setOpenDelete}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Batalkan Pendaftaran Peserta</DialogTitle>
-                        <DialogDescription className="space-y-2 pt-2">
-                            <p>
-                                Apakah Anda yakin ingin membatalkan pendaftaran
-                                untuk <strong>{name}</strong> (
-                                {row.registration_number})?
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                                Data binaan tidak akan terhapus dan dapat
-                                didaftarkan kembali ke olimpiade jika
-                                pendaftaran masih dibuka.
-                            </p>
-                        </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter className="gap-2 sm:gap-0">
-                        <Button
-                            variant="outline"
-                            onClick={() => setOpenDelete(false)}
-                            disabled={isDeleting}
-                        >
-                            Batal
-                        </Button>
-                        <Button
-                            variant="destructive"
-                            onClick={handleDelete}
-                            disabled={isDeleting}
-                        >
-                            {isDeleting
-                                ? 'Membatalkan...'
-                                : 'Batalkan Pendaftaran'}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
         </div>
     );
 };

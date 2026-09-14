@@ -70,9 +70,11 @@ class StudentController extends Controller
     {
         $this->authorize('update', $student);
 
+        $student = $this->service->resolveFromPenyaluran($student);
+
         return Inertia::render('admin/company/students/edit', [
-            'student' => $student,
-            ...$this->service->formOptions(),
+            'student' => $student->load(['mentor:id,name,email,phone', 'province:id,name', 'regency:id,name', 'district:id,name', 'village:id,name']),
+            ...$this->service->formOptions($student),
         ]);
     }
 

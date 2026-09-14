@@ -26,6 +26,7 @@ import {
     Trophy,
     UserRound,
 } from 'lucide-react';
+import { confirmAction } from '@/utils/sweetalert';
 import type { FormEvent, ReactNode } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
@@ -550,12 +551,17 @@ export default function RegistrationPage() {
         scrollToForm();
     };
 
-    const resetDraft = () => {
-        if (
-            window.confirm(
-                'Apakah Anda yakin ingin mengosongkan formulir dan memulai dari awal?',
-            )
-        ) {
+    const resetDraft = async () => {
+        const isConfirmed = await confirmAction({
+            title: 'Kosongkan Formulir?',
+            text: 'Apakah Anda yakin ingin mengosongkan formulir dan memulai dari awal?',
+            icon: 'warning',
+            confirmButtonText: 'Ya, Kosongkan',
+            cancelButtonText: 'Batal',
+            isDanger: true,
+        });
+
+        if (isConfirmed) {
             removeStoredDraft();
             form.reset();
             setCurrentStep(0);

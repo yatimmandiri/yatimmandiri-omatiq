@@ -1,12 +1,5 @@
 import { Button } from '@/components/ui/button';
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogOverlay,
-    DialogTitle,
-} from '@/components/ui/dialog';
-import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
@@ -16,6 +9,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { formatDate } from '@/utils/formatDate';
+import { confirmDelete } from '@/utils/sweetalert';
 import { router } from '@inertiajs/react';
 import {
     ChevronDownIcon,
@@ -24,7 +18,6 @@ import {
     FileTextIcon,
     MoreHorizontal,
 } from 'lucide-react';
-import { useState } from 'react';
 import { Fragment } from 'react/jsx-runtime';
 
 export const renderRowHeader = (info: any, title: string) => {
@@ -127,20 +120,25 @@ export const RowActions = ({
 }) => {
     const { currentUrl } = useCurrentUrl();
 
-    const [openModal, setOpenModal] = useState(false);
-
     const data = info.row.original;
 
     const showEdit = actions?.edit !== false;
     const showDelete = actions?.delete !== false;
 
-    const handleDelete = (id: number) => {
-        router.delete(`${currentUrl}/${id}`, {
-            onSuccess: () => {
-                setOpenModal(false);
-                setRefreshData(true);
-            },
+    const handleDelete = async (id: number) => {
+        const isConfirmed = await confirmDelete({
+            title: 'Konfirmasi Hapus Data',
+            text: 'Apakah Anda yakin ingin menghapus data ini? Tindakan ini tidak dapat dibatalkan.',
+            confirmButtonText: 'Ya, Hapus',
         });
+
+        if (isConfirmed) {
+            router.delete(`${currentUrl}/${id}`, {
+                onSuccess: () => {
+                    setRefreshData(true);
+                },
+            });
+        }
     };
 
     return (
@@ -170,44 +168,15 @@ export const RowActions = ({
                         </DropdownMenuItem>
                     )}
                     {showDelete && (
-                        <DropdownMenuItem onClick={() => setOpenModal(true)}>
+                        <DropdownMenuItem
+                            onClick={() => handleDelete(data.id)}
+                            className="text-destructive focus:text-destructive"
+                        >
                             Delete
                         </DropdownMenuItem>
                     )}
                 </DropdownMenuContent>
             </DropdownMenu>
-
-            {showDelete && openModal && (
-                <Dialog
-                    open={openModal}
-                    onOpenChange={(open) => setOpenModal(open)}
-                >
-                    <DialogOverlay className="fixed inset-0 bg-black opacity-30" />
-                    <DialogContent className="">
-                        <DialogTitle className="text-xl font-semibold">
-                            Confirm Deletion
-                        </DialogTitle>
-                        <DialogDescription className="mt-2">
-                            Are you sure you want to delete this item? This
-                            action cannot be undone.
-                        </DialogDescription>
-                        <div className="mt-4 flex justify-end space-x-4">
-                            <Button
-                                variant="outline"
-                                onClick={() => setOpenModal(false)}
-                            >
-                                Cancel
-                            </Button>
-                            <Button
-                                variant="destructive"
-                                onClick={() => handleDelete(data.id)}
-                            >
-                                Delete
-                            </Button>
-                        </div>
-                    </DialogContent>
-                </Dialog>
-            )}
         </Fragment>
     );
 };

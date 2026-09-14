@@ -97,7 +97,95 @@ it('updates guru profile and invalidates cache', function () {
     });
 });
 
-it('fetches and normalizes student list from penyaluran', function () {
+it('fetches and normalizes student list from penyaluran guru me response', function () {
+    Http::fake([
+        'https://penyaluran-test.example.com/api/v1/guru/me' => Http::response([
+            'success' => true,
+            'message' => 'Data profil guru berhasil diambil.',
+            'data' => [
+                'id' => 248,
+                'code' => 'GG161480',
+                'name' => 'MUHAMMAD ZAINUL ARIFIN',
+                'phone' => '6281259513025',
+                'kantor_name' => 'LAMONGAN',
+                'sanggars' => [
+                    [
+                        'id' => 316,
+                        'name' => 'SANGGAR GENIUS JOTOSANUR',
+                        'type' => 'Genius',
+                        'address' => null,
+                        'kantor_name' => 'LAMONGAN',
+                    ],
+                ],
+                'students' => [
+                    [
+                        'id' => 757,
+                        'student_id' => 757,
+                        'name' => 'PUTRI AZZUMA APRILIA',
+                        'nickname' => null,
+                        'nik' => '3524235304170003',
+                        'nis' => null,
+                        'gender' => 'P',
+                        'birth_place' => null,
+                        'birth_date' => '2017-04-13',
+                        'school_name' => 'SDN JOTOSANUR 2',
+                        'school_level' => 'SD',
+                        'class' => 'II',
+                        'status' => true,
+                        'address' => 'RT 02 RW 05, DUSUN JOTO',
+                        'guardian_name' => 'SUGENG',
+                        'guardian_phone' => '628120000000',
+                        'kantor_name' => 'LAMONGAN',
+                        'type' => 'NON-YATIM',
+                        'teacher_id' => 248,
+                    ],
+                    [
+                        'id' => 758,
+                        'student_id' => 758,
+                        'name' => 'SALMA MUFIDAH RAMADHANI',
+                        'nickname' => null,
+                        'nik' => '3524234407150001',
+                        'nis' => null,
+                        'gender' => 'P',
+                        'birth_place' => null,
+                        'birth_date' => '2015-07-04',
+                        'school_name' => 'SDN TAKERAN KLANTING',
+                        'school_level' => 'SD',
+                        'class' => 'V',
+                        'status' => true,
+                        'address' => 'DUSUN BANJARKEPUH RT 01 RW 06',
+                        'guardian_name' => 'SRIYATIN',
+                        'guardian_phone' => '6285850274947',
+                        'kantor_name' => 'LAMONGAN',
+                        'type' => 'YATIM',
+                        'teacher_id' => 248,
+                    ],
+                ],
+                'total_students' => 2,
+            ],
+        ], 200),
+    ]);
+
+    $service = new PenyaluranService;
+    $students = $service->students('test-token-me');
+    $sanggars = $service->sanggars('test-token-me');
+
+    expect(count($students))->toBe(2)
+        ->and($students[0]['student_id'])->toBe(757)
+        ->and($students[0]['name'])->toBe('PUTRI AZZUMA APRILIA')
+        ->and($students[0]['gender'])->toBe('female')
+        ->and($students[0]['school_level'])->toBe('SD')
+        ->and($students[0]['class'])->toBe('II')
+        ->and($students[0]['sanggar_id'])->toBe(316)
+        ->and($students[0]['sanggar_name'])->toBe('SANGGAR GENIUS JOTOSANUR')
+        ->and($students[0]['kantor_name'])->toBe('LAMONGAN')
+        ->and($students[1]['student_id'])->toBe(758)
+        ->and($students[1]['gender'])->toBe('female')
+        ->and(count($sanggars))->toBe(1)
+        ->and($sanggars[0]['id'])->toBe(316);
+});
+
+it('fetches and normalizes student list from legacy penyaluran students endpoint', function () {
     Http::fake([
         'https://penyaluran-test.example.com/api/v1/guru/students?sanggar_id=12' => Http::response([
             'success' => true,
