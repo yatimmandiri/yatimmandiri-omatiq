@@ -3,11 +3,26 @@ import { Card } from '@/components/ui/card';
 import { dashboard } from '@/routes/admin';
 import teachers from '@/routes/admin/companies/teachers';
 import { formatDate } from '@/utils/formatDate';
+import { confirmResetPassword } from '@/utils/sweetalert';
 import { router, usePage } from '@inertiajs/react';
 import { InfoIcon, KeyRound } from 'lucide-react';
 
 export default function DetailPage() {
     const { user } = usePage<any>().props;
+
+    const handleResetPassword = async () => {
+        const isConfirmed = await confirmResetPassword({
+            userName: user?.name,
+        });
+
+        if (isConfirmed) {
+            router.put(
+                teachers.resetPassword(user.id).url,
+                {},
+                { preserveScroll: true },
+            );
+        }
+    };
 
     return (
         <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
@@ -20,22 +35,7 @@ export default function DetailPage() {
                         </span>
                     </div>
                     <div className="mb-4 flex justify-end">
-                        <Button
-                            variant="outline"
-                            onClick={() => {
-                                if (
-                                    confirm(
-                                        'Reset password guru ini ke default "password"?',
-                                    )
-                                ) {
-                                    router.put(
-                                        teachers.resetPassword(user.id).url,
-                                        {},
-                                        { preserveScroll: true },
-                                    );
-                                }
-                            }}
-                        >
+                        <Button variant="outline" onClick={handleResetPassword}>
                             <KeyRound className="mr-2 h-4 w-4" />
                             Reset ke password default
                         </Button>

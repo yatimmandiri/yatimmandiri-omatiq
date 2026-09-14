@@ -66,8 +66,9 @@ class PenyaluranService
     }
 
     /**
-     * Get students list for authenticated guru. Normalizes gender P/L → male/female, maps school_level.
-     * sanggar_id is now required per API contract; if null, aggregates per sanggar and dedups.
+     * Get students list for authenticated guru.
+     * Primary source: GET api/v1/guru/me which provides students and sanggars directly in the profile response.
+     * Normalizes gender P/L → male/female, maps school_level, and sanggar relations.
      *
      * @return array<int, array{student_id:int, name:string, nik:?string, nis:?string, gender:?string, school_name:?string, school_level:?string, class:?string, birth_date:?string, sanggar_id:?int, status:bool}>
      */
@@ -76,12 +77,43 @@ class PenyaluranService
         $cacheKey = 'penyaluran:students:'.sha1($token).':'.($sanggarId ?? 'all');
 
         return Cache::remember($cacheKey, 120, function () use ($token, $sanggarId) {
+            $me = null;
+            try {
+                $me = $this->me($token);
+            } catch (\Throwable $e) {
+                // fall through to legacy fallback
+            }
+
+            if ($me && isset($me['students']) && is_array($me['students'])) {
+                $rawStudents = $me['students'];
+                $guruSanggars = is_array($me['sanggars'] ?? null) ? $me['sanggars'] : [];
+
+                if ($sanggarId !== null) {
+                    $rawStudents = collect($rawStudents)->filter(function (array $s) use ($sanggarId, $guruSanggars) {
+                        if (isset($s['sanggar_id']) && $s['sanggar_id'] !== null) {
+                            return (int) $s['sanggar_id'] === (int) $sanggarId;
+                        }
+                        if (isset($s['sanggar_ids']) && is_array($s['sanggar_ids'])) {
+                            return in_array($sanggarId, array_map('intval', $s['sanggar_ids']), true);
+                        }
+                        // If student does not have explicit sanggar_id, check if guru has matching sanggar
+                        if (count($guruSanggars) === 1 && (int) ($guruSanggars[0]['id'] ?? 0) === (int) $sanggarId) {
+                            return true;
+                        }
+
+                        return true;
+                    })->values()->all();
+                }
+
+                return $this->normalizeStudents($rawStudents, $sanggarId, $guruSanggars, $me['kantor_name'] ?? null);
+            }
+
+            // Fallback for legacy or direct endpoint if me() didn't contain students
             if ($sanggarId !== null) {
                 return $this->fetchStudentsForSanggar($token, $sanggarId);
             }
 
             // Backward-compatible aggregation: fetch per sanggar and merge deduped
-            // If API still allows without sanggar_id, try direct first
             try {
                 $response = $this->client($token)->get('api/v1/guru/students');
                 if ($response->successful()) {
@@ -132,6 +164,7 @@ class PenyaluranService
     {
         $baseKey = 'penyaluran:students:'.sha1($token);
         Cache::forget($baseKey.':all');
+        Cache::forget('penyaluran:me:'.sha1($token));
 
         try {
             $sanggars = $this->sanggars($token);
@@ -157,14 +190,27 @@ class PenyaluranService
         return $this->normalizeStudents($data, $sanggarId);
     }
 
-    private function normalizeStudents(array $data, ?int $sanggarId = null): array
+    private function normalizeStudents(array $data, ?int $sanggarId = null, array $guruSanggars = [], ?string $defaultKantorName = null): array
     {
-        $normalized = collect($data)->map(function (array $s) use ($sanggarId) {
+        $normalized = collect($data)->map(function (array $s) use ($sanggarId, $guruSanggars, $defaultKantorName) {
             $gender = $s['gender'] ?? null;
             if ($gender === 'L') {
                 $gender = 'male';
             } elseif ($gender === 'P') {
                 $gender = 'female';
+            }
+
+            $studentSanggarId = $s['sanggar_id'] ?? $s['sanggarId'] ?? $sanggarId;
+            if (! $studentSanggarId && count($guruSanggars) === 1) {
+                $studentSanggarId = $guruSanggars[0]['id'] ?? null;
+            }
+
+            $sanggarIds = $s['sanggar_ids'] ?? ($studentSanggarId ? [$studentSanggarId] : collect($guruSanggars)->pluck('id')->filter()->values()->all());
+
+            $sanggarName = $s['sanggar_name'] ?? null;
+            if (! $sanggarName && $studentSanggarId) {
+                $foundSanggar = collect($guruSanggars)->firstWhere('id', $studentSanggarId);
+                $sanggarName = $foundSanggar['name'] ?? null;
             }
 
             return [
@@ -186,9 +232,12 @@ class PenyaluranService
                 'village_id' => $s['village_id'] ?? $s['desa_id'] ?? $s['kelurahan_id'] ?? $s['village_name'] ?? $s['desa_name'] ?? $s['kelurahan_name'] ?? $s['village'] ?? $s['desa'] ?? $s['kelurahan'] ?? null,
                 'guardian_name' => $s['guardian_name'] ?? $s['parent_name'] ?? $s['wali_name'] ?? null,
                 'guardian_phone' => $s['guardian_phone'] ?? $s['parent_phone'] ?? $s['wali_phone'] ?? null,
-                'sanggar_id' => $s['sanggar_id'] ?? $s['sanggarId'] ?? $sanggarId,
-                'sanggar_name' => $s['sanggar_name'] ?? null,
-                'kantor_name' => $s['kantor_name'] ?? $s['branch'] ?? null,
+                'sanggar_id' => $studentSanggarId,
+                'sanggar_ids' => $sanggarIds,
+                'sanggar_name' => $sanggarName,
+                'kantor_name' => $s['kantor_name'] ?? $s['branch'] ?? $defaultKantorName ?? ($guruSanggars[0]['kantor_name'] ?? null),
+                'type' => $s['type'] ?? null,
+                'teacher_id' => $s['teacher_id'] ?? null,
                 'status' => $s['status'] ?? true,
             ];
         });
@@ -319,9 +368,19 @@ class PenyaluranService
 
     /**
      * Get sanggars list for authenticated guru.
+     * Primary source: GET api/v1/guru/me which provides sanggars array.
      */
     public function sanggars(string $token): array
     {
+        try {
+            $me = $this->me($token);
+            if (isset($me['sanggars']) && is_array($me['sanggars']) && ! empty($me['sanggars'])) {
+                return $me['sanggars'];
+            }
+        } catch (\Throwable $e) {
+            // fall through to dedicated endpoint
+        }
+
         $response = $this->client($token)->get('api/v1/guru/sanggars');
         $this->assertSuccess($response);
 

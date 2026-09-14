@@ -97,6 +97,7 @@
         "react-resizable-panels": "^4.12.0",
         "recharts": "^3.9.0",
         "sonner": "^2.0.7",
+        "sweetalert2": "^11.26.25",
         "swiper": "^14.0.0",
         "tailwind-merge": "^3.6.0",
         "tailwindcss": "^4.3.1",
