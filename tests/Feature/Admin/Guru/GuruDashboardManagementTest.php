@@ -353,3 +353,74 @@ test('teacher form options does not collide local auto increment student id with
         ->and($options['students'][0]['full_name'])->toBe('ADELIO ABRISAM ATTAR')
         ->and($options['preselected_student_id'])->toBe(31);
 });
+
+test('teacher can register penyaluran binaan even if local student table already has an active participant with same auto-increment id', function () {
+    $teacher = createGuruManagementTeacher([
+        'penyaluran_id' => 200,
+        'penyaluran_token' => 'teacher-token-200',
+    ]);
+
+    // Populate local student #31 as an active registered participant
+    $otherLocalStudent = Student::create([
+        'id' => 31,
+        'nik' => '9999999999999999',
+        'full_name' => 'Existing Participant 31',
+        'gender' => 'female',
+        'is_binaan' => false,
+    ]);
+
+    $olimpiade = Olimpiade::create(['name' => 'Olimpiade Matematika', 'category' => 'Matematika', 'event_year' => 2026]);
+
+    Participant::create([
+        'student_id' => $otherLocalStudent->id,
+        'olimpiade_id' => $olimpiade->id,
+        'registration_number' => 'OMQ-LOCAL-31',
+        'registration_type' => 'user',
+        'status' => 'verified',
+        'event_year' => 2026,
+    ]);
+
+    // Mock Penyaluran API response returning student_id 31 with Adelio's info
+    Http::fake([
+        '*/api/v1/guru/students*' => Http::response([
+            'success' => true,
+            'data' => [
+                [
+                    'id' => 31,
+                    'student_id' => 31,
+                    'name' => 'ADELIO ABRISAM ATTAR',
+                    'nik' => '3402160109160001',
+                    'gender' => 'L',
+                    'school_name' => 'SD Al-Firdaus',
+                    'class' => '3',
+                    'sanggar_id' => 15,
+                ],
+            ],
+        ], 200),
+        '*/api/v1/guru/sanggars' => Http::response([
+            'success' => true,
+            'data' => [
+                ['id' => 15, 'name' => 'SANGGAR GENIUS AL FIRDAUS', 'type' => 'Genius'],
+            ],
+        ], 200),
+    ]);
+
+    $response = $this->actingAs($teacher)
+        ->withSession(['penyaluran_token' => 'teacher-token-200'])
+        ->post(route('teacher.data-peserta.store'), [
+            'penyaluran_student_id' => 31,
+            'penyaluran_sanggar_id' => 15,
+            'olimpiade_id' => $olimpiade->id,
+        ]);
+
+    $response->assertSessionHasNoErrors();
+    $response->assertRedirect(route('teacher.data-peserta.index'));
+
+    // Verify both participants exist safely without colliding
+    $newParticipant = Participant::where('registration_type', 'teacher')->first();
+    expect($newParticipant)->not->toBeNull()
+        ->and($newParticipant->mentor_id)->toBe($teacher->id)
+        ->and($newParticipant->student->penyaluran_id)->toBe(31)
+        ->and($newParticipant->student->nik)->toBe('3402160109160001')
+        ->and($newParticipant->student->full_name)->toBe('ADELIO ABRISAM ATTAR');
+});
