@@ -170,6 +170,13 @@ class DataPesertaController extends Controller
             return back()->withErrors(['penyaluran_student_id' => 'Binaan tidak ditemukan.']);
         }
 
+        $studentNik = trim((string) ($penyaluranStudent['nik'] ?? ''));
+        if ($studentNik === '' || $studentNik === '-') {
+            return back()->withErrors([
+                'penyaluran_student_id' => 'Santri binaan belum memiliki NIK di Penyaluran. Silakan lengkapi NIK santri terlebih dahulu di website Penyaluran sebelum mendaftarkan ke OMATIQ.',
+            ])->withInput();
+        }
+
         if (empty($data['penyaluran_sanggar_id']) && ! empty($penyaluranStudent['sanggar_id'])) {
             $data['penyaluran_sanggar_id'] = $penyaluranStudent['sanggar_id'];
         }

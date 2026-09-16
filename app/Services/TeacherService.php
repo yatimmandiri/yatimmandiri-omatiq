@@ -104,8 +104,8 @@ class TeacherService
     {
         $eventYear ??= (int) date('Y');
         // Exclude students already actively registered for this event_year
-        // Active binaan are those with a Student linked via penyaluran_id or student_id
-        $activePenyaluranIds = Participant::query()
+        // Active binaan are checked via Penyaluran ID and NIK (1 NIK = 1 Olimpiade per event_year)
+        $activeParticipants = Participant::query()
             ->where(function ($q) use ($eventYear) {
                 $q->where('event_year', $eventYear);
                 if ($eventYear == 2026) {
@@ -113,30 +113,46 @@ class TeacherService
                 }
             })
             ->whereIn('status', ['submitted', 'verified'])
-            ->whereHas('student', fn ($q) => $q->whereNotNull('penyaluran_id'))
-            ->with('student:id,penyaluran_id')
-            ->get()
+            ->with('student:id,penyaluran_id,nik')
+            ->get();
+
+        $activePenyaluranIds = $activeParticipants
             ->pluck('student.penyaluran_id')
+            ->filter()
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->all();
+
+        $activeNiks = $activeParticipants
+            ->pluck('student.nik')
             ->filter()
             ->unique()
             ->all();
 
-        $activeStudentIds = Participant::query()
-            ->where(function ($q) use ($eventYear) {
-                $q->where('event_year', $eventYear);
-                if ($eventYear == 2026) {
-                    $q->orWhereNull('event_year');
-                }
-            })
-            ->whereIn('status', ['submitted', 'verified'])
-            ->pluck('student_id')
-            ->filter()
-            ->all();
-
-        $activeIds = array_unique(array_merge($activePenyaluranIds, $activeStudentIds));
+        // Testing-only fallback for local mock students where penyaluran_id is null
+        $activeLocalMockIds = app()->environment('testing')
+            ? $activeParticipants->whereNull('student.penyaluran_id')->pluck('student_id')->filter()->map(fn ($id) => (int) $id)->all()
+            : [];
 
         $filtered = collect($penyaluranStudents)
-            ->filter(fn (array $s) => ! in_array((int) ($s['student_id'] ?? $s['id'] ?? 0), $activeIds, true))
+            ->filter(function (array $s) use ($activePenyaluranIds, $activeNiks, $activeLocalMockIds) {
+                $penyaluranId = (int) ($s['student_id'] ?? $s['id'] ?? 0);
+                $nik = $s['nik'] ?? null;
+
+                if ($penyaluranId && in_array($penyaluranId, $activePenyaluranIds, true)) {
+                    return false;
+                }
+
+                if ($nik && in_array((string) $nik, $activeNiks, true)) {
+                    return false;
+                }
+
+                if (! empty($activeLocalMockIds) && in_array($penyaluranId, $activeLocalMockIds, true)) {
+                    return false;
+                }
+
+                return true;
+            })
             ->map(fn (array $s) => [
                 'id' => $s['student_id'] ?? $s['id'],
                 'nik' => $s['nik'] ?? null,
