@@ -18,6 +18,8 @@ import type { ReactNode } from 'react';
 
 export default function Dashboard() {
     const {
+        pageTitle = 'Dashboard Admin',
+        branchName,
         participantCount = 0,
         verifiedParticipantCount = 0,
         submittedParticipantCount = 0,
@@ -25,6 +27,8 @@ export default function Dashboard() {
         studentCount = 0,
         olimpiadeCount = 0,
     } = usePage<{
+        pageTitle?: string;
+        branchName?: string | null;
         participantCount?: number;
         verifiedParticipantCount?: number;
         submittedParticipantCount?: number;
@@ -39,7 +43,7 @@ export default function Dashboard() {
 
     return (
         <>
-            <Head title="Dashboard Admin" />
+            <Head title={pageTitle} />
             <div className="flex flex-1 flex-col gap-6 p-4 lg:p-6">
                 {/* Hero */}
                 <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#17524A] via-[#13423c] to-[#0e2e28] p-6 text-white shadow-xl lg:p-8">
@@ -49,14 +53,15 @@ export default function Dashboard() {
                         <div>
                             <p className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-bold backdrop-blur">
                                 <Sparkles className="size-4 text-[#E5BE1E]" />{' '}
-                                Kontrol OMATIQ 2026
+                                {branchName ? `Cabang ${branchName}` : 'Kontrol OMATIQ 2026'}
                             </p>
                             <h1 className="mt-3 text-3xl font-black tracking-tight lg:text-4xl">
-                                Dashboard Admin
+                                {pageTitle}
                             </h1>
                             <p className="mt-2 max-w-2xl text-sm leading-6 text-white/70">
-                                Pantau pendaftaran, verifikasi, guru, dan
-                                olimpiade — semua dalam satu command center.
+                                {branchName
+                                    ? `Pantau pendaftaran santri, verifikasi peserta, dan guru binaan wilayah ${branchName}.`
+                                    : 'Pantau pendaftaran, verifikasi, guru, dan olimpiade — semua dalam satu command center.'}
                             </p>
                             <div className="mt-4 flex items-center gap-3">
                                 <div className="h-1.5 w-32 overflow-hidden rounded-full bg-white/15">

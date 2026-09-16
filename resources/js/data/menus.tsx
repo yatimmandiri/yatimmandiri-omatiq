@@ -49,7 +49,7 @@ export const NavigationList = [
                 title: 'Data Guru',
                 href: teachers.index().url,
                 permission: 'view-user',
-                roles: ['Administrators'],
+                roles: ['Administrators', 'Cabang'],
                 icon: UserCheck,
             },
             {
@@ -63,8 +63,15 @@ export const NavigationList = [
                 title: 'Data Students',
                 href: students.index().url,
                 permission: 'view-student',
-                roles: ['Administrators'],
+                roles: ['Administrators', 'Cabang'],
                 icon: GraduationCap,
+            },
+            {
+                title: 'Data Sanggar',
+                href: '/admin/companies/sanggars',
+                permission: 'view-participant',
+                roles: ['Administrators', 'Cabang'],
+                icon: MapIcon,
             },
             {
                 title: 'Data Peserta',

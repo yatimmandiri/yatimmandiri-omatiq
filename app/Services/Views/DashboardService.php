@@ -17,25 +17,64 @@ class DashboardService
 
         return match ($role) {
             'Administrators' => self::admin(),
-            'Cabang' => self::cabang(),
+            'Cabang' => self::cabang($user),
             'Teacher' => self::teacher($user),
             'Participant' => self::participant($user),
             default => self::user(),
         };
     }
 
-    private static function cabang(): array
+    private static function cabang(User $user): array
     {
+        $branch = $user->getBranchName();
+
+        $participantQuery = Participant::query();
+        $studentQuery = Student::query()->where('is_binaan', true);
+        $teacherQuery = User::role('Teacher');
+
+        if (filled($branch)) {
+            $participantQuery->where(function ($q) use ($branch) {
+                $q->where('branch', $branch)
+                    ->orWhere('branch', 'like', "%{$branch}%");
+            });
+
+            $studentQuery->where(function ($q) use ($branch) {
+                $q->whereHas('participants', function ($pq) use ($branch) {
+                    $pq->where('branch', $branch)->orWhere('branch', 'like', "%{$branch}%");
+                })->orWhereHas('mentor', function ($mq) use ($branch) {
+                    $mq->where('branch', $branch)->orWhere('branch', 'like', "%{$branch}%");
+                });
+            });
+
+            $teacherQuery->where(function ($q) use ($branch) {
+                $q->where('branch', $branch)
+                    ->orWhere('branch', 'like', "%{$branch}%")
+                    ->orWhereHas('participants', function ($pq) use ($branch) {
+                        $pq->where('branch', $branch)->orWhere('branch', 'like', "%{$branch}%");
+                    });
+            });
+        }
+
+        $participantCount = (clone $participantQuery)->count();
+        $verifiedParticipantCount = (clone $participantQuery)->where('status', 'verified')->count();
+        $submittedParticipantCount = (clone $participantQuery)->where('status', 'submitted')->count();
+        $teacherCount = $teacherQuery->count();
+        $studentCount = $studentQuery->count();
+        $olimpiadeCount = Olimpiade::count();
+
+        $title = $branch ? "Dashboard Cabang {$branch}" : 'Dashboard Cabang';
+
         return [
             'view' => 'admin/dashboard/admin',
             'data' => [
-                'pageTitle' => 'Dashboard Cabang',
-                'participantCount' => Participant::count(),
-                'verifiedParticipantCount' => Participant::where('status', 'verified')->count(),
-                'submittedParticipantCount' => Participant::where('status', 'submitted')->count(),
-                'teacherCount' => User::role('Teacher')->count(),
-                'studentCount' => Student::where('is_binaan', true)->count(),
-                'olimpiadeCount' => Olimpiade::count(),
+                'pageTitle' => $title,
+                'branchName' => $branch,
+                'participantCount' => $participantCount,
+                'verifiedParticipantCount' => $verifiedParticipantCount,
+                'submittedParticipantCount' => $submittedParticipantCount,
+                'teacherCount' => $teacherCount,
+                'studentCount' => $studentCount,
+                'olimpiadeCount' => $olimpiadeCount,
             ],
         ];
     }

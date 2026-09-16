@@ -274,18 +274,31 @@ class DataPesertaController extends Controller
         $direction = strtolower((string) $request->input('orderDirection')) === 'asc' ? 'asc' : 'desc';
 
         $filterValue = $request->input('filterValue', []);
+        if (is_string($filterValue)) {
+            $filterValue = json_decode($filterValue, true) ?? [];
+        }
 
+        $userId = Auth::id();
         $query = Participant::query()
-            ->where('mentor_id', Auth::id())
+            ->where(function ($q) use ($userId) {
+                $q->where('mentor_id', $userId)
+                    ->orWhereHas('student', fn ($sq) => $sq->where('mentor_id', $userId));
+            })
             ->with([
                 'olimpiade:id,name,event_year',
                 'student:id,full_name,nik,nis,school_name,school_level,grade,gender,regency_id,penyaluran_id,parent_phone',
                 'student.regency:id,name',
             ])
-            ->search($request->string('globalSearch')->toString())
-            ->when(data_get($filterValue, 'status'), fn ($q, $v) => $q->where('status', $v))
-            ->when(data_get($filterValue, 'olimpiade_id'), fn ($q, $v) => $q->where('olimpiade_id', $v))
-            ->when(data_get($filterValue, 'event_year'), fn ($q, $v) => $q->where('event_year', $v))
+            ->search($request->string('globalSearch')->toString());
+
+        $status = data_get($filterValue, 'status');
+        $olimpiadeId = data_get($filterValue, 'olimpiade_id');
+        $eventYear = data_get($filterValue, 'event_year');
+
+        $query
+            ->when(filled($status) && $status !== 'all', fn ($q) => $q->where('status', $status))
+            ->when(filled($olimpiadeId) && $olimpiadeId !== 'all', fn ($q) => $q->where('olimpiade_id', $olimpiadeId))
+            ->when(filled($eventYear) && $eventYear !== 'all', fn ($q) => $q->where('event_year', $eventYear))
             ->orderBy($orderBy, $direction)
             ->orderBy('id', 'desc');
 

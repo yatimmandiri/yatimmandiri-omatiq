@@ -16,12 +16,37 @@ use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['name', 'email', 'password', 'phone', 'penyaluran_id', 'penyaluran_token', 'phone_verified_at', 'teacher_profile_completed_at', 'phone_otp', 'phone_otp_expires_at', 'phone_otp_attempts', 'phone_otp_last_sent_at'])]
+#[Fillable(['name', 'email', 'password', 'phone', 'branch', 'penyaluran_id', 'penyaluran_token', 'phone_verified_at', 'teacher_profile_completed_at', 'phone_otp', 'phone_otp_expires_at', 'phone_otp_attempts', 'phone_otp_last_sent_at'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token', 'penyaluran_token', 'phone_otp'])]
 
 class User extends Authenticatable
 {
     use HasFactory, HasRoles, LogsActivity, Notifiable, TwoFactorAuthenticatable;
+
+    public function getBranchName(): ?string
+    {
+        if (! empty($this->branch)) {
+            return trim($this->branch);
+        }
+
+        if ($this->hasRole('Cabang')) {
+            $clean = trim(preg_replace('/^(user\s+)?(kantor\s+)?cabang\s+/i', '', (string) $this->name));
+
+            return $clean !== '' ? $clean : null;
+        }
+
+        return null;
+    }
+
+    public function scopeForBranch(Builder $query, ?string $branch): Builder
+    {
+        return $query->when(filled($branch), function (Builder $q) use ($branch) {
+            $q->where(function (Builder $sub) use ($branch) {
+                $sub->where('branch', $branch)
+                    ->orWhere('branch', 'like', "%{$branch}%");
+            });
+        });
+    }
 
     protected function casts(): array
     {

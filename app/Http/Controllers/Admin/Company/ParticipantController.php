@@ -44,7 +44,24 @@ class ParticipantController extends Controller
 
         $settings = app(SiteSettings::class);
 
+        $user = Auth::user();
+        $isCabang = $user && $user->hasRole('Cabang');
+        $userBranch = $isCabang ? $user->getBranchName() : null;
+
+        $branchesQuery = Participant::query()
+            ->whereNotNull('branch')
+            ->where('branch', '<>', '')
+            ->distinct();
+
+        if ($isCabang && $userBranch) {
+            $branchesQuery->where(function ($q) use ($userBranch) {
+                $q->where('branch', $userBranch)
+                    ->orWhere('branch', 'like', "%{$userBranch}%");
+            });
+        }
+
         return Inertia::render('admin/company/participant/list', [
+            'userBranch' => $userBranch,
             'sheets' => [
                 'enabled' => $settings->sheets_sync_enabled,
                 'spreadsheet_id' => $settings->sheets_spreadsheet_id,
@@ -60,10 +77,7 @@ class ParticipantController extends Controller
                         'label' => trim($olimpiade->name.' '.($olimpiade->event_year ? "({$olimpiade->event_year})" : '')),
                     ]),
                 'eventYears' => $eventYearsOptions,
-                'branches' => Participant::query()
-                    ->whereNotNull('branch')
-                    ->where('branch', '<>', '')
-                    ->distinct()
+                'branches' => $branchesQuery
                     ->orderBy('branch')
                     ->limit(150)
                     ->pluck('branch')
@@ -80,9 +94,7 @@ class ParticipantController extends Controller
         $this->authorize('view', $participant);
 
         return Inertia::render('admin/company/participant/show', [
-            'participant' => $this->participantPayload(
-                $participant->load(['olimpiade:id,name', 'student:id,full_name,school_name,school_level,nis,grade,gender,photo_path,student_card_path,province_id,regency_id,parent_phone,nik,birth_place,birth_date,nickname,address,is_binaan', 'student.province:id,name', 'student.regency:id,name']),
-            ),
+            'participant' => $this->participantPayload($participant),
         ]);
     }
 
@@ -90,11 +102,15 @@ class ParticipantController extends Controller
     {
         $this->authorize('update', $participant);
 
+        $data = $this->participantPayload($participant);
+
         return Inertia::render('admin/company/participant/edit', [
-            'participant' => $this->participantPayload(
-                $participant->load(['student:id,full_name,school_name,school_level,nis,grade,gender,photo_path,identity_card_path,family_card_path,student_card_path,province_id,regency_id,parent_phone,nik,birth_place,birth_date,nickname,address,is_binaan', 'student.province:id,name', 'student.regency:id,name,province_id']),
-            ),
-            ...$this->formOptions(),
+            'participant' => $data,
+            'olimpiades' => Olimpiade::active()->ordered()->get(['id', 'name']),
+            'provinces' => Province::all(['id', 'name']),
+            'regencies' => $participant->student?->province_id
+                ? Regency::where('province_id', $participant->student->province_id)->get(['id', 'name'])
+                : [],
         ]);
     }
 
@@ -102,51 +118,49 @@ class ParticipantController extends Controller
     {
         $this->authorize('update', $participant);
 
-        $data = $this->payload($request);
+        $payload = $this->payload($request);
+        $name = $participant->student?->full_name ?? $participant->user?->name ?? 'Unknown';
 
-        $studentService = app(StudentService::class);
+        DB::transaction(function () use ($request, $participant, $payload) {
+            $studentData = $request->safe()->only([
+                'full_name',
+                'nickname',
+                'gender',
+                'birth_place',
+                'birth_date',
+                'school_name',
+                'grade',
+                'address',
+                'province_id',
+                'regency_id',
+                'parent_phone',
+                'nik',
+            ]);
 
-        try {
-            DB::transaction(function () use ($request, $participant, $data, $studentService) {
-                if ($participant->student) {
-                    $studentData = $this->studentPayload($request);
-                    foreach ($this->studentFileMap() as $input => $column) {
-                        if ($request->hasFile($input)) {
-                            $studentData[$column] = $this->replaceFile(
-                                $participant->student->{$column},
-                                $request->file($input),
-                                'uploads/students/'.$input,
-                            );
-                        }
-                    }
+            if ($participant->student) {
+                if ($participant->student->penyaluran_id) {
+                    $this->studentService->syncToPenyaluran($participant->student, $studentData);
+                }
+                $participant->student->update($studentData);
+            }
 
-                    if ($participant->student->penyaluran_id) {
-                        $studentService->syncToPenyaluran($participant->student, $studentData);
-                    }
-
-                    $participant->student->update($studentData);
+            if ($request->hasFile('payment_proof')) {
+                if ($participant->payment_proof_path) {
+                    $this->deleteFile($participant->payment_proof_path);
                 }
 
-                foreach ($this->fileMap() as $input => $column) {
-                    if ($request->hasFile($input)) {
-                        $data[$column] = $this->replaceFile(
-                            $participant->{$column},
-                            $request->file($input),
-                            'uploads/participants/'.$input,
-                        );
-                    }
-                }
+                $payload['payment_proof_path'] = $this->uploadFile(
+                    $request->file('payment_proof'),
+                    'participants/payment_proofs'
+                );
+            }
 
-                $participant->update($data);
-            });
-        } catch (\Throwable $e) {
-            return back()
-                ->withErrors(['student' => 'Gagal memperbarui data santri di server Penyaluran: '.$e->getMessage()])
-                ->withInput();
-        }
+            $participant->update($payload);
+        });
 
-        $this->logSuccess('update-participant', "Updated participant: {$participant->full_name}", [
+        $this->logSuccess('update-participant', "Updated participant: {$name}", [
             'participant_id' => $participant->id,
+            'new_data' => $payload,
         ]);
 
         return redirect()
@@ -161,8 +175,8 @@ class ParticipantController extends Controller
         $name = $participant->student?->full_name ?? $participant->user?->name ?? 'Unknown';
 
         DB::transaction(function () use ($participant) {
-            foreach ($this->fileMap() as $column) {
-                $this->deleteFile($participant->{$column});
+            if ($participant->payment_proof_path) {
+                $this->deleteFile($participant->payment_proof_path);
             }
 
             $participant->delete();
@@ -207,6 +221,7 @@ class ParticipantController extends Controller
     {
         $this->authorize('data-participant', Participant::class);
 
+        $user = Auth::user();
         $allowed = ['id', 'registration_number', 'status', 'created_at', 'updated_at'];
         $orderBy = in_array($request->input('orderBy'), $allowed, true)
             ? $request->input('orderBy')
@@ -214,6 +229,9 @@ class ParticipantController extends Controller
         $direction = strtolower((string) $request->input('orderDirection')) === 'asc' ? 'asc' : 'desc';
 
         $filterValue = $request->input('filterValue', []);
+        if (is_string($filterValue)) {
+            $filterValue = json_decode($filterValue, true) ?? [];
+        }
 
         $query = Participant::query()
             ->with([
@@ -221,13 +239,38 @@ class ParticipantController extends Controller
                 'student:id,full_name,school_name,gender,province_id,regency_id',
                 'student.regency:id,name',
             ])
-            ->search($request->string('globalSearch')->toString())
-            ->when(data_get($filterValue, 'status'), fn ($query, $status) => $query->where('status', $status))
-            ->when(data_get($filterValue, 'olimpiade_id'), fn ($query, $id) => $query->where('olimpiade_id', $id))
-            ->when(data_get($filterValue, 'registration_type'), fn ($query, $type) => $query->where('registration_type', $type))
-            ->when(data_get($filterValue, 'event_year'), fn ($query, $year) => $query->where('event_year', $year))
-            ->when(data_get($filterValue, 'payment_status'), fn ($query, $status) => $query->where('payment_status', $status))
-            ->when(data_get($filterValue, 'branch'), fn ($query, $branch) => $query->where('branch', $branch))
+            ->search($request->string('globalSearch')->toString());
+
+        // Cabang role strict scoping
+        if ($user && $user->hasRole('Cabang')) {
+            $branch = $user->getBranchName();
+            if (filled($branch)) {
+                $query->where(function ($q) use ($branch) {
+                    $q->where('branch', $branch)
+                        ->orWhere('branch', 'like', "%{$branch}%");
+                });
+            }
+        } elseif ($user && $user->hasRole('Teacher')) {
+            $query->where(function ($q) use ($user) {
+                $q->where('mentor_id', $user->id)
+                    ->orWhereHas('student', fn ($sq) => $sq->where('mentor_id', $user->id));
+            });
+        }
+
+        $status = data_get($filterValue, 'status');
+        $olimpiadeId = data_get($filterValue, 'olimpiade_id');
+        $regType = data_get($filterValue, 'registration_type');
+        $eventYear = data_get($filterValue, 'event_year');
+        $payStatus = data_get($filterValue, 'payment_status');
+        $branchFilter = data_get($filterValue, 'branch');
+
+        $query
+            ->when(filled($status) && $status !== 'all', fn ($q) => $q->where('status', $status))
+            ->when(filled($olimpiadeId) && $olimpiadeId !== 'all', fn ($q) => $q->where('olimpiade_id', $olimpiadeId))
+            ->when(filled($regType) && $regType !== 'all', fn ($q) => $q->where('registration_type', $regType))
+            ->when(filled($eventYear) && $eventYear !== 'all', fn ($q) => $q->where('event_year', $eventYear))
+            ->when(filled($payStatus) && $payStatus !== 'all', fn ($q) => $q->where('payment_status', $payStatus))
+            ->when(filled($branchFilter) && $branchFilter !== 'all', fn ($q) => $q->where('branch', $branchFilter))
             ->orderBy($orderBy, $direction)
             ->orderBy('id', 'desc');
 

@@ -58,8 +58,8 @@ class UserController extends Controller
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
+            'branch' => $request->branch,
             'password' => Hash::make($request->password),
-            'role' => ['required'],
         ])->assignRole($request->role);
 
         if ($user) {
@@ -127,6 +127,7 @@ class UserController extends Controller
         $user->update([
             'name' => $request->name,
             'email' => $request->email,
+            'branch' => $request->branch,
         ]);
 
         if ($request->password) {

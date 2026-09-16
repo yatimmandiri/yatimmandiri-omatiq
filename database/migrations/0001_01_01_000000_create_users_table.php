@@ -24,6 +24,7 @@ return new class extends Migration
             $table->timestamp('phone_otp_expires_at')->nullable();
             $table->unsignedTinyInteger('phone_otp_attempts')->default(0);
             $table->timestamp('phone_otp_last_sent_at')->nullable();
+            $table->string('branch')->nullable()->index();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->rememberToken();

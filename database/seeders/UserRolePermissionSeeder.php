@@ -166,13 +166,16 @@ class UserRolePermissionSeeder extends Seeder
         if ($cabangRole) {
             $cabangRole->givePermissionTo([
                 'view-participant', 'data-participant',
+                'view-user', 'data-user',
+                'view-student', 'data-student',
             ]);
         }
 
         User::firstOrCreate(
             ['email' => 'cabang@yatimmandiri.org'],
             [
-                'name' => 'User Cabang',
+                'name' => 'User Cabang Surabaya',
+                'branch' => 'Surabaya',
                 'email_verified_at' => now(),
                 'password' => Hash::make('password'),
             ]

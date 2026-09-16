@@ -73,6 +73,7 @@ class TeacherController extends Controller
     {
         $this->authorize('data-user', User::class);
 
+        $user = Auth::user();
         $allowed = ['id', 'name', 'email', 'created_at', 'updated_at'];
         $orderBy = in_array($request->input('orderBy'), $allowed, true) ? $request->input('orderBy') : 'id';
         $direction = strtolower((string) $request->input('orderDirection')) === 'asc' ? 'asc' : 'desc';
@@ -81,9 +82,23 @@ class TeacherController extends Controller
         $query = User::query()
             ->with(['roles'])
             ->whereHas('roles', fn ($q) => $q->where('name', 'Teacher'))
-            ->search($request->string('globalSearch')->toString())
-            ->orderBy($orderBy, $direction)
-            ->orderBy('id', 'desc');
+            ->search($request->string('globalSearch')->toString());
+
+        // Cabang role strict scoping
+        if ($user && $user->hasRole('Cabang')) {
+            $branch = $user->getBranchName();
+            if (filled($branch)) {
+                $query->where(function ($q) use ($branch) {
+                    $q->where('branch', $branch)
+                        ->orWhere('branch', 'like', "%{$branch}%")
+                        ->orWhereHas('participants', function ($pq) use ($branch) {
+                            $pq->where('branch', $branch)->orWhere('branch', 'like', "%{$branch}%");
+                        });
+                });
+            }
+        }
+
+        $query->orderBy($orderBy, $direction)->orderBy('id', 'desc');
 
         $data = $query->paginate($perPage, ['*'], 'page', $request->integer('page') ?: null);
 

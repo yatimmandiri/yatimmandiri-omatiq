@@ -57,6 +57,14 @@ export default function DetailPage() {
                         </li>
                         <li className="flex flex-col space-y-2">
                             <span className="text-sm font-semibold">
+                                Kantor Cabang
+                            </span>
+                            <span className="text-sm">
+                                {user.branch || '-'}
+                            </span>
+                        </li>
+                        <li className="flex flex-col space-y-2">
+                            <span className="text-sm font-semibold">
                                 Dibuat Pada
                             </span>
                             <span className="text-sm">

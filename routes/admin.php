@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\Company\OlimpiadeVideoController;
 use App\Http\Controllers\Admin\Company\ParticipantController;
 use App\Http\Controllers\Admin\Company\PeriodController;
 use App\Http\Controllers\Admin\Company\ReviewController;
+use App\Http\Controllers\Admin\Company\SanggarController;
 use App\Http\Controllers\Admin\Company\SliderController;
 use App\Http\Controllers\Admin\Company\StudentController;
 use App\Http\Controllers\Admin\Company\TeacherController;
@@ -123,6 +124,10 @@ Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'auth.admi
         Route::get('teachers/data', [TeacherController::class, 'getData'])->name('teachers.data');
         Route::put('teachers/{teacher}/reset-password', [TeacherController::class, 'resetPassword'])->name('teachers.reset-password');
         Route::resource('teachers', TeacherController::class)->parameters(['teachers' => 'teacher'])->only(['index', 'show']);
+
+        // Sanggar — read-only (snapshot Penyaluran & DB)
+        Route::get('sanggars/data', [SanggarController::class, 'getData'])->name('sanggars.data');
+        Route::resource('sanggars', SanggarController::class)->only(['index', 'show']);
     });
 
     // -----------------------------------------------------------------

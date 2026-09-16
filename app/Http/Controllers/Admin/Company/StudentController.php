@@ -150,21 +150,49 @@ class StudentController extends Controller
     {
         $this->authorize('data-student', Student::class);
 
+        $user = Auth::user();
         $allowed = ['id', 'full_name', 'school_name', 'nik', 'is_binaan', 'is_active', 'created_at', 'updated_at'];
         $orderBy = in_array($request->input('orderBy'), $allowed, true) ? $request->input('orderBy') : 'created_at';
         $direction = strtolower((string) $request->input('orderDirection')) === 'asc' ? 'asc' : 'desc';
 
         $filterValue = $request->input('filterValue', []);
+        if (is_string($filterValue)) {
+            $filterValue = json_decode($filterValue, true) ?? [];
+        }
 
         $query = Student::query()
             ->with(['mentor:id,name', 'province:id,name', 'regency:id,name'])
             ->withCount('participants')
-            ->search($request->string('globalSearch')->toString())
-            ->when(data_get($filterValue, 'mentor_id'), fn ($q, $v) => $q->where('mentor_id', $v))
-            ->when(data_get($filterValue, 'is_binaan') !== null && data_get($filterValue, 'is_binaan') !== '', fn ($q) => $q->where('is_binaan', filter_var(data_get($filterValue, 'is_binaan'), FILTER_VALIDATE_BOOLEAN)))
-            ->when(data_get($filterValue, 'is_active') !== null && data_get($filterValue, 'is_active') !== '', fn ($q) => $q->where('is_active', filter_var(data_get($filterValue, 'is_active'), FILTER_VALIDATE_BOOLEAN)))
-            ->when(data_get($filterValue, 'school_level'), fn ($q, $v) => $q->where('school_level', $v))
-            ->when(data_get($filterValue, 'province_id'), fn ($q, $v) => $q->where('province_id', $v))
+            ->search($request->string('globalSearch')->toString());
+
+        // Cabang role strict scoping
+        if ($user && $user->hasRole('Cabang')) {
+            $branch = $user->getBranchName();
+            if (filled($branch)) {
+                $query->where(function ($q) use ($branch) {
+                    $q->whereHas('participants', function ($pq) use ($branch) {
+                        $pq->where('branch', $branch)->orWhere('branch', 'like', "%{$branch}%");
+                    })->orWhereHas('mentor', function ($mq) use ($branch) {
+                        $mq->where('branch', $branch)->orWhere('branch', 'like', "%{$branch}%");
+                    });
+                });
+            }
+        } elseif ($user && $user->hasRole('Teacher')) {
+            $query->where('mentor_id', $user->id);
+        }
+
+        $mentorId = data_get($filterValue, 'mentor_id');
+        $isBinaan = data_get($filterValue, 'is_binaan');
+        $isActive = data_get($filterValue, 'is_active');
+        $schoolLevel = data_get($filterValue, 'school_level');
+        $provinceId = data_get($filterValue, 'province_id');
+
+        $query
+            ->when(filled($mentorId) && $mentorId !== 'all', fn ($q) => $q->where('mentor_id', $mentorId))
+            ->when($isBinaan !== null && $isBinaan !== '' && $isBinaan !== 'all', fn ($q) => $q->where('is_binaan', filter_var($isBinaan, FILTER_VALIDATE_BOOLEAN)))
+            ->when($isActive !== null && $isActive !== '' && $isActive !== 'all', fn ($q) => $q->where('is_active', filter_var($isActive, FILTER_VALIDATE_BOOLEAN)))
+            ->when(filled($schoolLevel) && $schoolLevel !== 'all', fn ($q) => $q->where('school_level', $schoolLevel))
+            ->when(filled($provinceId) && $provinceId !== 'all', fn ($q) => $q->where('province_id', $provinceId))
             ->orderBy($orderBy, $direction)
             ->orderBy('id', 'desc');
 

@@ -84,10 +84,13 @@ class GuruAuthController extends Controller
             ],
         );
 
+        $guruBranch = $profile['kantor_name'] ?? $profile['sanggars'][0]['kantor_name'] ?? null;
+
         // Sync profile data without overwriting custom password
         $user->forceFill([
             'name' => $profile['name'] ?? $user->name,
             'phone' => $phone,
+            'branch' => $guruBranch ?? $user->branch,
             'penyaluran_token' => $token,
         ])->save();
 

@@ -15,9 +15,10 @@ export const UserForm = ({ dataId }: { dataId?: number }) => {
             saveBack: 'false',
             name: user?.name || '',
             email: user?.email || '',
+            branch: user?.branch || '',
             password: '',
             password_confirmation: '',
-            role: user?.roles[0]?.id || '',
+            role: user?.roles?.[0]?.id || '',
         },
     );
 
@@ -123,6 +124,17 @@ export const UserForm = ({ dataId }: { dataId?: number }) => {
                     handleOnChange={(value: any) => setData('role', value)}
                     errors={errors.role && errors.role}
                     helperText={errors.role && errors.role}
+                />
+                <InputTextComponent
+                    type="text"
+                    label="Kantor Cabang (Opsional)"
+                    placeholder="Contoh: Surabaya, Sidoarjo, dsb."
+                    name="branch"
+                    value={data.branch}
+                    handleOnChange={(value: string) => setData('branch', value)}
+                    color={errors.branch ? 'danger' : 'default'}
+                    errors={errors.branch && errors.branch}
+                    helperText={errors.branch ? errors.branch : 'Wajib diisi untuk pengguna dengan Role Cabang agar data terfilter otomatis.'}
                 />
             </div>
             <div className="flex justify-end space-x-4">
