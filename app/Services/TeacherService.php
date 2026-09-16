@@ -12,32 +12,9 @@ class TeacherService
 {
     public function getStudentById(User $teacher, int $id): Participant
     {
-        $token = session('penyaluran_token') ?? $teacher->penyaluran_token;
-        $sessionStudentIds = [];
-        $sessionNiks = [];
-
-        if ($token) {
-            try {
-                $sessionStudents = app(PenyaluranService::class)->students($token);
-                $sessionStudentIds = collect($sessionStudents)->pluck('student_id')->filter()->map(fn ($sid) => (int) $sid)->all();
-                $sessionNiks = collect($sessionStudents)->pluck('nik')->filter()->all();
-            } catch (\Throwable $e) {
-            }
-        }
-
         return Participant::query()
             ->with(['olimpiade:id,name,category,slug', 'student', 'student.province:id,name', 'student.regency:id,name', 'student.village:id,name'])
-            ->where(function ($q) use ($teacher, $sessionStudentIds, $sessionNiks) {
-                $q->where('mentor_id', $teacher->id)
-                    ->orWhereHas('student', fn ($sq) => $sq->where('mentor_id', $teacher->id));
-
-                if (! empty($sessionStudentIds) || ! empty($sessionNiks)) {
-                    $q->orWhereHas('student', function ($sq) use ($sessionStudentIds, $sessionNiks) {
-                        $sq->when(! empty($sessionStudentIds), fn ($sub) => $sub->whereIn('penyaluran_id', $sessionStudentIds))
-                            ->when(! empty($sessionNiks), fn ($sub) => $sub->orWhereIn('nik', $sessionNiks));
-                    });
-                }
-            })
+            ->where('mentor_id', $teacher->id)
             ->findOrFail($id);
     }
 
@@ -59,14 +36,35 @@ class TeacherService
             return $g;
         };
 
-        $olimpiade = Olimpiade::find($data['olimpiade_id']);
-        $eventYear = $olimpiade?->event_year ?? (int) date('Y');
+        $olimpiade = Olimpiade::findOrFail($data['olimpiade_id']);
+        $eventYear = $olimpiade->event_year ?? (int) date('Y');
 
         return DB::transaction(function () use ($teacher, $data, $penyaluranStudent, $mapGender, $eventYear) {
             $penyaluranId = $penyaluranStudent['student_id'] ?? $penyaluranStudent['id'] ?? $data['penyaluran_student_id'];
+            $nik = trim((string) ($penyaluranStudent['nik'] ?? ''));
+
+            if ($nik !== '' && $nik !== '-' && Student::hasActiveRegistrationFor($nik, $eventYear)) {
+                throw new \DomainException("Binaan dengan NIK {$nik} sudah terdaftar pada OMATIQ {$eventYear}.");
+            }
+
+            $existingActive = Participant::query()
+                ->where(function ($q) use ($eventYear) {
+                    $q->where('event_year', $eventYear);
+                    if ($eventYear == 2026) {
+                        $q->orWhereNull('event_year');
+                    }
+                })
+                ->whereIn('status', ['submitted', 'verified'])
+                ->whereHas('student', fn ($q) => $q->where('penyaluran_id', $penyaluranId))
+                ->exists();
+
+            if ($existingActive) {
+                throw new \DomainException("Binaan ini sudah terdaftar pada OMATIQ {$eventYear}.");
+            }
+
             $student = Student::query()
                 ->where('penyaluran_id', $penyaluranId)
-                ->when($penyaluranStudent['nik'] ?? null, fn ($query, $nik) => $query->orWhere('nik', $nik))
+                ->when($penyaluranStudent['nik'] ?? null, fn ($query, $studentNik) => $query->orWhere('nik', $studentNik))
                 ->first();
 
             // Create/update Student master (is_binaan true, no User) with full data
@@ -97,6 +95,7 @@ class TeacherService
 
             return Participant::create([
                 'student_id' => $student->id,
+                'nik' => $student->nik,
                 'penyaluran_sanggar_id' => $data['penyaluran_sanggar_id'] ?? $penyaluranStudent['sanggar_id'] ?? null,
                 'penyaluran_sanggar_name' => $data['penyaluran_sanggar_name'] ?? $penyaluranStudent['sanggar_name'] ?? null,
                 'mentor_id' => $teacher->id,

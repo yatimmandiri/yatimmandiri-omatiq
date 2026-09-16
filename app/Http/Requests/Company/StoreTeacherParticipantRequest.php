@@ -51,13 +51,15 @@ class StoreTeacherParticipantRequest extends FormRequest
 
                             return;
                         }
+                        if (Student::hasActiveRegistrationFor($localNik, $eventYear)) {
+                            $fail('Binaan ini sudah terdaftar di OMATIQ '.($eventYear ?? '').'.');
+
+                            return;
+                        }
                         $exists = Participant::query()
-                            ->whereHas('student', fn ($q) => $q->where(function ($sub) use ($value, $localNik, $local) {
+                            ->whereHas('student', fn ($q) => $q->where(function ($sub) use ($value, $local) {
                                 if ($local->penyaluran_id) {
                                     $sub->where('penyaluran_id', $local->penyaluran_id);
-                                }
-                                if ($localNik !== '' && $localNik !== '-') {
-                                    $sub->orWhere('nik', $localNik);
                                 }
                                 if (app()->environment('testing') && ! $local->penyaluran_id) {
                                     $sub->orWhere('id', $value);
@@ -108,13 +110,16 @@ class StoreTeacherParticipantRequest extends FormRequest
                         return;
                     }
 
-                    // Check existing participant via Student.penyaluran_id or Student.nik for this event.
+                    if (Student::hasActiveRegistrationFor($nik, $eventYear)) {
+                        $fail('Binaan ini sudah terdaftar di OMATIQ '.($eventYear ?? '').'.');
+
+                        return;
+                    }
+
+                    // Check existing participant via Student.penyaluran_id for this event.
                     $exists = Participant::query()
-                        ->whereHas('student', fn ($q) => $q->where(function ($sub) use ($value, $nik) {
+                        ->whereHas('student', fn ($q) => $q->where(function ($sub) use ($value) {
                             $sub->where('penyaluran_id', $value);
-                            if ($nik !== '' && $nik !== '-') {
-                                $sub->orWhere('nik', $nik);
-                            }
                             if (app()->environment('testing')) {
                                 $sub->orWhere(fn ($testQ) => $testQ->whereNull('penyaluran_id')->where('id', $value));
                             }

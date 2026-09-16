@@ -7,6 +7,7 @@ use App\Models\Core\Region\District;
 use App\Models\Core\Region\Province;
 use App\Models\Core\Region\Regency;
 use App\Models\Core\Region\Village;
+use App\Models\Core\User;
 use App\Services\PenyaluranService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
