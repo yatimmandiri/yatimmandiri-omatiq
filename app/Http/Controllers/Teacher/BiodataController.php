@@ -149,7 +149,7 @@ class BiodataController extends Controller
         ];
     }
 
-    public static function extractTeacherBiodata(?array $profile, ?User $user = null): array
+    public static function extractTeacherBiodata(?array $profile, ?\App\Models\Core\User $user = null): array
     {
         if (! $profile) {
             return [
