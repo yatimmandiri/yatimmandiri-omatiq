@@ -15,7 +15,7 @@ class StoreStudentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'nik' => ['required', 'string', 'size:16', 'unique:students,nik'],
+            'nik' => ['required', 'string', 'size:16', Rule::unique('students', 'nik')->where('is_binaan', $this->boolean('is_binaan'))->whereNull('deleted_at')],
             'full_name' => ['required', 'string', 'max:255'],
             'nickname' => ['nullable', 'string', 'max:120'],
             'gender' => ['required', Rule::in(['male', 'female'])],

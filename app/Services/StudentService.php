@@ -136,6 +136,13 @@ class StudentService
         }
 
         $data['is_binaan'] = $request->boolean('is_binaan');
+        if (! $data['is_binaan']) {
+            $data['mentor_id'] = null;
+            $data['mentor_name'] = null;
+            $data['mentor_phone'] = null;
+            $data['penyaluran_id'] = null;
+        }
+
         if ($request->has('is_active')) {
             $data['is_active'] = $request->boolean('is_active');
         }
