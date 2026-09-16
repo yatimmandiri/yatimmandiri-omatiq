@@ -108,6 +108,8 @@ class TeacherService
                 'registration_type' => 'teacher',
                 'registration_number' => $this->generateRegistrationNumber(),
                 'status' => 'verified',
+                'payment_status' => 'paid',
+                'payment_amount' => 0,
                 'achievements' => $data['achievements'] ?? null,
                 'has_joined_before' => $data['has_joined_before'] ?? false,
                 'previous_year' => $data['previous_year'] ?? null,

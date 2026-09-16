@@ -374,6 +374,44 @@ class DiagnoseDataAnomalies extends Command
         }
 
         $this->line('');
+
+        // 8. Analisa Payment Status untuk Pendaftaran Guru Binaan
+        $this->info('🔍 8. ANALISA STATUS PEMBAYARAN PESERTA JALUR GURU BINAAN');
+        $unpaidTeacherParticipants = Participant::query()
+            ->where(function ($q) {
+                $q->where('registration_type', 'teacher')
+                    ->orWhereNotNull('mentor_id');
+            })
+            ->where('payment_status', '!=', 'paid')
+            ->select(['id', 'registration_number', 'student_id', 'mentor_id', 'payment_status', 'status'])
+            ->get();
+
+        if ($unpaidTeacherParticipants->isNotEmpty()) {
+            $this->warn("⚠️  Ditemukan {$unpaidTeacherParticipants->count()} peserta binaan yang payment_status nya belum 'paid':");
+            $this->table(
+                ['ID', 'No Registrasi', 'Siswa ID', 'Status Pendaftaran', 'Status Pembayaran'],
+                $unpaidTeacherParticipants->map(fn ($p) => [
+                    $p->id,
+                    $p->registration_number,
+                    $p->student_id,
+                    $p->status,
+                    $p->payment_status,
+                ])->toArray()
+            );
+
+            if ($isFix) {
+                $this->info("🛠️  Mengubah payment_status menjadi 'paid' untuk seluruh peserta jalur binaan guru...");
+                Participant::where(function ($q) {
+                    $q->where('registration_type', 'teacher')
+                        ->orWhereNotNull('mentor_id');
+                })->update(['payment_status' => 'paid', 'payment_amount' => 0]);
+                $this->info('✅ Selesai.');
+            }
+        } else {
+            $this->info("✅ Seluruh peserta jalur binaan guru berstatus pembayaran 'paid'.");
+        }
+
+        $this->line('');
         $this->info('================================================================================');
         $this->info('DIAGNOSA SELESAI.');
         $this->info('================================================================================');
