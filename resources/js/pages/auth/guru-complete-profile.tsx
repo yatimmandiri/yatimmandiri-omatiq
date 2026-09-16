@@ -122,8 +122,9 @@ export default function GuruCompleteProfile() {
                     <div className="flex gap-3">
                         <CheckCircle2 className="mt-0.5 size-4 shrink-0" />
                         <p>
-                            Setelah akun dilengkapi, login berikutnya langsung
-                            masuk ke dashboard guru.
+                            Setelah akun dilengkapi, Anda dapat login selanjutnya
+                            menggunakan nomor HP & password baru, atau langsung
+                            menggunakan <strong>Login with Google</strong> dengan email ini.
                         </p>
                     </div>
                 </div>

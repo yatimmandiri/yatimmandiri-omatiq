@@ -101,9 +101,13 @@ class GuruAuthController extends Controller
             $user->assignRole('Teacher');
         }
 
-        // Verify local password (default 'password' until guru changes via settings/security)
+        // Verify local password (default 'password' until guru updates via complete-profile/settings)
         if (! Hash::check($password, $user->password)) {
-            return back()->withErrors(['password' => 'Password salah. Hubungi admin untuk reset ke default.']);
+            $errorMessage = $user->needsTeacherProfileCompletion()
+                ? 'Password salah. Untuk login pertama kali, gunakan password default "password".'
+                : 'Password salah. Silakan periksa kembali password Anda atau hubungi admin.';
+
+            return back()->withErrors(['password' => $errorMessage]);
         }
 
         // OTP scaffold: disabled for now (otp_enabled=false) → direct login

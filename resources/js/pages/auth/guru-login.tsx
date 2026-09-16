@@ -48,13 +48,16 @@ export default function GuruLogin() {
                                     required
                                     tabIndex={2}
                                     autoComplete="current-password"
-                                    placeholder="Password dari admin"
+                                    placeholder="Password (default: password)"
                                 />
                                 <p className="text-xs text-muted-foreground">
-                                    Gunakan password yang diberikan oleh tim
-                                    OMATIQ. Setelah login pertama, Anda akan
-                                    diminta mendaftarkan email dan membuat
-                                    password baru.
+                                    Gunakan password Anda. Untuk login pertama
+                                    kali, gunakan password default:{' '}
+                                    <strong className="text-foreground">
+                                        password
+                                    </strong>
+                                    . Setelah login, Anda akan diminta
+                                    memperbarui email dan password baru.
                                 </p>
                                 <InputError message={errors.password} />
                             </div>
@@ -98,8 +101,8 @@ export default function GuruLogin() {
                 </a>
             </Button>
             <p className="text-center text-xs leading-5 text-muted-foreground">
-                Google hanya untuk guru yang sudah melengkapi profil (email
-                aktif). Guru baru wajib login dengan nomor HP terlebih dahulu.
+                Login Google dapat digunakan setelah Anda menyelesaikan update
+                email aktif pada akun guru.
             </p>
         </>
     );
@@ -107,5 +110,6 @@ export default function GuruLogin() {
 
 GuruLogin.layout = {
     title: 'Login Guru',
-    description: 'Masuk dengan nomor HP dan password dari tim OMATIQ',
+    description:
+        'Masuk dengan nomor HP dan password default (password) untuk pertama kali',
 };

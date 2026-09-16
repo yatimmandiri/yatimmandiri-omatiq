@@ -55,12 +55,14 @@ class DashboardService
             ->whereIn('status', ['submitted', 'verified'])
             ->count();
 
-        if ($user->penyaluran_token) {
+        $token = session('penyaluran_token') ?? $user->penyaluran_token;
+
+        if ($token) {
             try {
                 $penyaluran = app(PenyaluranService::class);
-                $penyaluranProfile = $penyaluran->me($user->penyaluran_token);
-                $sanggars = $penyaluran->sanggars($user->penyaluran_token);
-                $penyaluranStudents = $penyaluran->students($user->penyaluran_token);
+                $penyaluranProfile = $penyaluran->me($token);
+                $sanggars = $penyaluran->sanggars($token);
+                $penyaluranStudents = $penyaluran->students($token);
                 $penyaluranTotal = count($penyaluranStudents);
                 $sanggarCount = count($sanggars);
                 $sanggarSum = collect($sanggars)->sum(fn ($s) => (int) ($s['total_students'] ?? 0));

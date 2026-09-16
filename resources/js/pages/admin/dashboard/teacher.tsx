@@ -483,7 +483,7 @@ export default function Dashboard() {
                                 <QuickAction
                                     title="Absensi"
                                     desc="Rekap kehadiran santri"
-                                    href="/admin/absensi"
+                                    href="/teacher/absensi"
                                     icon={<Award className="size-4" />}
                                     accent="#0ea5e9"
                                 />

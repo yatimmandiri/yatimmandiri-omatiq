@@ -131,11 +131,15 @@ class HandleInertiaRequests extends Middleware
                 : [],
             'sidebarSanggars' => (function () use ($request) {
                 $user = $request->user();
-                if (! $user || ! $user->hasRole('Teacher') || ! $user->penyaluran_token) {
+                if (! $user || ! $user->hasRole('Teacher')) {
+                    return [];
+                }
+                $token = $request->session()->get('penyaluran_token') ?? $user->penyaluran_token;
+                if (! $token) {
                     return [];
                 }
                 try {
-                    return app(PenyaluranService::class)->sanggars($user->penyaluran_token);
+                    return app(PenyaluranService::class)->sanggars($token);
                 } catch (\Throwable $e) {
                     return [];
                 }

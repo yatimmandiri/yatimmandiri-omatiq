@@ -83,8 +83,20 @@ class SocialiteController extends Controller
         $request->session()->regenerate();
         $user->load('roles');
 
-        if ($user->hasRole('Teacher') && $user->penyaluran_token) {
-            $request->session()->put('penyaluran_token', $user->penyaluran_token);
+        if ($user->hasRole('Teacher')) {
+            $token = $user->penyaluran_token;
+            if (! $token && $user->phone) {
+                try {
+                    $token = app(\App\Services\PenyaluranService::class)->loginGuru($user->phone);
+                    $user->forceFill(['penyaluran_token' => $token])->save();
+                } catch (\Throwable $e) {
+                    // Penyaluran API might be unreachable or mock in tests
+                }
+            }
+
+            if ($token) {
+                $request->session()->put('penyaluran_token', $token);
+            }
             if ($user->penyaluran_id) {
                 $request->session()->put('penyaluran_id', $user->penyaluran_id);
             }
