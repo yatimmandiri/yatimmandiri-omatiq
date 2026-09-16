@@ -3,6 +3,7 @@
 namespace App\Models\Core;
 
 use App\Models\Company\Participant;
+use App\Models\Company\Student;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Builder;
@@ -90,6 +91,16 @@ class User extends Authenticatable
     public function participant(): HasOne
     {
         return $this->hasOne(Participant::class);
+    }
+
+    public function participants(): HasMany
+    {
+        return $this->hasMany(Participant::class, 'mentor_id');
+    }
+
+    public function students(): HasMany
+    {
+        return $this->hasMany(Student::class, 'mentor_id');
     }
 
     public function socials(): HasMany
