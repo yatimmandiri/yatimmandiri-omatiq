@@ -7,6 +7,7 @@ use App\Models\Core\Region\District;
 use App\Models\Core\Region\Province;
 use App\Models\Core\Region\Regency;
 use App\Models\Core\Region\Village;
+use App\Models\Core\User;
 use App\Services\PenyaluranService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -148,13 +149,13 @@ class BiodataController extends Controller
         ];
     }
 
-    public static function extractTeacherBiodata(?array $profile, User $user): array
+    public static function extractTeacherBiodata(?array $profile, ?User $user = null): array
     {
         if (! $profile) {
             return [
-                'name' => $user->name,
-                'email' => $user->email,
-                'phone' => $user->phone,
+                'name' => $user?->name,
+                'email' => $user?->email,
+                'phone' => $user?->phone,
                 'nik' => null,
                 'gender' => null,
                 'birth_place' => null,
@@ -195,9 +196,9 @@ class BiodataController extends Controller
         }
 
         return [
-            'name' => $flat['name'] ?? $flat['nama'] ?? $flat['full_name'] ?? $flat['nama_lengkap'] ?? $user->name,
-            'email' => $flat['email'] ?? $user->email,
-            'phone' => $flat['phone'] ?? $flat['hp'] ?? $flat['no_hp'] ?? $flat['nomor_hp'] ?? $flat['telepon'] ?? $flat['no_telp'] ?? $user->phone,
+            'name' => $flat['name'] ?? $flat['nama'] ?? $flat['full_name'] ?? $flat['nama_lengkap'] ?? $user?->name,
+            'email' => $flat['email'] ?? $user?->email,
+            'phone' => $flat['phone'] ?? $flat['hp'] ?? $flat['no_hp'] ?? $flat['nomor_hp'] ?? $flat['telepon'] ?? $flat['no_telp'] ?? $user?->phone,
             'nik' => $flat['nik'] ?? $flat['no_ktp'] ?? $flat['ktp'] ?? $flat['nomor_ktp'] ?? $flat['identity_number'] ?? null,
             'gender' => $gender,
             'birth_place' => $flat['birth_place'] ?? $flat['tempat_lahir'] ?? $flat['tmpt_lahir'] ?? $flat['tmp_lahir'] ?? $flat['kota_lahir'] ?? null,
