@@ -49,14 +49,29 @@ export default function ListPage() {
         {
             header: (info: any) => renderRowHeader(info, 'Binaan'),
             accessorKey: 'full_name',
-            cell: (info: any) => (
-                <div className="space-y-1">
-                    <p className="font-semibold">{info.getValue()}</p>
-                    <p className="text-xs text-muted-foreground">
-                        {info.row.original.nik}
-                    </p>
-                </div>
-            ),
+            cell: (info: any) => {
+                const nik = info.row.original.nik;
+                const hasNik = Boolean(
+                    nik &&
+                    String(nik).trim() !== '' &&
+                    String(nik).trim() !== '-',
+                );
+
+                return (
+                    <div className="space-y-1">
+                        <p className="font-semibold">{info.getValue()}</p>
+                        <p
+                            className={`text-xs ${
+                                hasNik
+                                    ? 'text-muted-foreground'
+                                    : 'font-medium text-amber-600 dark:text-amber-400'
+                            }`}
+                        >
+                            {hasNik ? nik : 'NIK belum diisi'}
+                        </p>
+                    </div>
+                );
+            },
         },
         {
             header: 'Sekolah',

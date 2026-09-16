@@ -9,12 +9,16 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { dashboard } from '@/routes/teacher';
+import binaan from '@/routes/teacher/data-binaan';
 import dataPeserta from '@/routes/teacher/data-peserta';
-import { useForm, usePage } from '@inertiajs/react';
+import { router, useForm, usePage } from '@inertiajs/react';
 import {
+    AlertTriangle,
     ArrowLeft,
     CheckCircle2,
     GraduationCap,
+    IdCard,
+    Pencil,
     Save,
     School,
     UserRound,
@@ -83,6 +87,12 @@ export default function CreatePage() {
             (item) => String(item.id) === form.data.penyaluran_student_id,
         ) ?? null;
 
+    const hasValidNik = Boolean(
+        activeStudent?.nik &&
+        activeStudent.nik.trim() !== '' &&
+        activeStudent.nik.trim() !== '-',
+    );
+
     const activeSanggar =
         sanggars.find(
             (item) => String(item.id) === form.data.penyaluran_sanggar_id,
@@ -90,6 +100,11 @@ export default function CreatePage() {
 
     const submit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+
+        if (!hasValidNik) {
+            return;
+        }
+
         form.post(dataPeserta.store().url, {
             preserveScroll: true,
         });
@@ -137,7 +152,8 @@ export default function CreatePage() {
                         disabled={
                             form.processing ||
                             students.length === 0 ||
-                            !form.data.penyaluran_student_id
+                            !form.data.penyaluran_student_id ||
+                            !hasValidNik
                         }
                     >
                         <Save />
@@ -145,6 +161,40 @@ export default function CreatePage() {
                     </Button>
                 </div>
             </div>
+
+            {activeStudent && !hasValidNik && (
+                <div className="flex flex-col gap-3 rounded-2xl border border-amber-300 bg-amber-50/90 p-4 text-amber-950 sm:flex-row sm:items-center sm:justify-between dark:border-amber-800/60 dark:bg-amber-950/40 dark:text-amber-200">
+                    <div className="flex items-start gap-3">
+                        <AlertTriangle className="mt-0.5 size-5 shrink-0 text-amber-600 dark:text-amber-400" />
+                        <div>
+                            <p className="text-sm font-semibold">
+                                NIK Santri Belum Lengkap di Penyaluran
+                            </p>
+                            <p className="mt-0.5 text-xs text-amber-800/90 dark:text-amber-300/90">
+                                Santri{' '}
+                                <strong>{activeStudent.full_name}</strong> belum
+                                memiliki NIK di data Penyaluran. NIK wajib
+                                dilengkapi terlebih dahulu di website Penyaluran
+                                sebelum dapat didaftarkan ke OMATIQ.
+                            </p>
+                        </div>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="border-amber-300 bg-white text-xs hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-900 dark:hover:bg-amber-800"
+                            onClick={() =>
+                                router.visit(binaan.edit(activeStudent.id).url)
+                            }
+                        >
+                            <Pencil className="mr-1.5 size-3.5" />
+                            Lengkapi NIK
+                        </Button>
+                    </div>
+                </div>
+            )}
 
             {students.length === 0 && (
                 <div className="rounded-2xl border border-dashed p-5 text-sm text-muted-foreground">
@@ -172,7 +222,16 @@ export default function CreatePage() {
 
                         <Field
                             label="Binaan"
-                            error={error('penyaluran_student_id')}
+                            error={
+                                error('penyaluran_student_id') ||
+                                (activeStudent && !hasValidNik ? (
+                                    <p className="text-xs font-medium text-destructive">
+                                        Santri belum memiliki NIK di Penyaluran.
+                                        Lengkapi NIK terlebih dahulu sebelum
+                                        mendaftar.
+                                    </p>
+                                ) : null)
+                            }
                         >
                             <Select
                                 value={form.data.penyaluran_student_id}
@@ -192,10 +251,20 @@ export default function CreatePage() {
                                     }));
                                 }}
                                 placeholder="Pilih binaan"
-                                options={students.map((item) => ({
-                                    value: String(item.id),
-                                    label: `${item.full_name} - ${item.nik}`,
-                                }))}
+                                options={students.map((item) => {
+                                    const itemHasNik = Boolean(
+                                        item.nik &&
+                                        item.nik.trim() !== '' &&
+                                        item.nik.trim() !== '-',
+                                    );
+
+                                    return {
+                                        value: String(item.id),
+                                        label: itemHasNik
+                                            ? `${item.full_name} - ${item.nik}`
+                                            : `${item.full_name} - (NIK Belum Lengkap)`,
+                                    };
+                                })}
                             />
                         </Field>
 
@@ -226,6 +295,19 @@ export default function CreatePage() {
                         )}
 
                         <div className="grid gap-3 sm:grid-cols-2">
+                            <InfoCard
+                                icon={<IdCard className="size-5" />}
+                                label="NIK"
+                                value={
+                                    hasValidNik ? (
+                                        activeStudent?.nik
+                                    ) : (
+                                        <span className="font-semibold text-amber-600 dark:text-amber-400">
+                                            Belum terisi di Penyaluran
+                                        </span>
+                                    )
+                                }
+                            />
                             <InfoCard
                                 icon={<School className="size-5" />}
                                 label="Sekolah"
@@ -365,7 +447,7 @@ const InfoCard = ({
 }: {
     icon?: ReactNode;
     label: string;
-    value?: string | null;
+    value?: ReactNode;
     className?: string;
 }) => (
     <div className={`rounded-2xl border bg-muted/30 p-4 ${className}`}>
@@ -373,9 +455,9 @@ const InfoCard = ({
             {icon}
             {label}
         </div>
-        <p className="mt-2 text-sm font-semibold text-foreground">
+        <div className="mt-2 text-sm font-semibold text-foreground">
             {value || 'Belum tersedia dari Penyaluran'}
-        </p>
+        </div>
     </div>
 );
 

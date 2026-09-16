@@ -45,8 +45,14 @@ class StoreTeacherParticipantRequest extends FormRequest
 
                             return;
                         }
+                        $localNik = trim((string) ($local->nik ?? ''));
+                        if ($localNik === '' || $localNik === '-') {
+                            $fail('Santri binaan belum memiliki NIK di Penyaluran. Silakan lengkapi NIK santri terlebih dahulu di website Penyaluran sebelum mendaftarkan ke OMATIQ.');
+
+                            return;
+                        }
                         $exists = Participant::query()
-                            ->whereHas('student', fn ($q) => $q->where('penyaluran_id', $value)->orWhere('id', $value))
+                            ->whereHas('student', fn ($q) => $q->where('penyaluran_id', $value)->orWhere('id', $value)->orWhere('nik', $localNik))
                             ->where(function ($q) use ($eventYear) {
                                 $q->where('event_year', $eventYear);
                                 if ($eventYear == 2026) {
@@ -77,7 +83,7 @@ class StoreTeacherParticipantRequest extends FormRequest
                         $local = Student::where('penyaluran_id', $value)->where('mentor_id', $this->user()->id)->where('is_binaan', true)->first()
                             ?? Student::find($value);
                         if ($local && $local->mentor_id === $this->user()->id && $local->is_binaan) {
-                            $found = ['student_id' => $local->penyaluran_id ?? $local->id, 'status' => true];
+                            $found = ['student_id' => $local->penyaluran_id ?? $local->id, 'nik' => $local->nik, 'status' => true];
                         } else {
                             $fail('Binaan tidak ditemukan di data penyaluran Anda.');
 
@@ -85,9 +91,16 @@ class StoreTeacherParticipantRequest extends FormRequest
                         }
                     }
 
-                    // Check existing participant via Student.penyaluran_id for this event.
+                    $nik = trim((string) ($found['nik'] ?? ''));
+                    if ($nik === '' || $nik === '-') {
+                        $fail('Santri binaan belum memiliki NIK di Penyaluran. Silakan lengkapi NIK santri terlebih dahulu di website Penyaluran sebelum mendaftarkan ke OMATIQ.');
+
+                        return;
+                    }
+
+                    // Check existing participant via Student.penyaluran_id or Student.nik for this event.
                     $exists = Participant::query()
-                        ->whereHas('student', fn ($q) => $q->where('penyaluran_id', $value)->orWhere('id', $value))
+                        ->whereHas('student', fn ($q) => $q->where('penyaluran_id', $value)->orWhere('id', $value)->orWhere('nik', $nik))
                         ->where(function ($q) use ($eventYear) {
                             $q->where('event_year', $eventYear);
                             if ($eventYear == 2026) {

@@ -111,7 +111,20 @@ export default function ShowPage() {
                         Biodata Binaan (Penyaluran API)
                     </h2>
                     <div className="grid gap-4 md:grid-cols-2">
-                        <Detail label="NIK" value={binaan.nik} />
+                        <Detail
+                            label="NIK"
+                            value={
+                                binaan.nik &&
+                                String(binaan.nik).trim() !== '' &&
+                                String(binaan.nik).trim() !== '-' ? (
+                                    binaan.nik
+                                ) : (
+                                    <span className="font-medium text-amber-600 dark:text-amber-400">
+                                        Belum diisi di Penyaluran
+                                    </span>
+                                )
+                            }
+                        />
                         <Detail label="NIS" value={binaan.nis} />
                         <Detail label="Nama Lengkap" value={fullName} />
                         <Detail

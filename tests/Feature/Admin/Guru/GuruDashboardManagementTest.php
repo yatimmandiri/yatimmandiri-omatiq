@@ -4,6 +4,7 @@ use App\Models\Company\Olimpiade;
 use App\Models\Company\Participant;
 use App\Models\Company\Student;
 use App\Models\Core\User;
+use App\Services\TeacherService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\DB;
@@ -300,4 +301,55 @@ test('teacher can view sanggar and absensi pages', function () {
     $this->actingAs($teacher)
         ->get(route('teacher.absensi.index'))
         ->assertOk();
+});
+
+test('teacher form options does not collide local auto increment student id with penyaluran student id', function () {
+    $teacherService = app(TeacherService::class);
+
+    // Create an unrelated local participant whose local student_id is 31
+    $otherStudent = Student::create([
+        'id' => 31,
+        'nik' => '9999999999999999',
+        'full_name' => 'Other Local Student',
+        'gender' => 'male',
+        'is_binaan' => false,
+    ]);
+
+    $olimpiade = Olimpiade::create(['name' => 'Olimpiade IPA', 'category' => 'IPA', 'event_year' => 2026]);
+
+    Participant::create([
+        'student_id' => $otherStudent->id,
+        'olimpiade_id' => $olimpiade->id,
+        'registration_number' => 'OMQ-TEST-31',
+        'registration_type' => 'user',
+        'status' => 'verified',
+        'event_year' => 2026,
+    ]);
+
+    // Penyaluran student roster has a student whose Penyaluran student_id is 31, but with different NIK
+    $penyaluranRoster = [
+        [
+            'student_id' => 31,
+            'id' => 31,
+            'name' => 'ADELIO ABRISAM ATTAR',
+            'nik' => '3402160109160001',
+            'gender' => 'L',
+            'status' => true,
+        ],
+        [
+            'student_id' => 30,
+            'id' => 30,
+            'name' => 'NAFLA MAHIRA RIFDA',
+            'nik' => '3402166011140001',
+            'gender' => 'P',
+            'status' => true,
+        ],
+    ];
+
+    $options = $teacherService->getFormOptionsFromApi($penyaluranRoster, 31, 2026);
+
+    expect(count($options['students']))->toBe(2)
+        ->and($options['students'][0]['id'])->toBe(31)
+        ->and($options['students'][0]['full_name'])->toBe('ADELIO ABRISAM ATTAR')
+        ->and($options['preselected_student_id'])->toBe(31);
 });

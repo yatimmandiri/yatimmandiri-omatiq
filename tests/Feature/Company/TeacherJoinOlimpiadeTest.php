@@ -117,6 +117,25 @@ it('prevents registering a student who already has an active registration', func
     expect(Participant::count())->toBe(1);
 });
 
+it('prevents registering a student who has no NIK in penyaluran', function () {
+    openBinaanRegistration();
+    $teacher = createTeacher();
+    $studentNoNik = Student::create([
+        'nik' => '',
+        'full_name' => 'Santri Tanpa NIK',
+        'gender' => 'male',
+        'mentor_id' => $teacher->id,
+        'is_binaan' => true,
+    ]);
+    $olimpiade = createOlimpiade();
+
+    $this->actingAs($teacher)
+        ->post(route('teacher.data-peserta.store'), registrationPayload($olimpiade->id, $studentNoNik->id))
+        ->assertSessionHasErrors('penyaluran_student_id');
+
+    expect(Participant::count())->toBe(0);
+});
+
 it('prevents a teacher from registering another teacher student', function () {
     openBinaanRegistration();
     $teacherA = createTeacher();
