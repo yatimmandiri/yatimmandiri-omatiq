@@ -16,12 +16,21 @@ const labels: Record<string, string> = {
 };
 
 export default function ShowPage() {
-    const { participant } = usePage<{ participant: Record<string, any> }>()
-        .props;
-    const isBinaan =
-        !!participant.student?.is_binaan ||
-        !!participant.student?.penyaluran_id;
+    const { participant, auth } = usePage<{
+        participant: Record<string, any>;
+        auth?: {
+            user?: {
+                permissions?: string[];
+                roles?: string[];
+            };
+        };
+    }>().props;
+    const isBinaan = !!participant.student?.is_binaan;
     const [openProof, setOpenProof] = useState(false);
+
+    const canUpdate =
+        (auth?.user?.permissions ?? []).includes('update-participant') ||
+        (auth?.user?.roles ?? []).includes('Administrators');
 
     return (
         <div className="flex flex-1 flex-col gap-6 p-4">
@@ -58,14 +67,16 @@ export default function ShowPage() {
                             </a>
                         </Button>
                     )}
-                    <Button
-                        onClick={() =>
-                            router.visit(participants.edit(participant.id).url)
-                        }
-                    >
-                        <Pencil />
-                        Edit
-                    </Button>
+                    {canUpdate && (
+                        <Button
+                            onClick={() =>
+                                router.visit(participants.edit(participant.id).url)
+                            }
+                        >
+                            <Pencil />
+                            Edit
+                        </Button>
+                    )}
                 </div>
             </div>
 

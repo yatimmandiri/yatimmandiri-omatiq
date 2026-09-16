@@ -9,7 +9,7 @@ class ParticipantPolicy
 {
     public function viewAny(User $user): bool
     {
-        if ($user->hasRole('Administrators')) {
+        if ($user->hasRole('Administrators') || $user->hasRole('Cabang')) {
             return $user->hasPermissionTo('view-participant');
         }
 
@@ -26,7 +26,7 @@ class ParticipantPolicy
             return false;
         }
 
-        if ($user->hasRole('Administrators')) {
+        if ($user->hasRole('Administrators') || $user->hasRole('Cabang')) {
             return true;
         }
 
@@ -122,7 +122,7 @@ class ParticipantPolicy
 
     public function dataParticipant(User $user): bool
     {
-        if ($user->hasRole('Administrators')) {
+        if ($user->hasRole('Administrators') || $user->hasRole('Cabang')) {
             return $user->hasPermissionTo('data-participant');
         }
 
@@ -135,6 +135,10 @@ class ParticipantPolicy
 
     public function syncSheet(User $user): bool
     {
-        return $user->hasRole('Administrators') && $user->hasPermissionTo('update-participant');
+        if ($user->hasRole('Administrators')) {
+            return $user->hasPermissionTo('update-participant');
+        }
+
+        return false;
     }
 }

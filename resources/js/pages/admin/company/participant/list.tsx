@@ -48,7 +48,7 @@ const statusVariant = (status: string) =>
           : 'secondary';
 
 export default function ListPage() {
-    const { filterOptions, sheets } = usePage<{
+    const { filterOptions, sheets, auth } = usePage<{
         filterOptions?: {
             olimpiades?: Array<{ value: string; label: string }>;
             eventYears?: Array<{ value: string; label: string }>;
@@ -60,12 +60,21 @@ export default function ListPage() {
             sheet_name?: string | null;
             url?: string | null;
         };
+        auth?: {
+            user?: {
+                permissions?: string[];
+                roles?: string[];
+            };
+        };
     }>().props;
 
     const [filterValue, setFilterValue] = useState<Record<string, string>>({});
     const [refreshData, setRefreshData] = useState(false);
 
     const hasActiveFilter = Object.values(filterValue).some(Boolean);
+    const canUpdate =
+        (auth?.user?.permissions ?? []).includes('update-participant') ||
+        (auth?.user?.roles ?? []).includes('Administrators');
 
     const columns = [
         {
@@ -142,6 +151,15 @@ export default function ListPage() {
                           ? XCircle
                           : Clock3;
                 const row = info.row.original;
+
+                if (!canUpdate) {
+                    return (
+                        <Badge variant={statusVariant(status) as any}>
+                            <Icon />
+                            {statusLabels[status] ?? status}
+                        </Badge>
+                    );
+                }
 
                 const updateStatus = (newStatus: string) => {
                     router.put(

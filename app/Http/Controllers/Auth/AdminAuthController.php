@@ -40,12 +40,12 @@ class AdminAuthController extends Controller
 
         $user = $request->user();
 
-        if (! $user->hasRole('Administrators')) {
+        if (! $user->hasRole('Administrators') && ! $user->hasRole('Cabang')) {
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
-            return back()->withErrors(['email' => 'Akun Anda bukan Admin. Gunakan login sesuai role.']);
+            return back()->withErrors(['email' => 'Akun Anda tidak memiliki akses ke portal ini. Gunakan login sesuai role.']);
         }
 
         $this->logSuccess('login-admin', "Login Admin: {$user->email}", ['user_id' => $user->id]);

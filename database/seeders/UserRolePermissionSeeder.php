@@ -28,6 +28,7 @@ class UserRolePermissionSeeder extends Seeder
             ['name' => 'Users', 'guard_name' => 'web'],
             ['name' => 'Participant', 'guard_name' => 'web'],
             ['name' => 'Teacher', 'guard_name' => 'web'],
+            ['name' => 'Cabang', 'guard_name' => 'web'],
         ])->each(fn ($role) => Role::firstOrCreate($role));
 
         $adminRole = Role::where('name', 'Administrators')->first();
@@ -160,6 +161,22 @@ class UserRolePermissionSeeder extends Seeder
                 'password' => Hash::make('password'),
             ]
         )->assignRole('Administrators');
+
+        $cabangRole = Role::where('name', 'Cabang')->first();
+        if ($cabangRole) {
+            $cabangRole->givePermissionTo([
+                'view-participant', 'data-participant',
+            ]);
+        }
+
+        User::firstOrCreate(
+            ['email' => 'cabang@yatimmandiri.org'],
+            [
+                'name' => 'User Cabang',
+                'email_verified_at' => now(),
+                'password' => Hash::make('password'),
+            ]
+        )->assignRole('Cabang');
 
         $teacherRole = Role::where('name', 'Teacher')->first();
         if ($teacherRole) {

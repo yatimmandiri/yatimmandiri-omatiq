@@ -42,7 +42,7 @@ import students from '@/routes/admin/companies/students';
 export const NavigationList = [
     {
         title: 'Partisipasi',
-        roles: ['Administrators', 'Teacher'],
+        roles: ['Administrators', 'Teacher', 'Cabang'],
         icon: Handshake,
         children: [
             {
@@ -56,7 +56,7 @@ export const NavigationList = [
                 title: 'Data Peserta',
                 href: participants.index().url,
                 permission: 'view-participant',
-                roles: ['Administrators'],
+                roles: ['Administrators', 'Cabang'],
                 icon: Users,
             },
             {

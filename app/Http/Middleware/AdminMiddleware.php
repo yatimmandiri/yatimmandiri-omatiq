@@ -18,7 +18,7 @@ class AdminMiddleware
     {
         $user = $request->user();
 
-        if (Auth::check() && $user->hasRole('Users') && ! $user->hasRole('Participant') && ! $user->hasRole('Teacher')) {
+        if (Auth::check() && $user->hasRole('Users') && ! $user->hasRole('Participant') && ! $user->hasRole('Teacher') && ! $user->hasRole('Cabang')) {
             abort(403, 'User does not have the right roles.');
         }
 

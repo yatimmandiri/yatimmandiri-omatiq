@@ -17,10 +17,27 @@ class DashboardService
 
         return match ($role) {
             'Administrators' => self::admin(),
+            'Cabang' => self::cabang(),
             'Teacher' => self::teacher($user),
             'Participant' => self::participant($user),
             default => self::user(),
         };
+    }
+
+    private static function cabang(): array
+    {
+        return [
+            'view' => 'admin/dashboard/admin',
+            'data' => [
+                'pageTitle' => 'Dashboard Cabang',
+                'participantCount' => Participant::count(),
+                'verifiedParticipantCount' => Participant::where('status', 'verified')->count(),
+                'submittedParticipantCount' => Participant::where('status', 'submitted')->count(),
+                'teacherCount' => User::role('Teacher')->count(),
+                'studentCount' => Student::where('is_binaan', true)->count(),
+                'olimpiadeCount' => Olimpiade::count(),
+            ],
+        ];
     }
 
     private static function admin(): array
@@ -67,23 +84,18 @@ class DashboardService
         }
 
         $registeredCount = Participant::query()
-            ->where(function ($q) use ($user, $penyaluranStudents, $sanggars) {
+            ->where(function ($q) use ($user, $penyaluranStudents) {
                 $q->where('mentor_id', $user->id)
                     ->orWhereHas('student', fn ($sq) => $sq->where('mentor_id', $user->id));
 
                 $sessionIds = collect($penyaluranStudents)->pluck('student_id')->filter()->map(fn ($id) => (int) $id)->all();
                 $sessionNiks = collect($penyaluranStudents)->pluck('nik')->filter()->all();
-                $sanggarIds = collect($sanggars)->pluck('id')->filter()->map(fn ($id) => (int) $id)->all();
 
                 if (! empty($sessionIds) || ! empty($sessionNiks)) {
                     $q->orWhereHas('student', function ($sq) use ($sessionIds, $sessionNiks) {
                         $sq->when(! empty($sessionIds), fn ($sub) => $sub->whereIn('penyaluran_id', $sessionIds))
                             ->when(! empty($sessionNiks), fn ($sub) => $sub->orWhereIn('nik', $sessionNiks));
                     });
-                }
-
-                if (! empty($sanggarIds)) {
-                    $q->orWhereIn('penyaluran_sanggar_id', $sanggarIds);
                 }
             })
             ->whereIn('status', ['submitted', 'verified'])
