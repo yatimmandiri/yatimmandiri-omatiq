@@ -309,6 +309,8 @@ class ParticipantController extends Controller
     private function participantPayload(Participant $participant): array
     {
         $payload = $participant->toArray();
+        $payload['branch'] = $participant->branch;
+        $payload['kantor_name'] = $participant->branch ?? $participant->penyaluran_sanggar_name;
 
         if ($participant->relationLoaded('student') && $participant->student) {
             $payload['student'] = [

@@ -237,6 +237,12 @@ export default function ShowPage() {
                         label="HP Pendamping"
                         value={participant.student?.mentor_phone}
                     />
+                    {(participant.branch || participant.kantor_name) && (
+                        <Detail
+                            label="Kantor Cabang"
+                            value={participant.branch ?? participant.kantor_name}
+                        />
+                    )}
                     {participant.payment_proof_url && (
                         <div>
                             <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">

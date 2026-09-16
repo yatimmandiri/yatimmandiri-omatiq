@@ -330,6 +330,10 @@ export default function CreatePage() {
                                 }
                             />
                             <InfoCard
+                                label="Kantor Cabang"
+                                value={activeStudent?.kantor_name}
+                            />
+                            <InfoCard
                                 label="Tanggal Lahir"
                                 value={activeStudent?.birth_date?.slice(0, 10)}
                             />

@@ -12,9 +12,32 @@ class TeacherService
 {
     public function getStudentById(User $teacher, int $id): Participant
     {
+        $token = session('penyaluran_token') ?? $teacher->penyaluran_token;
+        $sessionStudentIds = [];
+        $sessionNiks = [];
+
+        if ($token) {
+            try {
+                $sessionStudents = app(PenyaluranService::class)->students($token);
+                $sessionStudentIds = collect($sessionStudents)->pluck('student_id')->filter()->map(fn ($sid) => (int) $sid)->all();
+                $sessionNiks = collect($sessionStudents)->pluck('nik')->filter()->all();
+            } catch (\Throwable $e) {
+            }
+        }
+
         return Participant::query()
             ->with(['olimpiade:id,name,category,slug', 'student', 'student.province:id,name', 'student.regency:id,name', 'student.village:id,name'])
-            ->where('mentor_id', $teacher->id)
+            ->where(function ($q) use ($teacher, $sessionStudentIds, $sessionNiks) {
+                $q->where('mentor_id', $teacher->id)
+                    ->orWhereHas('student', fn ($sq) => $sq->where('mentor_id', $teacher->id));
+
+                if (! empty($sessionStudentIds) || ! empty($sessionNiks)) {
+                    $q->orWhereHas('student', function ($sq) use ($sessionStudentIds, $sessionNiks) {
+                        $sq->when(! empty($sessionStudentIds), fn ($sub) => $sub->whereIn('penyaluran_id', $sessionStudentIds))
+                            ->when(! empty($sessionNiks), fn ($sub) => $sub->orWhereIn('nik', $sessionNiks));
+                    });
+                }
+            })
             ->findOrFail($id);
     }
 
@@ -174,7 +197,7 @@ class TeacherService
         $preselected = $filtered->contains(fn (array $s) => (int) $s['id'] === (int) $studentId) ? $studentId : null;
 
         return [
-            'olimpiades' => Olimpiade::query()->active()->forCurrentPeriod()->ordered()->get(['id', 'name', 'category', 'slug', 'event_year']),
+            'olimpiades' => Olimpiade::query()->active()->ordered()->get(['id', 'name', 'category', 'slug', 'event_year']),
             'students' => $filtered,
             'preselected_student_id' => $preselected,
         ];

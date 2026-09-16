@@ -122,6 +122,15 @@ export default function ListPage() {
             },
         },
         {
+            header: 'Kantor Cabang',
+            accessorKey: 'branch',
+            cell: (info: any) => {
+                const row = info.row.original;
+
+                return row.branch ?? row.kantor_name ?? '-';
+            },
+        },
+        {
             header: 'Status',
             accessorKey: 'status',
             cell: (info: any) => {

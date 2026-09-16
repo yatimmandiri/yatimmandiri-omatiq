@@ -41,10 +41,40 @@ class DataPesertaController extends Controller
                 'label' => trim($o->name.' '.($o->event_year ? "({$o->event_year})" : '')),
             ]);
 
+        $token = $request->session()->get('penyaluran_token') ?? Auth::user()?->penyaluran_token;
+        $sessionStudentIds = [];
+        $sessionNiks = [];
+        $sessionSanggarIds = [];
+
+        if ($token) {
+            try {
+                $sessionStudents = $this->penyaluran->students($token);
+                $sessionStudentIds = collect($sessionStudents)->pluck('student_id')->filter()->map(fn ($id) => (int) $id)->all();
+                $sessionNiks = collect($sessionStudents)->pluck('nik')->filter()->all();
+
+                $sessionSanggars = $this->penyaluran->sanggars($token);
+                $sessionSanggarIds = collect($sessionSanggars)->pluck('id')->filter()->map(fn ($id) => (int) $id)->all();
+            } catch (\Throwable $e) {
+            }
+        }
+
         $eventYears = collect([
             ...Participant::query()
-                ->where('mentor_id', $userId)
-                ->where('registration_type', 'teacher')
+                ->where(function ($q) use ($userId, $sessionStudentIds, $sessionNiks, $sessionSanggarIds) {
+                    $q->where('mentor_id', $userId)
+                        ->orWhereHas('student', fn ($sq) => $sq->where('mentor_id', $userId));
+
+                    if (! empty($sessionStudentIds) || ! empty($sessionNiks)) {
+                        $q->orWhereHas('student', function ($sq) use ($sessionStudentIds, $sessionNiks) {
+                            $sq->when(! empty($sessionStudentIds), fn ($sub) => $sub->whereIn('penyaluran_id', $sessionStudentIds))
+                                ->when(! empty($sessionNiks), fn ($sub) => $sub->orWhereIn('nik', $sessionNiks));
+                        });
+                    }
+
+                    if (! empty($sessionSanggarIds)) {
+                        $q->orWhereIn('penyaluran_sanggar_id', $sessionSanggarIds);
+                    }
+                })
                 ->whereNotNull('event_year')
                 ->distinct()
                 ->pluck('event_year')
@@ -241,9 +271,39 @@ class DataPesertaController extends Controller
 
         $filterValue = $request->input('filterValue', []);
 
+        $token = $request->session()->get('penyaluran_token') ?? Auth::user()?->penyaluran_token;
+        $sessionStudentIds = [];
+        $sessionNiks = [];
+        $sessionSanggarIds = [];
+
+        if ($token) {
+            try {
+                $sessionStudents = $this->penyaluran->students($token);
+                $sessionStudentIds = collect($sessionStudents)->pluck('student_id')->filter()->map(fn ($id) => (int) $id)->all();
+                $sessionNiks = collect($sessionStudents)->pluck('nik')->filter()->all();
+
+                $sessionSanggars = $this->penyaluran->sanggars($token);
+                $sessionSanggarIds = collect($sessionSanggars)->pluck('id')->filter()->map(fn ($id) => (int) $id)->all();
+            } catch (\Throwable $e) {
+            }
+        }
+
         $query = Participant::query()
-            ->where('mentor_id', Auth::id())
-            ->where('registration_type', 'teacher')
+            ->where(function ($q) use ($sessionStudentIds, $sessionNiks, $sessionSanggarIds) {
+                $q->where('mentor_id', Auth::id())
+                    ->orWhereHas('student', fn ($sq) => $sq->where('mentor_id', Auth::id()));
+
+                if (! empty($sessionStudentIds) || ! empty($sessionNiks)) {
+                    $q->orWhereHas('student', function ($sq) use ($sessionStudentIds, $sessionNiks) {
+                        $sq->when(! empty($sessionStudentIds), fn ($sub) => $sub->whereIn('penyaluran_id', $sessionStudentIds))
+                            ->when(! empty($sessionNiks), fn ($sub) => $sub->orWhereIn('nik', $sessionNiks));
+                    });
+                }
+
+                if (! empty($sessionSanggarIds)) {
+                    $q->orWhereIn('penyaluran_sanggar_id', $sessionSanggarIds);
+                }
+            })
             ->with([
                 'olimpiade:id,name,event_year',
                 'student:id,full_name,nik,nis,school_name,school_level,grade,gender,regency_id,penyaluran_id,parent_phone',
@@ -268,6 +328,8 @@ class DataPesertaController extends Controller
     {
         $payload = $participant->toArray();
         $payload['payment_proof_url'] = $participant->payment_proof_url;
+        $payload['branch'] = $participant->branch;
+        $payload['kantor_name'] = $participant->branch ?? $participant->penyaluran_sanggar_name;
 
         if ($participant->relationLoaded('student') && $participant->student) {
             $payload['student'] = [

@@ -49,12 +49,6 @@ class DashboardService
         $sanggarCount = 0;
         $overlap = null;
         $sanggarSum = null;
-        $registeredCount = Participant::query()
-            ->where('mentor_id', $user->id)
-            ->where('registration_type', 'teacher')
-            ->whereIn('status', ['submitted', 'verified'])
-            ->count();
-
         $token = session('penyaluran_token') ?? $user->penyaluran_token;
 
         if ($token) {
@@ -71,6 +65,29 @@ class DashboardService
                 // fallback to local, keep null
             }
         }
+
+        $registeredCount = Participant::query()
+            ->where(function ($q) use ($user, $penyaluranStudents, $sanggars) {
+                $q->where('mentor_id', $user->id)
+                    ->orWhereHas('student', fn ($sq) => $sq->where('mentor_id', $user->id));
+
+                $sessionIds = collect($penyaluranStudents)->pluck('student_id')->filter()->map(fn ($id) => (int) $id)->all();
+                $sessionNiks = collect($penyaluranStudents)->pluck('nik')->filter()->all();
+                $sanggarIds = collect($sanggars)->pluck('id')->filter()->map(fn ($id) => (int) $id)->all();
+
+                if (! empty($sessionIds) || ! empty($sessionNiks)) {
+                    $q->orWhereHas('student', function ($sq) use ($sessionIds, $sessionNiks) {
+                        $sq->when(! empty($sessionIds), fn ($sub) => $sub->whereIn('penyaluran_id', $sessionIds))
+                            ->when(! empty($sessionNiks), fn ($sub) => $sub->orWhereIn('nik', $sessionNiks));
+                    });
+                }
+
+                if (! empty($sanggarIds)) {
+                    $q->orWhereIn('penyaluran_sanggar_id', $sanggarIds);
+                }
+            })
+            ->whereIn('status', ['submitted', 'verified'])
+            ->count();
 
         // Kelengkapan biodata guru — HANYA dari Penyaluran (tidak simpan lokal)
         $biodata = self::guruBiodataFromPenyaluran($penyaluranProfile, $user);

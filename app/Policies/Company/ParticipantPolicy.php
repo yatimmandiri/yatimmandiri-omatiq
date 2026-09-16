@@ -31,7 +31,25 @@ class ParticipantPolicy
         }
 
         if ($user->hasRole('Teacher')) {
-            return $participant->mentor_id === $user->id;
+            if ($participant->mentor_id === $user->id || $participant->student?->mentor_id === $user->id) {
+                return true;
+            }
+            $token = session('penyaluran_token') ?? $user->penyaluran_token;
+            if ($token && $participant->student) {
+                try {
+                    $students = app(\App\Services\PenyaluranService::class)->students($token);
+                    $sessionIds = collect($students)->pluck('student_id')->filter()->map(fn ($id) => (int) $id)->all();
+                    $sessionNiks = collect($students)->pluck('nik')->filter()->all();
+                    $penyaluranId = (int) ($participant->student->penyaluran_id ?? 0);
+                    $nik = (string) ($participant->student->nik ?? '');
+
+                    return ($penyaluranId && in_array($penyaluranId, $sessionIds, true))
+                        || ($nik !== '' && in_array($nik, $sessionNiks, true));
+                } catch (\Throwable $e) {
+                }
+            }
+
+            return false;
         }
 
         return $user->participant?->id === $participant->id;
@@ -78,7 +96,25 @@ class ParticipantPolicy
         }
 
         if ($user->hasRole('Teacher')) {
-            return $participant->mentor_id === $user->id;
+            if ($participant->mentor_id === $user->id || $participant->student?->mentor_id === $user->id) {
+                return true;
+            }
+            $token = session('penyaluran_token') ?? $user->penyaluran_token;
+            if ($token && $participant->student) {
+                try {
+                    $students = app(\App\Services\PenyaluranService::class)->students($token);
+                    $sessionIds = collect($students)->pluck('student_id')->filter()->map(fn ($id) => (int) $id)->all();
+                    $sessionNiks = collect($students)->pluck('nik')->filter()->all();
+                    $penyaluranId = (int) ($participant->student->penyaluran_id ?? 0);
+                    $nik = (string) ($participant->student->nik ?? '');
+
+                    return ($penyaluranId && in_array($penyaluranId, $sessionIds, true))
+                        || ($nik !== '' && in_array($nik, $sessionNiks, true));
+                } catch (\Throwable $e) {
+                }
+            }
+
+            return false;
         }
 
         return false;

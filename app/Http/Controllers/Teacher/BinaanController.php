@@ -77,7 +77,20 @@ class BinaanController extends Controller
         }
 
         $activeParticipants = Participant::query()
-            ->where('mentor_id', Auth::id())
+            ->where(function ($q) use ($studentsRaw) {
+                $q->where('mentor_id', Auth::id())
+                    ->orWhereHas('student', fn ($sq) => $sq->where('mentor_id', Auth::id()));
+
+                $sessionIds = collect($studentsRaw)->pluck('student_id')->filter()->map(fn ($id) => (int) $id)->all();
+                $sessionNiks = collect($studentsRaw)->pluck('nik')->filter()->all();
+
+                if (! empty($sessionIds) || ! empty($sessionNiks)) {
+                    $q->orWhereHas('student', function ($sq) use ($sessionIds, $sessionNiks) {
+                        $sq->when(! empty($sessionIds), fn ($sub) => $sub->whereIn('penyaluran_id', $sessionIds))
+                            ->when(! empty($sessionNiks), fn ($sub) => $sub->orWhereIn('nik', $sessionNiks));
+                    });
+                }
+            })
             ->whereNotNull('student_id')
             ->with(['olimpiade:id,name', 'student:id,penyaluran_id,nik'])
             ->orderByDesc('created_at')

@@ -44,6 +44,15 @@ class Participant extends Model
 {
     use HasFactory, LogsActivity;
 
+    protected $appends = [
+        'kantor_name',
+    ];
+
+    public function getKantorNameAttribute(): ?string
+    {
+        return $this->branch;
+    }
+
     protected function casts(): array
     {
         return [

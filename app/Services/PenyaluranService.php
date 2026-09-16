@@ -101,7 +101,7 @@ class PenyaluranService
                             return true;
                         }
 
-                        return true;
+                        return false;
                     })->values()->all();
                 }
 
