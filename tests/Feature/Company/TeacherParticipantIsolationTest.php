@@ -344,3 +344,62 @@ it('does not falsely match students with dash or empty NIK in data binaan', func
     expect($itemNoNik['is_registered'])->toBeFalse()
         ->and($itemNoNik['participant_id'])->toBeNull();
 });
+
+it('strictly blocks duplicate NIK across public registration and teacher binaan registration', function () {
+    $teacher = createIsolatedTeacher();
+    $sharedNik = '3525011505120008';
+
+    $olimpiadePublic = Olimpiade::create([
+        'name' => 'Olimpiade Matematika 2026',
+        'category' => 'Matematika',
+        'event_year' => 2026,
+    ]);
+
+    $olimpiadeGuru = Olimpiade::create([
+        'name' => 'Olimpiade IPA 2026',
+        'category' => 'IPA',
+        'event_year' => 2026,
+    ]);
+
+    // 1. Create a public participant with this NIK
+    $studentUmum = Student::create([
+        'nik' => $sharedNik,
+        'full_name' => 'Siswa Umum',
+        'gender' => 'male',
+        'school_name' => 'SDN 1',
+        'grade' => '4',
+        'address' => 'Surabaya',
+        'is_binaan' => false,
+    ]);
+
+    Participant::create([
+        'student_id' => $studentUmum->id,
+        'nik' => $sharedNik,
+        'olimpiade_id' => $olimpiadePublic->id,
+        'registration_number' => 'OMQ-20260901-0888',
+        'registration_type' => 'public',
+        'status' => 'submitted',
+        'event_year' => 2026,
+    ]);
+
+    // 2. Teacher creates a binaan with the same NIK and tries to register to a different olimpiade
+    $binaanStudent = Student::create([
+        'nik' => $sharedNik,
+        'full_name' => 'Siswa Binaan Guru',
+        'gender' => 'male',
+        'school_name' => 'SDN 1',
+        'grade' => '4',
+        'address' => 'Surabaya',
+        'mentor_id' => $teacher->id,
+        'is_binaan' => true,
+    ]);
+
+    $this->actingAs($teacher)
+        ->post(route('teacher.data-peserta.store'), [
+            'penyaluran_student_id' => $binaanStudent->id,
+            'olimpiade_id' => $olimpiadeGuru->id,
+        ])
+        ->assertSessionHasErrors('penyaluran_student_id');
+
+    expect(Participant::where('nik', $sharedNik)->count())->toBe(1);
+});

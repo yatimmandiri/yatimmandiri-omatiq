@@ -87,7 +87,10 @@ export default function CreatePage() {
     const hasValidNik = Boolean(
         activeStudent?.nik &&
         activeStudent.nik.trim() !== '' &&
-        activeStudent.nik.trim() !== '-',
+        activeStudent.nik.trim() !== '-' &&
+        activeStudent.nik.trim() !== '0' &&
+        activeStudent.nik.trim().toLowerCase() !== 'null' &&
+        activeStudent.nik.trim().length >= 10,
     );
 
     const activeSanggar =
