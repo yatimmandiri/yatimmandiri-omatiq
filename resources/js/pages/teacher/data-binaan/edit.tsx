@@ -67,13 +67,6 @@ export default function EditPage() {
     const [loadingVillages, setLoadingVillages] = useState(false);
 
     const form = useForm<any>({
-        full_name: student.full_name ?? student.name ?? '',
-        nickname: student.nickname ?? '',
-        nik: student.nik ?? '',
-        nis: student.nis ?? '',
-        gender: student.gender ?? 'male',
-        birth_place: student.birth_place ?? '',
-        birth_date: dateValue(student.birth_date),
         school_name: student.school_name ?? '',
         school_level: student.school_level ?? '',
         grade: student.grade ?? student.class ?? '',
@@ -82,7 +75,6 @@ export default function EditPage() {
         regency_id: student.regency_id ? String(student.regency_id) : '',
         district_id: student.district_id ? String(student.district_id) : '',
         village_id: student.village_id ? String(student.village_id) : '',
-        parent_phone: student.parent_phone ?? student.guardian_phone ?? '',
     });
 
     form.transform((data: any) => ({
@@ -101,7 +93,7 @@ export default function EditPage() {
 
         if (
             regencies.length > 0 &&
-            String(regencies[0].province_id) === String(pid)
+            String(regencies[0].province_id ?? '') === String(pid)
         ) {
             return;
         }
@@ -127,7 +119,7 @@ export default function EditPage() {
 
         if (
             districts.length > 0 &&
-            String(districts[0].regency_id) === String(rid)
+            String(districts[0].regency_id ?? '') === String(rid)
         ) {
             return;
         }
@@ -153,7 +145,7 @@ export default function EditPage() {
 
         if (
             villages.length > 0 &&
-            String(villages[0].district_id) === String(did)
+            String(villages[0].district_id ?? '') === String(did)
         ) {
             return;
         }
@@ -180,6 +172,14 @@ export default function EditPage() {
             </p>
         ) : null;
 
+    const studentFullName = student.full_name ?? student.name ?? '-';
+    const studentGender =
+        student.gender === 'male' || student.gender === 'L'
+            ? 'Laki-laki (L)'
+            : student.gender === 'female' || student.gender === 'P'
+              ? 'Perempuan (P)'
+              : '-';
+
     return (
         <form onSubmit={submit} className="mx-auto max-w-4xl space-y-6 p-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -188,8 +188,8 @@ export default function EditPage() {
                         Edit Data Binaan
                     </h1>
                     <p className="text-sm text-muted-foreground">
-                        Pembaruan data santri ini akan langsung disinkronkan ke
-                        server Penyaluran.
+                        Pembaruan data pendidikan dan domisili santri ini akan
+                        langsung disinkronkan ke server Penyaluran.
                     </p>
                 </div>
                 <div className="flex gap-2">
@@ -207,125 +207,84 @@ export default function EditPage() {
                 </div>
             </div>
 
-            {/* Data Pribadi */}
-            <Card>
+            {/* Data Pribadi (Read-Only) */}
+            <Card className="border-muted bg-muted/20">
                 <CardHeader className="pb-3">
-                    <div className="flex items-center gap-2">
-                        <User className="size-5 text-primary" />
-                        <CardTitle className="text-base font-semibold">
-                            Data Pribadi
-                        </CardTitle>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <User className="size-5 text-muted-foreground" />
+                            <CardTitle className="text-base font-semibold">
+                                Data Identitas Santri
+                            </CardTitle>
+                        </div>
+                        <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+                            Penyaluran (Read-Only)
+                        </span>
                     </div>
                     <CardDescription>
-                        Informasi identitas santri binaan.
+                        Identitas utama santri terhubung langsung dengan
+                        Penyaluran dan tidak dapat diubah di sini.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="grid gap-4 md:grid-cols-2">
-                        <Field
-                            label="Nama Lengkap *"
-                            error={error('full_name')}
-                        >
+                        <Field label="Nama Lengkap">
                             <Input
-                                value={form.data.full_name}
-                                onChange={(e) =>
-                                    form.setData('full_name', e.target.value)
-                                }
-                                placeholder="Nama lengkap sesuai identitas"
-                                required
+                                value={studentFullName}
+                                disabled
+                                className="bg-muted/50 cursor-not-allowed font-medium text-foreground"
                             />
                         </Field>
 
-                        <Field label="Nama Panggilan" error={error('nickname')}>
+                        <Field label="Nama Panggilan">
                             <Input
-                                value={form.data.nickname}
-                                onChange={(e) =>
-                                    form.setData('nickname', e.target.value)
-                                }
-                                placeholder="Nama panggilan"
+                                value={student.nickname || '-'}
+                                disabled
+                                className="bg-muted/50 cursor-not-allowed"
                             />
                         </Field>
 
-                        <Field
-                            label="NIK (Nomor Induk Kependudukan)"
-                            error={error('nik')}
-                        >
+                        <Field label="NIK (Nomor Induk Kependudukan)">
                             <Input
-                                value={form.data.nik}
-                                onChange={(e) =>
-                                    form.setData('nik', e.target.value)
-                                }
-                                placeholder="16 digit NIK"
-                                maxLength={16}
+                                value={student.nik || '-'}
+                                disabled
+                                className="bg-muted/50 cursor-not-allowed"
                             />
                         </Field>
 
-                        <Field label="NIS" error={error('nis')}>
+                        <Field label="NIS">
                             <Input
-                                value={form.data.nis}
-                                onChange={(e) =>
-                                    form.setData('nis', e.target.value)
-                                }
-                                placeholder="Nomor induk siswa (opsional)"
+                                value={student.nis || '-'}
+                                disabled
+                                className="bg-muted/50 cursor-not-allowed"
                             />
                         </Field>
 
-                        <Field label="Jenis Kelamin *" error={error('gender')}>
-                            <Select
-                                value={form.data.gender}
-                                onValueChange={(v) => form.setData('gender', v)}
-                            >
-                                <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="Pilih Jenis Kelamin" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="male">
-                                        Laki-laki (L)
-                                    </SelectItem>
-                                    <SelectItem value="female">
-                                        Perempuan (P)
-                                    </SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </Field>
-
-                        <Field
-                            label="Tempat Lahir"
-                            error={error('birth_place')}
-                        >
+                        <Field label="Jenis Kelamin">
                             <Input
-                                value={form.data.birth_place}
-                                onChange={(e) =>
-                                    form.setData('birth_place', e.target.value)
-                                }
-                                placeholder="Tempat lahir"
+                                value={studentGender}
+                                disabled
+                                className="bg-muted/50 cursor-not-allowed"
                             />
                         </Field>
 
-                        <Field
-                            label="Tanggal Lahir *"
-                            error={error('birth_date')}
-                        >
+                        <Field label="Tempat / Tanggal Lahir">
                             <Input
-                                type="date"
-                                value={form.data.birth_date}
-                                onChange={(e) =>
-                                    form.setData('birth_date', e.target.value)
-                                }
-                                required
+                                value={`${student.birth_place || '-'}, ${dateValue(student.birth_date) || '-'}`}
+                                disabled
+                                className="bg-muted/50 cursor-not-allowed"
                             />
                         </Field>
 
-                        <Field
-                            label="No. HP / WhatsApp Wali"
-                            error={error('parent_phone')}
-                        >
+                        <Field label="No. HP / WhatsApp Wali">
                             <Input
-                                value={form.data.parent_phone}
-                                onChange={(e) =>
-                                    form.setData('parent_phone', e.target.value)
+                                value={
+                                    student.parent_phone ||
+                                    student.guardian_phone ||
+                                    '-'
                                 }
-                                placeholder="08xxxxxxxxxx"
+                                disabled
+                                className="bg-muted/50 cursor-not-allowed"
                             />
                         </Field>
                     </div>

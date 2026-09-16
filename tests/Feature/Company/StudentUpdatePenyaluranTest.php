@@ -181,7 +181,7 @@ test('teacher can update their assigned binaan and syncs to penyaluran', functio
     Http::fake([
         '*/api/v1/guru/students/915' => Http::response([
             'success' => true,
-            'data' => ['id' => 915, 'name' => 'Binaan Diupdate Guru'],
+            'data' => ['id' => 915, 'school_name' => 'SD Binaan Surabaya', 'class' => '3', 'address' => 'Jl. Binaan No. 3'],
         ], 200),
     ]);
 
@@ -206,10 +206,8 @@ test('teacher can update their assigned binaan and syncs to penyaluran', functio
         ->actingAs($teacher)
         ->withSession(['penyaluran_token' => 'teacher-token-xyz'])
         ->put(route('teacher.data-binaan.update', $student), [
-            'full_name' => 'Binaan Diupdate Guru',
-            'gender' => 'female',
-            'birth_date' => '2016-08-15',
             'school_name' => 'SD Binaan Surabaya',
+            'school_level' => 'SD',
             'grade' => '3',
             'address' => 'Jl. Binaan No. 3',
             'province_id' => $this->province->id,
@@ -222,12 +220,15 @@ test('teacher can update their assigned binaan and syncs to penyaluran', functio
     Http::assertSent(function (Request $request) {
         return str_contains($request->url(), 'api/v1/guru/students/915')
             && $request->method() === 'PUT'
-            && $request['name'] === 'Binaan Diupdate Guru'
-            && $request['gender'] === 'P'
-            && $request['class'] === '3';
+            && $request['class'] === '3'
+            && $request['school_name'] === 'SD Binaan Surabaya'
+            && $request['address'] === 'Jl. Binaan No. 3';
     });
 
-    expect($student->fresh()->full_name)->toBe('Binaan Diupdate Guru');
+    expect($student->fresh()->school_name)->toBe('SD Binaan Surabaya')
+        ->and($student->fresh()->grade)->toBe('3')
+        ->and($student->fresh()->address)->toBe('Jl. Binaan No. 3')
+        ->and($student->fresh()->full_name)->toBe('Binaan Guru Awal');
 });
 
 test('teacher cannot update another teacher student', function () {
@@ -249,18 +250,17 @@ test('teacher cannot update another teacher student', function () {
     $response = $this
         ->actingAs($teacher1)
         ->put(route('teacher.data-binaan.update', $student), [
-            'full_name' => 'Hacked Name',
-            'gender' => 'male',
-            'birth_date' => '2016-08-15',
-            'school_name' => 'SD Binaan',
+            'school_name' => 'SD Binaan Hacked',
+            'school_level' => 'SD',
             'grade' => '3',
-            'address' => 'Jl. Binaan',
+            'address' => 'Jl. Binaan Hacked',
             'province_id' => $this->province->id,
             'regency_id' => $this->regency->id,
         ]);
 
     $response->assertForbidden();
-    expect($student->fresh()->full_name)->toBe('Binaan Milik Guru 2');
+    expect($student->fresh()->full_name)->toBe('Binaan Milik Guru 2')
+        ->and($student->fresh()->school_name)->not->toBe('SD Binaan Hacked');
 });
 
 test('resolveBinaan updates local student with fresh data from penyaluran api on edit', function () {

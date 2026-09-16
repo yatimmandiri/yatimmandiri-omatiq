@@ -291,3 +291,36 @@ it('resolves region names from penyaluran me payload into local region ids', fun
         ->and($regions['district_id'])->toBe('3507170')
         ->and($regions['village_id'])->toBe('3507170001');
 });
+
+it('extracts teacher biodata from penyaluran profile and calculates completeness accurately', function () {
+    $user = User::factory()->create([
+        'name' => 'Guru Test',
+        'email' => 'gurutest@gmail.com',
+        'phone' => '081234567890',
+    ]);
+
+    $profile = [
+        'name' => 'Guru Test Lengkap',
+        'email' => 'gurutest@gmail.com',
+        'hp' => '081234567890',
+        'nik' => '3578010101010001',
+        'jenis_kelamin' => 'L',
+        'tempat_lahir' => 'Surabaya',
+        'tanggal_lahir' => '1990-01-01',
+        'alamat' => 'Jl. Dharmahusada No. 10',
+        'provinsi_id' => '35',
+        'kabupaten_id' => '3507',
+        'kecamatan_id' => '3507170',
+        'desa_id' => '3507170001',
+    ];
+
+    $biodata = BiodataController::extractTeacherBiodata($profile, $user);
+    $completeness = BiodataController::completeness($biodata);
+
+    expect($biodata['name'])->toBe('Guru Test Lengkap')
+        ->and($biodata['gender'])->toBe('male')
+        ->and($biodata['nik'])->toBe('3578010101010001')
+        ->and($completeness['percent'])->toBe(100)
+        ->and($completeness['is_complete'])->toBeTrue()
+        ->and($completeness['missing'])->toBeEmpty();
+});

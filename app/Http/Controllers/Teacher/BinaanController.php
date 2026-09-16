@@ -261,28 +261,25 @@ class BinaanController extends Controller
         }
 
         $request->validate([
-            'full_name' => ['required', 'string', 'max:255'],
-            'gender' => ['required', 'in:male,female'],
-            'birth_date' => ['required', 'date', 'before:today'],
-            'birth_place' => ['nullable', 'string', 'max:120'],
-            'school_level' => ['nullable', 'string', 'max:30'],
-            'nis' => ['nullable', 'string', 'max:20'],
             'school_name' => ['required', 'string', 'max:255'],
+            'school_level' => ['nullable', 'string', 'max:30'],
             'grade' => ['required', 'string', 'max:30'],
             'address' => ['required', 'string'],
             'province_id' => ['nullable', 'exists:provinces,id'],
             'regency_id' => ['nullable', 'exists:regencies,id'],
             'district_id' => ['nullable', 'exists:districts,id'],
             'village_id' => ['nullable', 'exists:villages,id'],
-            'parent_phone' => ['nullable', 'string', 'max:30'],
         ]);
 
-        $data = $request->only(['full_name', 'gender', 'birth_date', 'school_name', 'grade', 'address', 'province_id', 'regency_id', 'district_id', 'village_id', 'birth_place', 'parent_phone', 'nickname', 'school_level', 'nis']);
+        $data = $request->only([
+            'school_name', 'school_level', 'grade',
+            'address', 'province_id', 'regency_id', 'district_id', 'village_id',
+        ]);
 
         if ($student->penyaluran_id) {
             $token = $request->session()->get('penyaluran_token') ?? Auth::user()?->penyaluran_token;
             if (! $token && ! app()->environment('testing')) {
-                return back()->withErrors(['full_name' => 'Sesi Penyaluran tidak ditemukan. Silakan login ulang.'])->withInput();
+                return back()->withErrors(['school_name' => 'Sesi Penyaluran tidak ditemukan. Silakan login ulang.'])->withInput();
             }
 
             if ($token) {
@@ -290,14 +287,14 @@ class BinaanController extends Controller
                     $payload = $this->penyaluran->formatStudentPayload($data);
                     $this->penyaluran->updateStudent($token, $student->penyaluran_id, $payload);
                 } catch (\Throwable $e) {
-                    return back()->withErrors(['full_name' => 'Gagal memperbarui data santri di server Penyaluran: '.$e->getMessage()])->withInput();
+                    return back()->withErrors(['school_name' => 'Gagal memperbarui data santri di server Penyaluran: '.$e->getMessage()])->withInput();
                 }
             }
         }
 
         $student->update($data);
 
-        return redirect()->route('teacher.data-binaan.index')->with('success', "Binaan {$student->full_name} diperbarui.");
+        return redirect()->route('teacher.data-binaan.index')->with('success', "Data pendidikan dan domisili binaan {$student->full_name} berhasil diperbarui.");
     }
 
     public function destroy(int|string $binaan)

@@ -34,6 +34,16 @@ class BiodataController extends Controller
             }
         }
 
+        // Check in nested sub-structures if present
+        foreach (['guru', 'user', 'profile', 'biodata', 'domisili', 'wilayah', 'data', 'alamat'] as $nestedKey) {
+            if (isset($profile[$nestedKey]) && is_array($profile[$nestedKey])) {
+                $found = self::extractRegionValue($profile[$nestedKey], $keys);
+                if ($found !== null) {
+                    return $found;
+                }
+            }
+        }
+
         return null;
     }
 
@@ -54,16 +64,20 @@ class BiodataController extends Controller
         }
 
         $rawProv = self::extractRegionValue($profile, [
-            'province_name', 'provinsi_name', 'nama_provinsi', 'province_id', 'provinsi_id', 'province', 'provinsi', 'province_code', 'provinsi_code', 'id_provinsi', 'id_prov', 'kode_provinsi',
+            'province_id', 'provinsi_id', 'id_provinsi', 'id_prov', 'province_code', 'provinsi_code', 'kode_provinsi',
+            'province_name', 'provinsi_name', 'nama_provinsi', 'province', 'provinsi', 'propinsi_id', 'propinsi_name', 'propinsi',
         ]);
         $rawReg = self::extractRegionValue($profile, [
-            'regency_name', 'kabupaten_name', 'kota_name', 'nama_kabupaten', 'nama_kota', 'regency_id', 'kabupaten_id', 'kota_id', 'regency', 'kabupaten', 'kota', 'regency_code', 'kabupaten_code', 'kota_code', 'id_kabupaten', 'id_kota', 'kode_kabupaten', 'kode_kota',
+            'regency_id', 'kabupaten_id', 'kota_id', 'id_kabupaten', 'id_kota', 'id_kab', 'regency_code', 'kabupaten_code', 'kota_code', 'kode_kabupaten', 'kode_kota',
+            'regency_name', 'kabupaten_name', 'kota_name', 'nama_kabupaten', 'nama_kota', 'regency', 'kabupaten', 'kota', 'kab_kota', 'kabupaten_kota',
         ]);
         $rawDist = self::extractRegionValue($profile, [
-            'district_name', 'kecamatan_name', 'nama_kecamatan', 'district_id', 'kecamatan_id', 'district', 'kecamatan', 'district_code', 'kecamatan_code', 'id_kecamatan', 'id_distrik', 'kode_kecamatan',
+            'district_id', 'kecamatan_id', 'id_kecamatan', 'id_distrik', 'id_kec', 'district_code', 'kecamatan_code', 'kode_kecamatan',
+            'district_name', 'kecamatan_name', 'nama_kecamatan', 'district', 'kecamatan', 'kec',
         ]);
         $rawVill = self::extractRegionValue($profile, [
-            'village_name', 'desa_name', 'kelurahan_name', 'nama_desa', 'nama_kelurahan', 'village_id', 'desa_id', 'kelurahan_id', 'village', 'desa', 'kelurahan', 'village_code', 'desa_code', 'kelurahan_code', 'id_desa', 'id_kelurahan', 'kode_desa', 'kode_kelurahan',
+            'village_id', 'desa_id', 'kelurahan_id', 'id_desa', 'id_kelurahan', 'id_kel', 'id_des', 'village_code', 'desa_code', 'kelurahan_code', 'kode_desa', 'kode_kelurahan',
+            'village_name', 'desa_name', 'kelurahan_name', 'nama_desa', 'nama_kelurahan', 'village', 'desa', 'kelurahan', 'kel',
         ]);
 
         $provinceId = null;
@@ -134,6 +148,100 @@ class BiodataController extends Controller
         ];
     }
 
+    public static function extractTeacherBiodata(?array $profile, User $user): array
+    {
+        if (! $profile) {
+            return [
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->phone,
+                'nik' => null,
+                'gender' => null,
+                'birth_place' => null,
+                'birth_date' => null,
+                'address' => null,
+                'photo_url' => null,
+                'province_id' => null,
+                'regency_id' => null,
+                'district_id' => null,
+                'village_id' => null,
+            ];
+        }
+
+        // Flatten any nested sub-arrays
+        $flat = $profile;
+        foreach (['guru', 'user', 'profile', 'biodata', 'data', 'domisili', 'wilayah'] as $subKey) {
+            if (isset($profile[$subKey]) && is_array($profile[$subKey])) {
+                $flat = array_merge($flat, $profile[$subKey]);
+            }
+        }
+
+        $rawGender = $flat['gender'] ?? $flat['jenis_kelamin'] ?? $flat['jk'] ?? $flat['sex'] ?? null;
+        $gender = null;
+        if ($rawGender !== null && $rawGender !== '') {
+            $upperG = strtoupper(trim((string) $rawGender));
+            if (in_array($upperG, ['L', 'M', 'MALE', 'LAKI-LAKI', 'LAKI', 'PRIA'], true)) {
+                $gender = 'male';
+            } elseif (in_array($upperG, ['P', 'F', 'FEMALE', 'PEREMPUAN', 'WANITA'], true)) {
+                $gender = 'female';
+            }
+        }
+
+        $regions = self::resolveRegionIds($profile);
+
+        $birthDate = $flat['birth_date'] ?? $flat['tanggal_lahir'] ?? $flat['tgl_lahir'] ?? $flat['tgllahir'] ?? null;
+        if ($birthDate && is_string($birthDate) && strlen($birthDate) >= 10) {
+            $birthDate = substr($birthDate, 0, 10);
+        }
+
+        return [
+            'name' => $flat['name'] ?? $flat['nama'] ?? $flat['full_name'] ?? $flat['nama_lengkap'] ?? $user->name,
+            'email' => $flat['email'] ?? $user->email,
+            'phone' => $flat['phone'] ?? $flat['hp'] ?? $flat['no_hp'] ?? $flat['nomor_hp'] ?? $flat['telepon'] ?? $flat['no_telp'] ?? $user->phone,
+            'nik' => $flat['nik'] ?? $flat['no_ktp'] ?? $flat['ktp'] ?? $flat['nomor_ktp'] ?? $flat['identity_number'] ?? null,
+            'gender' => $gender,
+            'birth_place' => $flat['birth_place'] ?? $flat['tempat_lahir'] ?? $flat['tmpt_lahir'] ?? $flat['tmp_lahir'] ?? $flat['kota_lahir'] ?? null,
+            'birth_date' => $birthDate,
+            'address' => $flat['address'] ?? $flat['alamat'] ?? $flat['alamat_lengkap'] ?? $flat['domisili'] ?? $flat['alamat_domisili'] ?? null,
+            'photo_url' => $flat['photo_url'] ?? $flat['photo'] ?? $flat['foto'] ?? $flat['foto_url'] ?? $flat['avatar'] ?? null,
+            'province_id' => $regions['province_id'],
+            'regency_id' => $regions['regency_id'],
+            'district_id' => $regions['district_id'],
+            'village_id' => $regions['village_id'],
+        ];
+    }
+
+    public static function completeness(array $biodata): array
+    {
+        $fields = [
+            'name' => filled($biodata['name'] ?? null),
+            'email' => filled($biodata['email'] ?? null) && ! str_ends_with((string) ($biodata['email'] ?? ''), '@penyaluran.local'),
+            'phone' => filled($biodata['phone'] ?? null),
+            'nik' => filled($biodata['nik'] ?? null),
+            'gender' => filled($biodata['gender'] ?? null),
+            'birth_place' => filled($biodata['birth_place'] ?? null),
+            'birth_date' => filled($biodata['birth_date'] ?? null),
+            'address' => filled($biodata['address'] ?? null),
+            'province_id' => filled($biodata['province_id'] ?? null),
+            'regency_id' => filled($biodata['regency_id'] ?? null),
+            'district_id' => filled($biodata['district_id'] ?? null),
+            'village_id' => filled($biodata['village_id'] ?? null),
+        ];
+
+        $filled = collect($fields)->filter()->count();
+        $total = count($fields);
+        $percent = $total > 0 ? (int) round(($filled / $total) * 100) : 0;
+
+        return [
+            'fields' => $fields,
+            'filled' => $filled,
+            'total' => $total,
+            'percent' => $percent,
+            'is_complete' => $percent === 100,
+            'missing' => collect($fields)->filter(fn ($v) => ! $v)->keys()->all(),
+        ];
+    }
+
     public function edit(Request $request)
     {
         $user = $request->user();
@@ -152,55 +260,12 @@ class BiodataController extends Controller
             }
         }
 
-        // Normalize biodata dari Penyaluran (sumber tunggal)
-        $gender = $profile['gender'] ?? $profile['jenis_kelamin'] ?? null;
-        if ($gender === 'L') {
-            $gender = 'male';
-        } elseif ($gender === 'P') {
-            $gender = 'female';
-        }
+        $biodata = self::extractTeacherBiodata($profile, $user);
+        $completeness = self::completeness($biodata);
 
-        $regions = self::resolveRegionIds($profile);
-        $provinceId = $regions['province_id'];
-        $regencyId = $regions['regency_id'];
-        $districtId = $regions['district_id'];
-        $villageId = $regions['village_id'];
-
-        $biodata = [
-            'name' => $profile['name'] ?? $profile['nama'] ?? $user->name,
-            'email' => $profile['email'] ?? $user->email,
-            'phone' => $profile['phone'] ?? $profile['hp'] ?? $profile['no_hp'] ?? $user->phone,
-            'nik' => $profile['nik'] ?? null,
-            'gender' => $gender,
-            'birth_place' => $profile['birth_place'] ?? $profile['tempat_lahir'] ?? null,
-            'birth_date' => $profile['birth_date'] ?? $profile['tanggal_lahir'] ?? $profile['tgl_lahir'] ?? null,
-            'address' => $profile['address'] ?? $profile['alamat'] ?? null,
-            'photo_url' => $profile['photo_url'] ?? $profile['foto'] ?? null,
-            // Wilayah — dari Penyaluran (ids)
-            'province_id' => $provinceId,
-            'regency_id' => $regencyId,
-            'district_id' => $districtId,
-            'village_id' => $villageId,
-        ];
-
-        // Hitung kelengkapan (same logic as DashboardService) — include wilayah
-        $fields = [
-            'name' => filled($biodata['name']),
-            'email' => filled($biodata['email']) && ! str_ends_with((string) $biodata['email'], '@penyaluran.local'),
-            'phone' => filled($biodata['phone']),
-            'nik' => filled($biodata['nik']),
-            'gender' => filled($biodata['gender']),
-            'birth_place' => filled($biodata['birth_place']),
-            'birth_date' => filled($biodata['birth_date']),
-            'address' => filled($biodata['address']),
-            'province_id' => filled($biodata['province_id']),
-            'regency_id' => filled($biodata['regency_id']),
-            'district_id' => filled($biodata['district_id']),
-            'village_id' => filled($biodata['village_id']),
-        ];
-        $filled = collect($fields)->filter()->count();
-        $total = count($fields);
-        $percent = $total > 0 ? (int) round(($filled / $total) * 100) : 0;
+        $provinceId = $biodata['province_id'];
+        $regencyId = $biodata['regency_id'];
+        $districtId = $biodata['district_id'];
 
         $provinces = Province::orderBy('name')->get(['id', 'name']);
         $initialRegencies = $provinceId
@@ -218,14 +283,7 @@ class BiodataController extends Controller
                 ...$biodata,
                 'teacher_profile_completed_at' => $user->teacher_profile_completed_at,
                 'penyaluran' => $profile,
-                'completeness' => [
-                    'fields' => $fields,
-                    'filled' => $filled,
-                    'total' => $total,
-                    'percent' => $percent,
-                    'is_complete' => $percent === 100,
-                    'missing' => collect($fields)->filter(fn ($v) => ! $v)->keys()->all(),
-                ],
+                'completeness' => $completeness,
             ],
             'provinces' => $provinces,
             'initialRegencies' => $initialRegencies,
@@ -269,13 +327,25 @@ class BiodataController extends Controller
                 $dist = ! empty($validated['district_id']) ? District::find($validated['district_id']) : null;
                 $vill = ! empty($validated['village_id']) ? Village::find($validated['village_id']) : null;
 
+                $genderCode = null;
+                if (! empty($validated['gender'])) {
+                    $genderCode = $validated['gender'] === 'male' ? 'L' : ($validated['gender'] === 'female' ? 'P' : $validated['gender']);
+                }
+
                 $payload = collect([
                     'name' => $validated['name'] ?? null,
+                    'nama' => $validated['name'] ?? null,
                     'nik' => $validated['nik'] ?? null,
-                    'gender' => $validated['gender'] ?? null,
+                    'no_ktp' => $validated['nik'] ?? null,
+                    'gender' => $genderCode,
+                    'jenis_kelamin' => $genderCode,
                     'birth_place' => $validated['birth_place'] ?? null,
+                    'tempat_lahir' => $validated['birth_place'] ?? null,
                     'birth_date' => $validated['birth_date'] ?? null,
+                    'tanggal_lahir' => $validated['birth_date'] ?? null,
+                    'tgl_lahir' => $validated['birth_date'] ?? null,
                     'address' => $validated['address'] ?? null,
+                    'alamat' => $validated['address'] ?? null,
                     // ID
                     'province_id' => $validated['province_id'] ?? null,
                     'regency_id' => $validated['regency_id'] ?? null,
@@ -286,6 +356,7 @@ class BiodataController extends Controller
                     'kabupaten_id' => $validated['regency_id'] ?? null,
                     'kecamatan_id' => $validated['district_id'] ?? null,
                     'desa_id' => $validated['village_id'] ?? null,
+                    'kelurahan_id' => $validated['village_id'] ?? null,
                     // Alias nama wilayah
                     'province' => $prov?->name,
                     'provinsi' => $prov?->name,
@@ -299,12 +370,16 @@ class BiodataController extends Controller
                     'kelurahan' => $vill?->name,
                 ])->filter(fn ($v) => filled($v))->all();
 
-                // Konversi gender male/female ke format Penyaluran L/P jika diperlukan
-                if (isset($payload['gender'])) {
-                    $payload['gender'] = $payload['gender'] === 'male' ? 'L' : ($payload['gender'] === 'female' ? 'P' : $payload['gender']);
-                }
-
                 app(PenyaluranService::class)->updateMe($token, $payload);
+
+                // Bersihkan cache profile token
+                Cache::forget('penyaluran:me:'.sha1($token));
+                if ($user->penyaluran_token) {
+                    Cache::forget('penyaluran:me:'.sha1($user->penyaluran_token));
+                }
+                if ($request->session()->has('penyaluran_token')) {
+                    Cache::forget('penyaluran:me:'.sha1((string) $request->session()->get('penyaluran_token')));
+                }
             } catch (\Throwable $e) {
                 return back()->withErrors(['name' => 'Gagal memperbarui biodata di Penyaluran: '.$e->getMessage()])->withInput();
             }

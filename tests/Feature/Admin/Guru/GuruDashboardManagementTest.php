@@ -267,13 +267,10 @@ test('teacher can update binaan details and calls penyaluran api', function () {
     $response = $this->actingAs($teacher)
         ->withSession(['penyaluran_token' => 'teacher-token-107'])
         ->put(route('teacher.data-binaan.update', $student), [
-            'full_name' => 'Santri Updated Name',
-            'gender' => 'male',
-            'birth_date' => '2014-01-01',
             'school_name' => 'SD 1 Baru',
+            'school_level' => 'SD',
             'grade' => '5',
             'address' => 'Jl. Test No. 1 Baru',
-            'parent_phone' => '081234567899',
             'province_id' => '35',
             'regency_id' => '3578',
         ]);
@@ -284,11 +281,14 @@ test('teacher can update binaan details and calls penyaluran api', function () {
     Http::assertSent(function (Request $request) {
         return str_contains($request->url(), 'api/v1/guru/students/801')
             && $request->method() === 'PUT'
-            && $request['name'] === 'Santri Updated Name'
-            && $request['class'] === '5';
+            && $request['class'] === '5'
+            && $request['school_name'] === 'SD 1 Baru'
+            && $request['address'] === 'Jl. Test No. 1 Baru';
     });
 
-    expect($student->fresh()->full_name)->toBe('Santri Updated Name');
+    expect($student->fresh()->school_name)->toBe('SD 1 Baru')
+        ->and($student->fresh()->grade)->toBe('5')
+        ->and($student->fresh()->address)->toBe('Jl. Test No. 1 Baru');
 });
 
 test('teacher can view sanggar and absensi pages', function () {

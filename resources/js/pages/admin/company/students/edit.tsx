@@ -70,6 +70,8 @@ export default function EditPage() {
         mentors?: Mentor[];
     }>().props;
 
+    const isBinaan = !!student.is_binaan || !!student.penyaluran_id;
+
     const [regencies, setRegencies] = useState<Regency[]>(initialRegencies);
     const [districts, setDistricts] = useState<District[]>(initialDistricts);
     const [villages, setVillages] = useState<Village[]>(initialVillages);
@@ -228,16 +230,25 @@ export default function EditPage() {
             </div>
 
             {/* Data Pribadi */}
-            <Card>
+            <Card className={isBinaan ? 'border-muted bg-muted/20' : ''}>
                 <CardHeader className="pb-3">
-                    <div className="flex items-center gap-2">
-                        <User className="size-5 text-primary" />
-                        <CardTitle className="text-base font-semibold">
-                            Data Pribadi
-                        </CardTitle>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <User className="size-5 text-primary" />
+                            <CardTitle className="text-base font-semibold">
+                                Data Pribadi
+                            </CardTitle>
+                        </div>
+                        {isBinaan && (
+                            <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+                                Identitas Binaan Penyaluran (Read-Only)
+                            </span>
+                        )}
                     </div>
                     <CardDescription>
-                        Informasi identitas dasar siswa/santri.
+                        {isBinaan
+                            ? 'Identitas santri binaan terhubung dengan Penyaluran. Hanya data pendidikan dan domisili yang dapat diubah.'
+                            : 'Informasi identitas dasar siswa/santri.'}
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -252,6 +263,8 @@ export default function EditPage() {
                                     form.setData('full_name', e.target.value)
                                 }
                                 placeholder="Nama lengkap sesuai identitas"
+                                disabled={isBinaan}
+                                className={isBinaan ? 'bg-muted/50 cursor-not-allowed font-medium' : ''}
                                 required
                             />
                         </Field>
@@ -263,6 +276,8 @@ export default function EditPage() {
                                     form.setData('nickname', e.target.value)
                                 }
                                 placeholder="Nama panggilan"
+                                disabled={isBinaan}
+                                className={isBinaan ? 'bg-muted/50 cursor-not-allowed' : ''}
                             />
                         </Field>
 
@@ -277,6 +292,8 @@ export default function EditPage() {
                                 }
                                 placeholder="16 digit NIK"
                                 maxLength={16}
+                                disabled={isBinaan}
+                                className={isBinaan ? 'bg-muted/50 cursor-not-allowed' : ''}
                                 required
                             />
                         </Field>
@@ -291,6 +308,8 @@ export default function EditPage() {
                                     form.setData('nis', e.target.value)
                                 }
                                 placeholder="Nomor induk siswa (opsional)"
+                                disabled={isBinaan}
+                                className={isBinaan ? 'bg-muted/50 cursor-not-allowed' : ''}
                             />
                         </Field>
 
@@ -298,8 +317,9 @@ export default function EditPage() {
                             <Select
                                 value={form.data.gender}
                                 onValueChange={(v) => form.setData('gender', v)}
+                                disabled={isBinaan}
                             >
-                                <SelectTrigger className="w-full">
+                                <SelectTrigger className={`w-full ${isBinaan ? 'bg-muted/50 cursor-not-allowed' : ''}`}>
                                     <SelectValue placeholder="Pilih Jenis Kelamin" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -323,6 +343,8 @@ export default function EditPage() {
                                     form.setData('birth_place', e.target.value)
                                 }
                                 placeholder="Tempat lahir"
+                                disabled={isBinaan}
+                                className={isBinaan ? 'bg-muted/50 cursor-not-allowed' : ''}
                             />
                         </Field>
 
@@ -336,6 +358,8 @@ export default function EditPage() {
                                 onChange={(e) =>
                                     form.setData('birth_date', e.target.value)
                                 }
+                                disabled={isBinaan}
+                                className={isBinaan ? 'bg-muted/50 cursor-not-allowed' : ''}
                                 required
                             />
                         </Field>
@@ -350,6 +374,8 @@ export default function EditPage() {
                                     form.setData('parent_phone', e.target.value)
                                 }
                                 placeholder="08xxxxxxxxxx"
+                                disabled={isBinaan}
+                                className={isBinaan ? 'bg-muted/50 cursor-not-allowed' : ''}
                                 required
                             />
                         </Field>
