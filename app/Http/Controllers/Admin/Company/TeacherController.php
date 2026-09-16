@@ -8,6 +8,7 @@ use App\Http\Requests\Company\StoreTeacherRequest;
 use App\Http\Requests\Company\UpdateTeacherRequest;
 use App\Models\Core\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
 
