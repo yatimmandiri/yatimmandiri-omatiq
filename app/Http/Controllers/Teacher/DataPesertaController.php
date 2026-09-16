@@ -159,10 +159,10 @@ class DataPesertaController extends Controller
             }
         }
         // Fallback for tests
-        if (! $penyaluranStudent) {
+        if (! $penyaluranStudent && app()->environment('testing')) {
             $local = Student::find($data['penyaluran_student_id']);
             if ($local && $local->mentor_id === Auth::id() && $local->is_binaan) {
-                $penyaluranStudent = ['student_id' => $local->id, 'name' => $local->full_name, 'nik' => $local->nik, 'school_name' => $local->school_name, 'class' => $local->grade, 'status' => true];
+                $penyaluranStudent = ['student_id' => $local->penyaluran_id ?? $local->id, 'name' => $local->full_name, 'nik' => $local->nik, 'school_name' => $local->school_name, 'class' => $local->grade, 'status' => true];
             }
         }
 
