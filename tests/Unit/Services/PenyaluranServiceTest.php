@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Teacher\BiodataController;
+use App\Models\Core\User;
 use App\Services\PenyaluranService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;

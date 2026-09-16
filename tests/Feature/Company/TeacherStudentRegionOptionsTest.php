@@ -53,7 +53,20 @@ function createOptionsStudent(User $teacher, string $nik): Student
     ]);
 }
 
-it('provides only olimpiades and the teacher roster on the create page', function () {
+it('redirects to data-binaan index when create page is accessed without a student', function () {
+    openRegistrationsOptions();
+    $teacher = createRegistrationOptionsTeacher();
+    createOptionsStudent($teacher, '3525011505120002');
+
+    Olimpiade::create(['name' => 'Olimpiade Matematika', 'category' => 'Matematika']);
+
+    $this->actingAs($teacher)
+        ->get(route('teacher.data-peserta.create'))
+        ->assertRedirect(route('teacher.data-binaan.index'))
+        ->assertSessionHas('info');
+});
+
+it('provides olimpiades and the selected student on the create page when student_id is passed', function () {
     openRegistrationsOptions();
     $teacher = createRegistrationOptionsTeacher();
     $student = createOptionsStudent($teacher, '3525011505120002');
@@ -61,7 +74,7 @@ it('provides only olimpiades and the teacher roster on the create page', functio
     Olimpiade::create(['name' => 'Olimpiade Matematika', 'category' => 'Matematika']);
 
     $this->actingAs($teacher)
-        ->get(route('teacher.data-peserta.create'))
+        ->get(route('teacher.data-peserta.create', ['student_id' => $student->id]))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('teacher/data-peserta/create')
@@ -73,29 +86,23 @@ it('provides only olimpiades and the teacher roster on the create page', functio
         );
 });
 
-it('excludes students assigned to another teacher from the roster', function () {
+it('redirects to data-binaan if attempting to open create page for a student assigned to another teacher', function () {
     openRegistrationsOptions();
     $teacherA = createRegistrationOptionsTeacher();
     $teacherB = createRegistrationOptionsTeacher();
 
-    $mine = createOptionsStudent($teacherA, '3525011505120002');
-    createOptionsStudent($teacherB, '3525011505120003');
+    $theirStudent = createOptionsStudent($teacherB, '3525011505120003');
 
     $this->actingAs($teacherA)
-        ->get(route('teacher.data-peserta.create'))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->component('teacher/data-peserta/create')
-            ->has('students', 1)
-            ->where('students.0.id', $mine->id)
-        );
+        ->get(route('teacher.data-peserta.create', ['student_id' => $theirStudent->id]))
+        ->assertRedirect(route('teacher.data-binaan.index'))
+        ->assertSessionHas('error');
 });
 
-it('excludes students who already have an active registration from the roster', function () {
+it('redirects to data-binaan if attempting to open create page for a student who already has an active registration', function () {
     openRegistrationsOptions();
     $teacher = createRegistrationOptionsTeacher();
 
-    $free = createOptionsStudent($teacher, '3525011505120002');
     $registered = createOptionsStudent($teacher, '3525011505120003');
 
     $olimpiade = Olimpiade::create(['name' => 'Olimpiade Matematika', 'category' => 'Matematika']);
@@ -110,13 +117,9 @@ it('excludes students who already have an active registration from the roster', 
     ]);
 
     $this->actingAs($teacher)
-        ->get(route('teacher.data-peserta.create'))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->component('teacher/data-peserta/create')
-            ->has('students', 1)
-            ->where('students.0.id', $free->id)
-        );
+        ->get(route('teacher.data-peserta.create', ['student_id' => $registered->id]))
+        ->assertRedirect(route('teacher.data-binaan.index'))
+        ->assertSessionHas('error');
 });
 
 it('lets a teacher register an assigned student from the create page', function () {
@@ -154,7 +157,7 @@ it('preselects a valid roster student when student_id is passed', function () {
         );
 });
 
-it('ignores a student_id that is not part of the roster', function () {
+it('redirects when student_id is not part of the roster', function () {
     openRegistrationsOptions();
     $teacher = createRegistrationOptionsTeacher();
     $other = createRegistrationOptionsTeacher();
@@ -162,14 +165,11 @@ it('ignores a student_id that is not part of the roster', function () {
 
     $this->actingAs($teacher)
         ->get(route('teacher.data-peserta.create', ['student_id' => $theirStudent->id]))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->component('teacher/data-peserta/create')
-            ->where('preselected_student_id', null)
-        );
+        ->assertRedirect(route('teacher.data-binaan.index'))
+        ->assertSessionHas('error');
 });
 
-it('ignores a student_id that already has an active registration', function () {
+it('redirects when student_id already has an active registration', function () {
     openRegistrationsOptions();
     $teacher = createRegistrationOptionsTeacher();
     $student = createOptionsStudent($teacher, '3525011505120002');
@@ -186,12 +186,8 @@ it('ignores a student_id that already has an active registration', function () {
 
     $this->actingAs($teacher)
         ->get(route('teacher.data-peserta.create', ['student_id' => $student->id]))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->component('teacher/data-peserta/create')
-            ->has('students', 0)
-            ->where('preselected_student_id', null)
-        );
+        ->assertRedirect(route('teacher.data-binaan.index'))
+        ->assertSessionHas('error');
 });
 
 it('lists only the teacher participants in getData (Pendaftaran)', function () {

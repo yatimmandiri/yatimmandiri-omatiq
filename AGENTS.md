@@ -52,6 +52,39 @@ Note: "Teacher" is **not** an Eloquent model — mentor/teacher roles are `User`
 
 Legacy JSON: `olimpiades` stores `benefits`, `objectives`, `gallery`, `videos` as JSON array columns (casts in `Olimpiade`) alongside the newer relational `OlimpiadeObjective`/`OlimpiadeGallery`/`OlimpiadeVideo` tables. `show_on_registration` removed; public registration now uses `Olimpiade::active()->ordered()` (all `status=true`). Unused scopes: `Testimonial::scopeType`, `Review::scopeType`, `FaqCompany::scopeSearch` are dead.
 
+## Standar Pengembangan Fitur (Feature Development Lifecycle)
+
+Setiap pembuatan atau pembaruan fitur **wajib** mengikuti 3 tahap standar sebelum dideploy ke server produksi untuk mencegah bug dan kebocoran data:
+
+### 1. Buat Fitur (Architecture & Scaffolding)
+- **Routing & Controller**: Rute modular di `routes/{module}.php` dengan controller namespace terpisah (`Teacher`, `Admin`, `Auth`, `Home`).
+- **Form Request & Services**: Validasi terisolasi di FormRequest (`App\Http\Requests\Company\*`) dan logika bisnis di Service Layer (`App\Services\*`).
+- **Schema & Migrations**: Tidak membuat file migrasi baru untuk ubah skema — selalu edit file `create_*` yang sudah ada (dengan index kolom filter, FK, dan unique constraint).
+- **Frontend SPA**: React 19 + Inertia v3 dengan Shadcn UI, Wayfinder routes type-safe, dan breadcrumbs `.layout` pada setiap halaman.
+
+### 2. Fungsionalitas Fitur (Business Logic & Data Isolation)
+- **Strict Data Isolation (Zero Leakage)**: Query data guru wajib dibatasi hanya pada data miliknya (`where('mentor_id', Auth::id())`), dilarang membocorkan data antar guru walau berada di sanggar yang sama.
+- **Aturan Bisnis Tunggal (Single Source of Truth)**:
+  - **1 NIK = 1 Olimpiade per `event_year`**: Cek NIK via `Student::hasActiveRegistrationFor($nik, $eventYear)` di semua jalur (Guru, Umum, Admin).
+  - **Locked Binaan Flow**: Pendaftaran santri binaan guru wajib berasal dari Data Binaan (klik "Daftarkan"). Akses langsung ke `/teacher/data-peserta/create` tanpa santri wajib di-redirect ke Data Binaan.
+- **Atomic Operations & Concurrency**: Multi-step write wajib dibungkus `DB::transaction()`, dan nomor registrasi memakai `lockForUpdate()`.
+
+### 3. Optimasi Fitur (Performance, Scale & Pre-Deploy Quality Gates)
+- **Query Optimization & N+1 Prevention**: Wajib `with()` kolom spesifik (`olimpiade:id,name`, `student:id,full_name,nik`), bounded pagination (`perPage <= 100`), dan hindari `->get()` tanpa limit.
+- **Pest Automated Tests**: Setiap fitur wajib disertai test case di `tests/Feature/` mencakup:
+  - *Positive happy path*
+  - *Data isolation* antar user/role
+  - *Duplicate constraint* (NIK/tahun event ganda)
+  - *Direct URL access/tampering protection*
+- **Pre-Deployment Quality Checklist**:
+  1. `npm run lint:check` (ESLint)
+  2. `npm run format:check` (Prettier)
+  3. `npm run types:check` (TypeScript `tsc --noEmit` — 0 errors)
+  4. `vendor/bin/pint --dirty --format agent` (PHP formatting)
+  5. `composer run test` / `php artisan test --compact` (100% tests passed)
+
+---
+
 ## Conventions
 
 - **Migrations**: Do NOT create separate migration files for schema changes. Always edit the existing `create_*` table migration directly, since we use `migrate:fresh --seed`. This applies to every feature — modify the original table creation file, not a new `update_*` file. Exception for production with existing data: create incremental `2026_09_02_*` migrations with `hasColumn/hasTable` checks and `exists` checks for `SiteSettings` (`migrator->exists`).

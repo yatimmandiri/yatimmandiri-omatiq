@@ -41,32 +41,9 @@ class DataPesertaController extends Controller
                 'label' => trim($o->name.' '.($o->event_year ? "({$o->event_year})" : '')),
             ]);
 
-        $token = $request->session()->get('penyaluran_token') ?? Auth::user()?->penyaluran_token;
-        $sessionStudentIds = [];
-        $sessionNiks = [];
-
-        if ($token) {
-            try {
-                $sessionStudents = $this->penyaluran->students($token);
-                $sessionStudentIds = collect($sessionStudents)->pluck('student_id')->filter()->map(fn ($id) => (int) $id)->all();
-                $sessionNiks = collect($sessionStudents)->pluck('nik')->filter()->all();
-            } catch (\Throwable $e) {
-            }
-        }
-
         $eventYears = collect([
             ...Participant::query()
-                ->where(function ($q) use ($userId, $sessionStudentIds, $sessionNiks) {
-                    $q->where('mentor_id', $userId)
-                        ->orWhereHas('student', fn ($sq) => $sq->where('mentor_id', $userId));
-
-                    if (! empty($sessionStudentIds) || ! empty($sessionNiks)) {
-                        $q->orWhereHas('student', function ($sq) use ($sessionStudentIds, $sessionNiks) {
-                            $sq->when(! empty($sessionStudentIds), fn ($sub) => $sub->whereIn('penyaluran_id', $sessionStudentIds))
-                                ->when(! empty($sessionNiks), fn ($sub) => $sub->orWhereIn('nik', $sessionNiks));
-                        });
-                    }
-                })
+                ->where('mentor_id', $userId)
                 ->whereNotNull('event_year')
                 ->distinct()
                 ->pluck('event_year')
@@ -91,7 +68,7 @@ class DataPesertaController extends Controller
         ]);
     }
 
-    public function create(Request $request): Response
+    public function create(Request $request)
     {
         $this->authorize('create', Participant::class);
 
@@ -99,6 +76,13 @@ class DataPesertaController extends Controller
 
         if (! $settings->registration_binaan_open) {
             abort(403, 'Pendaftaran binaan sedang ditutup.');
+        }
+
+        $studentId = $request->integer('student_id') ?: $request->integer('penyaluran_student_id') ?: null;
+        if (! $studentId) {
+            return redirect()
+                ->route('teacher.data-binaan.index')
+                ->with('info', 'Silakan pilih santri yang ingin didaftarkan terlebih dahulu.');
         }
 
         $token = $request->session()->get('penyaluran_token') ?? Auth::user()?->penyaluran_token;
@@ -123,12 +107,30 @@ class DataPesertaController extends Controller
             $studentsRaw = $local;
         }
 
+        $targetStudent = collect($studentsRaw)->firstWhere(fn (array $s) => (int) ($s['student_id'] ?? $s['id'] ?? 0) === $studentId);
+
+        if (! $targetStudent) {
+            return redirect()
+                ->route('teacher.data-binaan.index')
+                ->with('error', 'Santri tidak ditemukan di data Penyaluran Anda.');
+        }
+
         // Determine event year from requested olimpiade or default to current year
         $eventYear = null;
         if ($request->filled('olimpiade_id')) {
             $eventYear = Olimpiade::find($request->integer('olimpiade_id'))?->event_year;
         }
-        $options = $this->service->getFormOptionsFromApi($studentsRaw, $request->integer('student_id') ?: $request->integer('penyaluran_student_id') ?: null, $eventYear);
+        $eventYear ??= (int) date('Y');
+
+        // Check if student is already actively registered
+        $targetNik = trim((string) ($targetStudent['nik'] ?? ''));
+        if ($targetNik !== '' && $targetNik !== '-' && Student::hasActiveRegistrationFor($targetNik, $eventYear)) {
+            return redirect()
+                ->route('teacher.data-binaan.index')
+                ->with('error', 'Santri ini sudah terdaftar pada OMATIQ '.$eventYear.'.');
+        }
+
+        $options = $this->service->getFormOptionsFromApi([$targetStudent], $studentId, $eventYear);
 
         $sanggarsRaw = [];
         if ($token) {
@@ -139,7 +141,8 @@ class DataPesertaController extends Controller
             }
         }
         $options['sanggars'] = collect($sanggarsRaw)->map(fn (array $s) => ['id' => $s['id'] ?? null, 'name' => $s['name'] ?? '-', 'type' => $s['type'] ?? null])->values()->all();
-        $options['selected_sanggar_id'] = $sanggarId;
+        $options['selected_sanggar_id'] = $sanggarId ?? $targetStudent['sanggar_id'] ?? null;
+        $options['student'] = $targetStudent;
 
         return Inertia::render('teacher/data-peserta/create', $options);
     }
@@ -196,6 +199,15 @@ class DataPesertaController extends Controller
         if ($studentNik === '' || $studentNik === '-') {
             return back()->withErrors([
                 'penyaluran_student_id' => 'Santri binaan belum memiliki NIK di Penyaluran. Silakan lengkapi NIK santri terlebih dahulu di website Penyaluran sebelum mendaftarkan ke OMATIQ.',
+            ])->withInput();
+        }
+
+        $olimpiade = Olimpiade::findOrFail($data['olimpiade_id']);
+        $eventYear = $olimpiade->event_year ?? (int) date('Y');
+
+        if (Student::hasActiveRegistrationFor($studentNik, $eventYear)) {
+            return back()->withErrors([
+                'penyaluran_student_id' => "Santri ini sudah terdaftar pada OMATIQ {$eventYear}.",
             ])->withInput();
         }
 
@@ -263,31 +275,8 @@ class DataPesertaController extends Controller
 
         $filterValue = $request->input('filterValue', []);
 
-        $token = $request->session()->get('penyaluran_token') ?? Auth::user()?->penyaluran_token;
-        $sessionStudentIds = [];
-        $sessionNiks = [];
-
-        if ($token) {
-            try {
-                $sessionStudents = $this->penyaluran->students($token);
-                $sessionStudentIds = collect($sessionStudents)->pluck('student_id')->filter()->map(fn ($id) => (int) $id)->all();
-                $sessionNiks = collect($sessionStudents)->pluck('nik')->filter()->all();
-            } catch (\Throwable $e) {
-            }
-        }
-
         $query = Participant::query()
-            ->where(function ($q) use ($sessionStudentIds, $sessionNiks) {
-                $q->where('mentor_id', Auth::id())
-                    ->orWhereHas('student', fn ($sq) => $sq->where('mentor_id', Auth::id()));
-
-                if (! empty($sessionStudentIds) || ! empty($sessionNiks)) {
-                    $q->orWhereHas('student', function ($sq) use ($sessionStudentIds, $sessionNiks) {
-                        $sq->when(! empty($sessionStudentIds), fn ($sub) => $sub->whereIn('penyaluran_id', $sessionStudentIds))
-                            ->when(! empty($sessionNiks), fn ($sub) => $sub->orWhereIn('nik', $sessionNiks));
-                    });
-                }
-            })
+            ->where('mentor_id', Auth::id())
             ->with([
                 'olimpiade:id,name,event_year',
                 'student:id,full_name,nik,nis,school_name,school_level,grade,gender,regency_id,penyaluran_id,parent_phone',

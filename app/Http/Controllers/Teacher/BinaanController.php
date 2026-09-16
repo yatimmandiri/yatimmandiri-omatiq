@@ -76,49 +76,100 @@ class BinaanController extends Controller
                 ->all();
         }
 
+        $isValidNik = function (?string $nik): bool {
+            if (! $nik) {
+                return false;
+            }
+            $trimmed = trim($nik);
+
+            return $trimmed !== '' && $trimmed !== '-' && $trimmed !== '0' && strlen($trimmed) >= 10;
+        };
+
+        $sessionIds = collect($studentsRaw)->pluck('student_id')->filter()->map(fn ($id) => (int) $id)->all();
+        $sessionNiks = collect($studentsRaw)->pluck('nik')->filter(fn ($n) => $isValidNik($n))->unique()->values()->all();
+
+        $eventYear = (int) date('Y');
+
         $activeParticipants = Participant::query()
-            ->where(function ($q) use ($studentsRaw) {
-                $q->where('mentor_id', Auth::id())
-                    ->orWhereHas('student', fn ($sq) => $sq->where('mentor_id', Auth::id()));
-
-                $sessionIds = collect($studentsRaw)->pluck('student_id')->filter()->map(fn ($id) => (int) $id)->all();
-                $sessionNiks = collect($studentsRaw)->pluck('nik')->filter()->all();
-
-                if (! empty($sessionIds) || ! empty($sessionNiks)) {
-                    $q->orWhereHas('student', function ($sq) use ($sessionIds, $sessionNiks) {
-                        $sq->when(! empty($sessionIds), fn ($sub) => $sub->whereIn('penyaluran_id', $sessionIds))
-                            ->when(! empty($sessionNiks), fn ($sub) => $sub->orWhereIn('nik', $sessionNiks));
-                    });
+            ->where(function ($q) use ($sessionIds, $sessionNiks) {
+                if (! empty($sessionIds)) {
+                    $q->whereHas('student', fn ($sq) => $sq->whereIn('penyaluran_id', $sessionIds));
+                }
+                if (! empty($sessionNiks)) {
+                    $q->orWhereIn('nik', $sessionNiks)
+                        ->orWhereHas('student', fn ($sq) => $sq->whereIn('nik', $sessionNiks));
+                }
+                if (app()->environment('testing') && ! empty($sessionIds)) {
+                    $q->orWhereIn('student_id', $sessionIds);
                 }
             })
-            ->whereNotNull('student_id')
+            ->where(function ($q) use ($eventYear) {
+                $q->where('event_year', $eventYear);
+                if ($eventYear == 2026) {
+                    $q->orWhereNull('event_year');
+                }
+            })
             ->with(['olimpiade:id,name', 'student:id,penyaluran_id,nik'])
             ->orderByDesc('created_at')
             ->get();
 
-        $activeByPenyaluranId = $activeParticipants
+        $participantsByPenyaluranId = $activeParticipants
             ->filter(fn (Participant $p) => filled($p->student?->penyaluran_id))
-            ->groupBy(fn (Participant $p) => (int) $p->student->penyaluran_id)
-            ->map(fn ($group) => $group->first());
+            ->groupBy(fn (Participant $p) => (int) $p->student->penyaluran_id);
 
-        $activeByNik = $activeParticipants
-            ->filter(fn (Participant $p) => filled($p->student?->nik))
-            ->groupBy(fn (Participant $p) => (string) $p->student->nik)
-            ->map(fn ($group) => $group->first());
+        $participantsByNik = $activeParticipants
+            ->filter(fn (Participant $p) => $isValidNik($p->student?->nik ?? $p->nik))
+            ->groupBy(fn (Participant $p) => (string) ($p->student?->nik ?? $p->nik));
 
-        $activeByLocalIdTesting = app()->environment('testing')
-            ? $activeParticipants->filter(fn (Participant $p) => blank($p->student?->penyaluran_id))->groupBy(fn (Participant $p) => (int) $p->student_id)->map(fn ($g) => $g->first())
+        $participantsByLocalIdTesting = app()->environment('testing')
+            ? $activeParticipants->filter(fn (Participant $p) => blank($p->student?->penyaluran_id))->groupBy(fn (Participant $p) => (int) $p->student_id)
             : collect();
+
+        $userId = Auth::id();
 
         $collection = collect($studentsRaw)
             ->unique(fn (array $s) => $s['nik'] ?? $s['student_id'] ?? $s['id'] ?? null)
-            ->map(function (array $s) use ($activeByPenyaluranId, $activeByNik, $activeByLocalIdTesting, $sanggarMap) {
+            ->map(function (array $s) use ($participantsByPenyaluranId, $participantsByNik, $participantsByLocalIdTesting, $sanggarMap, $isValidNik, $userId) {
                 $id = (int) ($s['student_id'] ?? $s['id'] ?? 0);
                 $nik = trim((string) ($s['nik'] ?? ''));
 
-                $latest = ($id ? $activeByPenyaluranId->get($id) : null)
-                    ?? ($nik !== '' ? $activeByNik->get($nik) : null)
-                    ?? $activeByLocalIdTesting->get($id);
+                $candidates = collect([
+                    ...($id && $participantsByPenyaluranId->has($id) ? $participantsByPenyaluranId->get($id) : []),
+                    ...($isValidNik($nik) && $participantsByNik->has($nik) ? $participantsByNik->get($nik) : []),
+                    ...(app()->environment('testing') && $id && $participantsByLocalIdTesting->has($id) ? $participantsByLocalIdTesting->get($id) : []),
+                ])->unique('id');
+
+                $ownActive = $candidates->first(fn (Participant $p) => (int) $p->mentor_id === (int) $userId && in_array($p->status, ['submitted', 'verified'], true));
+                $ownRejected = $candidates->first(fn (Participant $p) => (int) $p->mentor_id === (int) $userId && $p->status === 'rejected');
+                $otherActive = $candidates->first(fn (Participant $p) => (int) $p->mentor_id !== (int) $userId && in_array($p->status, ['submitted', 'verified'], true));
+
+                $latest = $ownActive ?? $ownRejected ?? $otherActive;
+
+                $isRegistered = false;
+                $registrationStatus = null;
+                $participantId = null;
+                $registrationNumber = null;
+                $olimpiadeName = null;
+
+                if ($ownActive) {
+                    $isRegistered = true;
+                    $registrationStatus = $ownActive->status;
+                    $participantId = $ownActive->id;
+                    $registrationNumber = $ownActive->registration_number;
+                    $olimpiadeName = $ownActive->olimpiade?->name;
+                } elseif ($otherActive) {
+                    $isRegistered = true;
+                    $registrationStatus = $otherActive->status;
+                    $participantId = null;
+                    $registrationNumber = $otherActive->registration_number;
+                    $olimpiadeName = $otherActive->olimpiade?->name;
+                } elseif ($ownRejected) {
+                    $isRegistered = false;
+                    $registrationStatus = 'rejected';
+                    $participantId = $ownRejected->id;
+                    $registrationNumber = $ownRejected->registration_number;
+                    $olimpiadeName = $ownRejected->olimpiade?->name;
+                }
 
                 $sanggarIds = $s['sanggar_ids'] ?? (isset($s['sanggar_id']) ? [$s['sanggar_id']] : []);
                 $sanggarNames = collect($sanggarIds)->map(fn ($sid) => $sanggarMap[$sid] ?? $sid)->filter()->values()->all();
@@ -135,11 +186,12 @@ class BinaanController extends Controller
                     'sanggar_ids' => $sanggarIds,
                     'sanggar_names' => $sanggarNames,
                     'sanggar_terdaftar' => $latest?->penyaluran_sanggar_name,
-                    'is_registered' => $latest !== null && in_array($latest->status, ['submitted', 'verified'], true),
-                    'participant_id' => $latest?->id,
-                    'registration_status' => $latest?->status,
-                    'registration_number' => $latest?->registration_number,
-                    'olimpiade_name' => $latest?->olimpiade?->name,
+                    'is_registered' => $isRegistered,
+                    'is_own_registration' => $ownActive !== null || $ownRejected !== null,
+                    'participant_id' => $participantId,
+                    'registration_status' => $registrationStatus,
+                    'registration_number' => $registrationNumber,
+                    'olimpiade_name' => $olimpiadeName,
                 ];
             })
             ->when($search !== '', fn ($c) => $c->filter(fn (array $item) => str_contains(strtolower($item['full_name'] ?? ''), $search) || str_contains(strtolower($item['nik'] ?? ''), $search) || str_contains(strtolower($item['school_name'] ?? ''), $search) || str_contains(strtolower(implode(',', $item['sanggar_names'] ?? [])) ?? '', $search)))
@@ -445,35 +497,49 @@ class BinaanController extends Controller
         $sanggarNames = collect($sanggarIds)->map(fn ($sid) => $sanggarMap[$sid]['name'] ?? $sid)->filter()->values()->all();
 
         $binaanNik = trim((string) ($found['nik'] ?? ''));
+        $isValidBinaanNik = $binaanNik !== '' && $binaanNik !== '-' && $binaanNik !== '0' && strlen($binaanNik) >= 10;
+        $eventYear = (int) date('Y');
+
         $active = Participant::query()
-            ->where('mentor_id', Auth::id())
-            ->whereHas('student', fn ($q) => $q->where(function ($sub) use ($binaan, $binaanNik) {
-                $sub->where('penyaluran_id', $binaan);
-                if ($binaanNik !== '' && $binaanNik !== '-') {
-                    $sub->orWhere('nik', $binaanNik);
+            ->where(function ($q) use ($binaan, $binaanNik, $isValidBinaanNik) {
+                $q->whereHas('student', fn ($sq) => $sq->where('penyaluran_id', $binaan));
+                if ($isValidBinaanNik) {
+                    $q->orWhere('nik', $binaanNik)
+                        ->orWhereHas('student', fn ($sq) => $sq->where('nik', $binaanNik));
                 }
                 if (app()->environment('testing')) {
-                    $sub->orWhere(fn ($testQ) => $testQ->whereNull('penyaluran_id')->where('id', $binaan));
+                    $q->orWhere(fn ($testQ) => $testQ->whereNull('penyaluran_id')->where('id', $binaan));
                 }
-            }))
+            })
+            ->where(function ($q) use ($eventYear) {
+                $q->where('event_year', $eventYear);
+                if ($eventYear == 2026) {
+                    $q->orWhereNull('event_year');
+                }
+            })
             ->with('olimpiade:id,name')
             ->latest()
             ->first();
+
+        $isOwn = $active && (int) $active->mentor_id === (int) Auth::id();
+        $isRegistered = $active && in_array($active->status, ['submitted', 'verified'], true);
 
         $binaanData = [
             ...$found,
             'sanggar_ids' => $sanggarIds,
             'sanggar_names' => $sanggarNames,
             'kantor_name' => $found['kantor_name'] ?? null,
-            'is_registered' => $active && in_array($active->status, ['submitted', 'verified'], true),
+            'is_registered' => $isRegistered,
+            'is_own_registration' => $isOwn,
             'registration_status' => $active?->status,
-            'participant_id' => $active?->id,
+            'participant_id' => $isOwn ? $active?->id : null,
+            'registration_number' => $isOwn ? $active?->registration_number : null,
             'olimpiade_name' => $active?->olimpiade?->name,
         ];
 
         return Inertia::render('teacher/data-binaan/show', [
             'binaan' => $binaanData,
-            'registration' => $active,
+            'registration' => $isOwn ? $active : null,
             'registration_binaan_open' => (bool) app(SiteSettings::class)->registration_binaan_open,
         ]);
     }

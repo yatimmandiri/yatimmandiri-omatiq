@@ -1,3 +1,4 @@
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -51,41 +52,37 @@ export default function CreatePage() {
     const {
         olimpiades = [],
         students = [],
+        student = null,
         sanggars = [],
         preselected_student_id = null,
         selected_sanggar_id = null,
     } = usePage<{
         olimpiades?: Option[];
         students?: RosterStudent[];
+        student?: RosterStudent | null;
         sanggars?: Array<{ id: number | string; name: string; type?: string }>;
         preselected_student_id?: number | string | null;
         selected_sanggar_id?: number | string | null;
     }>().props;
 
-    const selectedStudent =
+    const activeStudent =
+        student ??
         students.find(
             (item) => String(item.id) === String(preselected_student_id),
-        ) ?? students[0];
+        ) ??
+        students[0] ??
+        null;
 
     const selectedSanggarId =
-        selected_sanggar_id ?? selectedStudent?.sanggar_id ?? '';
+        selected_sanggar_id ?? activeStudent?.sanggar_id ?? '';
 
     const form = useForm({
-        penyaluran_student_id: selectedStudent
-            ? String(selectedStudent.id)
-            : '',
-        penyaluran_sanggar_id: selectedSanggarId
-            ? String(selectedSanggarId)
-            : '',
+        penyaluran_student_id: activeStudent ? String(activeStudent.id) : '',
+        penyaluran_sanggar_id: selectedSanggarId ? String(selectedSanggarId) : '',
         olimpiade_id: '',
         achievements: '',
         notes: '',
     });
-
-    const activeStudent =
-        students.find(
-            (item) => String(item.id) === form.data.penyaluran_student_id,
-        ) ?? null;
 
     const hasValidNik = Boolean(
         activeStudent?.nik &&
@@ -142,7 +139,7 @@ export default function CreatePage() {
                     <Button
                         type="button"
                         variant="outline"
-                        onClick={() => window.history.back()}
+                        onClick={() => router.visit(binaan.index().url)}
                     >
                         <ArrowLeft />
                         Kembali
@@ -151,7 +148,7 @@ export default function CreatePage() {
                         type="submit"
                         disabled={
                             form.processing ||
-                            students.length === 0 ||
+                            !activeStudent ||
                             !form.data.penyaluran_student_id ||
                             !hasValidNik
                         }
@@ -196,77 +193,47 @@ export default function CreatePage() {
                 </div>
             )}
 
-            {students.length === 0 && (
+            {!activeStudent && (
                 <div className="rounded-2xl border border-dashed p-5 text-sm text-muted-foreground">
-                    Belum ada binaan yang dapat didaftarkan dari Penyaluran.
-                    Pastikan akun guru terhubung dan data binaan tersedia.
+                    Santri binaan belum dipilih. Silakan kembali ke halaman Data Binaan untuk memilih santri yang ingin didaftarkan.
                 </div>
             )}
 
-            {students.length > 0 && (
+            {activeStudent && (
                 <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
                     <Card className="space-y-5 rounded-3xl p-5 shadow-sm lg:p-6">
-                        <div className="flex items-start gap-4">
-                            <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-orange-100 text-orange-600">
-                                <UserRound className="size-6" />
+                        <div className="flex items-start justify-between gap-4">
+                            <div className="flex items-start gap-4">
+                                <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-orange-100 text-orange-600 dark:bg-orange-950/50 dark:text-orange-400">
+                                    <UserRound className="size-6" />
+                                </div>
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <h2 className="text-lg font-bold">
+                                            {activeStudent.full_name}
+                                        </h2>
+                                        <Badge variant="outline" className="border-orange-200 bg-orange-50 text-xs text-orange-700 dark:border-orange-900/60 dark:bg-orange-950/50 dark:text-orange-300">
+                                            Santri Terpilih
+                                        </Badge>
+                                    </div>
+                                    <p className="text-sm text-muted-foreground">
+                                        Data profil santri dari Penyaluran
+                                    </p>
+                                </div>
                             </div>
-                            <div>
-                                <h2 className="text-lg font-bold">
-                                    Data Binaan
-                                </h2>
-                                <p className="text-sm text-muted-foreground">
-                                    Pilih binaan yang akan didaftarkan.
-                                </p>
-                            </div>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => router.visit(binaan.index().url)}
+                                className="shrink-0 text-xs"
+                            >
+                                <ArrowLeft className="mr-1 size-3.5" />
+                                Ganti Santri
+                            </Button>
                         </div>
 
-                        <Field
-                            label="Binaan"
-                            error={
-                                error('penyaluran_student_id') ||
-                                (activeStudent && !hasValidNik ? (
-                                    <p className="text-xs font-medium text-destructive">
-                                        Santri belum memiliki NIK di Penyaluran.
-                                        Lengkapi NIK terlebih dahulu sebelum
-                                        mendaftar.
-                                    </p>
-                                ) : null)
-                            }
-                        >
-                            <Select
-                                value={form.data.penyaluran_student_id}
-                                onChange={(value) => {
-                                    const next = students.find(
-                                        (item) => String(item.id) === value,
-                                    );
-
-                                    form.setData((data) => ({
-                                        ...data,
-                                        penyaluran_student_id: value,
-                                        penyaluran_sanggar_id:
-                                            data.penyaluran_sanggar_id ||
-                                            (next?.sanggar_id
-                                                ? String(next.sanggar_id)
-                                                : ''),
-                                    }));
-                                }}
-                                placeholder="Pilih binaan"
-                                options={students.map((item) => {
-                                    const itemHasNik = Boolean(
-                                        item.nik &&
-                                        item.nik.trim() !== '' &&
-                                        item.nik.trim() !== '-',
-                                    );
-
-                                    return {
-                                        value: String(item.id),
-                                        label: itemHasNik
-                                            ? `${item.full_name} - ${item.nik}`
-                                            : `${item.full_name} - (NIK Belum Lengkap)`,
-                                    };
-                                })}
-                            />
-                        </Field>
+                        {error('penyaluran_student_id')}
 
                         {sanggars.length > 0 && (
                             <Field
@@ -288,8 +255,7 @@ export default function CreatePage() {
                                     }))}
                                 />
                                 <p className="text-xs text-muted-foreground">
-                                    Biasanya sudah otomatis dari tombol
-                                    pendaftaran di daftar binaan.
+                                    Pilih sanggar tempat binaan belajar.
                                 </p>
                             </Field>
                         )}
