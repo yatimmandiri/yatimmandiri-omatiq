@@ -11,6 +11,7 @@ use App\Models\Company\Participant;
 use App\Models\Company\Period;
 use App\Models\Core\Region\Province;
 use App\Models\Core\Region\Regency;
+use App\Models\Core\User;
 use App\Settings\SiteSettings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -18,6 +19,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
+use Spatie\Permission\Models\Role;
 
 class ParticipantController extends Controller
 {
@@ -93,6 +95,8 @@ class ParticipantController extends Controller
     {
         $this->authorize('view', $participant);
 
+        $participant->loadMissing(['student', 'olimpiade']);
+
         return Inertia::render('admin/company/participant/show', [
             'participant' => $this->participantPayload($participant),
         ]);
@@ -102,6 +106,8 @@ class ParticipantController extends Controller
     {
         $this->authorize('update', $participant);
 
+        $participant->loadMissing(['student', 'olimpiade']);
+
         $data = $this->participantPayload($participant);
 
         return Inertia::render('admin/company/participant/edit', [
@@ -110,6 +116,9 @@ class ParticipantController extends Controller
             'provinces' => Province::all(['id', 'name']),
             'regencies' => $participant->student?->province_id
                 ? Regency::where('province_id', $participant->student->province_id)->get(['id', 'name'])
+                : [],
+            'teachers' => Role::where('name', 'Teacher')->where('guard_name', 'web')->exists()
+                ? User::role('Teacher')->orderBy('name')->get(['id', 'name', 'phone', 'email'])
                 : [],
         ]);
     }
@@ -121,21 +130,21 @@ class ParticipantController extends Controller
         $payload = $this->payload($request);
         $name = $participant->student?->full_name ?? $participant->user?->name ?? 'Unknown';
 
-        DB::transaction(function () use ($request, $participant, $payload) {
-            $studentData = $request->safe()->only([
-                'full_name',
-                'nickname',
-                'gender',
-                'birth_place',
-                'birth_date',
-                'school_name',
-                'grade',
-                'address',
-                'province_id',
-                'regency_id',
-                'parent_phone',
-                'nik',
-            ]);
+        DB::transaction(function () use ($request, $participant, &$payload) {
+            $studentData = $this->studentPayload($request);
+
+            if ($request->filled('mentor_id')) {
+                $teacher = User::find($request->input('mentor_id'));
+                if ($teacher) {
+                    $studentData['mentor_id'] = $teacher->id;
+                    $studentData['mentor_name'] = $teacher->name;
+                    $studentData['mentor_phone'] = $teacher->phone ?? ($studentData['mentor_phone'] ?? null);
+                    $payload['mentor_id'] = $teacher->id;
+                }
+            } elseif ($request->has('mentor_name') || $request->has('mentor_phone')) {
+                $studentData['mentor_name'] = $request->input('mentor_name');
+                $studentData['mentor_phone'] = $request->input('mentor_phone');
+            }
 
             if ($participant->student) {
                 if ($participant->student->penyaluran_id) {
@@ -299,6 +308,8 @@ class ParticipantController extends Controller
             'parent_phone',
             'nik',
             'student_card',
+            'mentor_name',
+            'mentor_phone',
         ]);
 
         if (array_key_exists('penyaluran_sanggar_name', $data) && $data['penyaluran_sanggar_name'] === null) {
@@ -323,6 +334,7 @@ class ParticipantController extends Controller
             'full_name', 'nickname', 'gender', 'birth_place', 'birth_date',
             'school_name', 'grade', 'address', 'province_id',
             'regency_id', 'parent_phone', 'nik', 'school_level', 'nis',
+            'mentor_name', 'mentor_phone', 'mentor_id',
         ]);
     }
 
@@ -355,7 +367,7 @@ class ParticipantController extends Controller
         $payload['branch'] = $participant->branch;
         $payload['kantor_name'] = $participant->branch ?? $participant->penyaluran_sanggar_name;
 
-        if ($participant->relationLoaded('student') && $participant->student) {
+        if ($participant->student) {
             $payload['student'] = [
                 ...$participant->student->toArray(),
                 'student_card_url' => $participant->student->student_card_url,

@@ -11,6 +11,7 @@ import { useMemo } from 'react';
 
 type Option = { id: number | string; name: string; category?: string };
 type Regency = { id: string; province_id: string; name: string };
+type TeacherOption = { id: number; name: string; phone?: string | null; email?: string };
 
 const statusOptions = [
     { value: 'submitted', label: 'Submitted' },
@@ -26,15 +27,21 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
         olimpiades = [],
         provinces = [],
         regencies = [],
+        teachers = [],
     } = usePage<{
         participant: Record<string, any>;
         olimpiades?: Option[];
         provinces?: Option[];
         regencies?: Regency[];
+        teachers?: TeacherOption[];
     }>().props;
 
     const student = participant?.student;
-    const isBinaan = !!student?.is_binaan || !!student?.penyaluran_id;
+    const isBinaan =
+        participant?.registration_type === 'teacher' ||
+        !!participant?.mentor_id ||
+        !!student?.is_binaan ||
+        !!student?.penyaluran_id;
     const form = useForm<any>({
         olimpiade_id: participant?.olimpiade_id
             ? String(participant.olimpiade_id)
@@ -53,6 +60,11 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
         province_id: student?.province_id ?? '',
         regency_id: student?.regency_id ?? '',
         parent_phone: student?.parent_phone ?? '',
+        mentor_id: participant?.mentor_id
+            ? String(participant.mentor_id)
+            : student?.mentor_id
+              ? String(student.mentor_id)
+              : '',
         mentor_name: student?.mentor_name ?? '',
         mentor_phone: student?.mentor_phone ?? '',
         penyaluran_sanggar_name: participant?.penyaluran_sanggar_name ?? '',
@@ -337,19 +349,62 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
                             }))}
                         />
                     </Field>
-                    <Field label="Nama Pendamping" error={error('mentor_name')}>
-                        <Input
-                            value={form.data.mentor_name}
-                            onChange={(e) =>
-                                form.setData('mentor_name', e.target.value)
-                            }
-                        />
-                    </Field>
+                    {isBinaan ? (
+                        <Field
+                            label="Nama Pendamping"
+                            error={error('mentor_id') || error('mentor_name')}
+                        >
+                            <Select
+                                value={form.data.mentor_id}
+                                onChange={(value) => {
+                                    form.setData('mentor_id', value);
+                                    const selected = teachers.find(
+                                        (t) => String(t.id) === String(value),
+                                    );
+                                    if (selected) {
+                                        form.setData(
+                                            'mentor_name',
+                                            selected.name,
+                                        );
+                                        if (selected.phone) {
+                                            form.setData(
+                                                'mentor_phone',
+                                                selected.phone,
+                                            );
+                                        }
+                                    }
+                                }}
+                                options={teachers.map((item) => ({
+                                    value: String(item.id),
+                                    label: `${item.name}${item.phone ? ` (${item.phone})` : ''}`,
+                                }))}
+                                required={false}
+                            />
+                        </Field>
+                    ) : (
+                        <Field
+                            label="Nama Pendamping"
+                            error={error('mentor_name')}
+                        >
+                            <Input
+                                value={form.data.mentor_name}
+                                onChange={(e) =>
+                                    form.setData('mentor_name', e.target.value)
+                                }
+                                placeholder="Nama guru pendamping / orang tua"
+                            />
+                        </Field>
+                    )}
                     <Field label="HP Pendamping" error={error('mentor_phone')}>
                         <Input
                             value={form.data.mentor_phone}
                             onChange={(e) =>
                                 form.setData('mentor_phone', e.target.value)
+                            }
+                            placeholder={
+                                isBinaan
+                                    ? 'Nomor HP guru binaan'
+                                    : 'Nomor WhatsApp / HP'
                             }
                         />
                     </Field>
@@ -547,16 +602,18 @@ const Select = ({
     value,
     onChange,
     options,
+    required = true,
 }: {
     value: string;
     onChange: (value: string) => void;
     options: Array<{ value: string; label: string }>;
+    required?: boolean;
 }) => (
     <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
         className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-        required
+        required={required}
     >
         <option value="">Pilih data</option>
         {options.map((option) => (

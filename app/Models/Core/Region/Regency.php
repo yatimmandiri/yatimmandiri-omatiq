@@ -19,6 +19,7 @@ use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 
 #[Fillable([
+    'id',
     'name',
     'province_id',
 ])]

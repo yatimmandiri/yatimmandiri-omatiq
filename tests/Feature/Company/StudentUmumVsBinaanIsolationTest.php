@@ -16,9 +16,23 @@ beforeEach(function () {
     $this->seed(UserRolePermissionSeeder::class);
 });
 
+use App\Models\Core\Region\District;
+use App\Models\Core\Region\Village;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
+
 test('public registration creates an isolated umum student', function () {
+    Storage::fake('public');
+
+    Cache::put('branch_offices', [
+        ['id' => 1, 'name' => 'SURABAYA PUSAT'],
+    ], 3600);
+
     $province = Province::create(['id' => '35', 'name' => 'JAWA TIMUR']);
     $regency = Regency::create(['id' => '3578', 'province_id' => '35', 'name' => 'KOTA SURABAYA']);
+    $district = District::create(['id' => '3578010', 'regency_id' => '3578', 'name' => 'GUBENG']);
+    $village = Village::create(['id' => '3578010001', 'district_id' => '3578010', 'name' => 'AIRLANGGA']);
     $olimpiade = Olimpiade::factory()->create(['event_year' => 2026, 'status' => true]);
 
     $postData = [
@@ -32,13 +46,18 @@ test('public registration creates an isolated umum student', function () {
         'birth_place' => 'Surabaya',
         'birth_date' => '2014-05-10',
         'school_name' => 'SD Negeri 1 Surabaya',
-        'grade' => '5',
+        'grade' => 'IV',
         'address' => 'Jl. Pemuda No. 1',
         'province_id' => '35',
         'regency_id' => '3578',
+        'district_id' => '3578010',
+        'village_id' => '3578010001',
         'parent_phone' => '081234567890',
+        'referral_source' => 'Website',
         'olimpiade_id' => $olimpiade->id,
-        'branch' => 'Surabaya',
+        'branch' => 'SURABAYA PUSAT',
+        'payment_proof' => UploadedFile::fake()->image('bukti.jpg'),
+        'student_card' => UploadedFile::fake()->image('kartu.jpg'),
         'data_truth_consent' => true,
         'documentation_consent' => true,
         'rules_consent' => true,
