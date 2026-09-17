@@ -4,8 +4,10 @@ use App\Http\Middleware\AdminMiddleware;
 use App\Http\Middleware\EnsureTeacherProfileCompleted;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\MaintenanceMode;
 use App\Http\Middleware\RedirectIfAuthenticated;
 use App\Http\Middleware\UserMiddleware;
+use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -28,6 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             HandleAppearance::class,
             HandleInertiaRequests::class,
+            MaintenanceMode::class,
             AddLinkHeadersForPreloadedAssets::class,
         ]);
 
@@ -37,10 +40,22 @@ return Application::configure(basePath: dirname(__DIR__))
             'role_or_permission' => RoleOrPermissionMiddleware::class,
             'auth.user' => UserMiddleware::class,
             'auth.admin' => AdminMiddleware::class,
+            'guru.profile.completed' => EnsureTeacherProfileCompleted::class,
             'teacher.profile.completed' => EnsureTeacherProfileCompleted::class,
             'guest' => RedirectIfAuthenticated::class,
             'guest.redirect' => RedirectIfAuthenticated::class,
         ]);
+
+        Authenticate::redirectUsing(function ($request) {
+            if ($request->is('guru/*') || $request->is('admin/guru/*')) {
+                return route('guru.login');
+            }
+            if ($request->is('admin/*')) {
+                return route('login');
+            }
+
+            return route('login');
+        });
 
         // Guest yang coba akses area terproteksi diarahkan ke login sesuai area (bukan ke home)
         $middleware->redirectGuestsTo(function (Request $request) {
