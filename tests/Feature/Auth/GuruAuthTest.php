@@ -113,7 +113,16 @@ test('completed teacher login redirects directly to dashboard', function () {
         ], 200),
         'https://penyaluran-test.example.com/api/v1/guru/me' => Http::response([
             'success' => true,
-            'data' => ['id' => 303, 'name' => $user->name],
+            'data' => [
+                'id' => 303,
+                'name' => $user->name,
+                'sanggars' => [
+                    ['id' => 10, 'name' => 'Sanggar Uji', 'type' => 'Genius'],
+                ],
+                'students' => [
+                    ['id' => 100, 'name' => 'Santri Uji', 'nik' => '3578010101010001', 'gender' => 'L'],
+                ],
+            ],
         ], 200),
     ]);
 
@@ -124,6 +133,10 @@ test('completed teacher login redirects directly to dashboard', function () {
 
     $this->assertAuthenticatedAs($user);
     $response->assertRedirect(route('teacher.dashboard'));
+    $response->assertSessionHas('penyaluran_sanggars');
+    $response->assertSessionHas('penyaluran_students');
+    expect(session('penyaluran_sanggars')[0]['name'])->toBe('Sanggar Uji')
+        ->and(session('penyaluran_students')[0]['name'])->toBe('Santri Uji');
 });
 
 test('teacher can complete profile and update email to penyaluran server', function () {

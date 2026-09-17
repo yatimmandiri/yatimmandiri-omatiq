@@ -132,9 +132,9 @@ export default function CreatePage() {
             onSubmit={submit}
             className="mx-auto w-full max-w-5xl space-y-6 p-4 lg:p-6"
         >
-            <div className="flex flex-col gap-4 rounded-3xl border bg-gradient-to-br from-orange-50 via-background to-sky-50 p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between lg:p-7">
+            <div className="flex flex-col gap-4 rounded-2xl border bg-gradient-to-br from-[#17524A]/10 via-background to-emerald-50/60 p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between lg:p-7">
                 <div className="max-w-2xl">
-                    <p className="mb-2 inline-flex items-center gap-2 rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-700">
+                    <p className="mb-2 inline-flex items-center gap-2 rounded-full bg-[#17524A]/10 px-3 py-1 text-xs font-semibold text-[#17524A]">
                         <CheckCircle2 className="size-4" />
                         Form singkat guru
                     </p>
@@ -213,10 +213,10 @@ export default function CreatePage() {
 
             {activeStudent && (
                 <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-                    <Card className="space-y-5 rounded-3xl p-5 shadow-sm lg:p-6">
+                    <Card className="space-y-5 rounded-2xl p-5 shadow-sm lg:p-6">
                         <div className="flex items-start justify-between gap-4">
                             <div className="flex items-start gap-4">
-                                <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-orange-100 text-orange-600 dark:bg-orange-950/50 dark:text-orange-400">
+                                <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-[#17524A]/10 text-[#17524A] dark:bg-[#17524A]/20 dark:text-emerald-300">
                                     <UserRound className="size-6" />
                                 </div>
                                 <div>
@@ -224,7 +224,7 @@ export default function CreatePage() {
                                         <h2 className="text-lg font-bold">
                                             {studentName}
                                         </h2>
-                                        <Badge variant="outline" className="border-orange-200 bg-orange-50 text-xs text-orange-700 dark:border-orange-900/60 dark:bg-orange-950/50 dark:text-orange-300">
+                                        <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-xs text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-300">
                                             Santri Terpilih
                                         </Badge>
                                     </div>
@@ -352,7 +352,7 @@ export default function CreatePage() {
                         </div>
                     </Card>
 
-                    <Card className="space-y-5 rounded-3xl p-5 shadow-sm lg:p-6">
+                    <Card className="space-y-5 rounded-2xl p-5 shadow-sm lg:p-6">
                         <div>
                             <h2 className="text-lg font-bold">
                                 Pilihan Olimpiade
@@ -393,7 +393,7 @@ export default function CreatePage() {
                                     )
                                 }
                                 placeholder="Contoh: Juara kelas, hafalan juz, atau lomba yang pernah diikuti"
-                                className="min-h-28 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm transition outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+                                className="min-h-28 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm transition outline-none focus:border-[#17524A]/30 focus:ring-2 focus:ring-[#17524A]/10"
                                 rows={4}
                             />
                         </Field>
@@ -408,7 +408,7 @@ export default function CreatePage() {
                                     form.setData('notes', event.target.value)
                                 }
                                 placeholder="Catatan singkat untuk admin, bila ada"
-                                className="min-h-24 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm transition outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+                                className="min-h-24 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm transition outline-none focus:border-[#17524A]/30 focus:ring-2 focus:ring-[#17524A]/10"
                                 rows={3}
                             />
                         </Field>

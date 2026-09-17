@@ -125,9 +125,12 @@ class GuruAuthController extends Controller
         }
 
         Auth::login($user, $request->boolean('remember'));
+        $request->session()->regenerate();
         $request->session()->put('penyaluran_token', $token);
         $request->session()->put('penyaluran_id', $penyaluranId);
-        $request->session()->regenerate();
+        $request->session()->put('penyaluran_me', $profile);
+        $request->session()->put('penyaluran_sanggars', $profile['sanggars'] ?? []);
+        $request->session()->put('penyaluran_students', $profile['students'] ?? []);
 
         if ($user->needsTeacherProfileCompletion()) {
             return redirect()->route('teacher.profile.edit');
@@ -234,8 +237,24 @@ class GuruAuthController extends Controller
         }
 
         Auth::login($user, true);
+        $token = $request->session()->get('penyaluran_token');
+        $penyaluranId = $request->session()->get('penyaluran_id');
         $request->session()->forget('otp_user_id');
         $request->session()->regenerate();
+
+        if ($token) {
+            $request->session()->put('penyaluran_token', $token);
+            if ($penyaluranId) {
+                $request->session()->put('penyaluran_id', $penyaluranId);
+            }
+            try {
+                $profile = app(PenyaluranService::class)->me($token);
+                $request->session()->put('penyaluran_me', $profile);
+                $request->session()->put('penyaluran_sanggars', $profile['sanggars'] ?? []);
+                $request->session()->put('penyaluran_students', $profile['students'] ?? []);
+            } catch (\Throwable $e) {
+            }
+        }
 
         if ($user->needsTeacherProfileCompletion()) {
             return redirect()->route('teacher.profile.edit');
@@ -265,7 +284,14 @@ class GuruAuthController extends Controller
     public function destroy(Request $request)
     {
         Auth::logout();
-        $request->session()->forget(['penyaluran_token', 'penyaluran_id', 'otp_user_id']);
+        $request->session()->forget([
+            'penyaluran_token',
+            'penyaluran_id',
+            'penyaluran_me',
+            'penyaluran_sanggars',
+            'penyaluran_students',
+            'otp_user_id',
+        ]);
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 

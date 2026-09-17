@@ -16,10 +16,13 @@ import { dashboard } from '@/routes/teacher';
 import dataPeserta from '@/routes/teacher/data-peserta';
 import { confirmAction } from '@/utils/sweetalert';
 import { router, usePage } from '@inertiajs/react';
+import { Card } from '@/components/ui/card';
 import {
+    Award,
     CheckCircle2,
     Clock3,
     Eye,
+    GraduationCap,
     MoreHorizontal,
     Printer,
     Trash2,
@@ -46,11 +49,19 @@ export default function ListPage() {
                 const row = info.row.original;
                 const name = row.student?.full_name ?? row.full_name ?? '-';
                 const regNo = row.registration_number ?? '-';
+                const initial = String(name).charAt(0).toUpperCase();
 
                 return (
-                    <div className="space-y-1">
-                        <p className="font-semibold">{name}</p>
-                        <p className="text-xs text-muted-foreground">{regNo}</p>
+                    <div className="flex items-center gap-3">
+                        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#17524A]/10 text-sm font-bold text-[#17524A] dark:bg-[#17524A]/20 dark:text-emerald-300">
+                            {initial}
+                        </span>
+                        <div className="space-y-0.5">
+                            <p className="font-semibold leading-none">{name}</p>
+                            <p className="font-mono text-xs text-muted-foreground">
+                                {regNo}
+                            </p>
+                        </div>
                     </div>
                 );
             },
@@ -101,7 +112,7 @@ export default function ListPage() {
 
                 if (status === 'verified') {
                     return (
-                        <Badge>
+                        <Badge className="gap-1.5 rounded-full bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-emerald-700">
                             <CheckCircle2 className="size-3" />
                             Terverifikasi
                         </Badge>
@@ -110,7 +121,10 @@ export default function ListPage() {
 
                 if (status === 'rejected') {
                     return (
-                        <Badge variant="destructive">
+                        <Badge
+                            variant="destructive"
+                            className="gap-1.5 rounded-full px-2.5 py-1"
+                        >
                             <XCircle className="size-3" />
                             Ditolak
                         </Badge>
@@ -118,7 +132,10 @@ export default function ListPage() {
                 }
 
                 return (
-                    <Badge variant="secondary">
+                    <Badge
+                        variant="secondary"
+                        className="gap-1.5 rounded-full bg-amber-100 px-2.5 py-1 text-amber-800 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-300"
+                    >
                         <Clock3 className="size-3" />
                         Menunggu
                     </Badge>
@@ -155,8 +172,36 @@ export default function ListPage() {
     ];
 
     return (
-        <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
-            <div className="relative min-h-screen flex-1 overflow-hidden rounded-xl border border-sidebar-border/70 md:min-h-min dark:border-sidebar-border">
+        <div className="flex h-full flex-1 flex-col gap-5 p-4 lg:p-6">
+            {/* Header */}
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                    <h1 className="flex items-center gap-2.5 text-2xl font-bold tracking-tight">
+                        <span className="flex size-9 items-center justify-center rounded-xl bg-[#17524A] text-white shadow-sm">
+                            <Award className="size-5" />
+                        </span>
+                        Data Peserta
+                    </h1>
+                    <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+                        Daftar peserta OMATIQ yang Anda daftarkan. Cetak kartu
+                        untuk peserta terverifikasi dan kelola pembatalan jika
+                        diperlukan.
+                    </p>
+                </div>
+            </div>
+
+            <Card className="flex items-start gap-3 rounded-2xl border-sky-200/50 bg-sky-50/60 px-4 py-3 dark:border-sky-900/30 dark:bg-sky-950/20">
+                <GraduationCap className="mt-0.5 size-4 shrink-0 text-sky-700 dark:text-sky-400" />
+                <p className="text-xs leading-relaxed text-sky-900 dark:text-sky-200">
+                    <span className="font-semibold">Tips:</span> Gunakan filter
+                    status & olimpiade untuk menyaring peserta per tahun event.
+                    Peserta binaan otomatis{' '}
+                    <span className="font-semibold">terverifikasi</span> — kartu
+                    siap cetak tanpa menunggu admin.
+                </p>
+            </Card>
+
+            <div className="relative flex-1 overflow-hidden rounded-2xl border bg-card shadow-sm">
                 <DataTableProvider
                     columns={columns}
                     filterValue={filterValue}
@@ -180,7 +225,10 @@ export default function ListPage() {
                         }))
                     }
                 >
-                    <div className="flex flex-col space-y-4 px-4 pt-8 md:px-8">
+                    <div className="flex flex-col gap-4 border-b bg-muted/20 px-4 py-5 md:px-6">
+                        <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                            Filter Data
+                        </p>
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                             <SelectComponent
                                 label="Status"

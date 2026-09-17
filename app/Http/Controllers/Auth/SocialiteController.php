@@ -97,6 +97,13 @@ class SocialiteController extends Controller
 
             if ($token) {
                 $request->session()->put('penyaluran_token', $token);
+                try {
+                    $profile = app(PenyaluranService::class)->me($token);
+                    $request->session()->put('penyaluran_me', $profile);
+                    $request->session()->put('penyaluran_sanggars', $profile['sanggars'] ?? []);
+                    $request->session()->put('penyaluran_students', $profile['students'] ?? []);
+                } catch (\Throwable $e) {
+                }
             }
             if ($user->penyaluran_id) {
                 $request->session()->put('penyaluran_id', $user->penyaluran_id);
