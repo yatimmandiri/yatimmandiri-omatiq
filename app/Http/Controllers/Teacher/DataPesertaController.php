@@ -142,7 +142,24 @@ class DataPesertaController extends Controller
         }
         $options['sanggars'] = collect($sanggarsRaw)->map(fn (array $s) => ['id' => $s['id'] ?? null, 'name' => $s['name'] ?? '-', 'type' => $s['type'] ?? null])->values()->all();
         $options['selected_sanggar_id'] = $sanggarId ?? $targetStudent['sanggar_id'] ?? null;
-        $options['student'] = $targetStudent;
+        $options['student'] = [
+            'id' => $targetStudent['student_id'] ?? $targetStudent['id'] ?? null,
+            'student_id' => $targetStudent['student_id'] ?? $targetStudent['id'] ?? null,
+            'full_name' => $targetStudent['name'] ?? $targetStudent['full_name'] ?? '-',
+            'name' => $targetStudent['name'] ?? $targetStudent['full_name'] ?? '-',
+            'nik' => $targetStudent['nik'] ?? null,
+            'nis' => $targetStudent['nis'] ?? null,
+            'school_name' => $targetStudent['school_name'] ?? null,
+            'school_level' => $targetStudent['school_level'] ?? null,
+            'grade' => $targetStudent['class'] ?? $targetStudent['grade'] ?? null,
+            'birth_date' => $targetStudent['birth_date'] ?? null,
+            'address' => $targetStudent['address'] ?? null,
+            'guardian_name' => $targetStudent['guardian_name'] ?? null,
+            'guardian_phone' => $targetStudent['guardian_phone'] ?? null,
+            'sanggar_id' => $targetStudent['sanggar_id'] ?? null,
+            'sanggar_name' => $targetStudent['sanggar_name'] ?? null,
+            'kantor_name' => $targetStudent['kantor_name'] ?? null,
+        ];
 
         return Inertia::render('teacher/data-peserta/create', $options);
     }

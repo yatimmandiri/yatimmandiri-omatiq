@@ -46,8 +46,8 @@ class StoreTeacherParticipantRequest extends FormRequest
                             return;
                         }
                         $localNik = trim((string) ($local->nik ?? ''));
-                        if ($localNik === '' || $localNik === '-') {
-                            $fail('Santri binaan belum memiliki NIK di Penyaluran. Silakan lengkapi NIK santri terlebih dahulu di website Penyaluran sebelum mendaftarkan ke OMATIQ.');
+                        if ($localNik === '' || $localNik === '-' || $localNik === '0' || strtolower($localNik) === 'null' || strlen($localNik) < 10) {
+                            $fail('Santri binaan belum memiliki NIK yang valid di Penyaluran. Silakan lengkapi NIK santri terlebih dahulu di website Penyaluran sebelum mendaftarkan ke OMATIQ.');
 
                             return;
                         }
@@ -104,8 +104,8 @@ class StoreTeacherParticipantRequest extends FormRequest
                     }
 
                     $nik = trim((string) ($found['nik'] ?? ''));
-                    if ($nik === '' || $nik === '-') {
-                        $fail('Santri binaan belum memiliki NIK di Penyaluran. Silakan lengkapi NIK santri terlebih dahulu di website Penyaluran sebelum mendaftarkan ke OMATIQ.');
+                    if ($nik === '' || $nik === '-' || $nik === '0' || strtolower($nik) === 'null' || strlen($nik) < 10) {
+                        $fail('Santri binaan belum memiliki NIK yang valid di Penyaluran. Silakan lengkapi NIK santri terlebih dahulu di website Penyaluran sebelum mendaftarkan ke OMATIQ.');
 
                         return;
                     }

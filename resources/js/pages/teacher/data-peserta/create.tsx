@@ -1,6 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
     Select as UiSelect,
@@ -19,6 +20,7 @@ import {
     CheckCircle2,
     GraduationCap,
     IdCard,
+    Lock,
     Pencil,
     Save,
     School,
@@ -34,8 +36,10 @@ type Option = {
 
 type RosterStudent = {
     id: number | string;
+    student_id?: number | string;
     nik: string;
-    full_name: string;
+    full_name?: string;
+    name?: string;
     school_name?: string | null;
     school_level?: string | null;
     grade?: string | null;
@@ -68,16 +72,21 @@ export default function CreatePage() {
     const activeStudent =
         student ??
         students.find(
-            (item) => String(item.id) === String(preselected_student_id),
+            (item) => String(item.id ?? item.student_id) === String(preselected_student_id),
         ) ??
         students[0] ??
         null;
+
+    const studentName =
+        activeStudent?.full_name || activeStudent?.name || '-';
+    const studentId =
+        activeStudent?.id ?? activeStudent?.student_id ?? '';
 
     const selectedSanggarId =
         selected_sanggar_id ?? activeStudent?.sanggar_id ?? '';
 
     const form = useForm({
-        penyaluran_student_id: activeStudent ? String(activeStudent.id) : '',
+        penyaluran_student_id: activeStudent ? String(studentId) : '',
         penyaluran_sanggar_id: selectedSanggarId ? String(selectedSanggarId) : '',
         olimpiade_id: '',
         achievements: '',
@@ -87,7 +96,10 @@ export default function CreatePage() {
     const hasValidNik = Boolean(
         activeStudent?.nik &&
         activeStudent.nik.trim() !== '' &&
-        activeStudent.nik.trim() !== '-',
+        activeStudent.nik.trim() !== '-' &&
+        activeStudent.nik.trim() !== '0' &&
+        activeStudent.nik.trim().toLowerCase() !== 'null' &&
+        activeStudent.nik.trim().length >= 10,
     );
 
     const activeSanggar =
@@ -169,7 +181,7 @@ export default function CreatePage() {
                             </p>
                             <p className="mt-0.5 text-xs text-amber-800/90 dark:text-amber-300/90">
                                 Santri{' '}
-                                <strong>{activeStudent.full_name}</strong> belum
+                                <strong>{studentName}</strong> belum
                                 memiliki NIK di data Penyaluran. NIK wajib
                                 dilengkapi terlebih dahulu di website Penyaluran
                                 sebelum dapat didaftarkan ke OMATIQ.
@@ -183,7 +195,7 @@ export default function CreatePage() {
                             size="sm"
                             className="border-amber-300 bg-white text-xs hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-900 dark:hover:bg-amber-800"
                             onClick={() =>
-                                router.visit(binaan.edit(activeStudent.id).url)
+                                router.visit(binaan.edit(studentId).url)
                             }
                         >
                             <Pencil className="mr-1.5 size-3.5" />
@@ -210,7 +222,7 @@ export default function CreatePage() {
                                 <div>
                                     <div className="flex items-center gap-2">
                                         <h2 className="text-lg font-bold">
-                                            {activeStudent.full_name}
+                                            {studentName}
                                         </h2>
                                         <Badge variant="outline" className="border-orange-200 bg-orange-50 text-xs text-orange-700 dark:border-orange-900/60 dark:bg-orange-950/50 dark:text-orange-300">
                                             Santri Terpilih
@@ -234,6 +246,26 @@ export default function CreatePage() {
                         </div>
 
                         {error('penyaluran_student_id')}
+
+                        <Field
+                            label="Nama Santri Binaan"
+                            error={error('penyaluran_student_id')}
+                        >
+                            <div className="relative flex items-center">
+                                <Input
+                                    value={studentName}
+                                    readOnly
+                                    disabled
+                                    className="cursor-not-allowed bg-muted/60 pr-10 font-medium text-foreground"
+                                />
+                                <div className="absolute right-3 text-muted-foreground">
+                                    <Lock className="size-4" />
+                                </div>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                                Santri binaan terpilih dari Penyaluran (ID: {studentId}).
+                            </p>
+                        </Field>
 
                         {sanggars.length > 0 && (
                             <Field

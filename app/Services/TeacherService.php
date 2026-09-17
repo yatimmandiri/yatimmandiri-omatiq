@@ -43,7 +43,11 @@ class TeacherService
             $penyaluranId = $penyaluranStudent['student_id'] ?? $penyaluranStudent['id'] ?? $data['penyaluran_student_id'];
             $nik = trim((string) ($penyaluranStudent['nik'] ?? ''));
 
-            if ($nik !== '' && $nik !== '-' && Student::hasActiveRegistrationFor($nik, $eventYear)) {
+            if ($nik === '' || $nik === '-' || $nik === '0' || strtolower($nik) === 'null' || strlen($nik) < 10) {
+                throw new \DomainException('Santri binaan belum memiliki NIK yang valid di Penyaluran.');
+            }
+
+            if (Student::hasActiveRegistrationFor($nik, $eventYear)) {
                 throw new \DomainException("Binaan dengan NIK {$nik} sudah terdaftar pada OMATIQ {$eventYear}.");
             }
 
@@ -113,6 +117,8 @@ class TeacherService
                 'registration_type' => 'teacher',
                 'registration_number' => $this->generateRegistrationNumber(),
                 'status' => 'verified',
+                'payment_status' => 'paid',
+                'payment_amount' => 0,
                 'achievements' => $data['achievements'] ?? null,
                 'has_joined_before' => $data['has_joined_before'] ?? false,
                 'previous_year' => $data['previous_year'] ?? null,

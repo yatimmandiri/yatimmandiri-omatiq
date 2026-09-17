@@ -129,7 +129,7 @@ class BinaanController extends Controller
         $userId = Auth::id();
 
         $collection = collect($studentsRaw)
-            ->unique(fn (array $s) => $s['nik'] ?? $s['student_id'] ?? $s['id'] ?? null)
+            ->unique(fn (array $s) => (int) ($s['student_id'] ?? $s['id'] ?? 0))
             ->map(function (array $s) use ($participantsByPenyaluranId, $participantsByNik, $participantsByLocalIdTesting, $sanggarMap, $isValidNik, $userId) {
                 $id = (int) ($s['student_id'] ?? $s['id'] ?? 0);
                 $nik = trim((string) ($s['nik'] ?? ''));

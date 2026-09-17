@@ -4,6 +4,7 @@ namespace App\Policies\Company;
 
 use App\Models\Company\Participant;
 use App\Models\Core\User;
+use App\Services\PenyaluranService;
 
 class ParticipantPolicy
 {
@@ -37,7 +38,7 @@ class ParticipantPolicy
             $token = session('penyaluran_token') ?? $user->penyaluran_token;
             if ($token && $participant->student) {
                 try {
-                    $students = app(\App\Services\PenyaluranService::class)->students($token);
+                    $students = app(PenyaluranService::class)->students($token);
                     $sessionIds = collect($students)->pluck('student_id')->filter()->map(fn ($id) => (int) $id)->all();
                     $sessionNiks = collect($students)->pluck('nik')->filter()->all();
                     $penyaluranId = (int) ($participant->student->penyaluran_id ?? 0);
@@ -102,7 +103,7 @@ class ParticipantPolicy
             $token = session('penyaluran_token') ?? $user->penyaluran_token;
             if ($token && $participant->student) {
                 try {
-                    $students = app(\App\Services\PenyaluranService::class)->students($token);
+                    $students = app(PenyaluranService::class)->students($token);
                     $sessionIds = collect($students)->pluck('student_id')->filter()->map(fn ($id) => (int) $id)->all();
                     $sessionNiks = collect($students)->pluck('nik')->filter()->all();
                     $penyaluranId = (int) ($participant->student->penyaluran_id ?? 0);

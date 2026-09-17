@@ -6,6 +6,7 @@ use App\Concerns\Traits\LogActivity;
 use App\Http\Controllers\Controller;
 use App\Models\Core\Social;
 use App\Models\Core\User;
+use App\Services\PenyaluranService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
@@ -87,7 +88,7 @@ class SocialiteController extends Controller
             $token = $user->penyaluran_token;
             if (! $token && $user->phone) {
                 try {
-                    $token = app(\App\Services\PenyaluranService::class)->loginGuru($user->phone);
+                    $token = app(PenyaluranService::class)->loginGuru($user->phone);
                     $user->forceFill(['penyaluran_token' => $token])->save();
                 } catch (\Throwable $e) {
                     // Penyaluran API might be unreachable or mock in tests
