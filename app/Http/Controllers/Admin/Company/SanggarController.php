@@ -20,11 +20,8 @@ class SanggarController extends Controller
         $this->authorize('viewAny', Participant::class);
 
         $user = Auth::user();
-        if ($user?->hasRole('Cabang')) {
-            abort(403);
-        }
-
-        $userBranch = null;
+        $isCabang = $user?->hasRole('Cabang') ?? false;
+        $userBranch = $isCabang ? $user->getBranchName() : null;
 
         return Inertia::render('admin/company/sanggars/list', [
             'userBranch' => $userBranch,
@@ -36,9 +33,8 @@ class SanggarController extends Controller
         $this->authorize('viewAny', Participant::class);
 
         $user = Auth::user();
-        if ($user?->hasRole('Cabang')) {
-            abort(403);
-        }
+        $isCabang = $user?->hasRole('Cabang') ?? false;
+        $userBranch = $isCabang ? $user->getBranchName() : null;
 
         $token = ($request->hasSession() ? $request->session()->get('penyaluran_token') : null)
             ?? $user?->penyaluran_token
@@ -118,9 +114,8 @@ class SanggarController extends Controller
         $this->authorize('viewAny', Participant::class);
 
         $user = Auth::user();
-        if ($user?->hasRole('Cabang')) {
-            abort(403);
-        }
+        $isCabang = $user?->hasRole('Cabang') ?? false;
+        $userBranch = $isCabang ? $user->getBranchName() : null;
 
         $token = request()->session()->get('penyaluran_token')
             ?? $user?->penyaluran_token
@@ -155,6 +150,14 @@ class SanggarController extends Controller
 
         if (! $found) {
             abort(404);
+        }
+
+        // Strict branch check for Cabang role
+        if ($isCabang && filled($userBranch)) {
+            $sanggarBranch = $found['kantor_name'] ?? $found['branch'] ?? '';
+            if (stripos((string) $sanggarBranch, $userBranch) === false) {
+                abort(403);
+            }
         }
 
         return Inertia::render('admin/company/sanggars/show', [

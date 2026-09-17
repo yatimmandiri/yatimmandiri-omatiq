@@ -16,17 +16,21 @@ import users from '@/routes/admin/core/users';
 import activities from '@/routes/admin/logs/activities';
 import site from '@/routes/admin/settings/site';
 import {
+    Building2,
     CalendarDays,
     ChevronRight,
+    ClipboardCheck,
     CogIcon,
     CpuIcon,
     Database,
     GraduationCap,
     Handshake,
     Images,
+    LayoutDashboard,
     MapIcon,
     Trophy,
     UserCheck,
+    UserRound,
     Users,
 } from 'lucide-react';
 import reviews from '@/routes/admin/companies/reviews';
@@ -41,8 +45,51 @@ import students from '@/routes/admin/companies/students';
 
 export const NavigationList = [
     {
+        title: 'Portal Guru',
+        roles: ['Teacher'],
+        icon: GraduationCap,
+        children: [
+            {
+                title: 'Dashboard',
+                href: '/teacher/dashboard',
+                roles: ['Teacher'],
+                icon: LayoutDashboard,
+            },
+            {
+                title: 'Biodata',
+                href: '/teacher/biodata',
+                roles: ['Teacher'],
+                icon: UserRound,
+            },
+            {
+                title: 'Data Binaan',
+                href: binaan.index().url,
+                roles: ['Teacher'],
+                icon: Users,
+            },
+            {
+                title: 'Data Peserta',
+                href: dataPeserta.index().url,
+                roles: ['Teacher'],
+                icon: GraduationCap,
+            },
+            {
+                title: 'Data Sanggar',
+                href: sanggar.index().url,
+                roles: ['Teacher'],
+                icon: Building2,
+            },
+            {
+                title: 'Presensi & Jurnal',
+                href: absensi.index().url,
+                roles: ['Teacher'],
+                icon: ClipboardCheck,
+            },
+        ],
+    },
+    {
         title: 'Partisipasi',
-        roles: ['Administrators', 'Teacher', 'Cabang'],
+        roles: ['Administrators', 'Cabang'],
         icon: Handshake,
         children: [
             {
@@ -70,50 +117,8 @@ export const NavigationList = [
                 title: 'Data Sanggar',
                 href: '/admin/companies/sanggars',
                 permission: 'view-participant',
-                roles: ['Administrators'],
+                roles: ['Administrators', 'Cabang'],
                 icon: MapIcon,
-            },
-            {
-                title: 'Data Peserta',
-                href: dataPeserta.index().url,
-                permission: 'view-participant',
-                roles: ['Teacher'],
-                icon: GraduationCap,
-            },
-        ],
-    },
-    {
-        title: 'Master',
-        roles: ['Teacher'],
-        icon: GraduationCap,
-        children: [
-            {
-                title: 'Data Binaan',
-                href: binaan.index().url,
-                permission: 'view-participant',
-                roles: ['Teacher'],
-                icon: Users,
-            },
-            {
-                title: 'Data Sanggar',
-                href: sanggar.index().url,
-                permission: 'view-participant',
-                roles: ['Teacher'],
-                icon: MapIcon,
-            },
-        ],
-    },
-    {
-        title: 'Absensi',
-        roles: ['Teacher'],
-        icon: Handshake,
-        children: [
-            {
-                title: 'Absensi',
-                href: absensi.index().url,
-                permission: 'view-participant',
-                roles: ['Teacher'],
-                icon: Users,
             },
         ],
     },

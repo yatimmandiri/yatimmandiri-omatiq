@@ -317,6 +317,14 @@ const RowAction = ({
     row: any;
     setRefreshData: (val: any) => void;
 }) => {
+    const { auth } = usePage<any>().props;
+    const isCabang = (auth?.user?.roles ?? []).includes('Cabang');
+    const userPermissions: string[] = auth?.user?.permissions ?? [];
+    const isSuperAdmin = (auth?.user?.roles ?? []).includes('Administrators');
+
+    const canEdit = !isCabang && (isSuperAdmin || userPermissions.includes('update-student'));
+    const canDelete = !isCabang && (isSuperAdmin || userPermissions.includes('delete-student'));
+
     const [openDeleteModal, setOpenDeleteModal] = useState(false);
 
     const handleDelete = () => {
@@ -345,22 +353,28 @@ const RowAction = ({
                     >
                         <Eye className="mr-2 size-4" /> Detail
                     </DropdownMenuItem>
-                    <DropdownMenuItem
-                        onClick={() => router.visit(students.edit(row.id).url)}
-                    >
-                        <Pencil className="mr-2 size-4" /> Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                        onClick={() => setOpenDeleteModal(true)}
-                        className="text-destructive focus:text-destructive"
-                    >
-                        <Trash2 className="mr-2 size-4" /> Hapus
-                    </DropdownMenuItem>
+                    {canEdit && (
+                        <DropdownMenuItem
+                            onClick={() => router.visit(students.edit(row.id).url)}
+                        >
+                            <Pencil className="mr-2 size-4" /> Edit
+                        </DropdownMenuItem>
+                    )}
+                    {canDelete && (
+                        <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                                onClick={() => setOpenDeleteModal(true)}
+                                className="text-destructive focus:text-destructive"
+                            >
+                                <Trash2 className="mr-2 size-4" /> Hapus
+                            </DropdownMenuItem>
+                        </>
+                    )}
                 </DropdownMenuContent>
             </DropdownMenu>
 
-            {openDeleteModal && (
+            {canDelete && openDeleteModal && (
                 <Dialog
                     open={openDeleteModal}
                     onOpenChange={setOpenDeleteModal}

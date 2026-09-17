@@ -73,38 +73,73 @@ class PenyaluranService
 
     public function me(string $token): array
     {
+        if (request()?->hasSession() && request()->session()->has('penyaluran_me')) {
+            $sessionMe = request()->session()->get('penyaluran_me');
+            if (is_array($sessionMe) && ! empty($sessionMe)) {
+                return $sessionMe;
+            }
+        }
+
         $cacheKey = 'penyaluran:me:'.sha1($token);
 
-        return Cache::remember($cacheKey, 300, function () use ($token) {
-            $endpoint = 'api/v1/guru/me';
-
-            try {
-                $response = $this->client($token)->get($endpoint);
-            } catch (\Throwable $e) {
-                Log::error("Penyaluran API Connection Error on {$endpoint}", [
-                    'endpoint' => $endpoint,
-                    'error_class' => get_class($e),
-                    'error_message' => $e->getMessage(),
-                ]);
-
-                throw new \RuntimeException('Tidak dapat terhubung ke server Penyaluran untuk mengambil data profil. Silakan coba beberapa saat lagi.');
-            }
-
-            $this->assertSuccess($response, $endpoint);
+        $data = Cache::remember($cacheKey, 300, function () use ($token) {
+            $response = $this->client($token)->get('api/v1/guru/me');
+            $this->assertSuccess($response);
 
             return $response->json('data') ?? $response->json();
         });
+
+        if (request()?->hasSession() && is_array($data) && ! empty($data)) {
+            request()->session()->put('penyaluran_me', $data);
+            if (isset($data['sanggars']) && is_array($data['sanggars'])) {
+                request()->session()->put('penyaluran_sanggars', $data['sanggars']);
+            }
+            if (isset($data['students']) && is_array($data['students'])) {
+                request()->session()->put('penyaluran_students', $data['students']);
+            }
+        }
+
+        return $data;
     }
 
     /**
      * Get students list for authenticated guru.
-     * Primary source: GET api/v1/guru/me which provides students and sanggars directly in the profile response.
+     * Primary source: Session / GET api/v1/guru/me which provides students and sanggars directly in the profile response.
      * Normalizes gender P/L → male/female, maps school_level, and sanggar relations.
      *
      * @return array<int, array{student_id:int, name:string, nik:?string, nis:?string, gender:?string, school_name:?string, school_level:?string, class:?string, birth_date:?string, sanggar_id:?int, status:bool}>
      */
     public function students(string $token, ?int $sanggarId = null): array
     {
+        // 1. Check session first if available
+        if (request()?->hasSession() && request()->session()->has('penyaluran_students')) {
+            $rawStudents = request()->session()->get('penyaluran_students');
+            if (is_array($rawStudents) && ! empty($rawStudents)) {
+                $guruSanggars = request()->session()->get('penyaluran_sanggars') ?? [];
+                $defaultKantor = request()->session()->get('penyaluran_me')['kantor_name'] ?? null;
+
+                if ($sanggarId !== null) {
+                    $filtered = collect($rawStudents)->filter(function (array $s) use ($sanggarId, $guruSanggars) {
+                        if (isset($s['sanggar_id']) && $s['sanggar_id'] !== null) {
+                            return (int) $s['sanggar_id'] === (int) $sanggarId;
+                        }
+                        if (isset($s['sanggar_ids']) && is_array($s['sanggar_ids'])) {
+                            return in_array($sanggarId, array_map('intval', $s['sanggar_ids']), true);
+                        }
+                        if (count($guruSanggars) === 1 && (int) ($guruSanggars[0]['id'] ?? 0) === (int) $sanggarId) {
+                            return true;
+                        }
+
+                        return false;
+                    })->values()->all();
+
+                    return $this->normalizeStudents($filtered, $sanggarId, $guruSanggars, $defaultKantor);
+                }
+
+                return $this->normalizeStudents($rawStudents, null, $guruSanggars, $defaultKantor);
+            }
+        }
+
         $cacheKey = 'penyaluran:students:'.sha1($token).':'.($sanggarId ?? 'all');
 
         return Cache::remember($cacheKey, 120, function () use ($token, $sanggarId) {
@@ -118,6 +153,13 @@ class PenyaluranService
             if ($me && isset($me['students']) && is_array($me['students'])) {
                 $rawStudents = $me['students'];
                 $guruSanggars = is_array($me['sanggars'] ?? null) ? $me['sanggars'] : [];
+
+                if (request()?->hasSession()) {
+                    request()->session()->put('penyaluran_students', $rawStudents);
+                    if (! empty($guruSanggars)) {
+                        request()->session()->put('penyaluran_sanggars', $guruSanggars);
+                    }
+                }
 
                 if ($sanggarId !== null) {
                     $rawStudents = collect($rawStudents)->filter(function (array $s) use ($sanggarId, $guruSanggars) {
@@ -197,6 +239,14 @@ class PenyaluranService
         $baseKey = 'penyaluran:students:'.sha1($token);
         Cache::forget($baseKey.':all');
         Cache::forget('penyaluran:me:'.sha1($token));
+
+        if (request()?->hasSession()) {
+            request()->session()->forget([
+                'penyaluran_me',
+                'penyaluran_sanggars',
+                'penyaluran_students',
+            ]);
+        }
 
         try {
             $sanggars = $this->sanggars($token);
@@ -319,7 +369,16 @@ class PenyaluranService
 
         Cache::forget('penyaluran:me:'.sha1($token));
 
-        return $response->json('data') ?? $response->json();
+        $data = $response->json('data') ?? $response->json();
+
+        if (request()?->hasSession()) {
+            $me = request()->session()->get('penyaluran_me', []);
+            if (is_array($me)) {
+                request()->session()->put('penyaluran_me', array_merge($me, $attributes));
+            }
+        }
+
+        return $data;
     }
 
     /**
@@ -443,13 +502,24 @@ class PenyaluranService
 
     /**
      * Get sanggars list for authenticated guru.
-     * Primary source: GET api/v1/guru/me which provides sanggars array.
+     * Primary source: Session / GET api/v1/guru/me which provides sanggars array.
      */
     public function sanggars(string $token): array
     {
+        if (request()?->hasSession() && request()->session()->has('penyaluran_sanggars')) {
+            $sessionSanggars = request()->session()->get('penyaluran_sanggars');
+            if (is_array($sessionSanggars) && ! empty($sessionSanggars)) {
+                return $sessionSanggars;
+            }
+        }
+
         try {
             $me = $this->me($token);
             if (isset($me['sanggars']) && is_array($me['sanggars']) && ! empty($me['sanggars'])) {
+                if (request()?->hasSession()) {
+                    request()->session()->put('penyaluran_sanggars', $me['sanggars']);
+                }
+
                 return $me['sanggars'];
             }
         } catch (\Throwable $e) {
@@ -475,6 +545,10 @@ class PenyaluranService
         $data = $response->json('data');
         if (! is_array($data)) {
             return [];
+        }
+
+        if (request()?->hasSession() && ! empty($data)) {
+            request()->session()->put('penyaluran_sanggars', $data);
         }
 
         return $data;

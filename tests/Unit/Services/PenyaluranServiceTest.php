@@ -325,3 +325,31 @@ it('extracts teacher biodata from penyaluran profile and calculates completeness
         ->and($completeness['is_complete'])->toBeTrue()
         ->and($completeness['missing'])->toBeEmpty();
 });
+
+it('resolves students and sanggars directly from session when present without making HTTP calls', function () {
+    session()->put('penyaluran_sanggars', [
+        ['id' => 99, 'name' => 'Sanggar Session', 'type' => 'Genius'],
+    ]);
+    session()->put('penyaluran_students', [
+        [
+            'id' => 888,
+            'name' => 'Santri Session',
+            'nik' => '3578010101018888',
+            'gender' => 'L',
+            'sanggar_id' => 99,
+        ],
+    ]);
+
+    $service = new PenyaluranService;
+    $sanggars = $service->sanggars('any-token');
+    $students = $service->students('any-token');
+
+    expect(count($sanggars))->toBe(1)
+        ->and($sanggars[0]['name'])->toBe('Sanggar Session')
+        ->and(count($students))->toBe(1)
+        ->and($students[0]['name'])->toBe('Santri Session')
+        ->and($students[0]['gender'])->toBe('male');
+
+    Http::assertNothingSent();
+});
+

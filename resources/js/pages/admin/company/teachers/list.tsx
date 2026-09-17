@@ -34,13 +34,13 @@ export default function ListPage() {
             accessorKey: 'email',
         },
         {
-            header: (info: any) => renderRowHeader(info, 'No. Telepon'),
-            accessorKey: 'phone',
-            cell: (info: any) => (
-                <span className="text-xs">
-                    {info.getValue() || '-'}
-                </span>
-            ),
+            header: (info: any) => renderRowHeader(info, 'Kantor Cabang'),
+            accessorKey: 'branch',
+            cell: (info: any) => {
+                const row = info.row.original;
+
+                return row.branch ?? row.kantor_name ?? '-';
+            },
         },
         {
             header: (info: any) => renderRowHeader(info, 'Verified'),
@@ -92,7 +92,8 @@ export default function ListPage() {
                             'Kode Guru': item.penyaluran_code || '-',
                             Name: item.name,
                             Email: item.email,
-                            'No. Telepon': item.phone || '-',
+                            'Kantor Cabang':
+                                item.branch ?? item.kantor_name ?? '-',
                         }))
                     }
                 >

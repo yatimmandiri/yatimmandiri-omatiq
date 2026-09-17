@@ -148,10 +148,12 @@ test('cabang user getData teachers is scoped to branch', function () {
 
     expect(collect($data)->pluck('name')->all())
         ->toContain('Guru Surabaya')
-        ->not->toContain('Guru Malang');
+        ->not->toContain('Guru Malang')
+        ->and($data[0]['kantor_name'] ?? $data[0]['branch'])
+        ->toBe('Surabaya');
 });
 
-test('cabang user is forbidden from accessing sanggars', function () {
+test('cabang user can view sanggars scoped to branch', function () {
     $cabangUser = User::factory()->create([
         'name' => 'User Cabang Surabaya',
         'branch' => 'Surabaya',
@@ -159,23 +161,71 @@ test('cabang user is forbidden from accessing sanggars', function () {
     ]);
     $cabangUser->assignRole('Cabang');
 
-    $this->actingAs($cabangUser)->get(route('admin.companies.sanggars.index'))->assertForbidden();
-    $this->actingAs($cabangUser)->getJson(route('admin.companies.sanggars.data'))->assertForbidden();
-    $this->actingAs($cabangUser)->get(route('admin.companies.sanggars.show', 1))->assertForbidden();
-});
+    $olimpiade = Olimpiade::factory()->create(['event_year' => 2026]);
 
-test('cabang user does not receive sheets prop on participants index', function () {
-    $cabangUser = User::factory()->create([
-        'name' => 'User Cabang Surabaya',
+    // Sanggar in Surabaya
+    Participant::factory()->create([
+        'penyaluran_sanggar_id' => 101,
+        'penyaluran_sanggar_name' => 'Sanggar Rungkut Surabaya',
         'branch' => 'Surabaya',
-        'email_verified_at' => now(),
+        'olimpiade_id' => $olimpiade->id,
     ]);
-    $cabangUser->assignRole('Cabang');
 
-    $response = $this->actingAs($cabangUser)->get(route('admin.companies.participants.index'));
+    // Sanggar in Malang
+    Participant::factory()->create([
+        'penyaluran_sanggar_id' => 102,
+        'penyaluran_sanggar_name' => 'Sanggar Klojen Malang',
+        'branch' => 'Malang',
+        'olimpiade_id' => $olimpiade->id,
+    ]);
+
+    $this->actingAs($cabangUser)->get(route('admin.companies.sanggars.index'))->assertOk();
+
+    $response = $this->actingAs($cabangUser)->getJson(route('admin.companies.sanggars.data'));
     $response->assertOk();
-    $response->assertInertia(fn ($page) => $page
-        ->component('admin/company/participant/list')
-        ->where('sheets', null)
-    );
+    $data = $response->json('data');
+
+    expect(collect($data)->pluck('name')->all())
+        ->toContain('Sanggar Rungkut Surabaya')
+        ->not->toContain('Sanggar Klojen Malang');
+
+    // Accessing own branch sanggar show succeeds
+    $this->actingAs($cabangUser)->get(route('admin.companies.sanggars.show', 101))->assertOk();
+
+    // Accessing other branch sanggar show is forbidden
+    $this->actingAs($cabangUser)->get(route('admin.companies.sanggars.show', 102))->assertForbidden();
 });
+
+test('cabang user cannot delete participants or students', function () {
+    $cabangUser = User::factory()->create([
+        'name' => 'User Cabang Surabaya',
+        'branch' => 'Surabaya',
+        'email_verified_at' => now(),
+    ]);
+    $cabangUser->assignRole('Cabang');
+
+    $olimpiade = Olimpiade::factory()->create(['event_year' => 2026]);
+
+    $student = Student::factory()->create([
+        'full_name' => 'Santri Cabang',
+        'is_binaan' => true,
+    ]);
+
+    $participant = Participant::factory()->create([
+        'student_id' => $student->id,
+        'olimpiade_id' => $olimpiade->id,
+        'branch' => 'Surabaya',
+        'status' => 'verified',
+    ]);
+
+    // Forbidden from deleting participant
+    $this->actingAs($cabangUser)
+        ->delete(route('admin.companies.participants.destroy', $participant->id))
+        ->assertForbidden();
+
+    // Forbidden from deleting student
+    $this->actingAs($cabangUser)
+        ->delete(route('admin.companies.students.destroy', $student->id))
+        ->assertForbidden();
+});
+

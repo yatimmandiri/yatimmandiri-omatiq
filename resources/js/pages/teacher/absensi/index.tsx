@@ -34,6 +34,7 @@ import {
     Calendar,
     Check,
     CheckCircle2,
+    ClipboardCheck,
     Clock,
     Filter,
     GraduationCap,
@@ -281,14 +282,17 @@ export default function AbsensiPage() {
     }, [sessions, selectedSanggarFilter]);
 
     return (
-        <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
+        <div className="flex flex-1 flex-col gap-6 p-4 lg:p-6">
             {/* Header Area */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+                    <h1 className="flex items-center gap-2.5 text-2xl font-bold tracking-tight sm:text-3xl">
+                        <span className="flex size-9 items-center justify-center rounded-xl bg-[#17524A] text-white shadow-sm">
+                            <ClipboardCheck className="size-5" />
+                        </span>
                         Presensi &amp; Jurnal Mengajar
                     </h1>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-muted-foreground">
                         Kelola absensi kehadiran santri binaan dan pantau
                         capaian step modul pembelajaran per sanggar.
                     </p>

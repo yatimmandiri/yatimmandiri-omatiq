@@ -4,6 +4,7 @@ import { renderRowHeader } from '@/components/partials/dataTables/utils/dataTabl
 import { SelectComponent } from '@/components/partials/select-component';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -21,10 +22,13 @@ import {
     CircleSlash2,
     Clock3,
     Eye,
+    GraduationCap,
     MoreHorizontal,
     Pencil,
     RefreshCcw,
+    School,
     UserPlus,
+    Users,
     XCircle,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -51,24 +55,31 @@ export default function ListPage() {
             accessorKey: 'full_name',
             cell: (info: any) => {
                 const nik = info.row.original.nik;
+                const name = info.getValue() ?? '-';
                 const hasNik = Boolean(
                     nik &&
                     String(nik).trim() !== '' &&
                     String(nik).trim() !== '-',
                 );
+                const initial = String(name).charAt(0).toUpperCase();
 
                 return (
-                    <div className="space-y-1">
-                        <p className="font-semibold">{info.getValue()}</p>
-                        <p
-                            className={`text-xs ${
-                                hasNik
-                                    ? 'text-muted-foreground'
-                                    : 'font-medium text-amber-600 dark:text-amber-400'
-                            }`}
-                        >
-                            {hasNik ? nik : 'NIK belum diisi'}
-                        </p>
+                    <div className="flex items-center gap-3">
+                        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#17524A]/10 text-sm font-bold text-[#17524A] dark:bg-[#17524A]/20 dark:text-emerald-300">
+                            {initial}
+                        </span>
+                        <div className="space-y-0.5">
+                            <p className="font-semibold leading-none">{name}</p>
+                            <p
+                                className={`text-xs ${
+                                    hasNik
+                                        ? 'text-muted-foreground'
+                                        : 'font-medium text-amber-600 dark:text-amber-400'
+                                }`}
+                            >
+                                {hasNik ? nik : 'NIK belum diisi'}
+                            </p>
+                        </div>
                     </div>
                 );
             },
@@ -131,8 +142,47 @@ export default function ListPage() {
     ];
 
     return (
-        <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
-            <div className="relative min-h-screen flex-1 overflow-hidden rounded-xl border border-sidebar-border/70 md:min-h-min dark:border-sidebar-border">
+        <div className="flex h-full flex-1 flex-col gap-5 p-4 lg:p-6">
+            {/* Page Header */}
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                    <h1 className="flex items-center gap-2.5 text-2xl font-bold tracking-tight">
+                        <span className="flex size-9 items-center justify-center rounded-xl bg-[#17524A] text-white shadow-sm">
+                            <Users className="size-5" />
+                        </span>
+                        Data Binaan
+                    </h1>
+                    <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+                        Kelola roster santri binaan dari Penyaluran. Pantau
+                        status pendaftaran OMATIQ dan daftarkan binaan yang
+                        belum terdaftar.
+                    </p>
+                </div>
+                <div className="flex items-center gap-2">
+                    <Badge
+                        variant="outline"
+                        className="gap-1.5 border-[#17524A]/20 bg-[#17524A]/5 px-3 py-1.5 text-xs font-medium text-[#17524A] dark:text-emerald-300"
+                    >
+                        <School className="size-3.5" />
+                        {sanggars.length} Sanggar
+                    </Badge>
+                </div>
+            </div>
+
+            {/* Info hint */}
+            <Card className="flex items-start gap-3 rounded-2xl border-[#E5BE1E]/30 bg-amber-50/60 px-4 py-3 dark:bg-amber-950/20">
+                <GraduationCap className="mt-0.5 size-4 shrink-0 text-amber-700 dark:text-amber-400" />
+                <p className="text-xs leading-relaxed text-amber-900 dark:text-amber-200">
+                    <span className="font-semibold">Alur pendaftaran:</span>{' '}
+                    klik <em>Daftarkan</em> pada binaan yang belum terdaftar →
+                    pilih sanggar & olimpiade → otomatis{' '}
+                    <span className="font-semibold">terverifikasi & gratis</span>{' '}
+                    untuk jalur binaan. Gunakan filter sanggar & status untuk
+                    mempercepat pencarian.
+                </p>
+            </Card>
+
+            <div className="relative flex-1 overflow-hidden rounded-2xl border bg-card shadow-sm">
                 <DataTableProvider
                     columns={columns}
                     filterValue={filterValue}
@@ -157,7 +207,10 @@ export default function ListPage() {
                         }))
                     }
                 >
-                    <div className="flex flex-col space-y-4 px-4 pt-8 md:px-8">
+                    <div className="flex flex-col gap-4 border-b bg-muted/20 px-4 py-5 md:px-6">
+                        <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                            Filter Data
+                        </p>
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                             {sanggars.length > 0 && (
                                 <SelectComponent
@@ -206,7 +259,10 @@ export default function ListPage() {
 const RegistrationBadge = ({ row }: { row: any }) => {
     if (!row.is_registered && row.registration_status !== 'rejected') {
         return (
-            <Badge variant="secondary">
+            <Badge
+                variant="secondary"
+                className="gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium"
+            >
                 <CircleSlash2 className="size-3" />
                 Belum Terdaftar
             </Badge>
@@ -218,11 +274,11 @@ const RegistrationBadge = ({ row }: { row: any }) => {
     if (status === 'verified') {
         return (
             <div className="flex flex-col items-start gap-1">
-                <Badge>
+                <Badge className="gap-1.5 rounded-full bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-emerald-700">
                     <CheckCircle2 className="size-3" />
                     Terdaftar · {row.olimpiade_name ?? 'OMATIQ'}
                 </Badge>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs font-medium text-muted-foreground">
                     {row.registration_number}
                 </span>
             </div>
@@ -231,7 +287,10 @@ const RegistrationBadge = ({ row }: { row: any }) => {
 
     if (status === 'rejected') {
         return (
-            <Badge variant="destructive">
+            <Badge
+                variant="destructive"
+                className="gap-1.5 rounded-full px-2.5 py-1"
+            >
                 <XCircle className="size-3" />
                 Ditolak · {row.olimpiade_name ?? 'OMATIQ'}
             </Badge>
@@ -241,7 +300,10 @@ const RegistrationBadge = ({ row }: { row: any }) => {
     if (row.is_registered) {
         return (
             <div className="flex flex-col items-start gap-1">
-                <Badge variant="secondary">
+                <Badge
+                    variant="secondary"
+                    className="gap-1.5 rounded-full bg-amber-100 px-2.5 py-1 text-amber-800 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-300"
+                >
                     <Clock3 className="size-3" />
                     Menunggu · {row.olimpiade_name ?? 'OMATIQ'}
                 </Badge>
@@ -253,7 +315,7 @@ const RegistrationBadge = ({ row }: { row: any }) => {
     }
 
     return (
-        <Badge variant="secondary">
+        <Badge variant="secondary" className="gap-1.5 rounded-full">
             <CircleSlash2 className="size-3" />
             Belum Terdaftar
         </Badge>
