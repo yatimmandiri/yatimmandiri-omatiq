@@ -38,6 +38,7 @@ class SiteSetttingsRequest extends FormRequest
             'tiktok' => ['nullable', 'string', 'max:255'],
             'registration_public_open' => ['sometimes', 'boolean'],
             'registration_binaan_open' => ['sometimes', 'boolean'],
+            'maintenance_mode' => ['sometimes', 'boolean'],
             'sheets_sync_enabled' => ['sometimes', 'boolean'],
             'sheets_spreadsheet_id' => ['nullable', 'string', 'max:255'],
             'sheets_sheet_name' => ['nullable', 'string', 'max:255'],

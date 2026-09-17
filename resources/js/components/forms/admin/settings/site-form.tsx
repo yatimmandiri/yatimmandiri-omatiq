@@ -31,6 +31,7 @@ export const SiteForm = () => {
         tiktok: settings?.tiktok || '',
         registration_public_open: settings?.registration_public_open ?? true,
         registration_binaan_open: settings?.registration_binaan_open ?? true,
+        maintenance_mode: settings?.maintenance_mode ?? false,
         sheets_sync_enabled: settings?.sheets_sync_enabled ?? false,
         sheets_spreadsheet_id: settings?.sheets_spreadsheet_id ?? '',
         sheets_sheet_name: settings?.sheets_sheet_name ?? 'Data Peserta',
@@ -274,6 +275,16 @@ export const SiteForm = () => {
                                 }
                             />
                         </div>
+                    </div>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardContent className="p-4">
+                    <h3 className="mb-4 text-lg font-semibold">Maintenance Mode</h3>
+                    <p className="mb-4 text-xs text-muted-foreground">Aktifkan untuk menampilkan halaman pemeliharaan di omatiq.com (home, pendaftaran, olimpiade). Dashboard admin dan akses lokal 127.0.0.1 tetap bisa untuk pengujian.</p>
+                    <div className="flex items-center justify-between rounded-md border p-4">
+                        <Label>Aktifkan Maintenance</Label>
+                        <Switch checked={data.maintenance_mode} onCheckedChange={(checked) => setData('maintenance_mode', checked)} />
                     </div>
                 </CardContent>
             </Card>
