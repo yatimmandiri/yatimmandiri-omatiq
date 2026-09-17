@@ -2,20 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
-
-class CreateUserCabangSeeder extends Seeder
-{
-    /**
-     * Run the database seeds.
-     */
-    public function run(): void
-    {
-       <?php
-
-namespace Database\Seeders;
-
 use App\Models\Core\Role;
 use App\Models\Core\User;
 use Illuminate\Database\Seeder;
