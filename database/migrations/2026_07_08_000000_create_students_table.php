@@ -48,7 +48,7 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->unique(['nik', 'deleted_at']);
+            $table->unique(['nik', 'is_binaan', 'deleted_at']);
 
             $table->foreign('province_id')->references('id')->on('provinces')->nullOnDelete();
             $table->foreign('regency_id')->references('id')->on('regencies')->nullOnDelete();

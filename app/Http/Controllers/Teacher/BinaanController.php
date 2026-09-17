@@ -14,6 +14,7 @@ use App\Settings\SiteSettings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -241,7 +242,7 @@ class BinaanController extends Controller
         $this->authorize('create', Student::class);
 
         $request->validate([
-            'nik' => ['required', 'string', 'size:16', 'unique:students,nik'],
+            'nik' => ['required', 'string', 'size:16', Rule::unique('students', 'nik')->where('is_binaan', true)->whereNull('deleted_at')],
             'full_name' => ['required', 'string', 'max:255'],
             'gender' => ['required', 'in:male,female'],
             'birth_date' => ['required', 'date', 'before:today'],

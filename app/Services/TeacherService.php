@@ -67,8 +67,17 @@ class TeacherService
             }
 
             $student = Student::query()
-                ->where('penyaluran_id', $penyaluranId)
-                ->when($penyaluranStudent['nik'] ?? null, fn ($query, $studentNik) => $query->orWhere('nik', $studentNik))
+                ->where(function ($q) use ($penyaluranId, $penyaluranStudent) {
+                    if ($penyaluranId) {
+                        $q->where('penyaluran_id', $penyaluranId);
+                    }
+                    $studentNik = $penyaluranStudent['nik'] ?? null;
+                    if ($studentNik) {
+                        $q->orWhere(function ($sub) use ($studentNik) {
+                            $sub->where('nik', $studentNik)->where('is_binaan', true);
+                        });
+                    }
+                })
                 ->first();
 
             // Create/update Student master (is_binaan true, no User) with full data

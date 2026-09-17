@@ -108,7 +108,10 @@ class ParticipantRegistrationController extends Controller
             $data['payment_proof_path'] = $this->handlePaymentProof($request);
 
             $student = Student::firstOrCreate(
-                ['nik' => $request->nik],
+                [
+                    'nik' => $request->nik,
+                    'is_binaan' => false,
+                ],
                 $this->studentData($request),
             );
 

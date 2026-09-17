@@ -17,7 +17,7 @@ class UpdateStudentRequest extends FormRequest
         $studentId = $this->route('student')?->id;
 
         return [
-            'nik' => ['required', 'string', 'size:16', Rule::unique('students', 'nik')->ignore($studentId)],
+            'nik' => ['required', 'string', 'size:16', Rule::unique('students', 'nik')->where('is_binaan', $this->boolean('is_binaan'))->whereNull('deleted_at')->ignore($studentId)],
             'full_name' => ['required', 'string', 'max:255'],
             'nickname' => ['nullable', 'string', 'max:120'],
             'gender' => ['required', Rule::in(['male', 'female'])],
