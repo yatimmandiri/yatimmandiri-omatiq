@@ -60,7 +60,7 @@ export default function DetailPage() {
                                 Kantor Cabang
                             </span>
                             <span className="text-sm">
-                                {user.branch || '-'}
+                                {user.branch || user.kantor_name || '-'}
                             </span>
                         </li>
                         <li className="flex flex-col space-y-2">

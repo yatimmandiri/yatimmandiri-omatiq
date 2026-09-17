@@ -24,6 +24,15 @@ class User extends Authenticatable
 {
     use HasFactory, HasRoles, LogsActivity, Notifiable, TwoFactorAuthenticatable;
 
+    protected $appends = [
+        'kantor_name',
+    ];
+
+    public function getKantorNameAttribute(): ?string
+    {
+        return $this->getBranchName();
+    }
+
     public function getBranchName(): ?string
     {
         if (! empty($this->branch)) {
@@ -130,8 +139,12 @@ class User extends Authenticatable
     public function scopeSearch(Builder $query, ?string $search)
     {
         return $query->when($search, function ($q, $search) {
-            $q->where('name', 'like', "%{$search}%")
-                ->orWhere('email', 'like', "%{$search}%");
+            $q->where(function ($sub) use ($search) {
+                $sub->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('branch', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%");
+            });
         });
     }
 }

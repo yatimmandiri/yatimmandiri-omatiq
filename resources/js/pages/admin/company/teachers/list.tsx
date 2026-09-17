@@ -25,6 +25,15 @@ export default function ListPage() {
             accessorKey: 'email',
         },
         {
+            header: (info: any) => renderRowHeader(info, 'Kantor Cabang'),
+            accessorKey: 'branch',
+            cell: (info: any) => {
+                const row = info.row.original;
+
+                return row.branch ?? row.kantor_name ?? '-';
+            },
+        },
+        {
             header: (info: any) => renderRowHeader(info, 'Verified'),
             accessorKey: 'email_verified_at',
             cell: (info: any) =>
@@ -73,6 +82,8 @@ export default function ListPage() {
                             No: i + 1,
                             Name: item.name,
                             Email: item.email,
+                            'Kantor Cabang':
+                                item.branch ?? item.kantor_name ?? '-',
                         }))
                     }
                 >

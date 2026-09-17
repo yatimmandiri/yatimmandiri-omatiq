@@ -75,8 +75,11 @@ class TeacherController extends Controller
         $this->authorize('data-user', User::class);
 
         $user = Auth::user();
-        $allowed = ['id', 'name', 'email', 'created_at', 'updated_at'];
+        $allowed = ['id', 'name', 'email', 'branch', 'created_at', 'updated_at'];
         $orderBy = in_array($request->input('orderBy'), $allowed, true) ? $request->input('orderBy') : 'id';
+        if ($request->input('orderBy') === 'kantor_name') {
+            $orderBy = 'branch';
+        }
         $direction = strtolower((string) $request->input('orderDirection')) === 'asc' ? 'asc' : 'desc';
         $perPage = min($request->integer('perPage') ?: 10, 100);
 

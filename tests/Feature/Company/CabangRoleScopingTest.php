@@ -148,7 +148,9 @@ test('cabang user getData teachers is scoped to branch', function () {
 
     expect(collect($data)->pluck('name')->all())
         ->toContain('Guru Surabaya')
-        ->not->toContain('Guru Malang');
+        ->not->toContain('Guru Malang')
+        ->and($data[0]['kantor_name'] ?? $data[0]['branch'])
+        ->toBe('Surabaya');
 });
 
 test('cabang user is forbidden from accessing sanggars', function () {
