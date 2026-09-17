@@ -55,6 +55,7 @@ test('cabang user sees scoped dashboard metrics for their branch', function () {
         ->where('participantCount', 1)
         ->where('verifiedParticipantCount', 1)
         ->where('branchName', 'Surabaya')
+        ->where('isCabang', true)
     );
 });
 

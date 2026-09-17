@@ -20,6 +20,7 @@ export default function Dashboard() {
     const {
         pageTitle = 'Dashboard Admin',
         branchName,
+        isCabang = false,
         participantCount = 0,
         verifiedParticipantCount = 0,
         submittedParticipantCount = 0,
@@ -29,6 +30,7 @@ export default function Dashboard() {
     } = usePage<{
         pageTitle?: string;
         branchName?: string | null;
+        isCabang?: boolean;
         participantCount?: number;
         verifiedParticipantCount?: number;
         submittedParticipantCount?: number;
@@ -60,7 +62,7 @@ export default function Dashboard() {
                             </h1>
                             <p className="mt-2 max-w-2xl text-sm leading-6 text-white/70">
                                 {branchName
-                                    ? `Pantau pendaftaran santri, verifikasi peserta, dan guru binaan wilayah ${branchName}.`
+                                    ? `Pantau pendaftaran dan verifikasi peserta wilayah ${branchName}.`
                                     : 'Pantau pendaftaran, verifikasi, guru, dan olimpiade — semua dalam satu command center.'}
                             </p>
                             <div className="mt-4 flex items-center gap-3">
@@ -85,19 +87,27 @@ export default function Dashboard() {
                             >
                                 Kelola Peserta <ArrowRight className="size-4" />
                             </Link>
-                            <Link
-                                href={teachers.index().url}
-                                prefetch
-                                className="inline-flex items-center gap-2 rounded-2xl bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur hover:bg-white/15"
-                            >
-                                Data Guru
-                            </Link>
+                            {!isCabang && (
+                                <Link
+                                    href={teachers.index().url}
+                                    prefetch
+                                    className="inline-flex items-center gap-2 rounded-2xl bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur hover:bg-white/15"
+                                >
+                                    Data Guru
+                                </Link>
+                            )}
                         </div>
                     </div>
                 </div>
 
                 {/* Metrics */}
-                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                <div
+                    className={
+                        isCabang
+                            ? 'grid gap-4 sm:grid-cols-3'
+                            : 'grid gap-4 sm:grid-cols-2 xl:grid-cols-3'
+                    }
+                >
                     <Metric
                         label="Total Peserta"
                         value={participantCount}
@@ -119,51 +129,66 @@ export default function Dashboard() {
                         icon={<ClipboardList />}
                         accent="#f59e0b"
                     />
-                    <Metric
-                        label="Total Guru"
-                        value={teacherCount}
-                        sub="Akun terhubung"
-                        icon={<UserCheck />}
-                        accent="#0ea5e9"
-                    />
-                    <Metric
-                        label="Total Binaan"
-                        value={studentCount}
-                        sub="Is_binaan = true"
-                        icon={<GraduationCap />}
-                        accent="#8b5cf6"
-                    />
-                    <Metric
-                        label="Olimpiade"
-                        value={olimpiadeCount}
-                        sub="Kategori aktif"
-                        icon={<Trophy />}
-                        accent="#E5BE1E"
-                        dark
-                    />
+                    {!isCabang && (
+                        <>
+                            <Metric
+                                label="Total Guru"
+                                value={teacherCount}
+                                sub="Akun terhubung"
+                                icon={<UserCheck />}
+                                accent="#0ea5e9"
+                            />
+                            <Metric
+                                label="Total Binaan"
+                                value={studentCount}
+                                sub="Is_binaan = true"
+                                icon={<GraduationCap />}
+                                accent="#8b5cf6"
+                            />
+                            <Metric
+                                label="Olimpiade"
+                                value={olimpiadeCount}
+                                sub="Kategori aktif"
+                                icon={<Trophy />}
+                                accent="#E5BE1E"
+                                dark
+                            />
+                        </>
+                    )}
                 </div>
 
                 {/* Quick links */}
-                <div className="grid gap-4 lg:grid-cols-3">
-                    <Quick
-                        title="Data Peserta"
-                        desc="Validasi pembayaran & status pendaftaran."
-                        href={participants.index().url}
-                        icon={<Users className="size-5" />}
-                    />
-                    <Quick
-                        title="Data Guru"
-                        desc="Koneksi Penyaluran & reset password."
-                        href={teachers.index().url}
-                        icon={<GraduationCap className="size-5" />}
-                    />
-                    <Quick
-                        title="Olimpiade"
-                        desc="Kategori, jadwal, dan konten."
-                        href={olimpiades.index().url}
-                        icon={<Trophy className="size-5" />}
-                    />
-                </div>
+                {!isCabang ? (
+                    <div className="grid gap-4 lg:grid-cols-3">
+                        <Quick
+                            title="Data Peserta"
+                            desc="Validasi pembayaran & status pendaftaran."
+                            href={participants.index().url}
+                            icon={<Users className="size-5" />}
+                        />
+                        <Quick
+                            title="Data Guru"
+                            desc="Koneksi Penyaluran & reset password."
+                            href={teachers.index().url}
+                            icon={<GraduationCap className="size-5" />}
+                        />
+                        <Quick
+                            title="Olimpiade"
+                            desc="Kategori, jadwal, dan konten."
+                            href={olimpiades.index().url}
+                            icon={<Trophy className="size-5" />}
+                        />
+                    </div>
+                ) : (
+                    <div className="grid gap-4">
+                        <Quick
+                            title="Data Peserta"
+                            desc="Validasi status pendaftaran dan pantau data peserta cabang."
+                            href={participants.index().url}
+                            icon={<Users className="size-5" />}
+                        />
+                    </div>
+                )}
             </div>
         </>
     );

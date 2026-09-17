@@ -29,38 +29,17 @@ class DashboardService
         $branch = $user->getBranchName();
 
         $participantQuery = Participant::query();
-        $studentQuery = Student::query()->where('is_binaan', true);
-        $teacherQuery = User::role('Teacher');
 
         if (filled($branch)) {
             $participantQuery->where(function ($q) use ($branch) {
                 $q->where('branch', $branch)
                     ->orWhere('branch', 'like', "%{$branch}%");
             });
-
-            $studentQuery->where(function ($q) use ($branch) {
-                $q->whereHas('participants', function ($pq) use ($branch) {
-                    $pq->where('branch', $branch)->orWhere('branch', 'like', "%{$branch}%");
-                })->orWhereHas('mentor', function ($mq) use ($branch) {
-                    $mq->where('branch', $branch)->orWhere('branch', 'like', "%{$branch}%");
-                });
-            });
-
-            $teacherQuery->where(function ($q) use ($branch) {
-                $q->where('branch', $branch)
-                    ->orWhere('branch', 'like', "%{$branch}%")
-                    ->orWhereHas('participants', function ($pq) use ($branch) {
-                        $pq->where('branch', $branch)->orWhere('branch', 'like', "%{$branch}%");
-                    });
-            });
         }
 
         $participantCount = (clone $participantQuery)->count();
         $verifiedParticipantCount = (clone $participantQuery)->where('status', 'verified')->count();
         $submittedParticipantCount = (clone $participantQuery)->where('status', 'submitted')->count();
-        $teacherCount = $teacherQuery->count();
-        $studentCount = $studentQuery->count();
-        $olimpiadeCount = Olimpiade::count();
 
         $title = $branch ? "Dashboard Cabang {$branch}" : 'Dashboard Cabang';
 
@@ -69,12 +48,10 @@ class DashboardService
             'data' => [
                 'pageTitle' => $title,
                 'branchName' => $branch,
+                'isCabang' => true,
                 'participantCount' => $participantCount,
                 'verifiedParticipantCount' => $verifiedParticipantCount,
                 'submittedParticipantCount' => $submittedParticipantCount,
-                'teacherCount' => $teacherCount,
-                'studentCount' => $studentCount,
-                'olimpiadeCount' => $olimpiadeCount,
             ],
         ];
     }
