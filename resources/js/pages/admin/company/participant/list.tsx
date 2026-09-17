@@ -259,7 +259,8 @@ export default function ListPage() {
                     }
                 >
                     <div className="flex flex-col gap-4 px-4 pt-8 md:px-8">
-                        <div className="rounded-xl border bg-muted/20 p-4">
+                        {sheets && !auth?.user?.roles?.includes('Cabang') && (
+                            <div className="rounded-xl border bg-muted/20 p-4">
                             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                 <div className="space-y-1">
                                     <div className="flex items-center gap-2 text-sm font-semibold">
@@ -314,6 +315,7 @@ export default function ListPage() {
                                 </div>
                             </div>
                         </div>
+                        )}
 
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                             <div>

@@ -20,7 +20,11 @@ class SanggarController extends Controller
         $this->authorize('viewAny', Participant::class);
 
         $user = Auth::user();
-        $userBranch = $user?->hasRole('Cabang') ? $user->getBranchName() : null;
+        if ($user?->hasRole('Cabang')) {
+            abort(403);
+        }
+
+        $userBranch = null;
 
         return Inertia::render('admin/company/sanggars/list', [
             'userBranch' => $userBranch,
@@ -32,8 +36,9 @@ class SanggarController extends Controller
         $this->authorize('viewAny', Participant::class);
 
         $user = Auth::user();
-        $isCabang = $user && $user->hasRole('Cabang');
-        $userBranch = $isCabang ? $user->getBranchName() : null;
+        if ($user?->hasRole('Cabang')) {
+            abort(403);
+        }
 
         $token = $request->session()->get('penyaluran_token')
             ?? $user?->penyaluran_token
@@ -107,6 +112,10 @@ class SanggarController extends Controller
         $this->authorize('viewAny', Participant::class);
 
         $user = Auth::user();
+        if ($user?->hasRole('Cabang')) {
+            abort(403);
+        }
+
         $token = request()->session()->get('penyaluran_token')
             ?? $user?->penyaluran_token
             ?? User::role('Teacher')->whereNotNull('penyaluran_token')->value('penyaluran_token');

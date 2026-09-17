@@ -150,7 +150,7 @@ test('cabang user getData teachers is scoped to branch', function () {
         ->not->toContain('Guru Malang');
 });
 
-test('cabang user getData sanggars is scoped to branch', function () {
+test('cabang user is forbidden from accessing sanggars', function () {
     $cabangUser = User::factory()->create([
         'name' => 'User Cabang Surabaya',
         'branch' => 'Surabaya',
@@ -158,28 +158,23 @@ test('cabang user getData sanggars is scoped to branch', function () {
     ]);
     $cabangUser->assignRole('Cabang');
 
-    $olimpiade = Olimpiade::factory()->create(['event_year' => 2026]);
+    $this->actingAs($cabangUser)->get(route('admin.companies.sanggars.index'))->assertForbidden();
+    $this->actingAs($cabangUser)->getJson(route('admin.companies.sanggars.data'))->assertForbidden();
+    $this->actingAs($cabangUser)->get(route('admin.companies.sanggars.show', 1))->assertForbidden();
+});
 
-    Participant::factory()->create([
-        'olimpiade_id' => $olimpiade->id,
-        'penyaluran_sanggar_name' => 'Sanggar Rungkut',
-        'penyaluran_sanggar_id' => 101,
+test('cabang user does not receive sheets prop on participants index', function () {
+    $cabangUser = User::factory()->create([
+        'name' => 'User Cabang Surabaya',
         'branch' => 'Surabaya',
+        'email_verified_at' => now(),
     ]);
+    $cabangUser->assignRole('Cabang');
 
-    Participant::factory()->create([
-        'olimpiade_id' => $olimpiade->id,
-        'penyaluran_sanggar_name' => 'Sanggar Klojen',
-        'penyaluran_sanggar_id' => 102,
-        'branch' => 'Malang',
-    ]);
-
-    $response = $this->actingAs($cabangUser)->getJson(route('admin.companies.sanggars.data'));
-
+    $response = $this->actingAs($cabangUser)->get(route('admin.companies.participants.index'));
     $response->assertOk();
-    $data = $response->json('data');
-
-    expect(collect($data)->pluck('name')->all())
-        ->toContain('Sanggar Rungkut')
-        ->not->toContain('Sanggar Klojen');
+    $response->assertInertia(fn ($page) => $page
+        ->component('admin/company/participant/list')
+        ->where('sheets', null)
+    );
 });
