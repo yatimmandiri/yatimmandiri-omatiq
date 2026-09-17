@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             OlimpiadeScheduleSeeder::class,
             TestimonialSeeder::class,
             StudentSeeder::class,
+            CreateUserCabangSeeder::class,
             // ParticipantSeeder::class,
         ]);
     }
