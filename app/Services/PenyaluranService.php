@@ -73,8 +73,8 @@ class PenyaluranService
 
     public function me(string $token): array
     {
-        if (request()?->hasSession() && request()->session()->has('penyaluran_me')) {
-            $sessionMe = request()->session()->get('penyaluran_me');
+        if (session()->has('penyaluran_me')) {
+            $sessionMe = session()->get('penyaluran_me');
             if (is_array($sessionMe) && ! empty($sessionMe)) {
                 return $sessionMe;
             }
@@ -89,13 +89,13 @@ class PenyaluranService
             return $response->json('data') ?? $response->json();
         });
 
-        if (request()?->hasSession() && is_array($data) && ! empty($data)) {
-            request()->session()->put('penyaluran_me', $data);
+        if (is_array($data) && ! empty($data)) {
+            session()->put('penyaluran_me', $data);
             if (isset($data['sanggars']) && is_array($data['sanggars'])) {
-                request()->session()->put('penyaluran_sanggars', $data['sanggars']);
+                session()->put('penyaluran_sanggars', $data['sanggars']);
             }
             if (isset($data['students']) && is_array($data['students'])) {
-                request()->session()->put('penyaluran_students', $data['students']);
+                session()->put('penyaluran_students', $data['students']);
             }
         }
 
@@ -112,11 +112,11 @@ class PenyaluranService
     public function students(string $token, ?int $sanggarId = null): array
     {
         // 1. Check session first if available
-        if (request()?->hasSession() && request()->session()->has('penyaluran_students')) {
-            $rawStudents = request()->session()->get('penyaluran_students');
+        if (session()->has('penyaluran_students')) {
+            $rawStudents = session()->get('penyaluran_students');
             if (is_array($rawStudents) && ! empty($rawStudents)) {
-                $guruSanggars = request()->session()->get('penyaluran_sanggars') ?? [];
-                $defaultKantor = request()->session()->get('penyaluran_me')['kantor_name'] ?? null;
+                $guruSanggars = session()->get('penyaluran_sanggars') ?? [];
+                $defaultKantor = session()->get('penyaluran_me')['kantor_name'] ?? null;
 
                 if ($sanggarId !== null) {
                     $filtered = collect($rawStudents)->filter(function (array $s) use ($sanggarId, $guruSanggars) {
@@ -154,11 +154,9 @@ class PenyaluranService
                 $rawStudents = $me['students'];
                 $guruSanggars = is_array($me['sanggars'] ?? null) ? $me['sanggars'] : [];
 
-                if (request()?->hasSession()) {
-                    request()->session()->put('penyaluran_students', $rawStudents);
-                    if (! empty($guruSanggars)) {
-                        request()->session()->put('penyaluran_sanggars', $guruSanggars);
-                    }
+                session()->put('penyaluran_students', $rawStudents);
+                if (! empty($guruSanggars)) {
+                    session()->put('penyaluran_sanggars', $guruSanggars);
                 }
 
                 if ($sanggarId !== null) {
@@ -240,13 +238,11 @@ class PenyaluranService
         Cache::forget($baseKey.':all');
         Cache::forget('penyaluran:me:'.sha1($token));
 
-        if (request()?->hasSession()) {
-            request()->session()->forget([
-                'penyaluran_me',
-                'penyaluran_sanggars',
-                'penyaluran_students',
-            ]);
-        }
+        session()->forget([
+            'penyaluran_me',
+            'penyaluran_sanggars',
+            'penyaluran_students',
+        ]);
 
         try {
             $sanggars = $this->sanggars($token);
@@ -371,10 +367,10 @@ class PenyaluranService
 
         $data = $response->json('data') ?? $response->json();
 
-        if (request()?->hasSession()) {
-            $me = request()->session()->get('penyaluran_me', []);
+        if (session()->has('penyaluran_me')) {
+            $me = session()->get('penyaluran_me', []);
             if (is_array($me)) {
-                request()->session()->put('penyaluran_me', array_merge($me, $attributes));
+                session()->put('penyaluran_me', array_merge($me, $attributes));
             }
         }
 
@@ -506,8 +502,8 @@ class PenyaluranService
      */
     public function sanggars(string $token): array
     {
-        if (request()?->hasSession() && request()->session()->has('penyaluran_sanggars')) {
-            $sessionSanggars = request()->session()->get('penyaluran_sanggars');
+        if (session()->has('penyaluran_sanggars')) {
+            $sessionSanggars = session()->get('penyaluran_sanggars');
             if (is_array($sessionSanggars) && ! empty($sessionSanggars)) {
                 return $sessionSanggars;
             }
@@ -516,9 +512,7 @@ class PenyaluranService
         try {
             $me = $this->me($token);
             if (isset($me['sanggars']) && is_array($me['sanggars']) && ! empty($me['sanggars'])) {
-                if (request()?->hasSession()) {
-                    request()->session()->put('penyaluran_sanggars', $me['sanggars']);
-                }
+                session()->put('penyaluran_sanggars', $me['sanggars']);
 
                 return $me['sanggars'];
             }
@@ -547,8 +541,8 @@ class PenyaluranService
             return [];
         }
 
-        if (request()?->hasSession() && ! empty($data)) {
-            request()->session()->put('penyaluran_sanggars', $data);
+        if (! empty($data)) {
+            session()->put('penyaluran_sanggars', $data);
         }
 
         return $data;

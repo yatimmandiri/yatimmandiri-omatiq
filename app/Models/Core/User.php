@@ -143,7 +143,8 @@ class User extends Authenticatable
                 $sub->where('name', 'like', "%{$search}%")
                     ->orWhere('email', 'like', "%{$search}%")
                     ->orWhere('branch', 'like', "%{$search}%")
-                    ->orWhere('phone', 'like', "%{$search}%");
+                    ->orWhere('phone', 'like', "%{$search}%")
+                    ->orWhere('penyaluran_code', 'like', "%{$search}%");
             });
         });
     }

@@ -11,7 +11,7 @@ class ParticipantPolicy
     public function viewAny(User $user): bool
     {
         if ($user->hasRole('Administrators') || $user->hasRole('Cabang')) {
-            return $user->hasPermissionTo('view-participant');
+            return true;
         }
 
         if ($user->hasRole('Teacher')) {
@@ -124,7 +124,7 @@ class ParticipantPolicy
     public function dataParticipant(User $user): bool
     {
         if ($user->hasRole('Administrators') || $user->hasRole('Cabang')) {
-            return $user->hasPermissionTo('data-participant');
+            return true;
         }
 
         if ($user->hasRole('Teacher')) {
