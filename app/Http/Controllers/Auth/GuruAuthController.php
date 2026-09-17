@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Auth;
 
 use App\Concerns\Traits\LogActivity;
 use App\Http\Controllers\Controller;
+use App\Models\Company\Participant;
+use App\Models\Company\Student;
 use App\Models\Core\User;
 use App\Services\PenyaluranService;
 use App\Services\PhoneOtpService;
@@ -59,38 +61,121 @@ class GuruAuthController extends Controller
         try {
             $token = $this->penyaluran->loginGuru($phone);
         } catch (\Throwable $e) {
-            return back()->withErrors(['phone' => $e->getMessage() ?: 'Gagal login guru. Periksa nomor HP.']);
+            return back()->withErrors(['phone' => $e->getMessage() ?: 'Gagal login guru. Silakan periksa kembali nomor HP Anda atau coba beberapa saat lagi.'])->withInput();
         }
 
         try {
             $profile = $this->penyaluran->me($token);
         } catch (\Throwable $e) {
-            return back()->withErrors(['phone' => 'Gagal mengambil profil guru: '.$e->getMessage()]);
+            return back()->withErrors(['phone' => $e->getMessage() ?: 'Gagal mengambil data profil guru dari server Penyaluran.'])->withInput();
         }
 
-        $penyaluranId = $profile['id'] ?? null;
+        $teacherData = $profile['teacher'] ?? $profile['data']['teacher'] ?? $profile;
+        $penyaluranId = $teacherData['id'] ?? $profile['id'] ?? null;
+        $penyaluranCode = $teacherData['code'] ?? $profile['code'] ?? null;
+        $penyaluranName = $teacherData['name'] ?? $profile['name'] ?? null;
+        $penyaluranEmail = $teacherData['email'] ?? $profile['email'] ?? null;
+        $guruBranch = $teacherData['kantor_name'] ?? $profile['kantor_name'] ?? $profile['sanggars'][0]['kantor_name'] ?? null;
+
         if (! $penyaluranId) {
-            return back()->withErrors(['phone' => 'Profil guru tidak valid (id kosong).']);
+            return back()->withErrors(['phone' => 'Data profil guru dari Penyaluran tidak lengkap. Silakan hubungi admin.'])->withInput();
         }
 
-        // Find or create local Teacher user; email is completed by the teacher after first login.
-        $user = User::firstOrCreate(
-            ['penyaluran_id' => $penyaluranId],
-            [
-                'name' => $profile['name'] ?? 'Guru '.$penyaluranId,
-                'email' => 'guru'.$penyaluranId.'@penyaluran.local',
+        // 1. Search for existing teacher candidates by: penyaluran_id, penyaluran_code, phone (all formats), or official email
+        $cleanPhone = preg_replace('/\D+/', '', $phone);
+        $trimmed62 = preg_replace('/^62/', '', $cleanPhone);
+
+        $candidates = User::query()
+            ->where(function ($q) use ($penyaluranId, $penyaluranCode, $cleanPhone, $trimmed62, $penyaluranEmail) {
+                if ($penyaluranId) {
+                    $q->orWhere('penyaluran_id', $penyaluranId);
+                }
+                if ($penyaluranCode) {
+                    $q->orWhere('penyaluran_code', $penyaluranCode);
+                }
+                if ($cleanPhone) {
+                    $q->orWhere('phone', $cleanPhone)
+                        ->orWhere('phone', '0'.$trimmed62)
+                        ->orWhere('phone', '62'.$trimmed62)
+                        ->orWhere('phone', 'like', '%'.$trimmed62);
+                }
+                if (! empty($penyaluranEmail) && filter_var($penyaluranEmail, FILTER_VALIDATE_EMAIL)) {
+                    $q->orWhere('email', strtolower($penyaluranEmail));
+                }
+            })
+            ->withCount(['participants', 'students'])
+            ->get();
+
+        $user = null;
+        if ($candidates->isNotEmpty()) {
+            // First check if any candidate matches the provided password
+            $matchingPasswordUser = $candidates->first(fn ($c) => Hash::check($password, $c->password));
+
+            if ($matchingPasswordUser) {
+                $user = $matchingPasswordUser;
+            } else {
+                // Otherwise pick candidate with highest weight (participants, completed profile, official email)
+                $user = $candidates->sortByDesc(function ($c) {
+                    return ($c->participants_count * 100)
+                        + ($c->students_count * 10)
+                        + ($c->teacher_profile_completed_at ? 50 : 0)
+                        + (! str_ends_with((string) $c->email, '@penyaluran.local') ? 20 : 0)
+                        + ($c->id * 0.001);
+                })->first();
+            }
+
+            // Consolidate data from other duplicate candidates to this primary user if needed
+            $otherDuplicates = $candidates->where('id', '!=', $user->id);
+            foreach ($otherDuplicates as $dup) {
+                if ($dup->participants_count > 0) {
+                    Participant::where('mentor_id', $dup->id)->update(['mentor_id' => $user->id]);
+                }
+                if ($dup->students_count > 0) {
+                    Student::where('mentor_id', $dup->id)->update(['mentor_id' => $user->id]);
+                }
+            }
+        }
+
+        // 2. Email determination: If Penyaluran already has a real unique email, adopt it.
+        if (! $user) {
+            $initialEmail = 'guru'.$penyaluranId.'@penyaluran.local';
+            $teacherProfileCompletedAt = null;
+
+            if (! empty($penyaluranEmail) && filter_var($penyaluranEmail, FILTER_VALIDATE_EMAIL)) {
+                if (! User::where('email', strtolower($penyaluranEmail))->exists()) {
+                    $initialEmail = strtolower($penyaluranEmail);
+                    $teacherProfileCompletedAt = now();
+                }
+            }
+
+            $user = User::create([
+                'name' => $penyaluranName ?? 'Guru '.$penyaluranId,
+                'email' => $initialEmail,
                 'phone' => $phone,
+                'penyaluran_id' => $penyaluranId,
+                'penyaluran_code' => $penyaluranCode,
                 'password' => Hash::make('password'),
-            ],
-        );
+                'teacher_profile_completed_at' => $teacherProfileCompletedAt,
+                'email_verified_at' => now(),
+            ]);
+        } else {
+            // If existing user has placeholder email but Penyaluran now provides a real email
+            if (str_ends_with((string) $user->email, '@penyaluran.local') && ! empty($penyaluranEmail) && filter_var($penyaluranEmail, FILTER_VALIDATE_EMAIL)) {
+                if (! User::where('email', strtolower($penyaluranEmail))->where('id', '!=', $user->id)->exists()) {
+                    $user->email = strtolower($penyaluranEmail);
+                    $user->teacher_profile_completed_at = now();
+                    $user->email_verified_at = now();
+                }
+            }
+        }
 
-        $guruBranch = $profile['kantor_name'] ?? $profile['sanggars'][0]['kantor_name'] ?? null;
-
-        // Sync profile data without overwriting custom password
+        // 3. Sync profile metadata
         $user->forceFill([
-            'name' => $profile['name'] ?? $user->name,
+            'name' => $penyaluranName ?? $user->name,
             'phone' => $phone,
             'branch' => $guruBranch ?? $user->branch,
+            'penyaluran_id' => $penyaluranId,
+            'penyaluran_code' => $penyaluranCode ?? $user->penyaluran_code,
             'penyaluran_token' => $token,
         ])->save();
 
@@ -192,7 +277,7 @@ class GuruAuthController extends Controller
                 $this->penyaluran->updateMe($token, ['email' => $validated['email']]);
             } catch (\Throwable $e) {
                 return back()
-                    ->withErrors(['email' => 'Gagal memperbarui email di server Penyaluran: '.$e->getMessage()])
+                    ->withErrors(['email' => $e->getMessage() ?: 'Gagal memperbarui email di server Penyaluran. Silakan coba beberapa saat lagi.'])
                     ->withInput();
             }
         }

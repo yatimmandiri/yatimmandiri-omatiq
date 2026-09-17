@@ -136,14 +136,15 @@ class SanggarController extends Controller
             // Check DB fallback
             $dbRow = Participant::query()
                 ->where('penyaluran_sanggar_id', $sanggar)
-                ->first(['penyaluran_sanggar_id as id', 'penyaluran_sanggar_name as name', 'branch as kantor_name']);
+                ->first();
 
             if ($dbRow) {
                 $found = [
-                    'id' => $dbRow->id,
-                    'name' => $dbRow->name,
+                    'id' => (int) ($dbRow->penyaluran_sanggar_id ?: $sanggar),
+                    'name' => $dbRow->penyaluran_sanggar_name,
                     'type' => 'Sanggar Binaan',
-                    'kantor_name' => $dbRow->kantor_name,
+                    'kantor_name' => $dbRow->branch,
+                    'branch' => $dbRow->branch,
                 ];
             }
         }

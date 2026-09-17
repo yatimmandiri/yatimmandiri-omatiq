@@ -17,12 +17,30 @@ export default function ListPage() {
 
     const columns = [
         {
+            header: (info: any) => renderRowHeader(info, 'Kode Guru'),
+            accessorKey: 'penyaluran_code',
+            cell: (info: any) => (
+                <span className="font-mono text-xs font-semibold text-primary">
+                    {info.getValue() || '-'}
+                </span>
+            ),
+        },
+        {
             header: (info: any) => renderRowHeader(info, 'Name'),
             accessorKey: 'name',
         },
         {
             header: (info: any) => renderRowHeader(info, 'Email'),
             accessorKey: 'email',
+        },
+        {
+            header: (info: any) => renderRowHeader(info, 'No. Telepon'),
+            accessorKey: 'phone',
+            cell: (info: any) => (
+                <span className="text-xs">
+                    {info.getValue() || '-'}
+                </span>
+            ),
         },
         {
             header: (info: any) => renderRowHeader(info, 'Kantor Cabang'),
@@ -80,8 +98,10 @@ export default function ListPage() {
                     formatDataExport={(items: any[]) =>
                         items.map((item: any, i: number) => ({
                             No: i + 1,
+                            'Kode Guru': item.penyaluran_code || '-',
                             Name: item.name,
                             Email: item.email,
+                            'No. Telepon': item.phone || '-',
                             'Kantor Cabang':
                                 item.branch ?? item.kantor_name ?? '-',
                         }))

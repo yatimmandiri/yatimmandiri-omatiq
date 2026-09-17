@@ -30,6 +30,15 @@ export default function ListPage() {
             accessorKey: 'email',
         },
         {
+            header: (info: any) => renderRowHeader(info, 'No. Telepon'),
+            accessorKey: 'phone',
+            cell: (info: any) => (
+                <span className="text-xs">
+                    {info.getValue() || '-'}
+                </span>
+            ),
+        },
+        {
             header: (info: any) => renderRowHeader(info, 'Roles'),
             accessorKey: 'roles',
             accessorFn: (row: any) =>
@@ -93,6 +102,8 @@ export default function ListPage() {
         return data.map((item: any, i: number) => ({
             No: i + 1,
             Name: item.name,
+            Email: item.email,
+            'No. Telepon': item.phone || '-',
             'Created At': formatDate(item.created_at, 'datetime'),
             'Updated At': formatDate(item.updated_at, 'datetime'),
         }));

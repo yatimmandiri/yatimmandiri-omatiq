@@ -58,6 +58,7 @@ class UserController extends Controller
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
+            'phone' => $request->phone,
             'branch' => $request->branch,
             'password' => Hash::make($request->password),
         ])->assignRole($request->role);
@@ -127,6 +128,7 @@ class UserController extends Controller
         $user->update([
             'name' => $request->name,
             'email' => $request->email,
+            'phone' => $request->phone,
             'branch' => $request->branch,
         ]);
 

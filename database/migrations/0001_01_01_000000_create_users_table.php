@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->string('phone', 20)->nullable()->index();
             $table->unsignedBigInteger('penyaluran_id')->nullable()->unique();
+            $table->string('penyaluran_code', 30)->nullable()->index();
             $table->text('penyaluran_token')->nullable();
             $table->timestamp('phone_verified_at')->nullable();
             $table->timestamp('teacher_profile_completed_at')->nullable();
