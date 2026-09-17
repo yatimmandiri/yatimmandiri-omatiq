@@ -70,7 +70,7 @@ export const NavigationList = [
                 title: 'Data Sanggar',
                 href: '/admin/companies/sanggars',
                 permission: 'view-participant',
-                roles: ['Administrators', 'Cabang'],
+                roles: ['Administrators'],
                 icon: MapIcon,
             },
             {

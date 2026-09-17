@@ -62,7 +62,7 @@ class ParticipantController extends Controller
 
         return Inertia::render('admin/company/participant/list', [
             'userBranch' => $userBranch,
-            'sheets' => [
+            'sheets' => $isCabang ? null : [
                 'enabled' => $settings->sheets_sync_enabled,
                 'spreadsheet_id' => $settings->sheets_spreadsheet_id,
                 'sheet_name' => $settings->sheets_sheet_name ?? config('sheets.sheet_name'),
