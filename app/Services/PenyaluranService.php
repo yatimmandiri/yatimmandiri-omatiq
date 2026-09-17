@@ -35,19 +35,37 @@ class PenyaluranService
      */
     public function loginGuru(string $phone): string
     {
-        $response = $this->client()->post('api/v1/guru/login', [
-            'phone' => $phone,
-        ]);
+        $endpoint = 'api/v1/guru/login';
 
-        $this->assertSuccess($response);
+        try {
+            $response = $this->client()->post($endpoint, [
+                'phone' => $phone,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error("Penyaluran API Connection Error on {$endpoint}", [
+                'endpoint' => $endpoint,
+                'phone' => $phone,
+                'error_class' => get_class($e),
+                'error_message' => $e->getMessage(),
+            ]);
+
+            throw new \RuntimeException('Tidak dapat terhubung ke server Penyaluran. Server sedang dalam pemeliharaan atau koneksi terputus. Silakan coba beberapa saat lagi.');
+        }
+
+        $this->assertSuccess($response, $endpoint, ['phone' => $phone]);
 
         $data = $response->json();
 
         $token = $data['token'] ?? $data['data']['token'] ?? $data['access_token'] ?? null;
 
         if (! $token) {
-            Log::warning('penyaluran.login missing token', ['response' => $data]);
-            throw new \RuntimeException('Token tidak ditemukan pada respon penyaluran.');
+            Log::warning("Penyaluran login response missing token on {$endpoint}", [
+                'endpoint' => $endpoint,
+                'phone' => $phone,
+                'response' => $data,
+            ]);
+
+            throw new \RuntimeException('Token autentikasi tidak ditemukan pada respon server Penyaluran.');
         }
 
         return $token;
@@ -58,8 +76,21 @@ class PenyaluranService
         $cacheKey = 'penyaluran:me:'.sha1($token);
 
         return Cache::remember($cacheKey, 300, function () use ($token) {
-            $response = $this->client($token)->get('api/v1/guru/me');
-            $this->assertSuccess($response);
+            $endpoint = 'api/v1/guru/me';
+
+            try {
+                $response = $this->client($token)->get($endpoint);
+            } catch (\Throwable $e) {
+                Log::error("Penyaluran API Connection Error on {$endpoint}", [
+                    'endpoint' => $endpoint,
+                    'error_class' => get_class($e),
+                    'error_message' => $e->getMessage(),
+                ]);
+
+                throw new \RuntimeException('Tidak dapat terhubung ke server Penyaluran untuk mengambil data profil. Silakan coba beberapa saat lagi.');
+            }
+
+            $this->assertSuccess($response, $endpoint);
 
             return $response->json('data') ?? $response->json();
         });
@@ -115,7 +146,8 @@ class PenyaluranService
 
             // Backward-compatible aggregation: fetch per sanggar and merge deduped
             try {
-                $response = $this->client($token)->get('api/v1/guru/students');
+                $endpoint = 'api/v1/guru/students';
+                $response = $this->client($token)->get($endpoint);
                 if ($response->successful()) {
                     $data = $response->json('data');
                     if (is_array($data) && ! empty($data)) {
@@ -179,8 +211,22 @@ class PenyaluranService
 
     private function fetchStudentsForSanggar(string $token, int $sanggarId): array
     {
-        $response = $this->client($token)->get('api/v1/guru/students', ['sanggar_id' => $sanggarId]);
-        $this->assertSuccess($response);
+        $endpoint = 'api/v1/guru/students';
+
+        try {
+            $response = $this->client($token)->get($endpoint, ['sanggar_id' => $sanggarId]);
+        } catch (\Throwable $e) {
+            Log::error("Penyaluran API Connection Error on {$endpoint}", [
+                'endpoint' => $endpoint,
+                'sanggar_id' => $sanggarId,
+                'error_class' => get_class($e),
+                'error_message' => $e->getMessage(),
+            ]);
+
+            return [];
+        }
+
+        $this->assertSuccess($response, $endpoint, ['sanggar_id' => $sanggarId]);
 
         $data = $response->json('data');
         if (! is_array($data)) {
@@ -254,8 +300,22 @@ class PenyaluranService
      */
     public function updateMe(string $token, array $attributes): array
     {
-        $response = $this->client($token)->put('api/v1/guru/me', $attributes);
-        $this->assertSuccess($response);
+        $endpoint = 'api/v1/guru/me';
+
+        try {
+            $response = $this->client($token)->put($endpoint, $attributes);
+        } catch (\Throwable $e) {
+            Log::error("Penyaluran API Connection Error on PUT {$endpoint}", [
+                'endpoint' => $endpoint,
+                'attributes' => $attributes,
+                'error_class' => get_class($e),
+                'error_message' => $e->getMessage(),
+            ]);
+
+            throw new \RuntimeException('Tidak dapat terhubung ke server Penyaluran untuk memperbarui profil. Silakan coba beberapa saat lagi.');
+        }
+
+        $this->assertSuccess($response, $endpoint, $attributes);
 
         Cache::forget('penyaluran:me:'.sha1($token));
 
@@ -269,8 +329,23 @@ class PenyaluranService
      */
     public function updateStudent(string $token, int|string $studentId, array $attributes): array
     {
-        $response = $this->client($token)->put("api/v1/guru/students/{$studentId}", $attributes);
-        $this->assertSuccess($response);
+        $endpoint = "api/v1/guru/students/{$studentId}";
+
+        try {
+            $response = $this->client($token)->put($endpoint, $attributes);
+        } catch (\Throwable $e) {
+            Log::error("Penyaluran API Connection Error on PUT {$endpoint}", [
+                'endpoint' => $endpoint,
+                'student_id' => $studentId,
+                'attributes' => $attributes,
+                'error_class' => get_class($e),
+                'error_message' => $e->getMessage(),
+            ]);
+
+            throw new \RuntimeException('Tidak dapat terhubung ke server Penyaluran untuk memperbarui data santri. Silakan coba beberapa saat lagi.');
+        }
+
+        $this->assertSuccess($response, $endpoint, $attributes);
 
         $this->forgetStudentsCache($token);
 
@@ -381,8 +456,21 @@ class PenyaluranService
             // fall through to dedicated endpoint
         }
 
-        $response = $this->client($token)->get('api/v1/guru/sanggars');
-        $this->assertSuccess($response);
+        $endpoint = 'api/v1/guru/sanggars';
+
+        try {
+            $response = $this->client($token)->get($endpoint);
+        } catch (\Throwable $e) {
+            Log::error("Penyaluran API Connection Error on {$endpoint}", [
+                'endpoint' => $endpoint,
+                'error_class' => get_class($e),
+                'error_message' => $e->getMessage(),
+            ]);
+
+            return [];
+        }
+
+        $this->assertSuccess($response, $endpoint);
 
         $data = $response->json('data');
         if (! is_array($data)) {
@@ -392,20 +480,118 @@ class PenyaluranService
         return $data;
     }
 
-    private function assertSuccess(Response $response): void
+    /**
+     * Map raw error response into user-friendly message and log detailed context for /log-viewer.
+     *
+     * @throws \RuntimeException
+     */
+    private function assertSuccess(Response $response, string $endpoint = '', array $context = []): void
     {
         if ($response->successful()) {
             return;
         }
 
+        $status = $response->status();
         $body = $response->json() ?? $response->body();
-        $message = is_array($body) ? ($body['message'] ?? json_encode($body)) : $body;
+        $rawMessage = is_array($body) ? ($body['message'] ?? json_encode($body)) : (string) $body;
 
-        Log::warning('penyaluran.api failed', [
-            'status' => $response->status(),
-            'body' => $body,
+        // Log detailed error for Developer Tracking in /log-viewer
+        Log::error("Penyaluran API Error [{$status}] on {$endpoint}", [
+            'endpoint' => $endpoint,
+            'url' => $this->baseUrl().'/'.ltrim($endpoint, '/'),
+            'status' => $status,
+            'request_data' => $this->sanitizeLogContext($context),
+            'response_body' => is_array($body) ? $body : (strlen($rawMessage) > 1000 ? substr($rawMessage, 0, 1000).'...' : $rawMessage),
+            'raw_message' => $rawMessage,
         ]);
 
-        throw new \RuntimeException($message ?: 'Gagal menghubungi server penyaluran.', $response->status());
+        // Translate raw error into friendly Indonesian message for users
+        $userFriendlyMessage = $this->resolveFriendlyErrorMessage($status, $rawMessage, $endpoint);
+
+        throw new \RuntimeException($userFriendlyMessage, $status);
+    }
+
+    /**
+     * Translate raw Penyaluran API error responses into user-friendly Indonesian messages.
+     */
+    public function resolveFriendlyErrorMessage(int $status, string $rawMessage, string $endpoint = ''): string
+    {
+        $lowerRaw = strtolower($rawMessage);
+
+        // 1. Phone / Account Not Found (404 or specific keywords)
+        if ($status === 404
+            || str_contains($lowerRaw, 'tidak ditemukan')
+            || str_contains($lowerRaw, 'not found')
+            || str_contains($lowerRaw, 'unregistered')
+            || str_contains($lowerRaw, 'belum terdaftar')
+            || str_contains($lowerRaw, 'nomor tidak')
+            || str_contains($lowerRaw, 'guru tidak ditemukan')
+            || str_contains($lowerRaw, 'data guru tidak')
+        ) {
+            if (str_contains($endpoint, 'login') || str_contains($endpoint, 'guru')) {
+                return 'Nomor HP tidak terdaftar sebagai Guru/Pembina di sistem Penyaluran. Pastikan nomor yang Anda masukkan sudah terdaftar.';
+            }
+
+            return 'Data tidak ditemukan di server Penyaluran.';
+        }
+
+        // 2. Routing / Method Not Allowed / 405 (e.g. "The GET method is not supported for route...")
+        if ($status === 405
+            || str_contains($lowerRaw, 'method is not supported')
+            || str_contains($lowerRaw, 'method not allowed')
+        ) {
+            return 'Layanan sinkronisasi Penyaluran sedang dalam pemeliharaan/perbaikan. Silakan coba beberapa saat lagi.';
+        }
+
+        // 3. Unauthorized / Session Expired (401 / 403)
+        if ($status === 401 || $status === 403) {
+            return 'Sesi autentikasi Penyaluran telah berakhir atau tidak memiliki izin akses. Silakan login ulang.';
+        }
+
+        // 4. Server Errors & Maintenance (500, 502, 503, 504, HTML error pages)
+        if ($status >= 500
+            || str_contains($lowerRaw, 'server error')
+            || str_contains($lowerRaw, '<!doctype html')
+            || str_contains($lowerRaw, '<html')
+            || str_contains($lowerRaw, 'bad gateway')
+            || str_contains($lowerRaw, 'service unavailable')
+            || str_contains($lowerRaw, 'gateway timeout')
+        ) {
+            return 'Server Penyaluran sedang mengalami gangguan atau pemeliharaan sistem. Silakan coba beberapa saat lagi.';
+        }
+
+        // 5. Validation Errors (422)
+        if ($status === 422) {
+            if (str_contains($lowerRaw, 'phone') || str_contains($lowerRaw, 'nomor')) {
+                return 'Nomor HP yang dimasukkan tidak valid untuk sistem Penyaluran.';
+            }
+
+            if (! empty($rawMessage) && ! str_contains($lowerRaw, '{') && strlen($rawMessage) < 150) {
+                return $rawMessage;
+            }
+
+            return 'Data yang dikirimkan tidak valid untuk server Penyaluran.';
+        }
+
+        // Default friendly fallback
+        return 'Layanan sinkronisasi Penyaluran sedang dalam pemeliharaan/perbaikan. Silakan coba beberapa saat lagi.';
+    }
+
+    /**
+     * Sanitize sensitive keys from log context.
+     */
+    private function sanitizeLogContext(array $context): array
+    {
+        $sensitiveKeys = ['password', 'password_confirmation', 'token', 'access_token', 'secret'];
+
+        foreach ($context as $key => $value) {
+            if (in_array(strtolower((string) $key), $sensitiveKeys, true)) {
+                $context[$key] = '***REDACTED***';
+            } elseif (is_array($value)) {
+                $context[$key] = $this->sanitizeLogContext($value);
+            }
+        }
+
+        return $context;
     }
 }

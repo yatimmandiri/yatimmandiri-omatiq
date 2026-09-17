@@ -17,6 +17,15 @@ export default function ListPage() {
 
     const columns = [
         {
+            header: (info: any) => renderRowHeader(info, 'Kode Guru'),
+            accessorKey: 'penyaluran_code',
+            cell: (info: any) => (
+                <span className="font-mono text-xs font-semibold text-primary">
+                    {info.getValue() || '-'}
+                </span>
+            ),
+        },
+        {
             header: (info: any) => renderRowHeader(info, 'Name'),
             accessorKey: 'name',
         },

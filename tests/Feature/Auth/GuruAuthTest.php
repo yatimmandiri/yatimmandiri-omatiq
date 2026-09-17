@@ -49,7 +49,7 @@ test('guru first time login creates user and redirects to complete profile', fun
         ->and($user->needsTeacherProfileCompletion())->toBeTrue();
 });
 
-test('guru login with invalid phone from penyaluran shows error', function () {
+test('guru login with invalid phone from penyaluran shows friendly error', function () {
     Http::fake([
         'https://penyaluran-test.example.com/api/v1/guru/login' => Http::response([
             'success' => false,
@@ -64,6 +64,42 @@ test('guru login with invalid phone from penyaluran shows error', function () {
 
     $this->assertGuest();
     $response->assertSessionHasErrors(['phone']);
+    $errors = session('errors')->get('phone');
+    expect($errors[0])->toContain('Nomor HP tidak terdaftar sebagai Guru/Pembina di sistem Penyaluran');
+});
+
+test('guru login when penyaluran returns 405 method not allowed shows friendly maintenance error', function () {
+    Http::fake([
+        'https://penyaluran-test.example.com/api/v1/guru/login' => Http::response([
+            'message' => 'The GET method is not supported for route api/v1/guru/login. Supported methods: POST.',
+        ], 405),
+    ]);
+
+    $response = $this->post(route('teacher.login.store'), [
+        'phone' => '081234567890',
+        'password' => 'password',
+    ]);
+
+    $this->assertGuest();
+    $response->assertSessionHasErrors(['phone']);
+    $errors = session('errors')->get('phone');
+    expect($errors[0])->toBe('Layanan sinkronisasi Penyaluran sedang dalam pemeliharaan/perbaikan. Silakan coba beberapa saat lagi.');
+});
+
+test('guru login when penyaluran has 500 server error shows friendly maintenance error', function () {
+    Http::fake([
+        'https://penyaluran-test.example.com/api/v1/guru/login' => Http::response('<!DOCTYPE html><html>Server Error 500</html>', 500),
+    ]);
+
+    $response = $this->post(route('teacher.login.store'), [
+        'phone' => '081234567890',
+        'password' => 'password',
+    ]);
+
+    $this->assertGuest();
+    $response->assertSessionHasErrors(['phone']);
+    $errors = session('errors')->get('phone');
+    expect($errors[0])->toContain('Server Penyaluran sedang mengalami gangguan atau pemeliharaan sistem');
 });
 
 test('guru login with wrong local password shows error', function () {
