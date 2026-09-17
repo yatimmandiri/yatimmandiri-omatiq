@@ -182,25 +182,9 @@ export default function CreatePage() {
                             <p className="mt-0.5 text-xs text-amber-800/90 dark:text-amber-300/90">
                                 Santri{' '}
                                 <strong>{studentName}</strong> belum
-                                memiliki NIK di data Penyaluran. NIK wajib
-                                dilengkapi terlebih dahulu di website Penyaluran
-                                sebelum dapat didaftarkan ke OMATIQ.
+                                memiliki NIK yang valid di data Penyaluran. Silakan hubungi <strong>Admin</strong> untuk melengkapi atau memperbarui data NIK santri terlebih dahulu agar dapat didaftarkan ke OMATIQ.
                             </p>
                         </div>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-2">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="border-amber-300 bg-white text-xs hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-900 dark:hover:bg-amber-800"
-                            onClick={() =>
-                                router.visit(binaan.edit(studentId).url)
-                            }
-                        >
-                            <Pencil className="mr-1.5 size-3.5" />
-                            Lengkapi NIK
-                        </Button>
                     </div>
                 </div>
             )}

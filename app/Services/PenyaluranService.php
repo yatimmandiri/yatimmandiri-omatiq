@@ -330,7 +330,7 @@ class PenyaluranService
                 'kantor_name' => $s['kantor_name'] ?? $s['branch'] ?? $defaultKantorName ?? ($guruSanggars[0]['kantor_name'] ?? null),
                 'type' => $s['type'] ?? null,
                 'teacher_id' => $s['teacher_id'] ?? null,
-                'status' => $s['status'] ?? true,
+                'status' => filter_var($s['status'] ?? true, FILTER_VALIDATE_BOOLEAN),
             ];
         });
 
