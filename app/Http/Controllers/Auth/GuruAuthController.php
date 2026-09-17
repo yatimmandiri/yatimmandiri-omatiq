@@ -81,23 +81,36 @@ class GuruAuthController extends Controller
             return back()->withErrors(['phone' => 'Data profil guru dari Penyaluran tidak lengkap. Silakan hubungi admin.'])->withInput();
         }
 
-        // 1. Search for existing teacher candidates by: penyaluran_id, penyaluran_code, phone (all formats), or official email
+        // 1. Search for existing teacher candidates by priority:
+        // Priority 1: penyaluran_code (unique official code)
+        // Priority 2: penyaluran_id
+        // Priority 3: phone (only matching same teacher name token)
+        // Priority 4: official email
         $cleanPhone = preg_replace('/\D+/', '', $phone);
         $trimmed62 = preg_replace('/^62/', '', $cleanPhone);
+        $firstNameToken = mb_strtolower(explode(' ', trim($penyaluranName ?? ''))[0] ?? '');
 
         $candidates = User::query()
-            ->where(function ($q) use ($penyaluranId, $penyaluranCode, $cleanPhone, $trimmed62, $penyaluranEmail) {
-                if ($penyaluranId) {
-                    $q->orWhere('penyaluran_id', $penyaluranId);
-                }
+            ->where(function ($q) use ($penyaluranId, $penyaluranCode, $cleanPhone, $trimmed62, $penyaluranEmail, $firstNameToken) {
                 if ($penyaluranCode) {
                     $q->orWhere('penyaluran_code', $penyaluranCode);
                 }
+                if ($penyaluranId) {
+                    $q->orWhere('penyaluran_id', $penyaluranId);
+                }
                 if ($cleanPhone) {
-                    $q->orWhere('phone', $cleanPhone)
-                        ->orWhere('phone', '0'.$trimmed62)
-                        ->orWhere('phone', '62'.$trimmed62)
-                        ->orWhere('phone', 'like', '%'.$trimmed62);
+                    $q->orWhere(function ($phoneQ) use ($cleanPhone, $trimmed62, $firstNameToken) {
+                        $phoneQ->where(function ($sq) use ($cleanPhone, $trimmed62) {
+                            $sq->where('phone', $cleanPhone)
+                                ->orWhere('phone', '0'.$trimmed62)
+                                ->orWhere('phone', '62'.$trimmed62)
+                                ->orWhere('phone', 'like', '%'.$trimmed62);
+                        });
+                        // Prevent matching a different teacher who shared this phone number
+                        if ($firstNameToken !== '') {
+                            $phoneQ->whereRaw('LOWER(name) LIKE ?', ['%'.$firstNameToken.'%']);
+                        }
+                    });
                 }
                 if (! empty($penyaluranEmail) && filter_var($penyaluranEmail, FILTER_VALIDATE_EMAIL)) {
                     $q->orWhere('email', strtolower($penyaluranEmail));
@@ -108,15 +121,17 @@ class GuruAuthController extends Controller
 
         $user = null;
         if ($candidates->isNotEmpty()) {
-            // First check if any candidate matches the provided password
+            // Check if any candidate matching this teacher matches the provided password
             $matchingPasswordUser = $candidates->first(fn ($c) => Hash::check($password, $c->password));
 
             if ($matchingPasswordUser) {
                 $user = $matchingPasswordUser;
             } else {
-                // Otherwise pick candidate with highest weight (participants, completed profile, official email)
-                $user = $candidates->sortByDesc(function ($c) {
-                    return ($c->participants_count * 100)
+                // Otherwise pick candidate with highest weight (matching code/id, participants, completed profile, official email)
+                $user = $candidates->sortByDesc(function ($c) use ($penyaluranCode, $penyaluranId) {
+                    return (($penyaluranCode && $c->penyaluran_code === $penyaluranCode) ? 500 : 0)
+                        + (($penyaluranId && $c->penyaluran_id == $penyaluranId) ? 200 : 0)
+                        + ($c->participants_count * 100)
                         + ($c->students_count * 10)
                         + ($c->teacher_profile_completed_at ? 50 : 0)
                         + (! str_ends_with((string) $c->email, '@penyaluran.local') ? 20 : 0)
@@ -133,6 +148,27 @@ class GuruAuthController extends Controller
                 if ($dup->students_count > 0) {
                     Student::where('mentor_id', $dup->id)->update(['mentor_id' => $user->id]);
                 }
+                // Release unique keys from duplicate to avoid 1062 duplicate key violation
+                if ($dup->penyaluran_id == $penyaluranId || ($penyaluranCode && $dup->penyaluran_code === $penyaluranCode)) {
+                    $dup->forceFill([
+                        'penyaluran_id' => null,
+                        'penyaluran_code' => null,
+                    ])->save();
+                }
+            }
+        }
+
+        // Ensure no other conflicting user in DB holds this penyaluran_id or penyaluran_code before updating
+        if ($user) {
+            if ($penyaluranId) {
+                User::where('penyaluran_id', $penyaluranId)
+                    ->where('id', '!=', $user->id)
+                    ->update(['penyaluran_id' => null]);
+            }
+            if ($penyaluranCode) {
+                User::where('penyaluran_code', $penyaluranCode)
+                    ->where('id', '!=', $user->id)
+                    ->update(['penyaluran_code' => null]);
             }
         }
 
