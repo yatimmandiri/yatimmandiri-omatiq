@@ -153,7 +153,7 @@ test('cabang user getData teachers is scoped to branch', function () {
         ->toBe('Surabaya');
 });
 
-test('cabang user is forbidden from accessing sanggars', function () {
+test('cabang user can view sanggars scoped to branch', function () {
     $cabangUser = User::factory()->create([
         'name' => 'User Cabang Surabaya',
         'branch' => 'Surabaya',
@@ -161,9 +161,39 @@ test('cabang user is forbidden from accessing sanggars', function () {
     ]);
     $cabangUser->assignRole('Cabang');
 
-    $this->actingAs($cabangUser)->get(route('admin.companies.sanggars.index'))->assertForbidden();
-    $this->actingAs($cabangUser)->getJson(route('admin.companies.sanggars.data'))->assertForbidden();
-    $this->actingAs($cabangUser)->get(route('admin.companies.sanggars.show', 1))->assertForbidden();
+    $olimpiade = Olimpiade::factory()->create(['event_year' => 2026]);
+
+    // Sanggar in Surabaya
+    Participant::factory()->create([
+        'penyaluran_sanggar_id' => 101,
+        'penyaluran_sanggar_name' => 'Sanggar Rungkut Surabaya',
+        'branch' => 'Surabaya',
+        'olimpiade_id' => $olimpiade->id,
+    ]);
+
+    // Sanggar in Malang
+    Participant::factory()->create([
+        'penyaluran_sanggar_id' => 102,
+        'penyaluran_sanggar_name' => 'Sanggar Klojen Malang',
+        'branch' => 'Malang',
+        'olimpiade_id' => $olimpiade->id,
+    ]);
+
+    $this->actingAs($cabangUser)->get(route('admin.companies.sanggars.index'))->assertOk();
+
+    $response = $this->actingAs($cabangUser)->getJson(route('admin.companies.sanggars.data'));
+    $response->assertOk();
+    $data = $response->json('data');
+
+    expect(collect($data)->pluck('name')->all())
+        ->toContain('Sanggar Rungkut Surabaya')
+        ->not->toContain('Sanggar Klojen Malang');
+
+    // Accessing own branch sanggar show succeeds
+    $this->actingAs($cabangUser)->get(route('admin.companies.sanggars.show', 101))->assertOk();
+
+    // Accessing other branch sanggar show is forbidden
+    $this->actingAs($cabangUser)->get(route('admin.companies.sanggars.show', 102))->assertForbidden();
 });
 
 test('cabang user cannot delete participants or students', function () {
