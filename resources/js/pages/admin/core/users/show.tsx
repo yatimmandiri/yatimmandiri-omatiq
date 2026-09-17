@@ -1,4 +1,6 @@
 import { Card } from '@/components/ui/card';
+import { dashboard } from '@/routes/admin';
+import users from '@/routes/admin/core/users';
 import { formatDate } from '@/utils/formatDate';
 import { usePage } from '@inertiajs/react';
 import { InfoIcon } from 'lucide-react';
@@ -24,6 +26,10 @@ export default function DetailPage() {
                         <li className="flex flex-col space-y-2">
                             <span className="text-sm font-semibold">Email</span>
                             <span className="text-sm">{user.email}</span>
+                        </li>
+                        <li className="flex flex-col space-y-2">
+                            <span className="text-sm font-semibold">No. Telepon / WhatsApp</span>
+                            <span className="text-sm">{user.phone || '-'}</span>
                         </li>
                         <li className="flex flex-col space-y-2">
                             <span className="text-sm font-semibold">Role</span>
@@ -61,3 +67,21 @@ export default function DetailPage() {
         </div>
     );
 }
+
+DetailPage.layout = {
+    breadcrumbs: [
+        {
+            title: 'Dashboard',
+            href: dashboard(),
+        },
+        {
+            title: 'Users',
+            href: users.index().url,
+        },
+        {
+            title: 'Detail User',
+            href: '#',
+        },
+    ],
+};
+

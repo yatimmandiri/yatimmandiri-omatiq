@@ -15,6 +15,7 @@ export const UserForm = ({ dataId }: { dataId?: number }) => {
             saveBack: 'false',
             name: user?.name || '',
             email: user?.email || '',
+            phone: user?.phone || '',
             branch: user?.branch || '',
             password: '',
             password_confirmation: '',
@@ -74,6 +75,39 @@ export const UserForm = ({ dataId }: { dataId?: number }) => {
                     helperText={errors.email && errors.email}
                 />
                 <InputTextComponent
+                    type="text"
+                    label="No. Telepon / WhatsApp (Opsional)"
+                    placeholder="Contoh: 08123456789"
+                    name="phone"
+                    value={data.phone}
+                    handleOnChange={(value: string) => setData('phone', value)}
+                    color={errors.phone ? 'danger' : 'default'}
+                    errors={errors.phone && errors.phone}
+                    helperText={errors.phone && errors.phone}
+                />
+                <SelectComponent
+                    label="Role"
+                    data={roles.map((role: any) => ({
+                        value: role.id,
+                        label: role.name,
+                    }))}
+                    dataSelected={data.role}
+                    handleOnChange={(value: any) => setData('role', value)}
+                    errors={errors.role && errors.role}
+                    helperText={errors.role && errors.role}
+                />
+                <InputTextComponent
+                    type="text"
+                    label="Kantor Cabang (Opsional)"
+                    placeholder="Contoh: Surabaya, Sidoarjo, dsb."
+                    name="branch"
+                    value={data.branch}
+                    handleOnChange={(value: string) => setData('branch', value)}
+                    color={errors.branch ? 'danger' : 'default'}
+                    errors={errors.branch && errors.branch}
+                    helperText={errors.branch ? errors.branch : 'Wajib diisi untuk pengguna dengan Role Cabang agar data terfilter otomatis.'}
+                />
+                <InputTextComponent
                     type={showPassword ? 'text' : 'password'}
                     label="Password"
                     placeholder="Password"
@@ -113,28 +147,6 @@ export const UserForm = ({ dataId }: { dataId?: number }) => {
                         errors.password_confirmation
                     }
                     group={true}
-                />
-                <SelectComponent
-                    label="Role"
-                    data={roles.map((role: any) => ({
-                        value: role.id,
-                        label: role.name,
-                    }))}
-                    dataSelected={data.role}
-                    handleOnChange={(value: any) => setData('role', value)}
-                    errors={errors.role && errors.role}
-                    helperText={errors.role && errors.role}
-                />
-                <InputTextComponent
-                    type="text"
-                    label="Kantor Cabang (Opsional)"
-                    placeholder="Contoh: Surabaya, Sidoarjo, dsb."
-                    name="branch"
-                    value={data.branch}
-                    handleOnChange={(value: string) => setData('branch', value)}
-                    color={errors.branch ? 'danger' : 'default'}
-                    errors={errors.branch && errors.branch}
-                    helperText={errors.branch ? errors.branch : 'Wajib diisi untuk pengguna dengan Role Cabang agar data terfilter otomatis.'}
                 />
             </div>
             <div className="flex justify-end space-x-4">

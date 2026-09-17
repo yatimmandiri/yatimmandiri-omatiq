@@ -34,6 +34,15 @@ export default function ListPage() {
             accessorKey: 'email',
         },
         {
+            header: (info: any) => renderRowHeader(info, 'No. Telepon'),
+            accessorKey: 'phone',
+            cell: (info: any) => (
+                <span className="text-xs">
+                    {info.getValue() || '-'}
+                </span>
+            ),
+        },
+        {
             header: (info: any) => renderRowHeader(info, 'Verified'),
             accessorKey: 'email_verified_at',
             cell: (info: any) =>
@@ -80,8 +89,10 @@ export default function ListPage() {
                     formatDataExport={(items: any[]) =>
                         items.map((item: any, i: number) => ({
                             No: i + 1,
+                            'Kode Guru': item.penyaluran_code || '-',
                             Name: item.name,
                             Email: item.email,
+                            'No. Telepon': item.phone || '-',
                         }))
                     }
                 >

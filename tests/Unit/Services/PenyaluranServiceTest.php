@@ -47,7 +47,7 @@ it('throws RuntimeException when login returns no token or fails', function () {
     $service = new PenyaluranService;
 
     expect(fn () => $service->loginGuru('081999999999'))
-        ->toThrow(RuntimeException::class, 'Nomor HP tidak terdaftar sebagai guru.');
+        ->toThrow(RuntimeException::class, 'Nomor HP tidak terdaftar sebagai Guru/Pembina di sistem Penyaluran. Pastikan nomor yang Anda masukkan sudah terdaftar.');
 });
 
 it('fetches guru profile and caches it', function () {
