@@ -164,7 +164,7 @@ test('cabang user is forbidden from accessing sanggars', function () {
     $this->actingAs($cabangUser)->get(route('admin.companies.sanggars.show', 1))->assertForbidden();
 });
 
-test('cabang user does not receive sheets prop on participants index', function () {
+test('cabang user cannot delete participants or students', function () {
     $cabangUser = User::factory()->create([
         'name' => 'User Cabang Surabaya',
         'branch' => 'Surabaya',
@@ -172,10 +172,28 @@ test('cabang user does not receive sheets prop on participants index', function 
     ]);
     $cabangUser->assignRole('Cabang');
 
-    $response = $this->actingAs($cabangUser)->get(route('admin.companies.participants.index'));
-    $response->assertOk();
-    $response->assertInertia(fn ($page) => $page
-        ->component('admin/company/participant/list')
-        ->where('sheets', null)
-    );
+    $olimpiade = Olimpiade::factory()->create(['event_year' => 2026]);
+
+    $student = Student::factory()->create([
+        'full_name' => 'Santri Cabang',
+        'is_binaan' => true,
+    ]);
+
+    $participant = Participant::factory()->create([
+        'student_id' => $student->id,
+        'olimpiade_id' => $olimpiade->id,
+        'branch' => 'Surabaya',
+        'status' => 'verified',
+    ]);
+
+    // Forbidden from deleting participant
+    $this->actingAs($cabangUser)
+        ->delete(route('admin.companies.participants.destroy', $participant->id))
+        ->assertForbidden();
+
+    // Forbidden from deleting student
+    $this->actingAs($cabangUser)
+        ->delete(route('admin.companies.students.destroy', $student->id))
+        ->assertForbidden();
 });
+

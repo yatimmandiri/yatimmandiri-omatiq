@@ -10,7 +10,7 @@ import {
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { formatDate } from '@/utils/formatDate';
 import { confirmDelete } from '@/utils/sweetalert';
-import { router } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import {
     ChevronDownIcon,
     ChevronsUpDownIcon,
@@ -119,11 +119,13 @@ export const RowActions = ({
     actions?: { edit?: boolean; delete?: boolean };
 }) => {
     const { currentUrl } = useCurrentUrl();
+    const { auth } = usePage<any>().props;
 
     const data = info.row.original;
 
-    const showEdit = actions?.edit !== false;
-    const showDelete = actions?.delete !== false;
+    const isCabang = (auth?.user?.roles ?? []).includes('Cabang');
+    const showEdit = actions?.edit !== false && !isCabang;
+    const showDelete = actions?.delete !== false && !isCabang;
 
     const handleDelete = async (id: number) => {
         const isConfirmed = await confirmDelete({
