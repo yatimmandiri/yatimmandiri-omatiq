@@ -566,4 +566,41 @@ class BinaanController extends Controller
             'registration_binaan_open' => (bool) app(SiteSettings::class)->registration_binaan_open,
         ]);
     }
+
+    public function syncPenyaluran(Request $request)
+    {
+        $this->authorize('viewAny', Participant::class);
+
+        $user = Auth::user();
+        $token = $request->session()->get('penyaluran_token') ?? $user?->penyaluran_token;
+
+        if (! $token) {
+            return back()->with('error', 'Token sesi Penyaluran tidak ditemukan. Silakan login ulang.');
+        }
+
+        try {
+            $this->penyaluran->forgetStudentsCache($token);
+            $profile = $this->penyaluran->me($token, force: true);
+            $sanggars = $this->penyaluran->sanggars($token);
+            $students = $this->penyaluran->students($token, null, force: true);
+
+            // Update user metadata snapshot if returned
+            if ($user && $profile) {
+                $teacherData = $profile['teacher'] ?? $profile['data']['teacher'] ?? $profile;
+                $penyaluranName = $teacherData['name'] ?? $profile['name'] ?? null;
+                $penyaluranCode = $teacherData['code'] ?? $profile['code'] ?? null;
+                $guruBranch = $teacherData['kantor_name'] ?? $profile['kantor_name'] ?? ($sanggars[0]['kantor_name'] ?? null);
+
+                $user->forceFill([
+                    'name' => $penyaluranName ?? $user->name,
+                    'branch' => $guruBranch ?? $user->branch,
+                    'penyaluran_code' => $penyaluranCode ?? $user->penyaluran_code,
+                ])->save();
+            }
+
+            return back()->with('success', 'Data guru, sanggar, dan binaan berhasil disinkronkan langsung dari server Penyaluran.');
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Gagal menyinkronkan data dari Penyaluran: '.$e->getMessage());
+        }
+    }
 }

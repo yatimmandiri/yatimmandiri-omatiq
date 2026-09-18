@@ -5,7 +5,7 @@ import { dashboard } from '@/routes/teacher';
 import binaan from '@/routes/teacher/data-binaan';
 import dataPeserta from '@/routes/teacher/data-peserta';
 import sanggarRoute from '@/routes/teacher/data-sanggar';
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     ArrowRight,
     Award,
@@ -14,10 +14,11 @@ import {
     CheckCircle2,
     GraduationCap,
     MapPin,
+    RefreshCw,
     Sparkles,
     Users,
 } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 
 type PageProps = {
     studentCount: number;
@@ -88,6 +89,20 @@ export default function Dashboard() {
     const registrationRate = totalBinaan
         ? Math.round((totalRegistered / totalBinaan) * 100)
         : 0;
+
+    const [isSyncing, setIsSyncing] = useState(false);
+
+    const handleSync = () => {
+        setIsSyncing(true);
+        router.post(
+            '/teacher/sync-penyaluran',
+            {},
+            {
+                preserveScroll: true,
+                onFinish: () => setIsSyncing(false),
+            },
+        );
+    };
 
     return (
         <>
@@ -171,6 +186,15 @@ export default function Dashboard() {
                                     ? 'Lihat Biodata'
                                     : 'Lengkapi Biodata'}
                             </Link>
+                            <button
+                                type="button"
+                                onClick={handleSync}
+                                disabled={isSyncing}
+                                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white/10 px-5 py-2.5 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/15 disabled:opacity-50"
+                            >
+                                <RefreshCw className={`size-4 ${isSyncing ? 'animate-spin' : ''}`} />
+                                {isSyncing ? 'Menyinkronkan...' : 'Sinkron Penyaluran'}
+                            </button>
                         </div>
                     </div>
                 </div>

@@ -43,6 +43,9 @@ Route::prefix('teacher')->as('teacher.')->middleware(['auth', 'verified', 'teach
     Route::get('data-sanggar/{sanggar}', [SanggarController::class, 'show'])->name('data-sanggar.show');
     Route::get('data-sanggar', [SanggarController::class, 'index'])->name('data-sanggar.index');
 
+    // Sync Penyaluran Data
+    Route::post('sync-penyaluran', [BinaanController::class, 'syncPenyaluran'])->name('sync-penyaluran');
+
     // Absensi
     Route::get('absensi', [AbsensiController::class, 'index'])->name('absensi.index');
 });

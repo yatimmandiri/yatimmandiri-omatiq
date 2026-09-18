@@ -464,3 +464,53 @@ test('teacher dashboard retrieves metrics and sanggars from session data directl
     );
 });
 
+test('teacher can sync fresh data from penyaluran api via sync-penyaluran route', function () {
+    $teacher = createGuruManagementTeacher([
+        'penyaluran_id' => 400,
+        'penyaluran_token' => 'teacher-token-400',
+    ]);
+
+    Http::fake([
+        '*/api/v1/guru/me' => Http::response([
+            'success' => true,
+            'data' => [
+                'id' => 400,
+                'name' => 'Guru Updated Name',
+                'code' => 'G-400',
+                'kantor_name' => 'KANTOR CABANG SIDOARJO',
+                'sanggars' => [
+                    ['id' => 20, 'name' => 'Sanggar Maju', 'type' => 'Genius'],
+                ],
+                'students' => [
+                    ['id' => 601, 'student_id' => 601, 'name' => 'Santri Baru', 'nik' => '3578000000000601', 'gender' => 'L', 'sanggar_id' => 20],
+                ],
+            ],
+        ], 200),
+        '*/api/v1/guru/sanggars' => Http::response([
+            'success' => true,
+            'data' => [
+                ['id' => 20, 'name' => 'Sanggar Maju', 'type' => 'Genius', 'total_students' => 1],
+            ],
+        ], 200),
+        '*/api/v1/guru/students*' => Http::response([
+            'success' => true,
+            'data' => [
+                ['id' => 601, 'student_id' => 601, 'name' => 'Santri Baru', 'nik' => '3578000000000601', 'gender' => 'L', 'sanggar_id' => 20],
+            ],
+        ], 200),
+    ]);
+
+    $response = $this->actingAs($teacher)
+        ->withSession(['penyaluran_token' => 'teacher-token-400'])
+        ->post(route('teacher.sync-penyaluran'));
+
+    $response->assertRedirect();
+    $response->assertSessionHas('success');
+
+    expect($teacher->fresh()->name)->toBe('Guru Updated Name')
+        ->and($teacher->fresh()->branch)->toBe('KANTOR CABANG SIDOARJO')
+        ->and(session('penyaluran_me')['name'])->toBe('Guru Updated Name')
+        ->and(count(session('penyaluran_students')))->toBe(1);
+});
+
+

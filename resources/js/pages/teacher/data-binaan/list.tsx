@@ -48,6 +48,20 @@ export default function ListPage() {
         initialSanggarId ? { sanggar_id: String(initialSanggarId) } : {},
     );
     const [refreshData, setRefreshData] = useState(false);
+    const [isSyncing, setIsSyncing] = useState(false);
+
+    const handleSync = () => {
+        setIsSyncing(true);
+        router.post(
+            '/teacher/sync-penyaluran',
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => setRefreshData((v) => !v),
+                onFinish: () => setIsSyncing(false),
+            },
+        );
+    };
 
     const columns = [
         {
@@ -158,7 +172,7 @@ export default function ListPage() {
                         belum terdaftar.
                     </p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                     <Badge
                         variant="outline"
                         className="gap-1.5 border-[#17524A]/20 bg-[#17524A]/5 px-3 py-1.5 text-xs font-medium text-[#17524A] dark:text-emerald-300"
@@ -166,6 +180,17 @@ export default function ListPage() {
                         <School className="size-3.5" />
                         {sanggars.length} Sanggar
                     </Badge>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleSync}
+                        disabled={isSyncing}
+                        className="gap-1.5 text-xs font-semibold"
+                    >
+                        <RefreshCcw className={`size-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+                        {isSyncing ? 'Menyinkronkan...' : 'Sinkron Penyaluran'}
+                    </Button>
                 </div>
             </div>
 

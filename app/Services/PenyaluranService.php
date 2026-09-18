@@ -71,9 +71,9 @@ class PenyaluranService
         return $token;
     }
 
-    public function me(string $token): array
+    public function me(string $token, bool $force = false): array
     {
-        if (session()->has('penyaluran_me')) {
+        if (! $force && session()->has('penyaluran_me')) {
             $sessionMe = session()->get('penyaluran_me');
             if (is_array($sessionMe) && ! empty($sessionMe)) {
                 return $sessionMe;
@@ -81,6 +81,10 @@ class PenyaluranService
         }
 
         $cacheKey = 'penyaluran:me:'.sha1($token);
+
+        if ($force) {
+            Cache::forget($cacheKey);
+        }
 
         $data = Cache::remember($cacheKey, 300, function () use ($token) {
             $response = $this->client($token)->get('api/v1/guru/me');
@@ -109,10 +113,10 @@ class PenyaluranService
      *
      * @return array<int, array{student_id:int, name:string, nik:?string, nis:?string, gender:?string, school_name:?string, school_level:?string, class:?string, birth_date:?string, sanggar_id:?int, status:bool}>
      */
-    public function students(string $token, ?int $sanggarId = null): array
+    public function students(string $token, ?int $sanggarId = null, bool $force = false): array
     {
-        // 1. Check session first if available
-        if (session()->has('penyaluran_students')) {
+        // 1. Check session first if available and not forced
+        if (! $force && session()->has('penyaluran_students')) {
             $rawStudents = session()->get('penyaluran_students');
             if (is_array($rawStudents) && ! empty($rawStudents)) {
                 $guruSanggars = session()->get('penyaluran_sanggars') ?? [];
@@ -142,6 +146,10 @@ class PenyaluranService
         }
 
         $cacheKey = 'penyaluran:students:'.sha1($token).':'.($sanggarId ?? 'all');
+
+        if ($force) {
+            $this->forgetStudentsCache($token);
+        }
 
         return Cache::remember($cacheKey, 120, function () use ($token, $sanggarId) {
             $me = null;
@@ -286,45 +294,56 @@ class PenyaluranService
     private function normalizeStudents(array $data, ?int $sanggarId = null, array $guruSanggars = [], ?string $defaultKantorName = null): array
     {
         $normalized = collect($data)->map(function (array $s) use ($sanggarId, $guruSanggars, $defaultKantorName) {
-            $gender = $s['gender'] ?? null;
-            if ($gender === 'L') {
+            $gender = $s['gender'] ?? $s['jenis_kelamin'] ?? $s['jk'] ?? null;
+            if ($gender === 'L' || $gender === 'l' || $gender === 'M' || $gender === 'male') {
                 $gender = 'male';
-            } elseif ($gender === 'P') {
+            } elseif ($gender === 'P' || $gender === 'p' || $gender === 'F' || $gender === 'female') {
                 $gender = 'female';
             }
 
-            $studentSanggarId = $s['sanggar_id'] ?? $s['sanggarId'] ?? $sanggarId;
+            $nestedSanggarId = null;
+            if (isset($s['sanggar']) && is_array($s['sanggar'])) {
+                $nestedSanggarId = $s['sanggar']['id'] ?? $s['sanggar']['sanggar_id'] ?? null;
+            }
+
+            $studentSanggarId = $s['sanggar_id'] ?? $s['sanggarId'] ?? $nestedSanggarId ?? $sanggarId;
             if (! $studentSanggarId && count($guruSanggars) === 1) {
                 $studentSanggarId = $guruSanggars[0]['id'] ?? null;
             }
 
             $sanggarIds = $s['sanggar_ids'] ?? ($studentSanggarId ? [$studentSanggarId] : collect($guruSanggars)->pluck('id')->filter()->values()->all());
 
-            $sanggarName = $s['sanggar_name'] ?? null;
+            $sanggarName = $s['sanggar_name'] ?? ($s['sanggar']['name'] ?? $s['sanggar']['nama'] ?? null);
             if (! $sanggarName && $studentSanggarId) {
                 $foundSanggar = collect($guruSanggars)->firstWhere('id', $studentSanggarId);
                 $sanggarName = $foundSanggar['name'] ?? null;
             }
 
-            return [
+            $schoolName = $s['school_name'] ?? $s['sekolah_name'] ?? $s['nama_sekolah'] ?? ($s['school']['name'] ?? $s['sekolah']['nama'] ?? null);
+            $schoolLevel = $s['school_level'] ?? $s['jenjang'] ?? $s['level'] ?? $s['tingkat'] ?? ($s['school']['level'] ?? $s['sekolah']['jenjang'] ?? null);
+            $grade = $s['class'] ?? $s['grade'] ?? $s['kelas'] ?? null;
+            $guardianName = $s['guardian_name'] ?? $s['parent_name'] ?? $s['wali_name'] ?? ($s['wali']['name'] ?? $s['wali']['nama'] ?? $s['parent']['name'] ?? null);
+            $guardianPhone = $s['guardian_phone'] ?? $s['parent_phone'] ?? $s['wali_phone'] ?? ($s['wali']['phone'] ?? $s['wali']['no_hp'] ?? $s['parent']['phone'] ?? null);
+
+            $normalizedAttrs = [
                 'student_id' => $s['student_id'] ?? $s['id'] ?? null,
-                'name' => $s['name'] ?? $s['full_name'] ?? null,
-                'nickname' => $s['nickname'] ?? null,
-                'nik' => $s['nik'] ?? null,
-                'nis' => $s['nis'] ?? null,
+                'name' => $s['name'] ?? $s['full_name'] ?? $s['nama'] ?? null,
+                'nickname' => $s['nickname'] ?? $s['nama_panggilan'] ?? null,
+                'nik' => $s['nik'] ?? $s['no_ktp'] ?? $s['no_nik'] ?? null,
+                'nis' => $s['nis'] ?? $s['no_nis'] ?? null,
                 'gender' => $gender,
-                'school_name' => $s['school_name'] ?? null,
-                'school_level' => $s['school_level'] ?? $s['jenjang'] ?? $s['level'] ?? $s['tingkat'] ?? null,
-                'class' => $s['class'] ?? $s['grade'] ?? null,
+                'school_name' => $schoolName,
+                'school_level' => $schoolLevel,
+                'class' => $grade,
                 'birth_place' => $s['birth_place'] ?? $s['tempat_lahir'] ?? null,
-                'birth_date' => $s['birth_date'] ?? $s['tanggal_lahir'] ?? null,
+                'birth_date' => $s['birth_date'] ?? $s['tanggal_lahir'] ?? $s['tgl_lahir'] ?? null,
                 'address' => $s['address'] ?? $s['alamat'] ?? null,
                 'province_id' => $s['province_id'] ?? $s['provinsi_id'] ?? $s['province_name'] ?? $s['provinsi_name'] ?? $s['province'] ?? $s['provinsi'] ?? null,
                 'regency_id' => $s['regency_id'] ?? $s['kabupaten_id'] ?? $s['kota_id'] ?? $s['regency_name'] ?? $s['kabupaten_name'] ?? $s['kota_name'] ?? $s['regency'] ?? $s['kabupaten'] ?? $s['kota'] ?? null,
                 'district_id' => $s['district_id'] ?? $s['kecamatan_id'] ?? $s['district_name'] ?? $s['kecamatan_name'] ?? $s['district'] ?? $s['kecamatan'] ?? null,
                 'village_id' => $s['village_id'] ?? $s['desa_id'] ?? $s['kelurahan_id'] ?? $s['village_name'] ?? $s['desa_name'] ?? $s['kelurahan_name'] ?? $s['village'] ?? $s['desa'] ?? $s['kelurahan'] ?? null,
-                'guardian_name' => $s['guardian_name'] ?? $s['parent_name'] ?? $s['wali_name'] ?? null,
-                'guardian_phone' => $s['guardian_phone'] ?? $s['parent_phone'] ?? $s['wali_phone'] ?? null,
+                'guardian_name' => $guardianName,
+                'guardian_phone' => $guardianPhone,
                 'sanggar_id' => $studentSanggarId,
                 'sanggar_ids' => $sanggarIds,
                 'sanggar_name' => $sanggarName,
@@ -333,7 +352,12 @@ class PenyaluranService
                 'teacher_id' => $s['teacher_id'] ?? null,
                 'status' => filter_var($s['status'] ?? true, FILTER_VALIDATE_BOOLEAN),
             ];
+
+            return array_merge($s, $normalizedAttrs);
         });
+
+        return $normalized->unique(fn (array $s) => $s['student_id'] ?? null)->values()->all();
+    }
 
         return $normalized->unique(fn (array $s) => $s['student_id'] ?? null)->values()->all();
     }
