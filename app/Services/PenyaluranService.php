@@ -359,9 +359,6 @@ class PenyaluranService
         return $normalized->unique(fn (array $s) => $s['student_id'] ?? null)->values()->all();
     }
 
-        return $normalized->unique(fn (array $s) => $s['student_id'] ?? null)->values()->all();
-    }
-
     /**
      * Update guru profile on Penyaluran (PUT api/v1/guru/me). Invalidates me cache.
      *
