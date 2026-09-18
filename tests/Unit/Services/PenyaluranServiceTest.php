@@ -183,7 +183,8 @@ it('fetches and normalizes student list from penyaluran guru me response', funct
         ->and($students[1]['student_id'])->toBe(758)
         ->and($students[1]['gender'])->toBe('female')
         ->and(count($sanggars))->toBe(1)
-        ->and($sanggars[0]['id'])->toBe(316);
+        ->and($sanggars[0]['id'])->toBe(316)
+        ->and($sanggars[0]['total_students'])->toBe(2);
 });
 
 it('fetches and normalizes student list from legacy penyaluran students endpoint', function () {

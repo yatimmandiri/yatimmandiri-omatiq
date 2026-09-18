@@ -123,8 +123,8 @@ export default function Dashboard() {
                                     <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold backdrop-blur">
                                         <Building2 className="size-3.5" />{' '}
                                         {sanggarCount ?? 0} Sanggar
-                                        {sanggarSum != null
-                                            ? ` • ${sanggarSum} santri`
+                                        {(sanggarSum ?? penyaluranTotal ?? studentCount) > 0
+                                            ? ` • ${sanggarSum ?? penyaluranTotal ?? studentCount} santri`
                                             : ''}
                                     </span>
                                     <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E5BE1E] px-3 py-1 text-xs font-black text-[#17524A]">
@@ -193,8 +193,8 @@ export default function Dashboard() {
                         label="Total Sanggar"
                         value={sanggarCount ?? 0}
                         hint={
-                            sanggarSum != null
-                                ? `${sanggarSum} santri total`
+                            (sanggarSum ?? penyaluranTotal ?? studentCount) > 0
+                                ? `${sanggarSum ?? penyaluranTotal ?? studentCount} santri total`
                                 : 'Unit binaan'
                         }
                         accent="#E5BE1E"
@@ -440,9 +440,11 @@ export default function Dashboard() {
                                                 {sg.name}
                                             </span>
                                             <span className="rounded-full bg-[#17524A]/10 px-2.5 py-1 text-xs font-bold text-[#17524A]">
-                                                {sg.total_students != null
+                                                {sg.total_students != null && sg.total_students > 0
                                                     ? `${sg.total_students} santri`
-                                                    : (sg.type ?? 'sanggar')}
+                                                    : totalBinaan > 0 && sanggars.length === 1
+                                                      ? `${totalBinaan} santri`
+                                                      : (sg.type ?? 'sanggar')}
                                             </span>
                                         </div>
                                     ))}
