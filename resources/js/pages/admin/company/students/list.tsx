@@ -25,6 +25,7 @@ import { router, usePage } from '@inertiajs/react';
 import {
     CheckCircle2,
     Eye,
+    Filter,
     MapPin,
     MoreHorizontal,
     Pencil,
@@ -36,10 +37,17 @@ import {
 import { useState } from 'react';
 
 export default function ListPage() {
-    const { mentors, userBranch } = usePage<{
+    const { auth, mentors, userBranch } = usePage<{
+        auth?: any;
         mentors?: Array<{ id: number; name: string }>;
         userBranch?: string | null;
     }>().props;
+
+    const isCabang = (auth?.user?.roles ?? []).includes('Cabang');
+    const userPermissions: string[] = auth?.user?.permissions ?? [];
+    const isSuperAdmin = (auth?.user?.roles ?? []).includes('Administrators');
+    const canEdit = !isCabang && (isSuperAdmin || userPermissions.includes('update-student'));
+    const canDelete = !isCabang && (isSuperAdmin || userPermissions.includes('delete-student'));
 
     const [filterValue, setFilterValue] = useState<Record<string, string>>({});
     const [refreshData, setRefreshData] = useState(false);
@@ -115,6 +123,20 @@ export default function ListPage() {
             cell: (info: any) => {
                 const row = info.row.original;
                 const active = info.getValue();
+
+                if (isCabang || !canEdit) {
+                    return (
+                        <Badge variant={active ? 'default' : 'destructive'}>
+                            {active ? (
+                                <CheckCircle2 className="size-3" />
+                            ) : (
+                                <XCircle className="size-3" />
+                            )}
+                            {active ? 'Aktif' : 'Non-aktif'}
+                        </Badge>
+                    );
+                }
+
                 const toggle = () => {
                     router.put(
                         students.status(row.id).url,
