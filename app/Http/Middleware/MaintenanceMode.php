@@ -36,16 +36,10 @@ class MaintenanceMode
             return $next($request);
         }
 
-        // Only block public home/* pages when maintenance is on
+        // Block public home/* + teacher/* + student/* when maintenance is on
         // Keep admin and local accessible for testing/sync
-        if (! $request->is('/') && ! $request->is('pendaftaran*') && ! $request->is('olimpiade*') && ! $request->is('jadwal*') && ! $request->is('berita*') && ! $request->is('kontak*') && ! $request->is('about*')) {
-            // For other public pages, still allow? Minimal: block home and pendaftaran as requested
-            // To block all public home/*, uncomment:
-            // if (! $request->is('home/*')) return $next($request);
-        }
-
-        // Prefer home maintenance for public
-        if ($request->is('/') || $request->is('pendaftaran*') || $request->is('olimpiade*') || $request->is('about*') || $request->is('jadwal*') || $request->is('berita*') || $request->is('kontak*')) {
+        // Prefer maintenance for public + teacher/student dashboards
+        if ($request->is('/') || $request->is('pendaftaran*') || $request->is('olimpiade*') || $request->is('about*') || $request->is('jadwal*') || $request->is('berita*') || $request->is('kontak*') || $request->is('teacher/*') || $request->is('student/*')) {
             if ($request->header('X-Inertia')) {
                 return Inertia::render('maintenance/index', [
                     'site_name' => config('app.name'),

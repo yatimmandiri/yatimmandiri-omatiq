@@ -60,6 +60,10 @@ class BinaanController extends Controller
         if ($token) {
             try {
                 $studentsRaw = $this->penyaluran->students($token, $sanggarId);
+                $studentsRaw = collect($studentsRaw)
+                    ->filter(fn (array $s) => filter_var($s['status'] ?? true, FILTER_VALIDATE_BOOLEAN))
+                    ->values()
+                    ->all();
                 $sanggarsTmp = $this->penyaluran->sanggars($token);
                 $sanggarMap = collect($sanggarsTmp)->pluck('name', 'id');
             } catch (\Throwable $e) {
@@ -134,11 +138,29 @@ class BinaanController extends Controller
                 $id = (int) ($s['student_id'] ?? $s['id'] ?? 0);
                 $nik = trim((string) ($s['nik'] ?? ''));
 
-                $candidates = collect([
-                    ...($id && $participantsByPenyaluranId->has($id) ? $participantsByPenyaluranId->get($id) : []),
-                    ...($isValidNik($nik) && $participantsByNik->has($nik) ? $participantsByNik->get($nik) : []),
-                    ...(app()->environment('testing') && $id && $participantsByLocalIdTesting->has($id) ? $participantsByLocalIdTesting->get($id) : []),
-                ])->unique('id');
+                $candidates = collect();
+
+                // Prioritas utama: Cocokkan via NIK jika NIK santri valid
+                if ($isValidNik($nik) && $participantsByNik->has($nik)) {
+                    $candidates = $candidates->merge($participantsByNik->get($nik));
+                } elseif ($id && $participantsByPenyaluranId->has($id)) {
+                    // Jika belum cocok via NIK, cocokkan via Penyaluran ID dengan memverifikasi NIK tidak bertentangan
+                    $matchedById = $participantsByPenyaluranId->get($id)->filter(function (Participant $p) use ($nik, $isValidNik) {
+                        $pNik = trim((string) ($p->student?->nik ?? $p->nik ?? ''));
+                        if ($isValidNik($nik) && $isValidNik($pNik) && $nik !== $pNik) {
+                            return false;
+                        }
+
+                        return true;
+                    });
+                    $candidates = $candidates->merge($matchedById);
+                }
+
+                if (app()->environment('testing') && $candidates->isEmpty() && $id && $participantsByLocalIdTesting->has($id)) {
+                    $candidates = $candidates->merge($participantsByLocalIdTesting->get($id));
+                }
+
+                $candidates = $candidates->unique('id');
 
                 $ownActive = $candidates->first(fn (Participant $p) => (int) $p->mentor_id === (int) $userId && in_array($p->status, ['submitted', 'verified'], true));
                 $ownRejected = $candidates->first(fn (Participant $p) => (int) $p->mentor_id === (int) $userId && $p->status === 'rejected');
