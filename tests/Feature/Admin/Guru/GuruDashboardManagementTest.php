@@ -424,3 +424,43 @@ test('teacher can register penyaluran binaan even if local student table already
         ->and($newParticipant->student->nik)->toBe('3402160109160001')
         ->and($newParticipant->student->full_name)->toBe('ADELIO ABRISAM ATTAR');
 });
+
+test('teacher dashboard retrieves metrics and sanggars from session data directly', function () {
+    $teacher = createGuruManagementTeacher([
+        'penyaluran_id' => 300,
+        'penyaluran_token' => 'teacher-token-300',
+    ]);
+
+    $sessionProfile = [
+        'id' => 300,
+        'name' => 'Guru Hebat',
+        'email' => 'guru300@penyaluran.local',
+        'kantor_name' => 'KANTOR CABANG SURABAYA',
+        'sanggars' => [
+            ['id' => 10, 'name' => 'Sanggar Berkah', 'type' => 'Genius', 'total_students' => 5],
+        ],
+        'students' => [
+            ['id' => 501, 'student_id' => 501, 'name' => 'Santri 1', 'nik' => '3578000000000001', 'gender' => 'L', 'sanggar_id' => 10],
+            ['id' => 502, 'student_id' => 502, 'name' => 'Santri 2', 'nik' => '3578000000000002', 'gender' => 'P', 'sanggar_id' => 10],
+        ],
+    ];
+
+    $response = $this->actingAs($teacher)
+        ->withSession([
+            'penyaluran_token' => 'teacher-token-300',
+            'penyaluran_me' => $sessionProfile,
+            'penyaluran_sanggars' => $sessionProfile['sanggars'],
+            'penyaluran_students' => $sessionProfile['students'],
+        ])
+        ->get(route('teacher.dashboard'));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('admin/dashboard/teacher')
+        ->where('studentCount', 2)
+        ->where('penyaluranTotal', 2)
+        ->where('sanggarCount', 1)
+        ->where('sanggarSum', 5)
+    );
+});
+
