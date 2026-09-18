@@ -120,13 +120,14 @@ class PenyaluranService
 
                 if ($sanggarId !== null) {
                     $filtered = collect($rawStudents)->filter(function (array $s) use ($sanggarId, $guruSanggars) {
-                        if (isset($s['sanggar_id']) && $s['sanggar_id'] !== null) {
+                        if (isset($s['sanggar_id']) && $s['sanggar_id'] !== null && $s['sanggar_id'] !== '') {
                             return (int) $s['sanggar_id'] === (int) $sanggarId;
                         }
-                        if (isset($s['sanggar_ids']) && is_array($s['sanggar_ids'])) {
+                        if (isset($s['sanggar_ids']) && is_array($s['sanggar_ids']) && ! empty($s['sanggar_ids'])) {
                             return in_array($sanggarId, array_map('intval', $s['sanggar_ids']), true);
                         }
-                        if (count($guruSanggars) === 1 && (int) ($guruSanggars[0]['id'] ?? 0) === (int) $sanggarId) {
+                        // If student does not have explicit sanggar_id in Penyaluran, check if requested sanggar belongs to this guru
+                        if (collect($guruSanggars)->contains(fn ($gs) => (int) ($gs['id'] ?? 0) === (int) $sanggarId)) {
                             return true;
                         }
 
@@ -161,14 +162,14 @@ class PenyaluranService
 
                 if ($sanggarId !== null) {
                     $rawStudents = collect($rawStudents)->filter(function (array $s) use ($sanggarId, $guruSanggars) {
-                        if (isset($s['sanggar_id']) && $s['sanggar_id'] !== null) {
+                        if (isset($s['sanggar_id']) && $s['sanggar_id'] !== null && $s['sanggar_id'] !== '') {
                             return (int) $s['sanggar_id'] === (int) $sanggarId;
                         }
-                        if (isset($s['sanggar_ids']) && is_array($s['sanggar_ids'])) {
+                        if (isset($s['sanggar_ids']) && is_array($s['sanggar_ids']) && ! empty($s['sanggar_ids'])) {
                             return in_array($sanggarId, array_map('intval', $s['sanggar_ids']), true);
                         }
                         // If student does not have explicit sanggar_id, check if guru has matching sanggar
-                        if (count($guruSanggars) === 1 && (int) ($guruSanggars[0]['id'] ?? 0) === (int) $sanggarId) {
+                        if (collect($guruSanggars)->contains(fn ($gs) => (int) ($gs['id'] ?? 0) === (int) $sanggarId)) {
                             return true;
                         }
 
@@ -200,7 +201,7 @@ class PenyaluranService
 
             // Aggregate per sanggar
             try {
-                $sanggars = $this->sanggars($token);
+                $sanggars = $this->sanggars($token, enrich: false);
             } catch (\Throwable $e) {
                 return [];
             }
@@ -500,7 +501,7 @@ class PenyaluranService
      * Get sanggars list for authenticated guru.
      * Primary source: Session / GET api/v1/guru/me which provides sanggars array.
      */
-    public function sanggars(string $token): array
+    public function sanggars(string $token, bool $enrich = true): array
     {
         $sanggars = null;
 
@@ -552,8 +553,14 @@ class PenyaluranService
             $sanggars = $data;
         }
 
+        if (! $enrich) {
+            return $sanggars;
+        }
+
         return $this->enrichSanggarsWithStudentCounts($sanggars, $token);
     }
+
+    protected static bool $isEnrichingSanggars = false;
 
     /**
      * Enrich sanggars array with accurate total_students counts from students roster.
@@ -564,15 +571,24 @@ class PenyaluranService
             return [];
         }
 
-        $students = [];
-        if ($token) {
-            try {
-                $students = $this->students($token);
-            } catch (\Throwable $e) {
+        if (self::$isEnrichingSanggars) {
+            return $sanggars;
+        }
+
+        self::$isEnrichingSanggars = true;
+        try {
+            $students = [];
+            if ($token) {
+                try {
+                    $students = $this->students($token);
+                } catch (\Throwable $e) {
+                    $students = session()->get('penyaluran_students', []);
+                }
+            } elseif (session()->has('penyaluran_students')) {
                 $students = session()->get('penyaluran_students', []);
             }
-        } elseif (session()->has('penyaluran_students')) {
-            $students = session()->get('penyaluran_students', []);
+        } finally {
+            self::$isEnrichingSanggars = false;
         }
 
         $studentsCollection = collect($students);

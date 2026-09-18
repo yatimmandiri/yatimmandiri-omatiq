@@ -12,6 +12,7 @@ use App\Models\Company\Period;
 use App\Models\Core\Region\Province;
 use App\Models\Core\Region\Regency;
 use App\Models\Core\User;
+use App\Services\StudentService;
 use App\Settings\SiteSettings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -24,6 +25,10 @@ use Spatie\Permission\Models\Role;
 class ParticipantController extends Controller
 {
     use LogActivity, UploadFiles;
+
+    public function __construct(
+        protected StudentService $studentService
+    ) {}
 
     public function index(): Response
     {

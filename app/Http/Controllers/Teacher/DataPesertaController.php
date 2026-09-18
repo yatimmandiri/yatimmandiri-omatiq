@@ -113,6 +113,16 @@ class DataPesertaController extends Controller
 
         $targetStudent = collect($studentsRaw)->firstWhere(fn (array $s) => (int) ($s['student_id'] ?? $s['id'] ?? 0) === $studentId);
 
+        if (! $targetStudent && $token) {
+            try {
+                $allStudentsRaw = $this->penyaluran->students($token, null);
+                $targetStudent = collect($allStudentsRaw)
+                    ->filter(fn (array $s) => filter_var($s['status'] ?? true, FILTER_VALIDATE_BOOLEAN))
+                    ->firstWhere(fn (array $s) => (int) ($s['student_id'] ?? $s['id'] ?? 0) === $studentId);
+            } catch (\Throwable $e) {
+            }
+        }
+
         if (! $targetStudent) {
             return redirect()
                 ->route('teacher.data-binaan.index')
@@ -200,6 +210,10 @@ class DataPesertaController extends Controller
             try {
                 $studentsRaw = $this->penyaluran->students($token, $data['penyaluran_sanggar_id'] ?? null);
                 $penyaluranStudent = collect($studentsRaw)->firstWhere(fn (array $s) => (int) ($s['student_id'] ?? $s['id'] ?? 0) === (int) $data['penyaluran_student_id']);
+                if (! $penyaluranStudent) {
+                    $allStudentsRaw = $this->penyaluran->students($token, null);
+                    $penyaluranStudent = collect($allStudentsRaw)->firstWhere(fn (array $s) => (int) ($s['student_id'] ?? $s['id'] ?? 0) === (int) $data['penyaluran_student_id']);
+                }
             } catch (\Throwable $e) {
                 $penyaluranStudent = null;
             }

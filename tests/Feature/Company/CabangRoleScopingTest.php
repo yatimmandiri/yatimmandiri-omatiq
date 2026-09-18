@@ -228,4 +228,3 @@ test('cabang user cannot delete participants or students', function () {
         ->delete(route('admin.companies.students.destroy', $student->id))
         ->assertForbidden();
 });
-
