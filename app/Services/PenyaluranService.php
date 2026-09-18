@@ -571,15 +571,26 @@ class PenyaluranService
             return [];
         }
 
-        $students = [];
-        if ($token) {
-            try {
-                $students = $this->students($token);
-            } catch (\Throwable $e) {
-                $students = session()->get('penyaluran_students', []);
+        if (self::$isEnrichingSanggars) {
+            return $sanggars;
+        }
+
+        self::$isEnrichingSanggars = true;
+        try {
+            $students = [];
+            if ($token) {
+                try {
+                    $students = $this->students($token);
+                } catch (\Throwable $e) {
+                    $raw = session()->get('penyaluran_students', []);
+                    $students = is_array($raw) ? $this->normalizeStudents($raw, null, $sanggars) : [];
+                }
+            } elseif (session()->has('penyaluran_students')) {
+                $raw = session()->get('penyaluran_students', []);
+                $students = is_array($raw) ? $this->normalizeStudents($raw, null, $sanggars) : [];
             }
-        } elseif (session()->has('penyaluran_students')) {
-            $students = session()->get('penyaluran_students', []);
+        } finally {
+            self::$isEnrichingSanggars = false;
         }
 
         $studentsCollection = collect($students);
