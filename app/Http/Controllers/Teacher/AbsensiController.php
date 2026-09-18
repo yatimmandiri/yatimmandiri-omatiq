@@ -65,17 +65,19 @@ class AbsensiController extends Controller
                 'name' => $s['name'] ?? '-',
                 'type' => $s['type'] ?? 'Reguler',
             ])->values()->all(),
-            'students' => collect($students)->map(fn (array $s) => [
-                'student_id' => $s['student_id'] ?? $s['id'] ?? null,
-                'name' => $s['name'] ?? $s['full_name'] ?? '-',
-                'nik' => $s['nik'] ?? null,
-                'nis' => $s['nis'] ?? null,
-                'gender' => $s['gender'] ?? 'male',
-                'school_name' => $s['school_name'] ?? null,
-                'class' => $s['class'] ?? $s['grade'] ?? null,
-                'sanggar_ids' => $s['sanggar_ids'] ?? (isset($s['sanggar_id']) ? [$s['sanggar_id']] : []),
-                'sanggar_id' => $s['sanggar_id'] ?? null,
-            ])->values()->all(),
+            'students' => collect($students)
+                ->filter(fn (array $s) => filter_var($s['status'] ?? true, FILTER_VALIDATE_BOOLEAN))
+                ->map(fn (array $s) => [
+                    'student_id' => $s['student_id'] ?? $s['id'] ?? null,
+                    'name' => $s['name'] ?? $s['full_name'] ?? '-',
+                    'nik' => $s['nik'] ?? null,
+                    'nis' => $s['nis'] ?? null,
+                    'gender' => $s['gender'] ?? 'male',
+                    'school_name' => $s['school_name'] ?? null,
+                    'class' => $s['class'] ?? $s['grade'] ?? null,
+                    'sanggar_ids' => $s['sanggar_ids'] ?? (isset($s['sanggar_id']) ? [$s['sanggar_id']] : []),
+                    'sanggar_id' => $s['sanggar_id'] ?? null,
+                ])->values()->all(),
         ]);
     }
 }

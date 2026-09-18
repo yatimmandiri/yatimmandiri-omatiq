@@ -66,19 +66,22 @@ class TeacherService
                 throw new \DomainException("Binaan ini sudah terdaftar pada OMATIQ {$eventYear}.");
             }
 
-            $student = Student::query()
-                ->where(function ($q) use ($penyaluranId, $penyaluranStudent) {
-                    if ($penyaluranId) {
-                        $q->where('penyaluran_id', $penyaluranId);
-                    }
-                    $studentNik = $penyaluranStudent['nik'] ?? null;
-                    if ($studentNik) {
-                        $q->orWhere(function ($sub) use ($studentNik) {
-                            $sub->where('nik', $studentNik)->where('is_binaan', true);
-                        });
-                    }
-                })
-                ->first();
+            $studentNik = $penyaluranStudent['nik'] ?? null;
+            $student = null;
+
+            if ($studentNik) {
+                $student = Student::query()
+                    ->where('nik', $studentNik)
+                    ->where('is_binaan', true)
+                    ->first();
+            }
+
+            if (! $student && $penyaluranId) {
+                $student = Student::query()
+                    ->where('penyaluran_id', $penyaluranId)
+                    ->where('is_binaan', true)
+                    ->first();
+            }
 
             // Create/update Student master (is_binaan true, no User) with full data
             $student ??= new Student;
@@ -172,6 +175,7 @@ class TeacherService
             : [];
 
         $filtered = collect($penyaluranStudents)
+            ->filter(fn (array $s) => filter_var($s['status'] ?? true, FILTER_VALIDATE_BOOLEAN))
             ->filter(function (array $s) use ($activePenyaluranIds, $activeNiks, $activeLocalMockIds) {
                 $penyaluranId = (int) ($s['student_id'] ?? $s['id'] ?? 0);
                 $nik = $s['nik'] ?? null;

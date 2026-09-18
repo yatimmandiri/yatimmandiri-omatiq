@@ -91,6 +91,10 @@ class DataPesertaController extends Controller
         if ($token) {
             try {
                 $studentsRaw = $this->penyaluran->students($token, $sanggarId);
+                $studentsRaw = collect($studentsRaw)
+                    ->filter(fn (array $s) => filter_var($s['status'] ?? true, FILTER_VALIDATE_BOOLEAN))
+                    ->values()
+                    ->all();
             } catch (\Throwable $e) {
                 $studentsRaw = [];
             }
@@ -212,10 +216,16 @@ class DataPesertaController extends Controller
             return back()->withErrors(['penyaluran_student_id' => 'Binaan tidak ditemukan.']);
         }
 
-        $studentNik = trim((string) ($penyaluranStudent['nik'] ?? ''));
-        if ($studentNik === '' || $studentNik === '-') {
+        if (! filter_var($penyaluranStudent['status'] ?? true, FILTER_VALIDATE_BOOLEAN)) {
             return back()->withErrors([
-                'penyaluran_student_id' => 'Santri binaan belum memiliki NIK di Penyaluran. Silakan lengkapi NIK santri terlebih dahulu di website Penyaluran sebelum mendaftarkan ke OMATIQ.',
+                'penyaluran_student_id' => 'Santri binaan ini sudah tidak aktif / lulus di Penyaluran.',
+            ])->withInput();
+        }
+
+        $studentNik = trim((string) ($penyaluranStudent['nik'] ?? ''));
+        if ($studentNik === '' || $studentNik === '-' || strlen($studentNik) < 10) {
+            return back()->withErrors([
+                'penyaluran_student_id' => 'Santri binaan belum memiliki NIK yang valid di Penyaluran. Silakan hubungi Admin untuk melengkapi data NIK santri terlebih dahulu sebelum mendaftarkan ke OMATIQ.',
             ])->withInput();
         }
 
