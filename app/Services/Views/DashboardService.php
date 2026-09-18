@@ -93,6 +93,9 @@ class DashboardService
                 $penyaluranTotal = count($penyaluranStudents);
                 $sanggarCount = count($sanggars);
                 $sanggarSum = collect($sanggars)->sum(fn ($s) => (int) ($s['total_students'] ?? 0));
+                if ($sanggarSum === 0 && $penyaluranTotal > 0 && $sanggarCount > 0) {
+                    $sanggarSum = $penyaluranTotal;
+                }
                 $overlap = $sanggarSum > $penyaluranTotal ? $sanggarSum - $penyaluranTotal : 0;
             } catch (\Throwable $e) {
                 // fallback to local, keep null

@@ -502,50 +502,111 @@ class PenyaluranService
      */
     public function sanggars(string $token): array
     {
+        $sanggars = null;
+
         if (session()->has('penyaluran_sanggars')) {
             $sessionSanggars = session()->get('penyaluran_sanggars');
             if (is_array($sessionSanggars) && ! empty($sessionSanggars)) {
-                return $sessionSanggars;
+                $sanggars = $sessionSanggars;
             }
         }
 
-        try {
-            $me = $this->me($token);
-            if (isset($me['sanggars']) && is_array($me['sanggars']) && ! empty($me['sanggars'])) {
-                session()->put('penyaluran_sanggars', $me['sanggars']);
-
-                return $me['sanggars'];
+        if ($sanggars === null) {
+            try {
+                $me = $this->me($token);
+                if (isset($me['sanggars']) && is_array($me['sanggars']) && ! empty($me['sanggars'])) {
+                    session()->put('penyaluran_sanggars', $me['sanggars']);
+                    $sanggars = $me['sanggars'];
+                }
+            } catch (\Throwable $e) {
+                // fall through to dedicated endpoint
             }
-        } catch (\Throwable $e) {
-            // fall through to dedicated endpoint
         }
 
-        $endpoint = 'api/v1/guru/sanggars';
+        if ($sanggars === null) {
+            $endpoint = 'api/v1/guru/sanggars';
 
-        try {
-            $response = $this->client($token)->get($endpoint);
-        } catch (\Throwable $e) {
-            Log::error("Penyaluran API Connection Error on {$endpoint}", [
-                'endpoint' => $endpoint,
-                'error_class' => get_class($e),
-                'error_message' => $e->getMessage(),
-            ]);
+            try {
+                $response = $this->client($token)->get($endpoint);
+            } catch (\Throwable $e) {
+                Log::error("Penyaluran API Connection Error on {$endpoint}", [
+                    'endpoint' => $endpoint,
+                    'error_class' => get_class($e),
+                    'error_message' => $e->getMessage(),
+                ]);
 
+                return [];
+            }
+
+            $this->assertSuccess($response, $endpoint);
+
+            $data = $response->json('data');
+            if (! is_array($data)) {
+                return [];
+            }
+
+            if (! empty($data)) {
+                session()->put('penyaluran_sanggars', $data);
+            }
+
+            $sanggars = $data;
+        }
+
+        return $this->enrichSanggarsWithStudentCounts($sanggars, $token);
+    }
+
+    /**
+     * Enrich sanggars array with accurate total_students counts from students roster.
+     */
+    public function enrichSanggarsWithStudentCounts(array $sanggars, ?string $token = null): array
+    {
+        if (empty($sanggars)) {
             return [];
         }
 
-        $this->assertSuccess($response, $endpoint);
-
-        $data = $response->json('data');
-        if (! is_array($data)) {
-            return [];
+        $students = [];
+        if ($token) {
+            try {
+                $students = $this->students($token);
+            } catch (\Throwable $e) {
+                $students = session()->get('penyaluran_students', []);
+            }
+        } elseif (session()->has('penyaluran_students')) {
+            $students = session()->get('penyaluran_students', []);
         }
 
-        if (! empty($data)) {
-            session()->put('penyaluran_sanggars', $data);
-        }
+        $studentsCollection = collect($students);
+        $totalStudents = $studentsCollection->count();
+        $isSingleSanggar = count($sanggars) === 1;
 
-        return $data;
+        return collect($sanggars)->map(function (array $s) use ($studentsCollection, $totalStudents, $isSingleSanggar) {
+            $sanggarId = (int) ($s['id'] ?? 0);
+
+            $matchedCount = $studentsCollection->filter(function (array $student) use ($sanggarId, $isSingleSanggar) {
+                if ($isSingleSanggar) {
+                    return true;
+                }
+                if (isset($student['sanggar_id']) && (int) $student['sanggar_id'] === $sanggarId) {
+                    return true;
+                }
+                if (isset($student['sanggar_ids']) && is_array($student['sanggar_ids'])) {
+                    return in_array($sanggarId, array_map('intval', $student['sanggar_ids']), true);
+                }
+
+                return false;
+            })->count();
+
+            $existing = isset($s['total_students']) && is_numeric($s['total_students']) ? (int) $s['total_students'] : 0;
+            $count = max($existing, $matchedCount);
+
+            if ($count === 0 && $isSingleSanggar && $totalStudents > 0) {
+                $count = $totalStudents;
+            }
+
+            $s['total_students'] = $count;
+
+            return $s;
+        })->values()->all();
     }
 
     /**
