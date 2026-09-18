@@ -41,6 +41,42 @@ class DashboardService
         $verifiedParticipantCount = (clone $participantQuery)->where('status', 'verified')->count();
         $submittedParticipantCount = (clone $participantQuery)->where('status', 'submitted')->count();
 
+        // Teachers count for branch
+        $teacherQuery = User::role('Teacher');
+        if (filled($branch)) {
+            $teacherQuery->where(function ($q) use ($branch) {
+                $q->where('branch', $branch)
+                    ->orWhere('branch', 'like', "%{$branch}%")
+                    ->orWhereHas('participants', function ($pq) use ($branch) {
+                        $pq->where('branch', $branch)->orWhere('branch', 'like', "%{$branch}%");
+                    });
+            });
+        }
+        $teacherCount = $teacherQuery->count();
+
+        // Students (binaan) count for branch
+        $studentQuery = Student::query();
+        if (filled($branch)) {
+            $studentQuery->where(function ($q) use ($branch) {
+                $q->whereHas('participants', function ($pq) use ($branch) {
+                    $pq->where('branch', $branch)->orWhere('branch', 'like', "%{$branch}%");
+                })->orWhereHas('mentor', function ($mq) use ($branch) {
+                    $mq->where('branch', $branch)->orWhere('branch', 'like', "%{$branch}%");
+                });
+            });
+        }
+        $studentCount = $studentQuery->count();
+
+        // Sanggars count for branch
+        $sanggarCount = Participant::query()
+            ->whereNotNull('penyaluran_sanggar_name')
+            ->where('penyaluran_sanggar_name', '<>', '')
+            ->when(filled($branch), fn ($q) => $q->where(function ($sub) use ($branch) {
+                $sub->where('branch', $branch)->orWhere('branch', 'like', "%{$branch}%");
+            }))
+            ->distinct('penyaluran_sanggar_name')
+            ->count('penyaluran_sanggar_name');
+
         $title = $branch ? "Dashboard Cabang {$branch}" : 'Dashboard Cabang';
 
         return [
@@ -52,6 +88,9 @@ class DashboardService
                 'participantCount' => $participantCount,
                 'verifiedParticipantCount' => $verifiedParticipantCount,
                 'submittedParticipantCount' => $submittedParticipantCount,
+                'teacherCount' => $teacherCount,
+                'studentCount' => $studentCount,
+                'sanggarCount' => $sanggarCount,
             ],
         ];
     }

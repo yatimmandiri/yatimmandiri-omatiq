@@ -25,7 +25,7 @@ import { router, usePage } from '@inertiajs/react';
 import {
     CheckCircle2,
     Eye,
-    Filter,
+    MapPin,
     MoreHorizontal,
     Pencil,
     Power,
@@ -36,8 +36,9 @@ import {
 import { useState } from 'react';
 
 export default function ListPage() {
-    const { mentors } = usePage<{
+    const { mentors, userBranch } = usePage<{
         mentors?: Array<{ id: number; name: string }>;
+        userBranch?: string | null;
     }>().props;
 
     const [filterValue, setFilterValue] = useState<Record<string, string>>({});
@@ -215,6 +216,13 @@ export default function ListPage() {
                     }
                 >
                     <div className="flex flex-col gap-4 px-4 pt-8 md:px-8">
+                        {userBranch && (
+                            <div className="inline-flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300">
+                                <MapPin className="size-3.5" />
+                                Menampilkan data santri wilayah:{' '}
+                                <strong>{userBranch}</strong>
+                            </div>
+                        )}
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                             <div>
                                 <div className="flex items-center gap-2 text-sm font-semibold">
@@ -412,7 +420,7 @@ const RowAction = ({
 
 ListPage.layout = {
     breadcrumbs: [
-        { title: 'Dashboard', href: dashboard() },
+        { title: 'Dashboard', href: dashboard().url },
         { title: 'Data Students', href: students.index().url },
     ],
 };

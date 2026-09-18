@@ -7,10 +7,21 @@ import { Link, usePage } from '@inertiajs/react';
 import { ArrowLeft, Pencil } from 'lucide-react';
 
 export default function ShowPage() {
-    const { student, participants } = usePage<{
+    const { student, participants, auth } = usePage<{
         student: any;
         participants: any[];
+        auth?: {
+            user?: {
+                roles?: string[];
+                permissions?: string[];
+            };
+        };
     }>().props;
+
+    const isCabang = (auth?.user?.roles ?? []).includes('Cabang');
+    const userPermissions: string[] = auth?.user?.permissions ?? [];
+    const isSuperAdmin = (auth?.user?.roles ?? []).includes('Administrators');
+    const canEdit = !isCabang && (isSuperAdmin || userPermissions.includes('update-student'));
 
     return (
         <div className="space-y-6 p-4">
@@ -27,11 +38,13 @@ export default function ShowPage() {
                             <ArrowLeft /> Kembali
                         </Link>
                     </Button>
-                    <Button asChild>
-                        <Link href={students.edit(student.id).url}>
-                            <Pencil /> Edit
-                        </Link>
-                    </Button>
+                    {canEdit && (
+                        <Button asChild>
+                            <Link href={students.edit(student.id).url}>
+                                <Pencil /> Edit
+                            </Link>
+                        </Button>
+                    )}
                 </div>
             </div>
 

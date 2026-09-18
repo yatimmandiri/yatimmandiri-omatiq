@@ -8,11 +8,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { dashboard } from '@/routes/admin';
 import teachers from '@/routes/admin/companies/teachers';
-import { router } from '@inertiajs/react';
-import { Eye } from 'lucide-react';
+import { router, usePage } from '@inertiajs/react';
+import { Eye, MapPin } from 'lucide-react';
 import { useState } from 'react';
 
 export default function ListPage() {
+    const { userBranch } = usePage<{ userBranch?: string | null }>().props;
     const [refreshData, setRefreshData] = useState(false);
 
     const columns = [
@@ -107,6 +108,15 @@ export default function ListPage() {
                         }))
                     }
                 >
+                    {userBranch && (
+                        <div className="px-4 pt-6 md:px-8">
+                            <div className="inline-flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300">
+                                <MapPin className="size-3.5" />
+                                Menampilkan data guru wilayah:{' '}
+                                <strong>{userBranch}</strong>
+                            </div>
+                        </div>
+                    )}
                     <DataTableComponent buttonActive={{ create: false }} />
                 </DataTableProvider>
             </div>
@@ -118,7 +128,7 @@ ListPage.layout = {
     breadcrumbs: [
         {
             title: 'Dashboard',
-            href: dashboard(),
+            href: dashboard().url,
         },
         {
             title: 'Guru',

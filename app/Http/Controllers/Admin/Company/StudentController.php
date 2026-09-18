@@ -26,8 +26,13 @@ class StudentController extends Controller
     {
         $this->authorize('viewAny', Student::class);
 
+        $user = Auth::user();
+        $isCabang = $user?->hasRole('Cabang') ?? false;
+        $userBranch = $isCabang ? $user->getBranchName() : null;
+
         return Inertia::render('admin/company/students/list', [
             'mentors' => $this->service->formOptions()['mentors'],
+            'userBranch' => $userBranch,
         ]);
     }
 
@@ -55,6 +60,21 @@ class StudentController extends Controller
     public function show(Student $student): Response
     {
         $this->authorize('view', $student);
+
+        $user = Auth::user();
+        if ($user && $user->hasRole('Cabang')) {
+            $branch = $user->getBranchName();
+            if (filled($branch)) {
+                $hasBranchParticipant = $student->participants()->where(function ($pq) use ($branch) {
+                    $pq->where('branch', $branch)->orWhere('branch', 'like', "%{$branch}%");
+                })->exists();
+                $mentorBranch = $student->mentor?->getBranchName();
+
+                if (! $hasBranchParticipant && (! $mentorBranch || stripos($mentorBranch, $branch) === false)) {
+                    abort(403, 'Akses terbatas untuk santri binaan cabang Anda.');
+                }
+            }
+        }
 
         $student->load(['mentor:id,name,email', 'province:id,name', 'regency:id,name']);
 

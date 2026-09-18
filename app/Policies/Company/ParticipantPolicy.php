@@ -27,7 +27,16 @@ class ParticipantPolicy
             return false;
         }
 
-        if ($user->hasRole('Administrators') || $user->hasRole('Cabang')) {
+        if ($user->hasRole('Administrators')) {
+            return true;
+        }
+
+        if ($user->hasRole('Cabang')) {
+            $branch = $user->getBranchName();
+            if (filled($branch)) {
+                return filled($participant->branch) && stripos($participant->branch, $branch) !== false;
+            }
+
             return true;
         }
 

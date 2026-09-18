@@ -20,7 +20,13 @@ class TeacherController extends Controller
     {
         $this->authorize('viewAny', User::class);
 
-        return Inertia::render('admin/company/teachers/list');
+        $user = Auth::user();
+        $isCabang = $user?->hasRole('Cabang') ?? false;
+        $userBranch = $isCabang ? $user->getBranchName() : null;
+
+        return Inertia::render('admin/company/teachers/list', [
+            'userBranch' => $userBranch,
+        ]);
     }
 
     public function create()
@@ -36,6 +42,21 @@ class TeacherController extends Controller
     public function show(User $teacher)
     {
         $this->authorize('view', $teacher);
+
+        $user = Auth::user();
+        if ($user && $user->hasRole('Cabang')) {
+            $branch = $user->getBranchName();
+            if (filled($branch)) {
+                $teacherBranch = $teacher->getBranchName();
+                $hasBranchParticipant = $teacher->participants()->where(function ($pq) use ($branch) {
+                    $pq->where('branch', $branch)->orWhere('branch', 'like', "%{$branch}%");
+                })->exists();
+
+                if (! $hasBranchParticipant && filled($teacherBranch) && stripos($teacherBranch, $branch) === false) {
+                    abort(403, 'Akses terbatas untuk guru cabang Anda.');
+                }
+            }
+        }
 
         $teacher->load(['roles']);
 

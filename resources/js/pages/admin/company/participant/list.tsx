@@ -17,6 +17,7 @@ import {
     Clock3,
     ExternalLink,
     Filter,
+    MapPin,
     RefreshCw,
     RotateCcw,
     XCircle,
@@ -48,7 +49,7 @@ const statusVariant = (status: string) =>
           : 'secondary';
 
 export default function ListPage() {
-    const { filterOptions, sheets, auth } = usePage<{
+    const { filterOptions, sheets, auth, userBranch } = usePage<{
         filterOptions?: {
             olimpiades?: Array<{ value: string; label: string }>;
             eventYears?: Array<{ value: string; label: string }>;
@@ -66,6 +67,7 @@ export default function ListPage() {
                 roles?: string[];
             };
         };
+        userBranch?: string | null;
     }>().props;
 
     const [filterValue, setFilterValue] = useState<Record<string, string>>({});
@@ -259,6 +261,14 @@ export default function ListPage() {
                     }
                 >
                     <div className="flex flex-col gap-4 px-4 pt-8 md:px-8">
+                        {userBranch && (
+                            <div className="inline-flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300">
+                                <MapPin className="size-3.5" />
+                                Menampilkan data peserta wilayah:{' '}
+                                <strong>{userBranch}</strong>
+                            </div>
+                        )}
+
                         {sheets && !auth?.user?.roles?.includes('Cabang') && (
                             <div className="rounded-xl border bg-muted/20 p-4">
                             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

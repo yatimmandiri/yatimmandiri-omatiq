@@ -54,6 +54,7 @@ test('cabang user sees scoped dashboard metrics for their branch', function () {
         ->component('admin/dashboard/admin')
         ->where('participantCount', 1)
         ->where('verifiedParticipantCount', 1)
+        ->where('studentCount', 1)
         ->where('branchName', 'Surabaya')
         ->where('isCabang', true)
     );
@@ -228,4 +229,40 @@ test('cabang user cannot delete participants or students', function () {
         ->delete(route('admin.companies.students.destroy', $student->id))
         ->assertForbidden();
 });
+
+test('cabang user cannot view participant or teacher from other branch', function () {
+    $cabangUser = User::factory()->create([
+        'name' => 'User Cabang Surabaya',
+        'branch' => 'Surabaya',
+        'email_verified_at' => now(),
+    ]);
+    $cabangUser->assignRole('Cabang');
+
+    $olimpiade = Olimpiade::factory()->create(['event_year' => 2026]);
+
+    $pMlg = Participant::factory()->create([
+        'registration_number' => 'OMQ-MLG-999',
+        'olimpiade_id' => $olimpiade->id,
+        'branch' => 'Malang',
+        'status' => 'verified',
+    ]);
+
+    $teacherMlg = User::factory()->create([
+        'name' => 'Guru Malang 999',
+        'branch' => 'Malang',
+        'email_verified_at' => now(),
+    ]);
+    $teacherMlg->assignRole('Teacher');
+
+    // Participant show from other branch is forbidden
+    $this->actingAs($cabangUser)
+        ->get(route('admin.companies.participants.show', $pMlg->id))
+        ->assertForbidden();
+
+    // Teacher show from other branch is forbidden
+    $this->actingAs($cabangUser)
+        ->get(route('admin.companies.teachers.show', $teacherMlg->id))
+        ->assertForbidden();
+});
+
 
