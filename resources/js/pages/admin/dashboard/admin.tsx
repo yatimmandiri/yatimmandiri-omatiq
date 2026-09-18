@@ -2,6 +2,7 @@ import { Card } from '@/components/ui/card';
 import { dashboard } from '@/routes/admin';
 import olimpiades from '@/routes/admin/companies/olimpiades';
 import participants from '@/routes/admin/companies/participants';
+import students from '@/routes/admin/companies/students';
 import teachers from '@/routes/admin/companies/teachers';
 import { Head, Link, usePage } from '@inertiajs/react';
 import {
@@ -9,6 +10,7 @@ import {
     CheckCircle2,
     ClipboardList,
     GraduationCap,
+    MapIcon,
     Sparkles,
     Trophy,
     UserCheck,
@@ -26,6 +28,7 @@ export default function Dashboard() {
         submittedParticipantCount = 0,
         teacherCount = 0,
         studentCount = 0,
+        sanggarCount = 0,
         olimpiadeCount = 0,
     } = usePage<{
         pageTitle?: string;
@@ -36,6 +39,7 @@ export default function Dashboard() {
         submittedParticipantCount?: number;
         teacherCount?: number;
         studentCount?: number;
+        sanggarCount?: number;
         olimpiadeCount?: number;
     }>().props;
 
@@ -62,7 +66,7 @@ export default function Dashboard() {
                             </h1>
                             <p className="mt-2 max-w-2xl text-sm leading-6 text-white/70">
                                 {branchName
-                                    ? `Pantau pendaftaran dan verifikasi peserta wilayah ${branchName}.`
+                                    ? `Pantau pendaftaran, santri binaan, guru, dan sanggar wilayah ${branchName}.`
                                     : 'Pantau pendaftaran, verifikasi, guru, dan olimpiade — semua dalam satu command center.'}
                             </p>
                             <div className="mt-4 flex items-center gap-3">
@@ -87,31 +91,30 @@ export default function Dashboard() {
                             >
                                 Kelola Peserta <ArrowRight className="size-4" />
                             </Link>
-                            {!isCabang && (
-                                <Link
-                                    href={teachers.index().url}
-                                    prefetch
-                                    className="inline-flex items-center gap-2 rounded-2xl bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur hover:bg-white/15"
-                                >
-                                    Data Guru
-                                </Link>
-                            )}
+                            <Link
+                                href={teachers.index().url}
+                                prefetch
+                                className="inline-flex items-center gap-2 rounded-2xl bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur hover:bg-white/15"
+                            >
+                                Data Guru
+                            </Link>
+                            <Link
+                                href={students.index().url}
+                                prefetch
+                                className="inline-flex items-center gap-2 rounded-2xl bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur hover:bg-white/15"
+                            >
+                                Data Santri
+                            </Link>
                         </div>
                     </div>
                 </div>
 
                 {/* Metrics */}
-                <div
-                    className={
-                        isCabang
-                            ? 'grid gap-4 sm:grid-cols-3'
-                            : 'grid gap-4 sm:grid-cols-2 xl:grid-cols-3'
-                    }
-                >
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                     <Metric
                         label="Total Peserta"
                         value={participantCount}
-                        sub="Semua pendaftaran"
+                        sub={isCabang ? `Peserta ${branchName || 'Cabang'}` : 'Semua pendaftaran'}
                         icon={<Users />}
                         accent="#17524A"
                     />
@@ -129,66 +132,82 @@ export default function Dashboard() {
                         icon={<ClipboardList />}
                         accent="#f59e0b"
                     />
-                    {!isCabang && (
-                        <>
-                            <Metric
-                                label="Total Guru"
-                                value={teacherCount}
-                                sub="Akun terhubung"
-                                icon={<UserCheck />}
-                                accent="#0ea5e9"
-                            />
-                            <Metric
-                                label="Total Binaan"
-                                value={studentCount}
-                                sub="Is_binaan = true"
-                                icon={<GraduationCap />}
-                                accent="#8b5cf6"
-                            />
-                            <Metric
-                                label="Olimpiade"
-                                value={olimpiadeCount}
-                                sub="Kategori aktif"
-                                icon={<Trophy />}
-                                accent="#E5BE1E"
-                                dark
-                            />
-                        </>
+                    <Metric
+                        label="Total Guru"
+                        value={teacherCount}
+                        sub={isCabang ? `Guru ${branchName || 'Cabang'}` : 'Akun terhubung'}
+                        icon={<UserCheck />}
+                        accent="#0ea5e9"
+                    />
+                    <Metric
+                        label="Total Santri"
+                        value={studentCount}
+                        sub={isCabang ? `Santri ${branchName || 'Cabang'}` : 'Santri binaan'}
+                        icon={<GraduationCap />}
+                        accent="#8b5cf6"
+                    />
+                    {isCabang ? (
+                        <Metric
+                            label="Total Sanggar"
+                            value={sanggarCount}
+                            sub={`Sanggar ${branchName || 'Cabang'}`}
+                            icon={<MapIcon />}
+                            accent="#E5BE1E"
+                            dark
+                        />
+                    ) : (
+                        <Metric
+                            label="Olimpiade"
+                            value={olimpiadeCount}
+                            sub="Kategori aktif"
+                            icon={<Trophy />}
+                            accent="#E5BE1E"
+                            dark
+                        />
                     )}
                 </div>
 
                 {/* Quick links */}
-                {!isCabang ? (
-                    <div className="grid gap-4 lg:grid-cols-3">
-                        <Quick
-                            title="Data Peserta"
-                            desc="Validasi pembayaran & status pendaftaran."
-                            href={participants.index().url}
-                            icon={<Users className="size-5" />}
-                        />
-                        <Quick
-                            title="Data Guru"
-                            desc="Koneksi Penyaluran & reset password."
-                            href={teachers.index().url}
-                            icon={<GraduationCap className="size-5" />}
-                        />
-                        <Quick
-                            title="Olimpiade"
-                            desc="Kategori, jadwal, dan konten."
-                            href={olimpiades.index().url}
-                            icon={<Trophy className="size-5" />}
-                        />
-                    </div>
-                ) : (
-                    <div className="grid gap-4">
-                        <Quick
-                            title="Data Peserta"
-                            desc="Validasi status pendaftaran dan pantau data peserta cabang."
-                            href={participants.index().url}
-                            icon={<Users className="size-5" />}
-                        />
-                    </div>
-                )}
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <Quick
+                        title="Data Peserta"
+                        desc="Validasi status pendaftaran dan pantau peserta."
+                        href={participants.index().url}
+                        icon={<Users className="size-5" />}
+                    />
+                    <Quick
+                        title="Data Guru"
+                        desc="Data guru dan pembina terhubung di cabang."
+                        href={teachers.index().url}
+                        icon={<UserCheck className="size-5" />}
+                    />
+                    <Quick
+                        title="Data Santri"
+                        desc="Data santri binaan dan sekolah asal."
+                        href={students.index().url}
+                        icon={<GraduationCap className="size-5" />}
+                    />
+                    <Quick
+                        title={isCabang ? 'Data Sanggar' : 'Olimpiade'}
+                        desc={
+                            isCabang
+                                ? 'Daftar sanggar binaan wilayah cabang.'
+                                : 'Kategori, jadwal, dan konten olimpiade.'
+                        }
+                        href={
+                            isCabang
+                                ? '/admin/companies/sanggars'
+                                : olimpiades.index().url
+                        }
+                        icon={
+                            isCabang ? (
+                                <MapIcon className="size-5" />
+                            ) : (
+                                <Trophy className="size-5" />
+                            )
+                        }
+                    />
+                </div>
             </div>
         </>
     );

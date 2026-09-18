@@ -41,6 +41,42 @@ class DashboardService
         $verifiedParticipantCount = (clone $participantQuery)->where('status', 'verified')->count();
         $submittedParticipantCount = (clone $participantQuery)->where('status', 'submitted')->count();
 
+        // Teachers count for branch
+        $teacherQuery = User::role('Teacher');
+        if (filled($branch)) {
+            $teacherQuery->where(function ($q) use ($branch) {
+                $q->where('branch', $branch)
+                    ->orWhere('branch', 'like', "%{$branch}%")
+                    ->orWhereHas('participants', function ($pq) use ($branch) {
+                        $pq->where('branch', $branch)->orWhere('branch', 'like', "%{$branch}%");
+                    });
+            });
+        }
+        $teacherCount = $teacherQuery->count();
+
+        // Students (binaan) count for branch
+        $studentQuery = Student::query();
+        if (filled($branch)) {
+            $studentQuery->where(function ($q) use ($branch) {
+                $q->whereHas('participants', function ($pq) use ($branch) {
+                    $pq->where('branch', $branch)->orWhere('branch', 'like', "%{$branch}%");
+                })->orWhereHas('mentor', function ($mq) use ($branch) {
+                    $mq->where('branch', $branch)->orWhere('branch', 'like', "%{$branch}%");
+                });
+            });
+        }
+        $studentCount = $studentQuery->count();
+
+        // Sanggars count for branch
+        $sanggarCount = Participant::query()
+            ->whereNotNull('penyaluran_sanggar_name')
+            ->where('penyaluran_sanggar_name', '<>', '')
+            ->when(filled($branch), fn ($q) => $q->where(function ($sub) use ($branch) {
+                $sub->where('branch', $branch)->orWhere('branch', 'like', "%{$branch}%");
+            }))
+            ->distinct('penyaluran_sanggar_name')
+            ->count('penyaluran_sanggar_name');
+
         $title = $branch ? "Dashboard Cabang {$branch}" : 'Dashboard Cabang';
 
         return [
@@ -52,6 +88,9 @@ class DashboardService
                 'participantCount' => $participantCount,
                 'verifiedParticipantCount' => $verifiedParticipantCount,
                 'submittedParticipantCount' => $submittedParticipantCount,
+                'teacherCount' => $teacherCount,
+                'studentCount' => $studentCount,
+                'sanggarCount' => $sanggarCount,
             ],
         ];
     }
@@ -74,33 +113,82 @@ class DashboardService
 
     private static function teacher(User $user): array
     {
-        $studentCount = Student::where('mentor_id', $user->id)->where('is_binaan', true)->count();
+        $penyaluran = app(PenyaluranService::class);
+        $token = session('penyaluran_token') ?? $user->penyaluran_token;
+
         $penyaluranProfile = null;
         $sanggars = [];
         $penyaluranStudents = [];
-        $penyaluranTotal = null;
-        $sanggarCount = 0;
-        $overlap = null;
-        $sanggarSum = null;
-        $token = session('penyaluran_token') ?? $user->penyaluran_token;
 
-        if ($token) {
-            try {
-                $penyaluran = app(PenyaluranService::class);
-                $penyaluranProfile = $penyaluran->me($token);
-                $sanggars = $penyaluran->sanggars($token);
-                $penyaluranStudents = $penyaluran->students($token);
-                $penyaluranTotal = count($penyaluranStudents);
-                $sanggarCount = count($sanggars);
-                $sanggarSum = collect($sanggars)->sum(fn ($s) => (int) ($s['total_students'] ?? 0));
-                if ($sanggarSum === 0 && $penyaluranTotal > 0 && $sanggarCount > 0) {
-                    $sanggarSum = $penyaluranTotal;
-                }
-                $overlap = $sanggarSum > $penyaluranTotal ? $sanggarSum - $penyaluranTotal : 0;
-            } catch (\Throwable $e) {
-                // fallback to local, keep null
+        // 1. Ambil Profile Penyaluran dari Session terlebih dahulu
+        if (session()->has('penyaluran_me')) {
+            $sessionMe = session()->get('penyaluran_me');
+            if (is_array($sessionMe) && ! empty($sessionMe)) {
+                $penyaluranProfile = $sessionMe;
             }
         }
+
+        if (! $penyaluranProfile && $token) {
+            try {
+                $penyaluranProfile = $penyaluran->me($token);
+            } catch (\Throwable $e) {
+                $penyaluranProfile = null;
+            }
+        }
+
+        // 2. Ambil Students Penyaluran dari Session terlebih dahulu (atau via PenyaluranService)
+        if (session()->has('penyaluran_students')) {
+            $rawSessionStudents = session()->get('penyaluran_students');
+            if (is_array($rawSessionStudents) && ! empty($rawSessionStudents)) {
+                $penyaluranStudents = $penyaluran->students($token ?: 'session');
+            }
+        }
+
+        if (empty($penyaluranStudents) && $token) {
+            try {
+                $penyaluranStudents = $penyaluran->students($token);
+            } catch (\Throwable $e) {
+                $penyaluranStudents = [];
+            }
+        }
+
+        if (empty($penyaluranStudents) && isset($penyaluranProfile['students']) && is_array($penyaluranProfile['students']) && ! empty($penyaluranProfile['students'])) {
+            $penyaluranStudents = $penyaluran->students($token ?: 'session');
+        }
+
+        // 3. Ambil Sanggars Penyaluran dari Session terlebih dahulu (atau via PenyaluranService)
+        if (session()->has('penyaluran_sanggars')) {
+            $rawSessionSanggars = session()->get('penyaluran_sanggars');
+            if (is_array($rawSessionSanggars) && ! empty($rawSessionSanggars)) {
+                $sanggars = $penyaluran->enrichSanggarsWithStudentCounts($rawSessionSanggars, $token);
+            }
+        }
+
+        if (empty($sanggars) && $token) {
+            try {
+                $sanggars = $penyaluran->sanggars($token);
+            } catch (\Throwable $e) {
+                $sanggars = [];
+            }
+        }
+
+        if (empty($sanggars) && isset($penyaluranProfile['sanggars']) && is_array($penyaluranProfile['sanggars']) && ! empty($penyaluranProfile['sanggars'])) {
+            $sanggars = $penyaluran->enrichSanggarsWithStudentCounts($penyaluranProfile['sanggars'], $token);
+        }
+
+        $penyaluranTotal = ! empty($penyaluranStudents)
+            ? count($penyaluranStudents)
+            : (isset($penyaluranProfile['total_students']) && is_numeric($penyaluranProfile['total_students']) ? (int) $penyaluranProfile['total_students'] : null);
+
+        $sanggarCount = count($sanggars);
+        $sanggarSum = collect($sanggars)->sum(fn ($s) => (int) ($s['total_students'] ?? 0));
+        if ($sanggarSum === 0 && $penyaluranTotal > 0 && $sanggarCount > 0) {
+            $sanggarSum = $penyaluranTotal;
+        }
+        $overlap = ($sanggarSum && $penyaluranTotal && $sanggarSum > $penyaluranTotal) ? $sanggarSum - $penyaluranTotal : 0;
+
+        $localStudentCount = Student::where('mentor_id', $user->id)->where('is_binaan', true)->count();
+        $studentCount = ($penyaluranTotal !== null && $penyaluranTotal > 0) ? $penyaluranTotal : $localStudentCount;
 
         $registeredCount = Participant::query()
             ->where(function ($q) use ($user, $penyaluranStudents) {

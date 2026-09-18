@@ -27,12 +27,10 @@ class SanggarController extends Controller
 
         $token = $request->session()->get('penyaluran_token') ?? Auth::user()?->penyaluran_token;
         $sanggars = [];
-        if ($token) {
-            try {
-                $sanggars = $this->penyaluran->sanggars($token);
-            } catch (\Throwable $e) {
-                $sanggars = [];
-            }
+        try {
+            $sanggars = $this->penyaluran->sanggars($token ?? 'session');
+        } catch (\Throwable $e) {
+            $sanggars = [];
         }
 
         $search = strtolower($request->string('globalSearch')->toString());
@@ -60,12 +58,10 @@ class SanggarController extends Controller
 
         $token = request()->session()->get('penyaluran_token') ?? Auth::user()?->penyaluran_token;
         $sanggars = [];
-        if ($token) {
-            try {
-                $sanggars = $this->penyaluran->sanggars($token);
-            } catch (\Throwable $e) {
-                $sanggars = [];
-            }
+        try {
+            $sanggars = $this->penyaluran->sanggars($token ?? 'session');
+        } catch (\Throwable $e) {
+            $sanggars = [];
         }
         $sanggar = collect($sanggars)->firstWhere(fn (array $s) => (int) ($s['id'] ?? 0) === $id);
         if (! $sanggar) {

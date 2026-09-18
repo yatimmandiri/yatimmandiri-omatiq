@@ -571,31 +571,23 @@ class PenyaluranService
             return [];
         }
 
-        if (self::$isEnrichingSanggars) {
-            return $sanggars;
-        }
-
-        self::$isEnrichingSanggars = true;
-        try {
-            $students = [];
-            if ($token) {
-                try {
-                    $students = $this->students($token);
-                } catch (\Throwable $e) {
-                    $students = session()->get('penyaluran_students', []);
-                }
-            } elseif (session()->has('penyaluran_students')) {
+        $students = [];
+        if ($token) {
+            try {
+                $students = $this->students($token);
+            } catch (\Throwable $e) {
                 $students = session()->get('penyaluran_students', []);
             }
-        } finally {
-            self::$isEnrichingSanggars = false;
+        } elseif (session()->has('penyaluran_students')) {
+            $students = session()->get('penyaluran_students', []);
         }
 
         $studentsCollection = collect($students);
         $totalStudents = $studentsCollection->count();
-        $isSingleSanggar = count($sanggars) === 1;
+        $sanggarCount = count($sanggars);
+        $isSingleSanggar = $sanggarCount === 1;
 
-        return collect($sanggars)->map(function (array $s) use ($studentsCollection, $totalStudents, $isSingleSanggar) {
+        $enriched = collect($sanggars)->map(function (array $s) use ($studentsCollection, $totalStudents, $isSingleSanggar) {
             $sanggarId = (int) ($s['id'] ?? 0);
 
             $matchedCount = $studentsCollection->filter(function (array $student) use ($sanggarId, $isSingleSanggar) {
@@ -622,7 +614,18 @@ class PenyaluranService
             $s['total_students'] = $count;
 
             return $s;
-        })->values()->all();
+        })->values();
+
+        $sum = $enriched->sum(fn ($s) => (int) ($s['total_students'] ?? 0));
+        if ($sum === 0 && $totalStudents > 0 && $sanggarCount > 0) {
+            $enriched = $enriched->map(function ($s) use ($totalStudents) {
+                $s['total_students'] = $totalStudents;
+
+                return $s;
+            });
+        }
+
+        return $enriched->all();
     }
 
     /**

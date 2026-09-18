@@ -8,7 +8,12 @@ import { router, usePage } from '@inertiajs/react';
 import { InfoIcon, KeyRound } from 'lucide-react';
 
 export default function DetailPage() {
-    const { user } = usePage<any>().props;
+    const { user, auth } = usePage<any>().props;
+
+    const isSuperAdmin = (auth?.user?.roles ?? []).includes('Administrators');
+    const canResetPassword =
+        isSuperAdmin ||
+        (auth?.user?.permissions ?? []).includes('update-user');
 
     const handleResetPassword = async () => {
         const isConfirmed = await confirmResetPassword({
@@ -34,13 +39,15 @@ export default function DetailPage() {
                             Detail Guru
                         </span>
                     </div>
-                    <div className="mb-4 flex justify-end">
-                        <Button variant="outline" onClick={handleResetPassword}>
-                            <KeyRound className="mr-2 h-4 w-4" />
-                            Reset ke password default
-                        </Button>
-                    </div>
-                    <ul className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    {canResetPassword && (
+                        <div className="mb-4 flex justify-end">
+                            <Button variant="outline" onClick={handleResetPassword}>
+                                <KeyRound className="mr-2 h-4 w-4" />
+                                Reset ke password default
+                            </Button>
+                        </div>
+                    )}
+                    <ul className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
                         <li className="flex flex-col space-y-2">
                             <span className="text-sm font-semibold">Kode Guru</span>
                             <span className="font-mono text-sm font-semibold text-primary">
@@ -100,7 +107,7 @@ DetailPage.layout = {
     breadcrumbs: [
         {
             title: 'Dashboard',
-            href: dashboard(),
+            href: dashboard().url,
         },
         {
             title: 'Guru',

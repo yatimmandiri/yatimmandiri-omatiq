@@ -23,14 +23,12 @@ class AbsensiController extends Controller
 
         $sanggars = [];
         $students = [];
-        if ($token) {
-            try {
-                $sanggars = $this->penyaluran->sanggars($token);
-                $students = $this->penyaluran->students($token);
-            } catch (\Throwable $e) {
-                $sanggars = [];
-                $students = [];
-            }
+        try {
+            $sanggars = $this->penyaluran->sanggars($token ?? 'session');
+            $students = $this->penyaluran->students($token ?? 'session');
+        } catch (\Throwable $e) {
+            $sanggars = [];
+            $students = [];
         }
 
         // Fallback for testing or local without Penyaluran API
