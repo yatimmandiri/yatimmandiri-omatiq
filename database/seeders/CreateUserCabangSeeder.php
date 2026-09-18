@@ -56,7 +56,7 @@ class CreateUserCabangSeeder extends Seeder
             $user = User::firstOrCreate(
                 ['email' => $email],
                 [
-                    'name' => 'Cabang ' . $branchName,
+                    'name' => 'Cabang '.$branchName,
                     'branch' => $branchName,
                     'email_verified_at' => now(),
                     'password' => Hash::make('password'),

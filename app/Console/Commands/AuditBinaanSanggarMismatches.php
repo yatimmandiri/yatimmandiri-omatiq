@@ -7,6 +7,7 @@ use App\Models\Company\Student;
 use App\Models\Core\User;
 use App\Services\PenyaluranService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Cache;
 
 class AuditBinaanSanggarMismatches extends Command
 {
@@ -19,9 +20,9 @@ class AuditBinaanSanggarMismatches extends Command
         $year = (int) $this->option('year');
         $checkAll = (bool) $this->option('all');
 
-        $this->info("================================================================================");
+        $this->info('================================================================================');
         $this->info("🔍 AUDIT KETIDAKSESUAIAN SANGGAR & PENYALURAN ID (Event Year: {$year})");
-        $this->info("================================================================================");
+        $this->info('================================================================================');
 
         // Ambil guru yang relevan: semua guru yang memiliki peserta di Omatiq (atau semua jika --all)
         $teacherQuery = User::role('Teacher')->whereNotNull('phone');
@@ -44,83 +45,89 @@ class AuditBinaanSanggarMismatches extends Command
             $teacherQuery->whereIn('id', $relevantIds);
         }
 
-        $teachers = $teacherQuery->get(['id', 'name', 'phone', 'penyaluran_id', 'penyaluran_token']);
-        $this->info("Mengumpulkan data santri dari {$teachers->count()} guru di API Penyaluran...");
+        $cachedData = Cache::get('penyaluran:all_students_index');
+        if ($cachedData && is_array($cachedData)) {
+            $apiStudentsById = $cachedData['byId'] ?? [];
+            $apiStudentsByNik = $cachedData['byNik'] ?? [];
+            $this->info('Menggunakan indeks cache API Penyaluran: '.count($apiStudentsById).' (ID), '.count($apiStudentsByNik).' (NIK)');
+        } else {
+            $teachers = $teacherQuery->get(['id', 'name', 'phone', 'penyaluran_id', 'penyaluran_token']);
+            $this->info("Mengumpulkan data santri dari {$teachers->count()} guru di API Penyaluran...");
 
-        $apiStudentsByNik = [];
-        $apiStudentsById = [];
-        $teacherSuccess = 0;
-        $teacherFail = 0;
+            $bar = $this->output->createProgressBar($teachers->count());
+            $bar->start();
 
-        $bar = $this->output->createProgressBar($teachers->count());
-        $bar->start();
+            foreach ($teachers as $teacher) {
+                session()->forget(['penyaluran_me', 'penyaluran_students', 'penyaluran_sanggars']);
+                $token = $teacher->penyaluran_token;
+                $students = [];
 
-        foreach ($teachers as $teacher) {
-            session()->forget(['penyaluran_me', 'penyaluran_students', 'penyaluran_sanggars']);
-            $token = $teacher->penyaluran_token;
-            $students = [];
-
-            // Coba dengan token yang ada
-            if ($token) {
-                try {
-                    $students = $penyaluran->students($token);
-                } catch (\Throwable $e) {
-                    $students = [];
-                }
-            }
-
-            // Jika token kadaluarsa atau kosong, coba login via phone
-            if (empty($students) && ! empty($teacher->phone)) {
-                try {
-                    $freshToken = $penyaluran->loginGuru($teacher->phone);
-                    if ($freshToken) {
-                        $teacher->update(['penyaluran_token' => $freshToken]);
-                        $students = $penyaluran->students($freshToken);
-                    }
-                } catch (\Throwable $e) {
-                    // Guru gagal login Penyaluran
-                }
-            }
-
-            if (! empty($students)) {
-                $teacherSuccess++;
-                foreach ($students as $s) {
-                    $pId = $s['student_id'] ?? $s['id'] ?? null;
-                    $nik = ! empty($s['nik']) ? trim((string) $s['nik']) : null;
-                    $sanggarId = $s['sanggar_id'] ?? null;
-                    $sanggarName = $s['sanggar_name'] ?? null;
-                    $name = $s['name'] ?? $s['full_name'] ?? null;
-
-                    $record = [
-                        'penyaluran_id' => $pId,
-                        'name' => $name,
-                        'nik' => $nik,
-                        'sanggar_id' => $sanggarId,
-                        'sanggar_name' => $sanggarName,
-                        'teacher_user_id' => $teacher->id,
-                        'teacher_name' => $teacher->name,
-                        'teacher_phone' => $teacher->phone,
-                    ];
-
-                    if ($pId) {
-                        $apiStudentsById[(int) $pId] = $record;
-                    }
-                    if ($nik && strlen($nik) >= 10) {
-                        $apiStudentsByNik[$nik] = $record;
+                // Coba dengan token yang ada
+                if ($token) {
+                    try {
+                        $students = $penyaluran->students($token);
+                    } catch (\Throwable $e) {
+                        $students = [];
                     }
                 }
-            } else {
-                $teacherFail++;
+
+                // Jika token kadaluarsa atau kosong, coba login via phone
+                if (empty($students) && ! empty($teacher->phone)) {
+                    try {
+                        $freshToken = $penyaluran->loginGuru($teacher->phone);
+                        if ($freshToken) {
+                            $teacher->update(['penyaluran_token' => $freshToken]);
+                            $students = $penyaluran->students($freshToken);
+                        }
+                    } catch (\Throwable $e) {
+                        // Guru gagal login Penyaluran
+                    }
+                }
+
+                if (! empty($students)) {
+                    $teacherSuccess++;
+                    foreach ($students as $s) {
+                        $pId = $s['student_id'] ?? $s['id'] ?? null;
+                        $nik = ! empty($s['nik']) ? trim((string) $s['nik']) : null;
+                        $sanggarId = $s['sanggar_id'] ?? null;
+                        $sanggarName = $s['sanggar_name'] ?? null;
+                        $name = $s['name'] ?? $s['full_name'] ?? null;
+
+                        $record = [
+                            'penyaluran_id' => $pId,
+                            'name' => $name,
+                            'nik' => $nik,
+                            'sanggar_id' => $sanggarId,
+                            'sanggar_name' => $sanggarName,
+                            'teacher_user_id' => $teacher->id,
+                            'teacher_name' => $teacher->name,
+                            'teacher_phone' => $teacher->phone,
+                        ];
+
+                        if ($pId) {
+                            $apiStudentsById[(int) $pId] = $record;
+                        }
+                        if ($nik && strlen($nik) >= 10) {
+                            $apiStudentsByNik[$nik] = $record;
+                        }
+                    }
+                } else {
+                    $teacherFail++;
+                }
+
+                $bar->advance();
             }
 
-            $bar->advance();
+            $bar->finish();
+            $this->line('');
+            Cache::put('penyaluran:all_students_index', [
+                'byId' => $apiStudentsById,
+                'byNik' => $apiStudentsByNik,
+            ], 1800);
+            $this->info("Berhasil sinkronisasi dari {$teacherSuccess} guru (Gagal/Tidak ada murid: {$teacherFail}).");
+            $this->info('Total santri terindeks dari API Penyaluran: '.count($apiStudentsById).' (berdasarkan ID), '.count($apiStudentsByNik).' (berdasarkan NIK)');
+            $this->line('');
         }
-
-        $bar->finish();
-        $this->line('');
-        $this->info("Berhasil sinkronisasi dari {$teacherSuccess} guru (Gagal/Tidak ada murid: {$teacherFail}).");
-        $this->info("Total santri terindeks dari API Penyaluran: ".count($apiStudentsById)." (berdasarkan ID), ".count($apiStudentsByNik)." (berdasarkan NIK)");
-        $this->line('');
 
         // 2. Ambil semua peserta binaan terdaftar di Omatiq
         $participants = Participant::with(['student', 'mentor', 'olimpiade'])
