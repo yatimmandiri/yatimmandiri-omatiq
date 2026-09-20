@@ -51,7 +51,7 @@ export default function ShowPage() {
                         <ArrowLeft />
                         Kembali
                     </Button>
-                    {participant.status === 'verified' && (
+                    {participant.status !== 'rejected' && (
                         <Button
                             variant="outline"
                             asChild
@@ -63,7 +63,9 @@ export default function ShowPage() {
                                 rel="noopener noreferrer"
                             >
                                 <Printer className="size-4" />
-                                Cetak Kartu
+                                {participant.status === 'verified'
+                                    ? 'Cetak Kartu'
+                                    : 'Cetak Bukti'}
                             </a>
                         </Button>
                     )}

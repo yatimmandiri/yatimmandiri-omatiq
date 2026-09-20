@@ -33,9 +33,9 @@ class ParticipantCardController extends Controller
             })
             ->firstOrFail();
 
-        // 1. Check verified status
-        if ($participant->status !== 'verified') {
-            abort(403, 'Kartu tanda peserta hanya dapat dicetak untuk peserta yang telah diverifikasi (status Terverifikasi).');
+        // 1. Check status (only allow submitted and verified; block rejected)
+        if ($participant->status === 'rejected') {
+            abort(403, 'Pendaftaran untuk peserta ini ditolak. Kartu atau bukti pendaftaran tidak dapat dicetak.');
         }
 
         // 2. Authorization check if logged in

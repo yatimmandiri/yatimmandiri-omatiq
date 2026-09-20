@@ -33,7 +33,7 @@ beforeEach(function () {
     ]);
 });
 
-test('public cannot view card if status is submitted or rejected', function () {
+test('public can view registration proof if status is submitted', function () {
     $submitted = Participant::factory()->create([
         'student_id' => $this->student->id,
         'olimpiade_id' => $this->olimpiade->id,
@@ -43,8 +43,13 @@ test('public cannot view card if status is submitted or rejected', function () {
     ]);
 
     $response = $this->get(route('home.registration.card', $submitted->registration_number));
-    $response->assertForbidden();
+    $response->assertOk()
+        ->assertSee('REG-2026-TEST02')
+        ->assertSee('BUKTI PENDAFTARAN')
+        ->assertSee('MENUNGGU VERIFIKASI ADMIN');
+});
 
+test('public cannot view card if status is rejected', function () {
     $rejected = Participant::factory()->create([
         'student_id' => $this->student->id,
         'olimpiade_id' => $this->olimpiade->id,
@@ -53,8 +58,8 @@ test('public cannot view card if status is submitted or rejected', function () {
         'status' => 'rejected',
     ]);
 
-    $response2 = $this->get(route('home.registration.card', $rejected->registration_number));
-    $response2->assertForbidden();
+    $response = $this->get(route('home.registration.card', $rejected->registration_number));
+    $response->assertForbidden();
 });
 
 test('admin can access participant card via admin route', function () {
