@@ -367,3 +367,38 @@ it('blocks binaan registration when registration_binaan_open is false', function
         ->post(route('teacher.data-peserta.store'), registrationPayload($olimpiade->id, $student->id))
         ->assertForbidden();
 });
+
+it('handles student registration without duplicate constraint violation when penyaluran_id and nik exist on different records', function () {
+    openBinaanRegistration();
+    $teacher = createTeacher();
+    $olimpiade = createOlimpiade();
+
+    // Record 1: has penyaluran_id 4155 but different NIK and 0 participants
+    Student::create([
+        'penyaluran_id' => 4155,
+        'nik' => '3502072805150002',
+        'full_name' => 'AHMAD GAZALI ALBI',
+        'gender' => 'male',
+        'mentor_id' => $teacher->id,
+        'is_binaan' => true,
+    ]);
+
+    // Record 2: has real NIK but null penyaluran_id
+    $targetStudent = Student::create([
+        'penyaluran_id' => null,
+        'nik' => '3502072805150001',
+        'full_name' => 'AHMAD GAZALI ALBA',
+        'gender' => 'male',
+        'mentor_id' => $teacher->id,
+        'is_binaan' => true,
+    ]);
+
+    $this->actingAs($teacher)
+        ->post(route('teacher.data-peserta.store'), registrationPayload($olimpiade->id, $targetStudent->id))
+        ->assertRedirect(route('teacher.data-peserta.index'))
+        ->assertSessionHasNoErrors();
+
+    expect(Participant::where('mentor_id', $teacher->id)->count())->toBe(1);
+    $registeredStudent = Student::where('nik', '3502072805150001')->first();
+    expect($registeredStudent)->not->toBeNull();
+});

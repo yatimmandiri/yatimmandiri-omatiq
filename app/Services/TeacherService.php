@@ -66,21 +66,62 @@ class TeacherService
                 throw new \DomainException("Binaan ini sudah terdaftar pada OMATIQ {$eventYear}.");
             }
 
-            $studentNik = $penyaluranStudent['nik'] ?? null;
+            $studentNik = ! empty($penyaluranStudent['nik']) ? trim((string) $penyaluranStudent['nik']) : null;
+
+            // Resolve existing student by penyaluran_id and by NIK
+            $studentByPenyaluran = $penyaluranId
+                ? Student::withTrashed()->where('penyaluran_id', $penyaluranId)->first()
+                : null;
+
+            $studentByNik = $studentNik
+                ? Student::withTrashed()->where('nik', $studentNik)->where('is_binaan', true)->first()
+                : null;
+
             $student = null;
 
-            if ($studentNik) {
-                $student = Student::query()
-                    ->where('nik', $studentNik)
-                    ->where('is_binaan', true)
-                    ->first();
+            if ($studentByPenyaluran && $studentByNik) {
+                if ($studentByPenyaluran->id === $studentByNik->id) {
+                    $student = $studentByPenyaluran;
+                } else {
+                    // Two different rows exist (one with penyaluran_id, one with the NIK).
+                    // Reconcile by prioritizing the row with participants or the one matching NIK.
+                    $penyaluranHasParticipants = Participant::where('student_id', $studentByPenyaluran->id)->exists();
+                    $nikHasParticipants = Participant::where('student_id', $studentByNik->id)->exists();
+
+                    if ($penyaluranHasParticipants && ! $nikHasParticipants) {
+                        // Reassign NIK to studentByPenyaluran and clear studentByNik
+                        $studentByNik->update(['nik' => 'DUP-'.uniqid().'-'.$studentByNik->id]);
+                        $studentByNik->delete();
+                        $student = $studentByPenyaluran;
+                    } else {
+                        // Reassign any participants from studentByPenyaluran to studentByNik
+                        if ($penyaluranHasParticipants) {
+                            Participant::where('student_id', $studentByPenyaluran->id)->update(['student_id' => $studentByNik->id]);
+                        }
+                        // Free the penyaluran_id from old student so studentByNik can take it
+                        $studentByPenyaluran->update(['penyaluran_id' => null]);
+                        if (! $penyaluranHasParticipants) {
+                            $studentByPenyaluran->delete();
+                        }
+                        $student = $studentByNik;
+                    }
+                }
+            } elseif ($studentByPenyaluran) {
+                $student = $studentByPenyaluran;
+            } elseif ($studentByNik) {
+                $student = $studentByNik;
             }
 
-            if (! $student && $penyaluranId) {
-                $student = Student::query()
+            if ($student && $student->trashed()) {
+                $student->restore();
+            }
+
+            // Ensure no other record holds this penyaluran_id
+            if ($penyaluranId) {
+                Student::withTrashed()
                     ->where('penyaluran_id', $penyaluranId)
-                    ->where('is_binaan', true)
-                    ->first();
+                    ->when($student?->id, fn ($q, $id) => $q->where('id', '!=', $id))
+                    ->update(['penyaluran_id' => null]);
             }
 
             // Create/update Student master (is_binaan true, no User) with full data
@@ -175,7 +216,6 @@ class TeacherService
             : [];
 
         $filtered = collect($penyaluranStudents)
-            ->filter(fn (array $s) => filter_var($s['status'] ?? true, FILTER_VALIDATE_BOOLEAN))
             ->filter(function (array $s) use ($activePenyaluranIds, $activeNiks, $activeLocalMockIds) {
                 $penyaluranId = (int) ($s['student_id'] ?? $s['id'] ?? 0);
                 $nik = $s['nik'] ?? null;

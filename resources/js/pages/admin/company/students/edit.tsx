@@ -28,6 +28,7 @@ import {
     Save,
     ShieldCheck,
     User,
+    Zap,
 } from 'lucide-react';
 import type { FormEvent, ReactNode } from 'react';
 import { useEffect, useState } from 'react';
@@ -229,26 +230,39 @@ export default function EditPage() {
                 </div>
             </div>
 
+            {/* Banner Sinkronisasi Real-Time (Khusus Binaan) */}
+            {isBinaan && (
+                <div className="flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50/50 p-4 text-emerald-900 dark:border-emerald-800/50 dark:bg-emerald-950/20 dark:text-emerald-200">
+                    <Zap className="size-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                    <div className="text-sm">
+                        <p className="font-semibold">
+                            Sinkronisasi Dua Arah Terpusat
+                        </p>
+                        <p className="text-xs text-emerald-700 dark:text-emerald-300/80">
+                            Santri ini terdaftar sebagai binaan Penyaluran. Setiap perubahan data yang Anda simpan akan langsung disinkronkan ke server Penyaluran Pusat dan memperbarui database OMATIQ secara otomatis.
+                        </p>
+                    </div>
+                </div>
+            )}
+
             {/* Data Pribadi */}
-            <Card className={isBinaan ? 'border-muted bg-muted/20' : ''}>
+            <Card>
                 <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <User className="size-5 text-primary" />
                             <CardTitle className="text-base font-semibold">
-                                Data Pribadi
+                                Data Identitas Santri / Siswa
                             </CardTitle>
                         </div>
                         {isBinaan && (
-                            <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
-                                Identitas Binaan Penyaluran (Read-Only)
+                            <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300">
+                                Sync Penyaluran
                             </span>
                         )}
                     </div>
                     <CardDescription>
-                        {isBinaan
-                            ? 'Identitas santri binaan terhubung dengan Penyaluran. Hanya data pendidikan dan domisili yang dapat diubah.'
-                            : 'Informasi identitas dasar siswa/santri.'}
+                        Informasi identitas dasar santri/siswa kependudukan dan kontak wali.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -263,8 +277,6 @@ export default function EditPage() {
                                     form.setData('full_name', e.target.value)
                                 }
                                 placeholder="Nama lengkap sesuai identitas"
-                                disabled={isBinaan}
-                                className={isBinaan ? 'bg-muted/50 cursor-not-allowed font-medium' : ''}
                                 required
                             />
                         </Field>
@@ -276,24 +288,25 @@ export default function EditPage() {
                                     form.setData('nickname', e.target.value)
                                 }
                                 placeholder="Nama panggilan"
-                                disabled={isBinaan}
-                                className={isBinaan ? 'bg-muted/50 cursor-not-allowed' : ''}
                             />
                         </Field>
 
                         <Field
-                            label="NIK (Nomor Induk Kependudukan) *"
+                            label="NIK (Nomor Induk Kependudukan 16 Digit) *"
                             error={error('nik')}
                         >
                             <Input
                                 value={form.data.nik}
                                 onChange={(e) =>
-                                    form.setData('nik', e.target.value)
+                                    form.setData(
+                                        'nik',
+                                        e.target.value
+                                            .replace(/\D/g, '')
+                                            .slice(0, 16),
+                                    )
                                 }
                                 placeholder="16 digit NIK"
                                 maxLength={16}
-                                disabled={isBinaan}
-                                className={isBinaan ? 'bg-muted/50 cursor-not-allowed' : ''}
                                 required
                             />
                         </Field>
@@ -308,18 +321,15 @@ export default function EditPage() {
                                     form.setData('nis', e.target.value)
                                 }
                                 placeholder="Nomor induk siswa (opsional)"
-                                disabled={isBinaan}
-                                className={isBinaan ? 'bg-muted/50 cursor-not-allowed' : ''}
                             />
                         </Field>
 
                         <Field label="Jenis Kelamin *" error={error('gender')}>
                             <Select
-                                value={form.data.gender}
+                                value={form.data.gender || 'male'}
                                 onValueChange={(v) => form.setData('gender', v)}
-                                disabled={isBinaan}
                             >
-                                <SelectTrigger className={`w-full ${isBinaan ? 'bg-muted/50 cursor-not-allowed' : ''}`}>
+                                <SelectTrigger className="w-full">
                                     <SelectValue placeholder="Pilih Jenis Kelamin" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -343,8 +353,6 @@ export default function EditPage() {
                                     form.setData('birth_place', e.target.value)
                                 }
                                 placeholder="Tempat lahir"
-                                disabled={isBinaan}
-                                className={isBinaan ? 'bg-muted/50 cursor-not-allowed' : ''}
                             />
                         </Field>
 
@@ -358,8 +366,6 @@ export default function EditPage() {
                                 onChange={(e) =>
                                     form.setData('birth_date', e.target.value)
                                 }
-                                disabled={isBinaan}
-                                className={isBinaan ? 'bg-muted/50 cursor-not-allowed' : ''}
                                 required
                             />
                         </Field>
@@ -368,16 +374,18 @@ export default function EditPage() {
                             label="No. HP / WhatsApp Wali *"
                             error={error('parent_phone')}
                         >
-                            <Input
-                                value={form.data.parent_phone}
-                                onChange={(e) =>
-                                    form.setData('parent_phone', e.target.value)
-                                }
-                                placeholder="08xxxxxxxxxx"
-                                disabled={isBinaan}
-                                className={isBinaan ? 'bg-muted/50 cursor-not-allowed' : ''}
-                                required
-                            />
+                            <div className="relative">
+                                <Phone className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+                                <Input
+                                    value={form.data.parent_phone}
+                                    onChange={(e) =>
+                                        form.setData('parent_phone', e.target.value)
+                                    }
+                                    placeholder="Contoh: 081234567890"
+                                    className="pl-9"
+                                    required
+                                />
+                            </div>
                         </Field>
                     </div>
                 </CardContent>

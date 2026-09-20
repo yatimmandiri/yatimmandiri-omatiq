@@ -231,6 +231,83 @@ test('teacher can update their assigned binaan and syncs to penyaluran', functio
         ->and($student->fresh()->full_name)->toBe('Binaan Guru Awal');
 });
 
+test('teacher can update all binaan fields including nik, name, birth date, gender, phone and syncs to penyaluran', function () {
+    Http::fake([
+        '*/api/v1/guru/students/915' => Http::response([
+            'success' => true,
+            'message' => 'Data santri berhasil diperbarui.',
+            'data' => ['id' => 915, 'name' => 'Muhammad Rizky Ramadhan'],
+        ], 200),
+    ]);
+
+    $teacher = User::factory()->create(['penyaluran_id' => 10, 'penyaluran_token' => 'teacher-token-full']);
+    $teacher->assignRole('Teacher');
+
+    $student = Student::factory()->create([
+        'penyaluran_id' => 915,
+        'full_name' => 'Rizky Awal',
+        'nik' => '3578010101019999',
+        'gender' => 'male',
+        'mentor_id' => $teacher->id,
+        'is_binaan' => true,
+        'province_id' => $this->province->id,
+        'regency_id' => $this->regency->id,
+    ]);
+
+    $response = $this
+        ->actingAs($teacher)
+        ->withSession(['penyaluran_token' => 'teacher-token-full'])
+        ->put(route('teacher.data-binaan.update', $student), [
+            'full_name' => 'Muhammad Rizky Ramadhan',
+            'nickname' => 'Rizky',
+            'nik' => '3578010101018888',
+            'nis' => 'NIS-2026-001',
+            'gender' => 'male',
+            'birth_place' => 'Surabaya',
+            'birth_date' => '2015-08-17',
+            'parent_phone' => '081234567899',
+            'school_name' => 'SDN Unggulan Surabaya',
+            'school_level' => 'SD',
+            'grade' => '5',
+            'address' => 'Jl. Pemuda No. 45',
+            'province_id' => $this->province->id,
+            'regency_id' => $this->regency->id,
+        ]);
+
+    $response->assertSessionHasNoErrors();
+    $response->assertRedirect(route('teacher.data-binaan.index'));
+
+    Http::assertSent(function (Request $request) {
+        return str_contains($request->url(), 'api/v1/guru/students/915')
+            && $request->method() === 'PUT'
+            && $request['name'] === 'Muhammad Rizky Ramadhan'
+            && $request['nik'] === '3578010101018888'
+            && $request['nickname'] === 'Rizky'
+            && $request['nis'] === 'NIS-2026-001'
+            && $request['gender'] === 'L'
+            && $request['birth_place'] === 'Surabaya'
+            && $request['birth_date'] === '2015-08-17'
+            && $request['guardian_phone'] === '081234567899'
+            && $request['phone'] === '081234567899'
+            && $request['class'] === '5'
+            && $request['school_name'] === 'SDN Unggulan Surabaya'
+            && $request['school_level'] === 'SD'
+            && $request['address'] === 'Jl. Pemuda No. 45';
+    });
+
+    $fresh = $student->fresh();
+    expect($fresh->full_name)->toBe('Muhammad Rizky Ramadhan')
+        ->and($fresh->nik)->toBe('3578010101018888')
+        ->and($fresh->nickname)->toBe('Rizky')
+        ->and($fresh->nis)->toBe('NIS-2026-001')
+        ->and($fresh->gender)->toBe('male')
+        ->and($fresh->birth_place)->toBe('Surabaya')
+        ->and($fresh->birth_date->format('Y-m-d'))->toBe('2015-08-17')
+        ->and($fresh->parent_phone)->toBe('081234567899')
+        ->and($fresh->school_name)->toBe('SDN Unggulan Surabaya')
+        ->and($fresh->grade)->toBe('5');
+});
+
 test('teacher cannot update another teacher student', function () {
     $teacher1 = User::factory()->create(['penyaluran_id' => 10]);
     $teacher1->assignRole('Teacher');

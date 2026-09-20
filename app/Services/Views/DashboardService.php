@@ -190,13 +190,22 @@ class DashboardService
         $localStudentCount = Student::where('mentor_id', $user->id)->where('is_binaan', true)->count();
         $studentCount = ($penyaluranTotal !== null && $penyaluranTotal > 0) ? $penyaluranTotal : $localStudentCount;
 
+        $isValidNik = function (?string $nik): bool {
+            if (! $nik) {
+                return false;
+            }
+            $trimmed = trim($nik);
+
+            return $trimmed !== '' && $trimmed !== '-' && $trimmed !== '0' && strlen($trimmed) >= 10;
+        };
+
         $registeredCount = Participant::query()
-            ->where(function ($q) use ($user, $penyaluranStudents) {
+            ->where(function ($q) use ($user, $penyaluranStudents, $isValidNik) {
                 $q->where('mentor_id', $user->id)
                     ->orWhereHas('student', fn ($sq) => $sq->where('mentor_id', $user->id));
 
                 $sessionIds = collect($penyaluranStudents)->pluck('student_id')->filter()->map(fn ($id) => (int) $id)->all();
-                $sessionNiks = collect($penyaluranStudents)->pluck('nik')->filter()->all();
+                $sessionNiks = collect($penyaluranStudents)->pluck('nik')->filter(fn ($n) => $isValidNik($n))->unique()->values()->all();
 
                 if (! empty($sessionIds) || ! empty($sessionNiks)) {
                     $q->orWhereHas('student', function ($sq) use ($sessionIds, $sessionNiks) {

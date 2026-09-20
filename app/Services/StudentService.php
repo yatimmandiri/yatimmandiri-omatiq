@@ -44,6 +44,20 @@ class StudentService
             ?? User::whereNotNull('penyaluran_token')->where('penyaluran_token', '!=', '')->latest()->value('penyaluran_token');
 
         if (! $token) {
+            $teacherPhone = $student->mentor?->phone
+                ?? ($student->mentor_id ? User::where('id', $student->mentor_id)->value('phone') : null)
+                ?? User::role('Teacher')->whereNotNull('phone')->latest()->value('phone');
+
+            if ($teacherPhone) {
+                try {
+                    $token = $this->penyaluran->loginGuru($teacherPhone);
+                } catch (\Throwable $e) {
+                    $token = null;
+                }
+            }
+        }
+
+        if (! $token) {
             return $student;
         }
 
@@ -61,9 +75,11 @@ class StudentService
             if ($found) {
                 $regions = BiodataController::resolveRegionIds($found);
                 $gender = ($found['gender'] ?? 'male') === 'female' || ($found['gender'] ?? 'male') === 'P' ? 'female' : 'male';
+                $validFoundNik = ! empty($found['nik']) && $found['nik'] !== '-' && $found['nik'] !== '0' && strlen(trim($found['nik'])) >= 10 ? trim($found['nik']) : null;
+
                 $attributes = [
                     'penyaluran_id' => $found['student_id'] ?? $found['id'] ?? $student->penyaluran_id,
-                    'nik' => $found['nik'] ?? $student->nik,
+                    'nik' => $validFoundNik ?? $student->nik,
                     'nis' => $found['nis'] ?? $student->nis,
                     'full_name' => $found['name'] ?? $found['full_name'] ?? $student->full_name,
                     'nickname' => $found['nickname'] ?? $student->nickname,
@@ -81,6 +97,14 @@ class StudentService
                     'parent_phone' => $found['guardian_phone'] ?? $found['parent_phone'] ?? $student->parent_phone,
                     'is_binaan' => true,
                 ];
+
+                $targetPenyaluranId = $attributes['penyaluran_id'] ?? null;
+                if ($targetPenyaluranId) {
+                    Student::withTrashed()
+                        ->where('penyaluran_id', $targetPenyaluranId)
+                        ->where('id', '!=', $student->id)
+                        ->update(['penyaluran_id' => null]);
+                }
 
                 $student->update(array_filter($attributes, fn ($v) => $v !== null));
             }
@@ -107,6 +131,23 @@ class StudentService
             ?? $student->mentor?->penyaluran_token
             ?? ($student->mentor_id ? User::where('id', $student->mentor_id)->value('penyaluran_token') : null)
             ?? User::whereNotNull('penyaluran_token')->where('penyaluran_token', '!=', '')->latest()->value('penyaluran_token');
+
+        if (! $token) {
+            $teacherPhone = $student->mentor?->phone
+                ?? ($student->mentor_id ? User::where('id', $student->mentor_id)->value('phone') : null)
+                ?? User::role('Teacher')->whereNotNull('phone')->latest()->value('phone');
+
+            if ($teacherPhone) {
+                try {
+                    $token = $this->penyaluran->loginGuru($teacherPhone);
+                    if ($student->mentor_id && $token) {
+                        User::where('id', $student->mentor_id)->update(['penyaluran_token' => $token]);
+                    }
+                } catch (\Throwable $e) {
+                    $token = null;
+                }
+            }
+        }
 
         if (! $token) {
             if (app()->environment('testing')) {

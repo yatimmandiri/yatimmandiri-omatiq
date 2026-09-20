@@ -361,11 +361,13 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
                                     const selected = teachers.find(
                                         (t) => String(t.id) === String(value),
                                     );
+
                                     if (selected) {
                                         form.setData(
                                             'mentor_name',
                                             selected.name,
                                         );
+
                                         if (selected.phone) {
                                             form.setData(
                                                 'mentor_phone',
