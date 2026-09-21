@@ -19,7 +19,15 @@ import { Textarea } from '@/components/ui/textarea';
 import { dashboard } from '@/routes/teacher';
 import binaanRoutes from '@/routes/teacher/data-binaan';
 import { useForm, usePage } from '@inertiajs/react';
-import { ArrowLeft, GraduationCap, MapPin, Save, User } from 'lucide-react';
+import {
+    ArrowLeft,
+    GraduationCap,
+    MapPin,
+    Phone,
+    Save,
+    User,
+    Zap,
+} from 'lucide-react';
 import type { FormEvent, ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 
@@ -67,6 +75,23 @@ export default function EditPage() {
     const [loadingVillages, setLoadingVillages] = useState(false);
 
     const form = useForm<any>({
+        full_name: student.full_name ?? student.name ?? '',
+        nickname: student.nickname ?? '',
+        nik:
+            student.nik &&
+            !student.nik.startsWith('RAND') &&
+            !student.nik.includes(' ') &&
+            student.nik !== '-'
+                ? student.nik
+                : (student.nik ?? ''),
+        nis: student.nis ?? '',
+        gender:
+            student.gender === 'female' || student.gender === 'P'
+                ? 'female'
+                : 'male',
+        birth_place: student.birth_place ?? '',
+        birth_date: dateValue(student.birth_date),
+        parent_phone: student.parent_phone ?? student.guardian_phone ?? '',
         school_name: student.school_name ?? '',
         school_level: student.school_level ?? '',
         grade: student.grade ?? student.class ?? '',
@@ -172,14 +197,6 @@ export default function EditPage() {
             </p>
         ) : null;
 
-    const studentFullName = student.full_name ?? student.name ?? '-';
-    const studentGender =
-        student.gender === 'male' || student.gender === 'L'
-            ? 'Laki-laki (L)'
-            : student.gender === 'female' || student.gender === 'P'
-              ? 'Perempuan (P)'
-              : '-';
-
     return (
         <form onSubmit={submit} className="mx-auto max-w-4xl space-y-6 p-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -188,8 +205,8 @@ export default function EditPage() {
                         Edit Data Binaan
                     </h1>
                     <p className="text-sm text-muted-foreground">
-                        Pembaruan data pendidikan dan domisili santri ini akan
-                        langsung disinkronkan ke server Penyaluran.
+                        Pembaruan data identitas, pendidikan, dan domisili santri
+                        ini akan langsung disinkronkan ke server Penyaluran.
                     </p>
                 </div>
                 <div className="flex gap-2">
@@ -207,85 +224,172 @@ export default function EditPage() {
                 </div>
             </div>
 
-            {/* Data Pribadi (Read-Only) */}
-            <Card className="border-muted bg-muted/20">
+            {/* Banner Sinkronisasi Real-Time */}
+            <div className="flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50/50 p-4 text-emerald-900 dark:border-emerald-800/50 dark:bg-emerald-950/20 dark:text-emerald-200">
+                <Zap className="size-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                <div className="text-sm">
+                    <p className="font-semibold">
+                        Sinkronisasi Dua Arah Terpusat
+                    </p>
+                    <p className="text-xs text-emerald-700 dark:text-emerald-300/80">
+                        Setiap perubahan yang Anda simpan di halaman ini akan
+                        langsung terkirim ke sistem Penyaluran Pusat dan
+                        memperbarui database OMATIQ secara otomatis.
+                    </p>
+                </div>
+            </div>
+
+            {/* Data Identitas Santri (Full Editable) */}
+            <Card>
                 <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                            <User className="size-5 text-muted-foreground" />
+                            <User className="size-5 text-primary" />
                             <CardTitle className="text-base font-semibold">
                                 Data Identitas Santri
                             </CardTitle>
                         </div>
-                        <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
-                            Penyaluran (Read-Only)
+                        <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300">
+                            Sync Penyaluran
                         </span>
                     </div>
                     <CardDescription>
-                        Identitas utama santri terhubung langsung dengan
-                        Penyaluran dan tidak dapat diubah di sini.
+                        Lengkapi identitas kependudukan dan kontak wali santri
+                        binaan.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="grid gap-4 md:grid-cols-2">
-                        <Field label="Nama Lengkap">
+                        <Field
+                            label="Nama Lengkap *"
+                            error={error('full_name')}
+                        >
                             <Input
-                                value={studentFullName}
-                                disabled
-                                className="bg-muted/50 cursor-not-allowed font-medium text-foreground"
-                            />
-                        </Field>
-
-                        <Field label="Nama Panggilan">
-                            <Input
-                                value={student.nickname || '-'}
-                                disabled
-                                className="bg-muted/50 cursor-not-allowed"
-                            />
-                        </Field>
-
-                        <Field label="NIK (Nomor Induk Kependudukan)">
-                            <Input
-                                value={student.nik || '-'}
-                                disabled
-                                className="bg-muted/50 cursor-not-allowed"
-                            />
-                        </Field>
-
-                        <Field label="NIS">
-                            <Input
-                                value={student.nis || '-'}
-                                disabled
-                                className="bg-muted/50 cursor-not-allowed"
-                            />
-                        </Field>
-
-                        <Field label="Jenis Kelamin">
-                            <Input
-                                value={studentGender}
-                                disabled
-                                className="bg-muted/50 cursor-not-allowed"
-                            />
-                        </Field>
-
-                        <Field label="Tempat / Tanggal Lahir">
-                            <Input
-                                value={`${student.birth_place || '-'}, ${dateValue(student.birth_date) || '-'}`}
-                                disabled
-                                className="bg-muted/50 cursor-not-allowed"
-                            />
-                        </Field>
-
-                        <Field label="No. HP / WhatsApp Wali">
-                            <Input
-                                value={
-                                    student.parent_phone ||
-                                    student.guardian_phone ||
-                                    '-'
+                                value={form.data.full_name}
+                                onChange={(e) =>
+                                    form.setData('full_name', e.target.value)
                                 }
-                                disabled
-                                className="bg-muted/50 cursor-not-allowed"
+                                placeholder="Nama lengkap santri sesuai KK"
+                                required
                             />
+                        </Field>
+
+                        <Field
+                            label="Nama Panggilan"
+                            error={error('nickname')}
+                        >
+                            <Input
+                                value={form.data.nickname}
+                                onChange={(e) =>
+                                    form.setData('nickname', e.target.value)
+                                }
+                                placeholder="Nama panggilan santri"
+                            />
+                        </Field>
+
+                        <Field
+                            label="NIK (Nomor Induk Kependudukan 16 Digit) *"
+                            error={error('nik')}
+                        >
+                            <Input
+                                value={form.data.nik}
+                                onChange={(e) =>
+                                    form.setData(
+                                        'nik',
+                                        e.target.value
+                                            .replace(/\D/g, '')
+                                            .slice(0, 16),
+                                    )
+                                }
+                                placeholder="16 digit NIK santri"
+                                maxLength={16}
+                                required
+                            />
+                        </Field>
+
+                        <Field
+                            label="NIS (Nomor Induk Siswa)"
+                            error={error('nis')}
+                        >
+                            <Input
+                                value={form.data.nis}
+                                onChange={(e) =>
+                                    form.setData('nis', e.target.value)
+                                }
+                                placeholder="Nomor Induk Siswa (jika ada)"
+                            />
+                        </Field>
+
+                        <Field
+                            label="Jenis Kelamin *"
+                            error={error('gender')}
+                        >
+                            <Select
+                                value={form.data.gender || 'male'}
+                                onValueChange={(v) =>
+                                    form.setData('gender', v)
+                                }
+                            >
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Pilih Jenis Kelamin" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="male">
+                                        Laki-laki (L)
+                                    </SelectItem>
+                                    <SelectItem value="female">
+                                        Perempuan (P)
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </Field>
+
+                        <Field
+                            label="Tempat Lahir"
+                            error={error('birth_place')}
+                        >
+                            <Input
+                                value={form.data.birth_place}
+                                onChange={(e) =>
+                                    form.setData('birth_place', e.target.value)
+                                }
+                                placeholder="Kota / Kabupaten kelahiran"
+                            />
+                        </Field>
+
+                        <Field
+                            label="Tanggal Lahir *"
+                            error={error('birth_date')}
+                        >
+                            <Input
+                                type="date"
+                                value={form.data.birth_date}
+                                onChange={(e) =>
+                                    form.setData('birth_date', e.target.value)
+                                }
+                                required
+                            />
+                        </Field>
+
+                        <Field
+                            label="No. HP / WhatsApp Wali *"
+                            error={error('parent_phone')}
+                        >
+                            <div className="relative">
+                                <Phone className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+                                <Input
+                                    value={form.data.parent_phone}
+                                    onChange={(e) =>
+                                        form.setData(
+                                            'parent_phone',
+                                            e.target.value,
+                                        )
+                                    }
+                                    placeholder="Contoh: 081234567890"
+                                    className="pl-9"
+                                    required
+                                />
+                            </div>
                         </Field>
                     </div>
                 </CardContent>
@@ -300,6 +404,10 @@ export default function EditPage() {
                             Pendidikan & Sekolah
                         </CardTitle>
                     </div>
+                    <CardDescription>
+                        Informasi sekolah dan jenjang pendidikan santri saat
+                        ini.
+                    </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="grid gap-4 md:grid-cols-3">
@@ -316,7 +424,7 @@ export default function EditPage() {
                                             e.target.value,
                                         )
                                     }
-                                    placeholder="Nama sekolah asal"
+                                    placeholder="Nama sekolah asal santri"
                                     required
                                 />
                             </Field>
@@ -368,6 +476,9 @@ export default function EditPage() {
                             Alamat & Domisili
                         </CardTitle>
                     </div>
+                    <CardDescription>
+                        Alamat tempat tinggal dan wilayah domisili binaan.
+                    </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <Field label="Alamat Lengkap *" error={error('address')}>
@@ -376,7 +487,7 @@ export default function EditPage() {
                             onChange={(e) =>
                                 form.setData('address', e.target.value)
                             }
-                            placeholder="Alamat tempat tinggal binaan..."
+                            placeholder="Alamat tempat tinggal santri (Jalan, RT/RW, No. Rumah)..."
                             rows={3}
                             required
                         />

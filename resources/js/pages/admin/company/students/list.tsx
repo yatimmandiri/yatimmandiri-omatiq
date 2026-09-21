@@ -47,7 +47,6 @@ export default function ListPage() {
     const userPermissions: string[] = auth?.user?.permissions ?? [];
     const isSuperAdmin = (auth?.user?.roles ?? []).includes('Administrators');
     const canEdit = !isCabang && (isSuperAdmin || userPermissions.includes('update-student'));
-    const canDelete = !isCabang && (isSuperAdmin || userPermissions.includes('delete-student'));
 
     const [filterValue, setFilterValue] = useState<Record<string, string>>({});
     const [refreshData, setRefreshData] = useState(false);

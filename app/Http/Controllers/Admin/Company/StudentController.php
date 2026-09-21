@@ -118,6 +118,10 @@ class StudentController extends Controller
         $oldData = $student->toArray();
         $student->update($payload);
 
+        if (! empty($payload['nik'])) {
+            $student->participants()->where('event_year', 2026)->update(['nik' => $payload['nik']]);
+        }
+
         $this->logSuccess('update-student', "Updated student: {$student->full_name}", [
             'student_id' => $student->id,
             'old_data' => $oldData,

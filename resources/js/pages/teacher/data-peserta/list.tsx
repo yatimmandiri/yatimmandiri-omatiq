@@ -324,7 +324,7 @@ const RowAction = ({ row, onDeleted }: { row: any; onDeleted: () => void }) => {
                     >
                         <Eye className="mr-2 size-4" /> Detail
                     </DropdownMenuItem>
-                    {row.status === 'verified' && (
+                    {row.status !== 'rejected' && (
                         <DropdownMenuItem asChild>
                             <a
                                 href={dataPeserta.card(row.id).url}
@@ -333,7 +333,11 @@ const RowAction = ({ row, onDeleted }: { row: any; onDeleted: () => void }) => {
                                 className="flex cursor-pointer items-center"
                             >
                                 <Printer className="mr-2 size-4 text-[#17524A]" />
-                                <span>Cetak Kartu</span>
+                                <span>
+                                    {row.status === 'verified'
+                                        ? 'Cetak Kartu'
+                                        : 'Cetak Bukti'}
+                                </span>
                             </a>
                         </DropdownMenuItem>
                     )}

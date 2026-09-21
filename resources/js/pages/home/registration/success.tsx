@@ -91,7 +91,9 @@ export default function RegistrationSuccessPage() {
                             className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-[#17524A] bg-[#17524A]/5 px-6 py-4 text-sm font-black text-[#17524A] transition hover:-translate-y-1 hover:bg-[#17524A]/10"
                         >
                             <Printer className="h-4 w-4" />
-                            Cetak Kartu Peserta
+                            {participant?.status === 'verified'
+                                ? 'Cetak Kartu Peserta'
+                                : 'Cetak Bukti Pendaftaran'}
                         </a>
                     )}
                     <Link

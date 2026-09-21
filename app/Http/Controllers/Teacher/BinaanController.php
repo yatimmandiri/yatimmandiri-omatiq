@@ -60,10 +60,6 @@ class BinaanController extends Controller
         if ($token) {
             try {
                 $studentsRaw = $this->penyaluran->students($token, $sanggarId);
-                $studentsRaw = collect($studentsRaw)
-                    ->filter(fn (array $s) => filter_var($s['status'] ?? true, FILTER_VALIDATE_BOOLEAN))
-                    ->values()
-                    ->all();
                 $sanggarsTmp = $this->penyaluran->sanggars($token);
                 $sanggarMap = collect($sanggarsTmp)->pluck('name', 'id');
             } catch (\Throwable $e) {
@@ -336,6 +332,20 @@ class BinaanController extends Controller
         }
 
         $request->validate([
+            'full_name' => ['nullable', 'string', 'max:255'],
+            'nickname' => ['nullable', 'string', 'max:120'],
+            'nik' => [
+                'nullable',
+                'string',
+                'size:16',
+                'regex:/^[0-9]{16}$/',
+                Rule::unique('students', 'nik')->where('is_binaan', true)->whereNull('deleted_at')->ignore($student->id),
+            ],
+            'nis' => ['nullable', 'string', 'max:20'],
+            'gender' => ['nullable', Rule::in(['male', 'female', 'L', 'P'])],
+            'birth_place' => ['nullable', 'string', 'max:120'],
+            'birth_date' => ['nullable', 'date', 'before:today'],
+            'parent_phone' => ['nullable', 'string', 'max:30'],
             'school_name' => ['required', 'string', 'max:255'],
             'school_level' => ['nullable', 'string', 'max:30'],
             'grade' => ['required', 'string', 'max:30'],
@@ -344,17 +354,33 @@ class BinaanController extends Controller
             'regency_id' => ['nullable', 'exists:regencies,id'],
             'district_id' => ['nullable', 'exists:districts,id'],
             'village_id' => ['nullable', 'exists:villages,id'],
+        ], [
+            'nik.size' => 'NIK harus berjumlah 16 digit angka.',
+            'nik.regex' => 'NIK harus berupa 16 digit angka.',
+            'nik.unique' => 'NIK ini sudah digunakan oleh santri lain.',
+            'birth_date.before' => 'Tanggal lahir harus sebelum hari ini.',
+            'school_name.required' => 'Nama sekolah wajib diisi.',
+            'grade.required' => 'Kelas/tingkat wajib diisi.',
+            'address.required' => 'Alamat lengkap wajib diisi.',
         ]);
 
         $data = $request->only([
+            'full_name', 'nickname', 'nik', 'nis', 'gender',
+            'birth_place', 'birth_date', 'parent_phone',
             'school_name', 'school_level', 'grade',
             'address', 'province_id', 'regency_id', 'district_id', 'village_id',
         ]);
 
+        $data = array_filter($data, fn ($v) => $v !== null && $v !== '');
+
+        if (isset($data['gender'])) {
+            $data['gender'] = in_array($data['gender'], ['female', 'P'], true) ? 'female' : 'male';
+        }
+
         if ($student->penyaluran_id) {
             $token = $request->session()->get('penyaluran_token') ?? Auth::user()?->penyaluran_token;
             if (! $token && ! app()->environment('testing')) {
-                return back()->withErrors(['school_name' => 'Sesi Penyaluran tidak ditemukan. Silakan login ulang.'])->withInput();
+                return back()->withErrors(['nik' => 'Sesi Penyaluran tidak ditemukan. Silakan login ulang.'])->withInput();
             }
 
             if ($token) {
@@ -362,14 +388,18 @@ class BinaanController extends Controller
                     $payload = $this->penyaluran->formatStudentPayload($data);
                     $this->penyaluran->updateStudent($token, $student->penyaluran_id, $payload);
                 } catch (\Throwable $e) {
-                    return back()->withErrors(['school_name' => 'Gagal memperbarui data santri di server Penyaluran: '.$e->getMessage()])->withInput();
+                    return back()->withErrors(['nik' => 'Gagal memperbarui data santri di server Penyaluran: '.$e->getMessage()])->withInput();
                 }
             }
         }
 
         $student->update($data);
 
-        return redirect()->route('teacher.data-binaan.index')->with('success', "Data pendidikan dan domisili binaan {$student->full_name} berhasil diperbarui.");
+        if (! empty($data['nik'])) {
+            $student->participants()->where('event_year', 2026)->update(['nik' => $data['nik']]);
+        }
+
+        return redirect()->route('teacher.data-binaan.index')->with('success', "Data santri binaan {$student->full_name} berhasil diperbarui dan disinkronkan ke Penyaluran.");
     }
 
     public function destroy(int|string $binaan)
@@ -393,7 +423,7 @@ class BinaanController extends Controller
         $student = $binaan instanceof Student
             ? $binaan
             : (Student::where('penyaluran_id', $binaan)->first()
-                ?? (app()->environment('testing') ? Student::find($binaan) : null));
+                ?? Student::find($binaan));
 
         $token = request()->session()->get('penyaluran_token') ?? Auth::user()?->penyaluran_token;
         $found = null;
@@ -421,9 +451,11 @@ class BinaanController extends Controller
         if ($found) {
             $regions = BiodataController::resolveRegionIds($found);
             $gender = ($found['gender'] ?? 'male') === 'female' || ($found['gender'] ?? 'male') === 'P' ? 'female' : 'male';
+            $validFoundNik = ! empty($found['nik']) && $found['nik'] !== '-' && $found['nik'] !== '0' && strlen(trim($found['nik'])) >= 10 ? trim($found['nik']) : null;
+
             $attributes = [
                 'penyaluran_id' => $found['student_id'] ?? $found['id'] ?? ($student?->penyaluran_id),
-                'nik' => $found['nik'] ?? $student?->nik ?? Str::random(16),
+                'nik' => $validFoundNik ?? $student?->nik ?? Str::random(16),
                 'nis' => $found['nis'] ?? $student?->nis,
                 'full_name' => $found['name'] ?? $found['full_name'] ?? $student?->full_name ?? '-',
                 'nickname' => $found['nickname'] ?? $student?->nickname,
@@ -445,6 +477,14 @@ class BinaanController extends Controller
                 'is_binaan' => true,
                 'is_active' => true,
             ];
+
+            $targetPenyaluranId = $attributes['penyaluran_id'] ?? null;
+            if ($targetPenyaluranId) {
+                Student::withTrashed()
+                    ->where('penyaluran_id', $targetPenyaluranId)
+                    ->when($student?->id, fn ($q, $id) => $q->where('id', '!=', $id))
+                    ->update(['penyaluran_id' => null]);
+            }
 
             if ($student) {
                 $student->update($attributes);

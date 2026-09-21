@@ -17,6 +17,7 @@ export default function ListPage() {
             accessorKey: 'name',
             cell: (info: any) => {
                 const name = info.getValue() ?? '-';
+
                 return (
                     <div className="flex items-center gap-2">
                         <Building2 className="size-4 text-primary" />
@@ -39,6 +40,7 @@ export default function ListPage() {
             accessorKey: 'kantor_name',
             cell: (info: any) => {
                 const val = info.getValue() ?? '-';
+
                 return (
                     <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                         <MapPin className="size-3.5 text-muted-foreground" />
@@ -52,6 +54,7 @@ export default function ListPage() {
             accessorKey: 'participant_count',
             cell: (info: any) => {
                 const val = info.getValue();
+
                 return val !== undefined && val !== null ? (
                     <span className="font-semibold text-primary">{val}</span>
                 ) : (

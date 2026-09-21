@@ -233,6 +233,11 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
         }
 
+        .access-tier-pending {
+            background: linear-gradient(90deg, #9a3412 0%, #c2410c 50%, #9a3412 100%) !important;
+            border-bottom: 1.5px solid rgba(254, 215, 170, 0.7) !important;
+        }
+
         /* Hero Section (Avatar + Big Name + Big BIB) */
         .badge-hero {
             padding: 14px 16px 10px;
@@ -444,6 +449,12 @@
             text-transform: uppercase;
         }
 
+        .status-chip-pending {
+            background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%) !important;
+            border-color: #fed7aa !important;
+            color: #ffffff !important;
+        }
+
         /* Hologram / Security Footer Strip */
         .badge-footer {
             background: linear-gradient(180deg, #12433c 0%, #0c332d 100%);
@@ -453,6 +464,15 @@
             text-align: center;
             font-size: 7.5px;
             line-height: 1.35;
+        }
+
+        .badge-footer-pending {
+            background: linear-gradient(180deg, #431407 0%, #270b04 100%) !important;
+            border-top: 2px solid #f97316 !important;
+        }
+
+        .footer-stamp-pending {
+            color: #fed7aa !important;
         }
 
         .footer-stamp-text {
@@ -681,7 +701,7 @@
     <div class="toolbar">
         <div class="toolbar-title">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E5BE1E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-            <span>OMATIQ {{ $participant->event_year ?? 2026 }} Pass</span>
+            <span>OMATIQ {{ $participant->event_year ?? 2026 }} {{ $participant->status === 'submitted' ? 'Proof' : 'Pass' }}</span>
         </div>
         <div>
             <button class="btn-print" onclick="window.print()" title="Cetak langsung atau Simpan sebagai PDF">
@@ -705,7 +725,7 @@
                 <div class="header-logo-wrap">
                     <img src="{{ asset('assets/images/LOGO OMATIQ-Fav.png') }}" alt="OMATIQ" class="header-logo-img">
                 </div>
-                <div class="event-tagline">&bull; OFFICIAL PARTICIPANT CREDENTIAL &bull;</div>
+                <div class="event-tagline">&bull; {{ $participant->status === 'submitted' ? 'REGISTRATION PROOF' : 'OFFICIAL PARTICIPANT CREDENTIAL' }} &bull;</div>
                 <div class="event-title">OMATIQ {{ $participant->event_year ?? 2026 }}</div>
                 <div>
                     <span class="event-edition-pill">&#9889; AI &amp; Future Talent Edition</span>
@@ -714,8 +734,12 @@
             </div>
 
             <!-- Access Category Ribbon -->
-            <div class="access-tier-ribbon">
-                OFFICIAL PASS &bull; <span>{{ $student?->is_binaan ? 'BINAAN SANGGAR' : 'PESERTA UMUM' }}</span>
+            <div class="access-tier-ribbon {{ $participant->status === 'submitted' ? 'access-tier-pending' : '' }}">
+                @if($participant->status === 'submitted')
+                    BUKTI PENDAFTARAN &bull; <span>MENUNGGU VERIFIKASI ADMIN</span>
+                @else
+                    OFFICIAL PASS &bull; <span>{{ $student?->is_binaan ? 'BINAAN SANGGAR' : 'PESERTA UMUM' }}</span>
+                @endif
             </div>
 
             <!-- Hero Section: Avatar, Big Name, BIB Number -->
@@ -814,9 +838,15 @@
                                 <div class="barcode-code-pass">{{ $participant->registration_number }}</div>
                             </div>
                             <div>
-                                <span class="status-chip-event">
-                                    &#10003; TERVERIFIKASI &bull; ACCESS GRANTED
-                                </span>
+                                @if($participant->status === 'submitted')
+                                    <span class="status-chip-event status-chip-pending">
+                                        &#9203; MENUNGGU VERIFIKASI ADMIN
+                                    </span>
+                                @else
+                                    <span class="status-chip-event">
+                                        &#10003; TERVERIFIKASI &bull; ACCESS GRANTED
+                                    </span>
+                                @endif
                             </div>
                         </td>
                     </tr>
@@ -824,9 +854,14 @@
             </div>
 
             <!-- Security / Hologram Event Footer -->
-            <div class="badge-footer">
-                <div class="footer-stamp-text">&bull; OMATIQ OFFICIAL COMPETITOR PASS &bull;</div>
-                <div>Wajib dikenakan/dibawa selama rangkaian perlombaan. Barcode &amp; QR Code digunakan untuk validasi registrasi ulang dan absensi digital panitia.</div>
+            <div class="badge-footer {{ $participant->status === 'submitted' ? 'badge-footer-pending' : '' }}">
+                @if($participant->status === 'submitted')
+                    <div class="footer-stamp-text footer-stamp-pending">&bull; BUKTI REGISTRASI SEMENTARA OMATIQ &bull;</div>
+                    <div>Dokumen ini adalah Bukti Pendaftaran Sementara OMATIQ. Silakan simpan dan tunggu verifikasi pembayaran/data oleh panitia untuk validasi resmi kartu lomba.</div>
+                @else
+                    <div class="footer-stamp-text">&bull; OMATIQ OFFICIAL COMPETITOR PASS &bull;</div>
+                    <div>Wajib dikenakan/dibawa selama rangkaian perlombaan. Barcode &amp; QR Code digunakan untuk validasi registrasi ulang dan absensi digital panitia.</div>
+                @endif
             </div>
         </div>
 

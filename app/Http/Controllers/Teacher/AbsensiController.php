@@ -64,7 +64,6 @@ class AbsensiController extends Controller
                 'type' => $s['type'] ?? 'Reguler',
             ])->values()->all(),
             'students' => collect($students)
-                ->filter(fn (array $s) => filter_var($s['status'] ?? true, FILTER_VALIDATE_BOOLEAN))
                 ->map(fn (array $s) => [
                     'student_id' => $s['student_id'] ?? $s['id'] ?? null,
                     'name' => $s['name'] ?? $s['full_name'] ?? '-',

@@ -1,7 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
     Select as UiSelect,
@@ -20,8 +19,6 @@ import {
     CheckCircle2,
     GraduationCap,
     IdCard,
-    Lock,
-    Pencil,
     Save,
     School,
     UserRound,
@@ -204,7 +201,7 @@ export default function CreatePage() {
                                     <UserRound className="size-6" />
                                 </div>
                                 <div>
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex flex-wrap items-center gap-2">
                                         <h2 className="text-lg font-bold">
                                             {studentName}
                                         </h2>
@@ -212,8 +209,12 @@ export default function CreatePage() {
                                             Santri Terpilih
                                         </Badge>
                                     </div>
-                                    <p className="text-sm text-muted-foreground">
-                                        Data profil santri dari Penyaluran
+                                    <p className="mt-0.5 text-xs text-muted-foreground">
+                                        ID Penyaluran:{' '}
+                                        <span className="font-semibold text-foreground">
+                                            {studentId || '-'}
+                                        </span>{' '}
+                                        • Data profil santri dari Penyaluran
                                     </p>
                                 </div>
                             </div>
@@ -230,26 +231,6 @@ export default function CreatePage() {
                         </div>
 
                         {error('penyaluran_student_id')}
-
-                        <Field
-                            label="Nama Santri Binaan"
-                            error={error('penyaluran_student_id')}
-                        >
-                            <div className="relative flex items-center">
-                                <Input
-                                    value={studentName}
-                                    readOnly
-                                    disabled
-                                    className="cursor-not-allowed bg-muted/60 pr-10 font-medium text-foreground"
-                                />
-                                <div className="absolute right-3 text-muted-foreground">
-                                    <Lock className="size-4" />
-                                </div>
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                                Santri binaan terpilih dari Penyaluran (ID: {studentId}).
-                            </p>
-                        </Field>
 
                         {sanggars.length > 0 && (
                             <Field

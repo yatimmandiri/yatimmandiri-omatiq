@@ -69,7 +69,7 @@ export default function Dashboard() {
                             </Badge>
                         </div>
                     </div>
-                    {participant.status === 'verified' && (
+                    {participant.status !== 'rejected' && (
                         <div>
                             <Button
                                 asChild
@@ -81,7 +81,9 @@ export default function Dashboard() {
                                     rel="noopener noreferrer"
                                 >
                                     <Printer className="size-4" />
-                                    Cetak Kartu Peserta
+                                    {participant.status === 'verified'
+                                        ? 'Cetak Kartu Peserta'
+                                        : 'Cetak Bukti Pendaftaran'}
                                 </a>
                             </Button>
                         </div>

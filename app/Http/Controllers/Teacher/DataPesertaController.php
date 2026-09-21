@@ -91,10 +91,6 @@ class DataPesertaController extends Controller
         if ($token) {
             try {
                 $studentsRaw = $this->penyaluran->students($token, $sanggarId);
-                $studentsRaw = collect($studentsRaw)
-                    ->filter(fn (array $s) => filter_var($s['status'] ?? true, FILTER_VALIDATE_BOOLEAN))
-                    ->values()
-                    ->all();
             } catch (\Throwable $e) {
                 $studentsRaw = [];
             }
@@ -117,7 +113,6 @@ class DataPesertaController extends Controller
             try {
                 $allStudentsRaw = $this->penyaluran->students($token, null);
                 $targetStudent = collect($allStudentsRaw)
-                    ->filter(fn (array $s) => filter_var($s['status'] ?? true, FILTER_VALIDATE_BOOLEAN))
                     ->firstWhere(fn (array $s) => (int) ($s['student_id'] ?? $s['id'] ?? 0) === $studentId);
             } catch (\Throwable $e) {
             }
@@ -228,12 +223,6 @@ class DataPesertaController extends Controller
 
         if (! $penyaluranStudent) {
             return back()->withErrors(['penyaluran_student_id' => 'Binaan tidak ditemukan.']);
-        }
-
-        if (! filter_var($penyaluranStudent['status'] ?? true, FILTER_VALIDATE_BOOLEAN)) {
-            return back()->withErrors([
-                'penyaluran_student_id' => 'Santri binaan ini sudah tidak aktif / lulus di Penyaluran.',
-            ])->withInput();
         }
 
         $studentNik = trim((string) ($penyaluranStudent['nik'] ?? ''));
