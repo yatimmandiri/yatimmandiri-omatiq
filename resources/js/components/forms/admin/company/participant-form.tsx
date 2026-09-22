@@ -1,3 +1,4 @@
+import { SelectComponent } from '@/components/partials/select-component';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -11,7 +12,8 @@ import { useMemo } from 'react';
 
 type Option = { id: number | string; name: string; category?: string };
 type Regency = { id: string; province_id: string; name: string };
-type TeacherOption = { id: number; name: string; phone?: string | null; email?: string };
+type TeacherOption = { id: number; name: string; phone?: string | null; email?: string; branch?: string | null };
+type BranchOption = { id: number | string; name: string };
 
 const statusOptions = [
     { value: 'submitted', label: 'Submitted' },
@@ -28,12 +30,14 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
         provinces = [],
         regencies = [],
         teachers = [],
+        branches = [],
     } = usePage<{
         participant: Record<string, any>;
         olimpiades?: Option[];
         provinces?: Option[];
         regencies?: Regency[];
         teachers?: TeacherOption[];
+        branches?: BranchOption[];
     }>().props;
 
     const student = participant?.student;
@@ -106,6 +110,29 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
             ),
         [form.data.province_id, regencies],
     );
+
+    const branchOptions = useMemo(() => {
+        const set = new Set<string>();
+        const list: Array<{ value: string; label: string }> = [];
+
+        const addBranch = (name?: string | null) => {
+            if (!name) return;
+            const trimmed = name.trim();
+            if (trimmed && !set.has(trimmed.toUpperCase())) {
+                set.add(trimmed.toUpperCase());
+                list.push({ value: trimmed, label: trimmed });
+            }
+        };
+
+        if (form.data.branch) {
+            addBranch(form.data.branch);
+        }
+
+        branches.forEach((b) => addBranch(b.name));
+        teachers.forEach((t) => addBranch(t.branch));
+
+        return list.sort((a, b) => a.label.localeCompare(b.label));
+    }, [branches, form.data.branch, teachers]);
 
     const submit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -354,12 +381,22 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
                             label="Nama Pendamping"
                             error={error('mentor_id') || error('mentor_name')}
                         >
-                            <Select
-                                value={form.data.mentor_id}
-                                onChange={(value) => {
-                                    form.setData('mentor_id', value);
+                            <SelectComponent
+                                placeholder="Pilih / Cari Guru Pendamping..."
+                                data={teachers.map((item) => ({
+                                    value: String(item.id),
+                                    label: `${item.name}${item.phone ? ` (${item.phone})` : ''}${item.branch ? ` - ${item.branch}` : ''}`,
+                                }))}
+                                dataSelected={
+                                    form.data.mentor_id
+                                        ? String(form.data.mentor_id)
+                                        : ''
+                                }
+                                handleOnChange={(value: any) => {
+                                    const strVal = value ? String(value) : '';
+                                    form.setData('mentor_id', strVal);
                                     const selected = teachers.find(
-                                        (t) => String(t.id) === String(value),
+                                        (t) => String(t.id) === strVal,
                                     );
 
                                     if (selected) {
@@ -374,13 +411,24 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
                                                 selected.phone,
                                             );
                                         }
+
+                                        if (selected.branch) {
+                                            form.setData(
+                                                'branch',
+                                                selected.branch,
+                                            );
+                                        }
+                                    } else {
+                                        form.setData('mentor_name', '');
+                                        form.setData('mentor_phone', '');
                                     }
                                 }}
-                                options={teachers.map((item) => ({
-                                    value: String(item.id),
-                                    label: `${item.name}${item.phone ? ` (${item.phone})` : ''}`,
-                                }))}
-                                required={false}
+                                color={
+                                    form.errors.mentor_id ||
+                                    form.errors.mentor_name
+                                        ? 'danger'
+                                        : 'default'
+                                }
                             />
                         </Field>
                     ) : (
@@ -422,11 +470,17 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
                         />
                     </Field>
                     <Field label="Cabang" error={error('branch')}>
-                        <Input
-                            value={form.data.branch}
-                            onChange={(e) =>
-                                form.setData('branch', e.target.value)
+                        <SelectComponent
+                            placeholder="Pilih / Cari Cabang..."
+                            data={branchOptions}
+                            dataSelected={form.data.branch || ''}
+                            handleOnChange={(value: any) =>
+                                form.setData(
+                                    'branch',
+                                    value ? String(value) : '',
+                                )
                             }
+                            color={form.errors.branch ? 'danger' : 'default'}
                         />
                     </Field>
                     <Field label="Status" error={error('status')}>

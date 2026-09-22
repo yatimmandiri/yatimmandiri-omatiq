@@ -17,7 +17,9 @@ use App\Settings\SiteSettings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 use Spatie\Permission\Models\Role;
@@ -115,6 +117,24 @@ class ParticipantController extends Controller
 
         $data = $this->participantPayload($participant);
 
+        $jsonBranches = Cache::remember('branch_offices', 3600, function () {
+            if (Storage::disk('local')->exists('branch-offices.json')) {
+                return json_decode(Storage::disk('local')->get('branch-offices.json'), true) ?? [];
+            }
+
+            return [];
+        });
+
+        $branches = collect($jsonBranches)->pluck('name')
+            ->merge(User::whereNotNull('branch')->distinct()->pluck('branch'))
+            ->merge(Participant::whereNotNull('branch')->distinct()->pluck('branch'))
+            ->filter()
+            ->map(fn ($b) => strtoupper(trim((string) $b)))
+            ->unique()
+            ->sort()
+            ->values()
+            ->map(fn ($name) => ['id' => $name, 'name' => $name]);
+
         return Inertia::render('admin/company/participant/edit', [
             'participant' => $data,
             'olimpiades' => Olimpiade::active()->ordered()->get(['id', 'name']),
@@ -123,8 +143,9 @@ class ParticipantController extends Controller
                 ? Regency::where('province_id', $participant->student->province_id)->get(['id', 'name'])
                 : [],
             'teachers' => Role::where('name', 'Teacher')->where('guard_name', 'web')->exists()
-                ? User::role('Teacher')->orderBy('name')->get(['id', 'name', 'phone', 'email'])
+                ? User::role('Teacher')->orderBy('name')->get(['id', 'name', 'phone', 'email', 'branch'])
                 : [],
+            'branches' => $branches,
         ]);
     }
 
@@ -145,6 +166,9 @@ class ParticipantController extends Controller
                     $studentData['mentor_name'] = $teacher->name;
                     $studentData['mentor_phone'] = $teacher->phone ?? ($studentData['mentor_phone'] ?? null);
                     $payload['mentor_id'] = $teacher->id;
+                    if (empty($payload['branch']) && $teacher->branch) {
+                        $payload['branch'] = $teacher->branch;
+                    }
                 }
             } elseif ($request->has('mentor_name') || $request->has('mentor_phone')) {
                 $studentData['mentor_name'] = $request->input('mentor_name');

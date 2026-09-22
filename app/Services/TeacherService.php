@@ -167,7 +167,7 @@ class TeacherService
                 'has_joined_before' => $data['has_joined_before'] ?? false,
                 'previous_year' => $data['previous_year'] ?? null,
                 'referral_source' => $data['referral_source'] ?? null,
-                'branch' => $data['branch'] ?? $penyaluranStudent['kantor_name'] ?? null,
+                'branch' => $penyaluranStudent['kantor_name'] ?? $teacher->branch ?? $data['branch'] ?? null,
                 'notes' => $data['notes'] ?? null,
                 'data_truth_consent' => true,
                 'documentation_consent' => true,
