@@ -27,7 +27,7 @@ function getLogoutHref(user: User | null | undefined): string {
             return teacherLogout().url;
         }
 
-        if (roles.includes('Administrators')) {
+        if (roles.includes('Administrators') || roles.includes('Cabang')) {
             return adminLogout().url;
         }
 
