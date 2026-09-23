@@ -26,6 +26,7 @@ Key packages: Fortify (auth), Socialite, Reverb (websockets), Spatie (permission
 | Data inspector | `php artisan omatiq:inspect {--teacher=} {--nik=} {--name=} {--range=}` |
 | Audit sanggar & Penyaluran ID | `php artisan omatiq:audit-sanggar {--year=2026} {--all}` |
 | Heal sanggar & Penyaluran ID | `php artisan omatiq:heal-binaan {--dry-run}` |
+| Heal participant branches | `php artisan omatiq:heal-branches {--dry-run} {--force}` |
 
 Order when touching PHP: `vendor/bin/pint --dirty --format agent` then `composer run test`.
 Order for full check (matches `ci:check`): `npm run lint:check` → `npm run format:check` → `npm run types:check` → `composer run test`.

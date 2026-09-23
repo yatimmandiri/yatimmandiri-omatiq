@@ -61,10 +61,10 @@ export const SelectComponent = ({
         [data, fetchDataUrl, resultData],
     );
 
-    const isSelected = (value: string) => {
+    const isSelected = (value: string | number) => {
         return Array.isArray(dataSelected)
-            ? dataSelected.includes(value)
-            : dataSelected === value;
+            ? dataSelected.map(String).includes(String(value))
+            : String(dataSelected) === String(value);
     };
 
     const toggleSelect = (value: any) => {
@@ -93,7 +93,7 @@ export const SelectComponent = ({
             const selectedLabels = listItems
                 .filter((item: any) =>
                     Array.isArray(dataSelected)
-                        ? dataSelected.includes(item.value)
+                        ? dataSelected.map(String).includes(String(item.value))
                         : false,
                 )
                 .map((item: any) => item.label);
@@ -103,7 +103,7 @@ export const SelectComponent = ({
                 : placeholder;
         } else {
             const selectedLabel = listItems.find(
-                (item: any) => item.value === dataSelected,
+                (item: any) => String(item.value) === String(dataSelected),
             )?.label;
 
             return selectedLabel || placeholder;
@@ -187,33 +187,33 @@ export const SelectComponent = ({
                     </Button>
                 </PopoverTrigger>
 
-                <PopoverContent className="w-(--radix-popover-trigger-width) p-0">
+                <PopoverContent className="w-[var(--radix-popover-trigger-width)] min-w-[280px] p-0" align="start">
                     <Command>
                         <CommandInput
-                            placeholder="Search..."
+                            placeholder="Cari..."
                             className="h-9"
                             onValueChange={(value: any) =>
                                 setSearchValue(value)
                             }
                         />
-                        <CommandList>
+                        <CommandList className="max-h-64 overflow-y-auto">
                             {isLoading && (
-                                <div className="p-2 text-center text-sm text-gray-500">
-                                    Loading...
+                                <div className="p-2 text-center text-sm text-muted-foreground">
+                                    Memuat...
                                 </div>
                             )}
 
                             {!isLoading && listItems.length === 0 && (
-                                <CommandEmpty>No results found.</CommandEmpty>
+                                <CommandEmpty>Tidak ada data ditemukan.</CommandEmpty>
                             )}
                             <CommandGroup>
                                 <CommandItem onSelect={() => toggleSelect('')}>
-                                    Clear Selection
+                                    <span className="text-muted-foreground italic">-- Kosongkan Pilihan --</span>
                                 </CommandItem>
                                 {listItems.map((item: any, i: number) => (
                                     <CommandItem
                                         key={i}
-                                        value={item.label}
+                                        value={`${item.label} ${item.value}`}
                                         onSelect={() =>
                                             toggleSelect(item.value)
                                         }

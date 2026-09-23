@@ -68,7 +68,9 @@ class FortifyServiceProvider extends ServiceProvider
                 public function toResponse($request)
                 {
                     $referer = $request->headers->get('referer', '');
-                    $isTeacher = str_contains($referer, '/teacher') || str_contains($referer, 'teacher.login') || $request->session()->has('penyaluran_id') || $request->session()->has('penyaluran_token');
+                    $path = parse_url($referer, PHP_URL_PATH) ?? '';
+
+                    $isTeacher = str_starts_with($path, '/teacher') || str_starts_with($path, '/guru') || str_contains($referer, 'teacher.login') || $request->session()->has('penyaluran_id') || $request->session()->has('penyaluran_token');
 
                     if ($isTeacher) {
                         return redirect()->route('teacher.login');

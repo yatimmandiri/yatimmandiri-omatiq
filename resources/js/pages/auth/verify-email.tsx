@@ -14,7 +14,7 @@ export default function VerifyEmail({ status }: { status?: string }) {
     const roles: string[] = page?.auth?.user?.roles ?? [];
     const logoutHref = roles.includes('Teacher')
         ? teacherLogout().url
-        : roles.includes('Administrators')
+        : roles.includes('Administrators') || roles.includes('Cabang')
           ? adminLogout().url
           : roles.includes('Participant')
             ? studentLogout().url
