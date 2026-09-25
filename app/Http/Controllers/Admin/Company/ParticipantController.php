@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -177,7 +178,11 @@ class ParticipantController extends Controller
 
             if ($participant->student) {
                 if ($participant->student->penyaluran_id) {
-                    $this->studentService->syncToPenyaluran($participant->student, $studentData);
+                    try {
+                        $this->studentService->syncToPenyaluran($participant->student, $studentData);
+                    } catch (\Throwable $e) {
+                        Log::warning("Gagal sinkronisasi data santri ke Penyaluran saat update peserta {$participant->registration_number}: ".$e->getMessage());
+                    }
                 }
                 $participant->student->update($studentData);
             }

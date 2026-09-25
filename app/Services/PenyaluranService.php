@@ -30,6 +30,7 @@ class PenyaluranService
 
     /**
      * Login guru via phone, returns token string.
+     * Automatically attempts standard Indonesian phone variations (08xxx, 628xxx, 8xxx).
      *
      * @throws \RuntimeException
      */
@@ -37,38 +38,66 @@ class PenyaluranService
     {
         $endpoint = 'api/v1/guru/login';
 
-        try {
-            $response = $this->client()->post($endpoint, [
-                'phone' => $phone,
-            ]);
-        } catch (\Throwable $e) {
+        $cleanPhone = preg_replace('/\D+/', '', $phone);
+        $phoneVariants = [];
+
+        if (str_starts_with($cleanPhone, '628')) {
+            $phoneVariants[] = '08'.substr($cleanPhone, 2);
+            $phoneVariants[] = $cleanPhone;
+            $phoneVariants[] = substr($cleanPhone, 2);
+        } elseif (str_starts_with($cleanPhone, '08')) {
+            $phoneVariants[] = $cleanPhone;
+            $phoneVariants[] = '628'.substr($cleanPhone, 1);
+            $phoneVariants[] = substr($cleanPhone, 1);
+        } elseif (str_starts_with($cleanPhone, '8')) {
+            $phoneVariants[] = '08'.$cleanPhone;
+            $phoneVariants[] = '628'.$cleanPhone;
+            $phoneVariants[] = $cleanPhone;
+        } else {
+            $phoneVariants[] = $cleanPhone;
+        }
+
+        $phoneVariants = array_values(array_unique(array_filter($phoneVariants)));
+
+        $lastResponse = null;
+        $lastException = null;
+
+        foreach ($phoneVariants as $candidatePhone) {
+            try {
+                $response = $this->client()->post($endpoint, [
+                    'phone' => $candidatePhone,
+                ]);
+
+                if ($response->successful()) {
+                    $data = $response->json();
+                    $token = $data['token'] ?? $data['data']['token'] ?? $data['access_token'] ?? null;
+                    if ($token) {
+                        return $token;
+                    }
+                }
+
+                $lastResponse = $response;
+            } catch (\Throwable $e) {
+                $lastException = $e;
+            }
+        }
+
+        if ($lastException && ! $lastResponse) {
             Log::error("Penyaluran API Connection Error on {$endpoint}", [
                 'endpoint' => $endpoint,
                 'phone' => $phone,
-                'error_class' => get_class($e),
-                'error_message' => $e->getMessage(),
+                'error_class' => get_class($lastException),
+                'error_message' => $lastException->getMessage(),
             ]);
 
             throw new \RuntimeException('Tidak dapat terhubung ke server Penyaluran. Server sedang dalam pemeliharaan atau koneksi terputus. Silakan coba beberapa saat lagi.');
         }
 
-        $this->assertSuccess($response, $endpoint, ['phone' => $phone]);
-
-        $data = $response->json();
-
-        $token = $data['token'] ?? $data['data']['token'] ?? $data['access_token'] ?? null;
-
-        if (! $token) {
-            Log::warning("Penyaluran login response missing token on {$endpoint}", [
-                'endpoint' => $endpoint,
-                'phone' => $phone,
-                'response' => $data,
-            ]);
-
-            throw new \RuntimeException('Token autentikasi tidak ditemukan pada respon server Penyaluran.');
+        if ($lastResponse) {
+            $this->assertSuccess($lastResponse, $endpoint, ['phone' => $phone]);
         }
 
-        return $token;
+        throw new \RuntimeException('Nomor HP tidak terdaftar sebagai Guru/Pembina di sistem Penyaluran. Pastikan nomor yang Anda masukkan sudah terdaftar.');
     }
 
     public function me(string $token, bool $force = false): array
