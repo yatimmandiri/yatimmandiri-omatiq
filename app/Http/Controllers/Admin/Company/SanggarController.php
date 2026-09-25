@@ -40,8 +40,16 @@ class SanggarController extends Controller
             ?? $user?->penyaluran_token
             ?? (! app()->environment('testing') ? User::role('Teacher')->whereNotNull('penyaluran_token')->value('penyaluran_token') : null);
 
+        // Primary source: global sanggars via X-API-KEY (api/v1/sanggars) - per instruction
         $apiSanggars = [];
-        if ($token) {
+        try {
+            $apiSanggars = $this->penyaluran->allSanggars();
+        } catch (\Throwable $e) {
+            $apiSanggars = [];
+        }
+
+        // Fallback to guru-specific sanggars if global fetch returned empty
+        if (empty($apiSanggars) && $token) {
             try {
                 $apiSanggars = $this->penyaluran->sanggars($token);
             } catch (\Throwable $e) {
@@ -71,9 +79,11 @@ class SanggarController extends Controller
             ])
             ->all();
 
-        $merged = collect([...$apiSanggars, ...$dbSanggars])
-            ->unique(fn ($item) => strtolower(trim((string) ($item['name'] ?? ''))))
-            ->values();
+        // Keep API sanggars intact (588 rows include 11 duplicate names with different IDs/kantor) — do NOT dedupe by name.
+        // Only dedupe DB entries against API by ID to avoid double counting same sanggar from participants table.
+        $apiIds = collect($apiSanggars)->pluck('id')->map(fn ($v) => (int) $v)->filter()->all();
+        $filteredDb = collect($dbSanggars)->filter(fn ($item) => ! in_array((int) ($item['id'] ?? 0), $apiIds, true))->values();
+        $merged = collect([...$apiSanggars, ...$filteredDb])->values();
 
         // Strict branch filter for role Cabang
         if ($isCabang && filled($userBranch)) {
@@ -105,6 +115,8 @@ class SanggarController extends Controller
             'current_page' => $page,
             'per_page' => $perPage,
             'total' => $total,
+            'from' => $total > 0 ? ($page - 1) * $perPage + 1 : 0,
+            'to' => $total > 0 ? min($page * $perPage, $total) : 0,
             'last_page' => (int) ceil($total / $perPage),
         ]);
     }
@@ -122,7 +134,13 @@ class SanggarController extends Controller
             ?? (! app()->environment('testing') ? User::role('Teacher')->whereNotNull('penyaluran_token')->value('penyaluran_token') : null);
 
         $sanggars = [];
-        if ($token) {
+        try {
+            $sanggars = $this->penyaluran->allSanggars();
+        } catch (\Throwable $e) {
+            $sanggars = [];
+        }
+
+        if (empty($sanggars) && $token) {
             try {
                 $sanggars = $this->penyaluran->sanggars($token);
             } catch (\Throwable $e) {

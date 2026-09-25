@@ -14,12 +14,25 @@ class PenyaluranService
         return rtrim((string) config('services.penyaluran.url'), '/');
     }
 
+    public function apiKey(): string
+    {
+        return (string) config('services.penyaluran.api_key', 'rPoVsZQKlLnV8nY3lDvcekFQvGzTSX89TDO48MOB');
+    }
+
     private function client(?string $token = null)
     {
         $client = Http::baseUrl($this->baseUrl())
             ->acceptJson()
-            ->timeout(8)
+            ->withoutVerifying()
+            ->timeout(10)
             ->retry(2, 200, throw: false);
+
+        $apiKey = $this->apiKey();
+        if ($apiKey !== '') {
+            $client = $client->withHeaders([
+                'X-API-KEY' => $apiKey,
+            ]);
+        }
 
         if ($token) {
             $client = $client->withToken($token);
@@ -519,6 +532,486 @@ class PenyaluranService
     }
 
     /**
+     * Parse any standard/custom Laravel paginated or wrapped JSON response.
+     *
+     * @return array{items: array, last_page: int, total: int}
+     */
+    public static function parsePaginatedResponse(mixed $json): array
+    {
+        if (! is_array($json) || empty($json)) {
+            return ['items' => [], 'last_page' => 1, 'total' => 0];
+        }
+
+        $lastPage = $json['last_page']
+            ?? $json['meta']['last_page']
+            ?? ($json['data']['last_page'] ?? null)
+            ?? ($json['pagination']['last_page'] ?? null)
+            ?? 1;
+
+        $total = $json['total']
+            ?? $json['meta']['total']
+            ?? ($json['data']['total'] ?? null)
+            ?? ($json['pagination']['total'] ?? null)
+            ?? null;
+
+        $items = [];
+        if (isset($json['data']) && is_array($json['data'])) {
+            if (isset($json['data']['data']) && is_array($json['data']['data'])) {
+                $items = $json['data']['data'];
+            } elseif (isset($json['data']['sanggars']) && is_array($json['data']['sanggars'])) {
+                $items = $json['data']['sanggars'];
+            } else {
+                $items = $json['data'];
+            }
+        } elseif (isset($json['sanggars']) && is_array($json['sanggars'])) {
+            if (isset($json['sanggars']['data']) && is_array($json['sanggars']['data'])) {
+                $items = $json['sanggars']['data'];
+            } else {
+                $items = $json['sanggars'];
+            }
+        } elseif (array_is_list($json)) {
+            $items = $json;
+        }
+
+        if (! empty($items) && is_array($items) && ! array_is_list($items)) {
+            $firstKey = array_key_first($items);
+            if (is_numeric($firstKey) || is_array(reset($items))) {
+                $items = array_values($items);
+            }
+        }
+
+        if (! is_array($items)) {
+            $items = [];
+        }
+
+        return [
+            'items' => array_values($items),
+            'last_page' => max(1, (int) $lastPage),
+            'total' => $total !== null ? (int) $total : count($items),
+        ];
+    }
+
+    /**
+     * Get all sanggars from Penyaluran API (GET api/v1/sanggars) using X-API-KEY header.
+     * Endpoint: https://penyaluran.yatimmandiri.org/api/v1/sanggars with header X-API-KEY.
+     * Handles all Laravel pagination shapes and aggregates all available pages.
+     *
+     * @return array<int, array>
+     */
+    public function allSanggars(array $queryParams = [], bool $force = false): array
+    {
+        $cacheKey = 'penyaluran:sanggars:all:'.md5(json_encode($queryParams));
+
+        if ($force || request()->has('refresh')) {
+            Cache::forget($cacheKey);
+        }
+
+        $cached = Cache::get($cacheKey);
+        if (! $force && ! empty($cached) && is_array($cached)) {
+            return $cached;
+        }
+
+        $endpoint = 'api/v1/sanggars';
+        $allData = [];
+        $page = 1;
+        $lastPage = 1;
+
+        do {
+            try {
+                $query = array_merge(['per_page' => 100], $queryParams, [
+                    'page' => $page,
+                ]);
+
+                $response = $this->client()->get($endpoint, $query);
+
+                // Fallback only on first page if primary endpoint not successful
+                if (! $response->successful() && $page === 1) {
+                    $endpoint = 'api/v1/guru/sanggars';
+                    $response = $this->client()->get($endpoint, $query);
+                }
+            } catch (\Throwable $e) {
+                Log::error("Penyaluran API Connection Error on {$endpoint}", [
+                    'endpoint' => $endpoint,
+                    'page' => $page,
+                    'error_class' => get_class($e),
+                    'error_message' => $e->getMessage(),
+                ]);
+
+                break;
+            }
+
+            if (! $response->successful()) {
+                Log::error("Penyaluran API Error on {$endpoint}", [
+                    'endpoint' => $endpoint,
+                    'page' => $page,
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+
+                break;
+            }
+
+            $parsed = self::parsePaginatedResponse($response->json());
+            $items = $parsed['items'];
+            $lastPage = $parsed['last_page'];
+
+            if (! empty($items)) {
+                $allData = array_merge($allData, $items);
+            } else {
+                break;
+            }
+
+            $page++;
+        } while ($page <= $lastPage && $page <= 50);
+
+        $normalized = ! empty($allData) ? collect($this->normalizeSanggars($allData))->unique('id')->values()->all() : [];
+
+        if (! empty($normalized)) {
+            Cache::put($cacheKey, $normalized, 300);
+        } else {
+            Cache::forget($cacheKey);
+        }
+
+        return $normalized;
+    }
+
+    /**
+     * Normalize sanggars attributes to standard format.
+     */
+    public function normalizeSanggars(array $data): array
+    {
+        return collect($data)->map(function ($s, $idx) {
+            if (! is_array($s)) {
+                return [
+                    'id' => $idx + 1,
+                    'name' => (string) $s,
+                    'type' => 'Reguler',
+                    'kantor_name' => '-',
+                    'total_students' => 0,
+                    'address' => null,
+                ];
+            }
+
+            $id = $s['id'] ?? $s['sanggar_id'] ?? $s['id_sanggar'] ?? ($idx + 1);
+
+            $name = $s['name'] ?? $s['nama'] ?? $s['nama_sanggar'] ?? $s['sanggar_name'] ?? $s['title'] ?? null;
+            if (! $name && isset($s['sanggar']) && is_string($s['sanggar'])) {
+                $name = $s['sanggar'];
+            }
+
+            $type = $s['type'] ?? $s['tipe'] ?? $s['jenis'] ?? $s['kategori'] ?? $s['program'] ?? ($s['sanggar_type']['name'] ?? $s['sanggar_type']['code'] ?? null) ?? 'Reguler';
+
+            $kantor = $s['kantor_name'] ?? $s['kantor'] ?? $s['cabang'] ?? $s['nama_kantor'] ?? $s['nama_cabang'] ?? $s['branch'] ?? null;
+            if (is_array($kantor)) {
+                $kantor = $kantor['name'] ?? $kantor['nama'] ?? $kantor['nama_cabang'] ?? null;
+            }
+
+            $totalStudents = $s['total_students'] ?? $s['santri_count'] ?? $s['students_count'] ?? $s['jumlah_santri'] ?? $s['total_santri'] ?? 0;
+            if (is_array($totalStudents)) {
+                $totalStudents = count($totalStudents);
+            }
+
+            $address = $s['address'] ?? $s['alamat'] ?? $s['alamat_lengkap'] ?? $s['lokasi'] ?? null;
+
+            return array_merge($s, [
+                'id' => $id ? (int) $id : ($idx + 1),
+                'name' => $name ?? '-',
+                'type' => is_string($type) ? $type : 'Reguler',
+                'kantor_name' => is_string($kantor) ? $kantor : null,
+                'total_students' => (int) $totalStudents,
+                'address' => is_string($address) ? $address : null,
+            ]);
+        })->values()->all();
+    }
+
+    /**
+     * Get all teachers from Penyaluran API (GET api/v1/teachers) using X-API-KEY header.
+     * Endpoint: https://penyaluran.yatimmandiri.org/api/v1/teachers with header X-API-KEY.
+     * Handles all Laravel pagination shapes and aggregates all available pages.
+     *
+     * @return array<int, array>
+     */
+    public function allTeachers(array $queryParams = [], bool $force = false): array
+    {
+        $cacheKey = 'penyaluran:teachers:all:'.md5(json_encode($queryParams));
+
+        if ($force || request()->has('refresh')) {
+            Cache::forget($cacheKey);
+        }
+
+        $cached = Cache::get($cacheKey);
+        if (! $force && ! empty($cached) && is_array($cached)) {
+            return $cached;
+        }
+
+        $endpoint = 'api/v1/teachers';
+        $allData = [];
+        $page = 1;
+        $lastPage = 1;
+
+        do {
+            try {
+                $query = array_merge(['per_page' => 100], $queryParams, [
+                    'page' => $page,
+                ]);
+
+                $response = $this->client()->get($endpoint, $query);
+            } catch (\Throwable $e) {
+                Log::error("Penyaluran API Connection Error on {$endpoint}", [
+                    'endpoint' => $endpoint,
+                    'page' => $page,
+                    'error_class' => get_class($e),
+                    'error_message' => $e->getMessage(),
+                ]);
+
+                break;
+            }
+
+            if (! $response->successful()) {
+                Log::error("Penyaluran API Error on {$endpoint}", [
+                    'endpoint' => $endpoint,
+                    'page' => $page,
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+
+                break;
+            }
+
+            $parsed = self::parsePaginatedResponse($response->json());
+            $items = $parsed['items'];
+            $lastPage = $parsed['last_page'];
+
+            if (! empty($items)) {
+                $allData = array_merge($allData, $items);
+            } else {
+                break;
+            }
+
+            $page++;
+        } while ($page <= $lastPage && $page <= 500);
+
+        $normalized = ! empty($allData) ? collect($this->normalizeTeachers($allData))->unique(fn ($t) => $t['id'] ?? $t['code'] ?? $t['email'] ?? $t['phone'])->values()->all() : [];
+
+        if (! empty($normalized)) {
+            Cache::put($cacheKey, $normalized, 300);
+        } else {
+            Cache::forget($cacheKey);
+        }
+
+        return $normalized;
+    }
+
+    /**
+     * Normalize teachers attributes to standard format.
+     */
+    public function normalizeTeachers(array $data): array
+    {
+        return collect($data)->map(function ($s, $idx) {
+            if (! is_array($s)) {
+                return [
+                    'id' => $idx + 1,
+                    'penyaluran_id' => $idx + 1,
+                    'teacher_id' => $idx + 1,
+                    'penyaluran_code' => null,
+                    'code' => null,
+                    'name' => (string) $s,
+                    'phone' => null,
+                    'email' => null,
+                    'kantor_id' => null,
+                    'kantor_name' => null,
+                    'branch' => null,
+                    'email_verified_at' => null,
+                    'created_at' => null,
+                    'status' => true,
+                ];
+            }
+
+            $id = $s['id'] ?? $s['teacher_id'] ?? $s['guru_id'] ?? $s['user_id'] ?? ($idx + 1);
+            $name = $s['name'] ?? $s['nama'] ?? $s['nama_guru'] ?? $s['full_name'] ?? $s['nama_lengkap'] ?? null;
+            $code = $s['code'] ?? $s['penyaluran_code'] ?? $s['kode'] ?? $s['kode_guru'] ?? null;
+            $phone = $s['phone'] ?? $s['hp'] ?? $s['no_hp'] ?? $s['nomor_hp'] ?? $s['telephone'] ?? null;
+            $email = $s['email'] ?? null;
+            $kantorId = $s['kantor_id'] ?? $s['branch_id'] ?? ($s['kantor']['id'] ?? null) ?? null;
+            $kantorName = $s['kantor_name'] ?? $s['kantor'] ?? $s['cabang'] ?? $s['nama_kantor'] ?? ($s['kantor']['name'] ?? null) ?? null;
+            if (is_array($kantorName)) {
+                $kantorName = $kantorName['name'] ?? $kantorName['nama'] ?? null;
+            }
+            $positions = $s['positions'] ?? $s['jabatan'] ?? [];
+            $sanggars = $s['sanggars'] ?? $s['sanggar_teachers'] ?? [];
+
+            return array_merge($s, [
+                'id' => $id ? (int) $id : ($idx + 1),
+                'penyaluran_id' => $id ? (int) $id : null,
+                'teacher_id' => $id ? (int) $id : null,
+                'penyaluran_code' => $code,
+                'code' => $code,
+                'name' => $name ?? '-',
+                'phone' => $phone,
+                'email' => $email,
+                'kantor_id' => $kantorId ? (int) $kantorId : null,
+                'kantor_name' => is_string($kantorName) ? $kantorName : null,
+                'branch' => is_string($kantorName) ? $kantorName : null,
+                'positions' => $positions,
+                'sanggars' => $sanggars,
+                'email_verified_at' => $s['email_verified_at'] ?? ($email ? now()->toIso8601String() : null),
+                'created_at' => $s['created_at'] ?? null,
+                'status' => filter_var($s['status'] ?? true, FILTER_VALIDATE_BOOLEAN),
+            ]);
+        })->values()->all();
+    }
+
+    /**
+     * Get all students from Penyaluran API (GET api/v1/students) using X-API-KEY header.
+     * Endpoint: https://penyaluran.yatimmandiri.org/api/v1/students with header X-API-KEY.
+     * Handles all Laravel pagination shapes and aggregates all available pages.
+     *
+     * @return array<int, array>
+     */
+    public function allStudents(array $queryParams = [], bool $force = false): array
+    {
+        $cacheKey = 'penyaluran:students:all:'.md5(json_encode($queryParams));
+
+        if ($force || request()->has('refresh')) {
+            Cache::forget($cacheKey);
+        }
+
+        $cached = Cache::get($cacheKey);
+        if (! $force && ! empty($cached) && is_array($cached)) {
+            return $cached;
+        }
+
+        $endpoint = 'api/v1/students';
+        $allData = [];
+        $page = 1;
+        $lastPage = 1;
+
+        do {
+            try {
+                $query = array_merge(['per_page' => 100], $queryParams, [
+                    'page' => $page,
+                ]);
+
+                $response = $this->client()->get($endpoint, $query);
+            } catch (\Throwable $e) {
+                Log::error("Penyaluran API Connection Error on {$endpoint}", [
+                    'endpoint' => $endpoint,
+                    'page' => $page,
+                    'error_class' => get_class($e),
+                    'error_message' => $e->getMessage(),
+                ]);
+
+                break;
+            }
+
+            if (! $response->successful()) {
+                Log::error("Penyaluran API Error on {$endpoint}", [
+                    'endpoint' => $endpoint,
+                    'page' => $page,
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+
+                break;
+            }
+
+            $parsed = self::parsePaginatedResponse($response->json());
+            $items = $parsed['items'];
+            $lastPage = $parsed['last_page'];
+
+            if (! empty($items)) {
+                $allData = array_merge($allData, $items);
+            } else {
+                break;
+            }
+
+            $page++;
+        } while ($page <= $lastPage && $page <= 500);
+
+        $normalized = ! empty($allData) ? collect($this->normalizeGlobalStudents($allData))->unique('id')->values()->all() : [];
+
+        if (! empty($normalized)) {
+            Cache::put($cacheKey, $normalized, 300);
+        } else {
+            Cache::forget($cacheKey);
+        }
+
+        return $normalized;
+    }
+
+    /**
+     * Normalize global students (api/v1/students) to standard format.
+     */
+    public function normalizeGlobalStudents(array $data): array
+    {
+        return collect($data)->map(function ($s, $idx) {
+            if (! is_array($s)) {
+                return [
+                    'id' => $idx + 1,
+                    'name' => (string) $s,
+                    'nik' => null,
+                    'kantor_name' => null,
+                ];
+            }
+
+            $id = $s['id'] ?? $s['student_id'] ?? ($idx + 1);
+            $name = $s['name'] ?? $s['nama'] ?? $s['full_name'] ?? null;
+            $nik = $s['nik'] ?? null;
+            $nis = $s['nis'] ?? null;
+            $gender = $s['gender'] ?? null;
+            if ($gender === 'L' || $gender === 'l') {
+                $gender = 'L';
+            } elseif ($gender === 'P' || $gender === 'p') {
+                $gender = 'P';
+            }
+            $schoolName = $s['school_name'] ?? $s['sekolah_name'] ?? null;
+            $schoolLevel = $s['school_level'] ?? null;
+            $class = $s['class'] ?? $s['kelas'] ?? null;
+            $kantorId = $s['kantor_id'] ?? ($s['kantor']['id'] ?? null) ?? null;
+            $kantorName = $s['kantor_name'] ?? $s['kantor'] ?? null;
+            if (is_array($kantorName)) {
+                $kantorName = $kantorName['name'] ?? $kantorName['nama'] ?? null;
+            }
+            $sanggarName = null;
+            if (isset($s['sanggar_students']) && is_array($s['sanggar_students']) && ! empty($s['sanggar_students'])) {
+                $sanggarName = $s['sanggar_students'][0]['sanggar_name'] ?? $s['sanggar_students'][0]['sanggar']['name'] ?? null;
+            } elseif (isset($s['sanggars']) && is_array($s['sanggars']) && ! empty($s['sanggars'])) {
+                $sanggarName = $s['sanggars'][0]['name'] ?? null;
+            }
+            $teacherName = null;
+            $teacherId = $s['teacher_id'] ?? null;
+            if (isset($s['teacher_students']) && is_array($s['teacher_students']) && ! empty($s['teacher_students'])) {
+                $teacherName = $s['teacher_students'][0]['teacher_name'] ?? $s['teacher_students'][0]['teacher']['name'] ?? null;
+                $teacherId = $teacherId ?? $s['teacher_students'][0]['teacher_id'] ?? $s['teacher_students'][0]['teacher']['id'] ?? null;
+            } elseif (isset($s['teachers']) && is_array($s['teachers']) && ! empty($s['teachers'])) {
+                $teacherName = $s['teachers'][0]['name'] ?? null;
+                $teacherId = $teacherId ?? $s['teachers'][0]['id'] ?? null;
+            }
+
+            return array_merge($s, [
+                'id' => $id ? (int) $id : ($idx + 1),
+                'student_id' => $id ? (int) $id : ($idx + 1),
+                'name' => $name ?? '-',
+                'full_name' => $name ?? '-',
+                'nik' => $nik,
+                'nis' => $nis,
+                'gender' => $gender,
+                'school_name' => $schoolName,
+                'school_level' => $schoolLevel,
+                'class' => $class,
+                'grade' => $class,
+                'kantor_id' => $kantorId ? (int) $kantorId : null,
+                'kantor_name' => is_string($kantorName) ? $kantorName : null,
+                'branch' => is_string($kantorName) ? $kantorName : null,
+                'sanggar_name' => $sanggarName,
+                'teacher_name' => $teacherName,
+                'teacher_id' => $teacherId ? (int) $teacherId : null,
+                'mentor_id' => $teacherId ? (int) $teacherId : null,
+            ]);
+        })->values()->all();
+    }
+
+    /**
      * Get sanggars list for authenticated guru.
      * Primary source: Session / GET api/v1/guru/me which provides sanggars array.
      */
@@ -546,10 +1039,14 @@ class PenyaluranService
         }
 
         if ($sanggars === null) {
-            $endpoint = 'api/v1/guru/sanggars';
+            $endpoint = 'api/v1/sanggars';
 
             try {
                 $response = $this->client($token)->get($endpoint);
+                if (! $response->successful()) {
+                    $endpoint = 'api/v1/guru/sanggars';
+                    $response = $this->client($token)->get($endpoint);
+                }
             } catch (\Throwable $e) {
                 Log::error("Penyaluran API Connection Error on {$endpoint}", [
                     'endpoint' => $endpoint,
@@ -562,7 +1059,7 @@ class PenyaluranService
 
             $this->assertSuccess($response, $endpoint);
 
-            $data = $response->json('data');
+            $data = $response->json('data') ?? $response->json();
             if (! is_array($data)) {
                 return [];
             }

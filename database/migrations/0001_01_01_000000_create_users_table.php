@@ -26,6 +26,8 @@ return new class extends Migration
             $table->unsignedTinyInteger('phone_otp_attempts')->default(0);
             $table->timestamp('phone_otp_last_sent_at')->nullable();
             $table->string('branch')->nullable()->index();
+            $table->unsignedBigInteger('kantor_id')->nullable()->index();
+            $table->unsignedBigInteger('teacher_id')->nullable()->index();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->rememberToken();

@@ -17,7 +17,7 @@ use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['name', 'email', 'password', 'phone', 'branch', 'penyaluran_id', 'penyaluran_code', 'penyaluran_token', 'phone_verified_at', 'teacher_profile_completed_at', 'phone_otp', 'phone_otp_expires_at', 'phone_otp_attempts', 'phone_otp_last_sent_at'])]
+#[Fillable(['name', 'email', 'password', 'phone', 'branch', 'kantor_id', 'teacher_id', 'penyaluran_id', 'penyaluran_code', 'penyaluran_token', 'phone_verified_at', 'teacher_profile_completed_at', 'phone_otp', 'phone_otp_expires_at', 'phone_otp_attempts', 'phone_otp_last_sent_at'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token', 'penyaluran_token', 'phone_otp'])]
 
 class User extends Authenticatable
@@ -61,6 +61,8 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
+            'kantor_id' => 'integer',
+            'teacher_id' => 'integer',
             'email_verified_at' => 'datetime',
             'phone_verified_at' => 'datetime',
             'teacher_profile_completed_at' => 'datetime',

@@ -72,6 +72,8 @@ class GuruAuthController extends Controller
 
         $teacherData = $profile['teacher'] ?? $profile['data']['teacher'] ?? $profile;
         $penyaluranId = $teacherData['id'] ?? $profile['id'] ?? null;
+        $teacherId = $teacherData['teacher_id'] ?? $teacherData['id'] ?? $profile['teacher_id'] ?? $profile['guru_id'] ?? $profile['id'] ?? $penyaluranId ?? null;
+        $kantorId = $teacherData['kantor_id'] ?? $teacherData['branch_id'] ?? $profile['kantor_id'] ?? $profile['branch_id'] ?? ($teacherData['kantor']['id'] ?? null) ?? ($profile['kantor']['id'] ?? null) ?? ($profile['sanggars'][0]['kantor_id'] ?? null) ?? ($profile['sanggars'][0]['kantor']['id'] ?? null) ?? null;
         $penyaluranCode = $teacherData['code'] ?? $profile['code'] ?? null;
         $penyaluranName = $teacherData['name'] ?? $profile['name'] ?? null;
         $penyaluranEmail = $teacherData['email'] ?? $profile['email'] ?? null;
@@ -188,6 +190,9 @@ class GuruAuthController extends Controller
                 'name' => $penyaluranName ?? 'Guru '.$penyaluranId,
                 'email' => $initialEmail,
                 'phone' => $phone,
+                'branch' => $guruBranch,
+                'kantor_id' => $kantorId ? (int) $kantorId : null,
+                'teacher_id' => $teacherId ? (int) $teacherId : null,
                 'penyaluran_id' => $penyaluranId,
                 'penyaluran_code' => $penyaluranCode,
                 'password' => Hash::make('password'),
@@ -210,6 +215,8 @@ class GuruAuthController extends Controller
             'name' => $penyaluranName ?? $user->name,
             'phone' => $phone,
             'branch' => $guruBranch ?? $user->branch,
+            'kantor_id' => $kantorId ? (int) $kantorId : $user->kantor_id,
+            'teacher_id' => $teacherId ? (int) $teacherId : $user->teacher_id,
             'penyaluran_id' => $penyaluranId,
             'penyaluran_code' => $penyaluranCode ?? $user->penyaluran_code,
             'penyaluran_token' => $token,
@@ -241,6 +248,8 @@ class GuruAuthController extends Controller
             $request->session()->put('otp_user_id', $user->id);
             $request->session()->put('penyaluran_token', $token);
             $request->session()->put('penyaluran_id', $penyaluranId);
+            $request->session()->put('kantor_id', $kantorId ? (int) $kantorId : $user->kantor_id);
+            $request->session()->put('teacher_id', $teacherId ? (int) $teacherId : $user->teacher_id);
 
             return redirect()->route('teacher.verify');
         }
@@ -249,6 +258,8 @@ class GuruAuthController extends Controller
         $request->session()->regenerate();
         $request->session()->put('penyaluran_token', $token);
         $request->session()->put('penyaluran_id', $penyaluranId);
+        $request->session()->put('kantor_id', $kantorId ? (int) $kantorId : $user->kantor_id);
+        $request->session()->put('teacher_id', $teacherId ? (int) $teacherId : $user->teacher_id);
         $request->session()->put('penyaluran_me', $profile);
         $request->session()->put('penyaluran_sanggars', $profile['sanggars'] ?? []);
         $request->session()->put('penyaluran_students', $profile['students'] ?? []);
@@ -370,6 +381,21 @@ class GuruAuthController extends Controller
             }
             try {
                 $profile = app(PenyaluranService::class)->me($token);
+                $teacherData = $profile['teacher'] ?? $profile['data']['teacher'] ?? $profile;
+                $teacherId = $teacherData['teacher_id'] ?? $teacherData['id'] ?? $profile['teacher_id'] ?? $profile['guru_id'] ?? $profile['id'] ?? $penyaluranId ?? null;
+                $kantorId = $teacherData['kantor_id'] ?? $teacherData['branch_id'] ?? $profile['kantor_id'] ?? $profile['branch_id'] ?? ($teacherData['kantor']['id'] ?? null) ?? ($profile['kantor']['id'] ?? null) ?? ($profile['sanggars'][0]['kantor_id'] ?? null) ?? ($profile['sanggars'][0]['kantor']['id'] ?? null) ?? null;
+
+                $user->forceFill(array_filter([
+                    'kantor_id' => $kantorId ? (int) $kantorId : null,
+                    'teacher_id' => $teacherId ? (int) $teacherId : null,
+                ], fn ($v) => $v !== null))->save();
+
+                if ($kantorId) {
+                    $request->session()->put('kantor_id', (int) $kantorId);
+                }
+                if ($teacherId) {
+                    $request->session()->put('teacher_id', (int) $teacherId);
+                }
                 $request->session()->put('penyaluran_me', $profile);
                 $request->session()->put('penyaluran_sanggars', $profile['sanggars'] ?? []);
                 $request->session()->put('penyaluran_students', $profile['students'] ?? []);
@@ -408,6 +434,8 @@ class GuruAuthController extends Controller
         $request->session()->forget([
             'penyaluran_token',
             'penyaluran_id',
+            'kantor_id',
+            'teacher_id',
             'penyaluran_me',
             'penyaluran_sanggars',
             'penyaluran_students',
