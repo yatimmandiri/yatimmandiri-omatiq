@@ -25,17 +25,42 @@ class SanggarController extends Controller
     {
         $this->authorize('viewAny', Participant::class);
 
-        $token = $request->session()->get('penyaluran_token') ?? Auth::user()?->penyaluran_token;
+        $user = Auth::user();
+        $token = $request->session()->get('penyaluran_token') ?? $user?->penyaluran_token;
+
+        $queryParams = array_filter([
+            'kantor_id' => $request->input('kantor_id', $user?->kantor_id),
+            'teacher_id' => $request->input('teacher_id', $user?->teacher_id),
+        ], fn ($v) => filled($v));
+
         $sanggars = [];
         try {
-            $sanggars = $this->penyaluran->sanggars($token ?? 'session');
+            $sanggars = $this->penyaluran->allSanggars($queryParams);
+            if (empty($sanggars) && ! empty($queryParams)) {
+                $sanggars = $this->penyaluran->allSanggars();
+            }
         } catch (\Throwable $e) {
             $sanggars = [];
         }
 
+        if (empty($sanggars) && $token) {
+            try {
+                $sanggars = $this->penyaluran->sanggars($token ?? 'session');
+            } catch (\Throwable $e) {
+                $sanggars = [];
+            }
+        }
+
+        if (! empty($sanggars) && $token) {
+            try {
+                $sanggars = $this->penyaluran->enrichSanggarsWithStudentCounts($sanggars, $token);
+            } catch (\Throwable $e) {
+            }
+        }
+
         $search = strtolower($request->string('globalSearch')->toString());
         $collection = collect($sanggars)
-            ->when($search !== '', fn ($c) => $c->filter(fn (array $s) => str_contains(strtolower($s['name'] ?? ''), $search) || str_contains(strtolower($s['type'] ?? ''), $search)))
+            ->when($search !== '', fn ($c) => $c->filter(fn (array $s) => str_contains(strtolower($s['name'] ?? ''), $search) || str_contains(strtolower($s['type'] ?? ''), $search) || str_contains(strtolower($s['kantor_name'] ?? ''), $search)))
             ->values();
 
         $perPage = min($request->integer('perPage') ?: 10, 100);
@@ -48,6 +73,8 @@ class SanggarController extends Controller
             'current_page' => $page,
             'per_page' => $perPage,
             'total' => $total,
+            'from' => $total > 0 ? ($page - 1) * $perPage + 1 : 0,
+            'to' => $total > 0 ? min($page * $perPage, $total) : 0,
             'last_page' => (int) ceil($total / $perPage),
         ]);
     }
@@ -56,13 +83,31 @@ class SanggarController extends Controller
     {
         $this->authorize('viewAny', Participant::class);
 
-        $token = request()->session()->get('penyaluran_token') ?? Auth::user()?->penyaluran_token;
+        $user = Auth::user();
+        $token = request()->session()->get('penyaluran_token') ?? $user?->penyaluran_token;
+
         $sanggars = [];
         try {
-            $sanggars = $this->penyaluran->sanggars($token ?? 'session');
+            $sanggars = $this->penyaluran->allSanggars();
         } catch (\Throwable $e) {
             $sanggars = [];
         }
+
+        if (empty($sanggars) && $token) {
+            try {
+                $sanggars = $this->penyaluran->sanggars($token ?? 'session');
+            } catch (\Throwable $e) {
+                $sanggars = [];
+            }
+        }
+
+        if (! empty($sanggars) && $token) {
+            try {
+                $sanggars = $this->penyaluran->enrichSanggarsWithStudentCounts($sanggars, $token);
+            } catch (\Throwable $e) {
+            }
+        }
+
         $sanggar = collect($sanggars)->firstWhere(fn (array $s) => (int) ($s['id'] ?? 0) === $id);
         if (! $sanggar) {
             abort(404);

@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Company\StoreStudentRequest;
 use App\Http\Requests\Company\UpdateStudentRequest;
 use App\Models\Company\Student;
+use App\Services\PenyaluranService;
 use App\Services\StudentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -20,18 +21,110 @@ class StudentController extends Controller
 
     public function __construct(
         private readonly StudentService $service,
+        private readonly PenyaluranService $penyaluran,
     ) {}
+
+    private function resolveBranch(?\App\Models\Core\User $user): ?string
+    {
+        if (! $user) {
+            return null;
+        }
+
+        $rawBranch = $user->getBranchName() ?? $user->branch;
+        if (filled($rawBranch)) {
+            $clean = trim(preg_replace('/^(user\s+)?(kantor\s+)?(layanan\s+)?cabang\s+/i', '', (string) $rawBranch));
+            $clean = trim(preg_replace('/\s*(cabang|kantor)\s*$/i', '', (string) $clean));
+
+            return $clean !== '' ? $clean : null;
+        }
+
+        if ($user->hasRole('Cabang')) {
+            $clean = trim(preg_replace('/^(user\s+)?(kantor\s+)?(layanan\s+)?cabang\s+/i', '', (string) $user->name));
+            $clean = trim(preg_replace('/\s*(cabang|kantor)\s*$/i', '', (string) $clean));
+
+            return $clean !== '' ? $clean : null;
+        }
+
+        return null;
+    }
 
     public function index(): Response
     {
         $this->authorize('viewAny', Student::class);
 
         $user = Auth::user();
-        $isCabang = $user?->hasRole('Cabang') ?? false;
-        $userBranch = $isCabang ? $user->getBranchName() : null;
+        $userBranch = $this->resolveBranch($user);
+        $userKantorId = $user?->kantor_id;
+
+        $mentors = [];
+        try {
+            $queryParams = [];
+            if ($userKantorId) {
+                $queryParams['kantor_id'] = $userKantorId;
+            }
+            $apiTeachers = $this->penyaluran->allTeachers($queryParams);
+            if (empty($apiTeachers) && ! empty($queryParams)) {
+                $apiTeachers = $this->penyaluran->allTeachers();
+            }
+
+            if (! empty($apiTeachers)) {
+                $teachersCol = collect($apiTeachers);
+
+                if (filled($userBranch)) {
+                    $branchLower = strtolower($userBranch);
+                    $teachersCol = $teachersCol->filter(function (array $t) use ($branchLower, $userKantorId) {
+                        if ($userKantorId && ! empty($t['kantor_id']) && (int) $t['kantor_id'] === (int) $userKantorId) {
+                            return true;
+                        }
+
+                        $kantor = strtolower(trim((string) ($t['kantor_name'] ?? $t['branch'] ?? '')));
+                        if ($kantor !== '') {
+                            $cleanKantor = trim(preg_replace('/^(kantor\s+)?(layanan\s+)?(cabang\s+)?/i', '', $kantor));
+                            $cleanKantor = trim(preg_replace('/\s*(cabang|kantor)\s*$/i', '', $cleanKantor));
+                            if (str_contains($kantor, $branchLower) || str_contains($branchLower, $cleanKantor)) {
+                                return true;
+                            }
+                        }
+
+                        $sanggars = $t['sanggars'] ?? [];
+                        if (is_array($sanggars) && ! empty($sanggars)) {
+                            foreach ($sanggars as $s) {
+                                if (! is_array($s)) {
+                                    continue;
+                                }
+                                if ($userKantorId && ! empty($s['kantor_id']) && (int) $s['kantor_id'] === (int) $userKantorId) {
+                                    return true;
+                                }
+                                $sKantor = strtolower(trim((string) ($s['kantor_name'] ?? $s['kantor'] ?? $s['cabang'] ?? '')));
+                                if ($sKantor !== '') {
+                                    $cleanSKantor = trim(preg_replace('/^(kantor\s+)?(layanan\s+)?(cabang\s+)?/i', '', $sKantor));
+                                    $cleanSKantor = trim(preg_replace('/\s*(cabang|kantor)\s*$/i', '', $cleanSKantor));
+                                    if (str_contains($sKantor, $branchLower) || str_contains($branchLower, $cleanSKantor)) {
+                                        return true;
+                                    }
+                                }
+                            }
+                        }
+
+                        return false;
+                    });
+                }
+
+                $mentors = $teachersCol->map(fn (array $t) => [
+                    'id' => $t['id'] ?? $t['teacher_id'],
+                    'name' => $t['name'] ?? $t['full_name'] ?? '-',
+                ])->unique('id')->sortBy('name')->values()->all();
+            }
+        } catch (\Throwable $e) {
+            $mentors = [];
+        }
+
+        if (empty($mentors)) {
+            $mentors = $this->service->formOptions()['mentors'];
+        }
 
         return Inertia::render('admin/company/students/list', [
-            'mentors' => $this->service->formOptions()['mentors'],
+            'mentors' => $mentors,
             'userBranch' => $userBranch,
         ]);
     }
@@ -176,32 +269,194 @@ class StudentController extends Controller
         $this->authorize('data-student', Student::class);
 
         $user = Auth::user();
-        $allowed = ['id', 'full_name', 'school_name', 'nik', 'is_binaan', 'is_active', 'created_at', 'updated_at'];
-        $orderBy = in_array($request->input('orderBy'), $allowed, true) ? $request->input('orderBy') : 'created_at';
-        $direction = strtolower((string) $request->input('orderDirection')) === 'asc' ? 'asc' : 'desc';
+        $branch = $this->resolveBranch($user);
+        $userKantorId = $user?->kantor_id;
 
+        // Primary source: Penyaluran API api/v1/students (X-API-KEY) — 4202 students
+        $apiStudents = [];
+        try {
+            $queryParams = [];
+            if ($userKantorId) {
+                $queryParams['kantor_id'] = $userKantorId;
+            }
+            $apiStudents = $this->penyaluran->allStudents($queryParams);
+            if (empty($apiStudents) && ! empty($queryParams)) {
+                $apiStudents = $this->penyaluran->allStudents();
+            }
+        } catch (\Throwable $e) {
+            $apiStudents = [];
+        }
+
+        // If API available and not filtered to local-only, serve from API with DataTable handling
         $filterValue = $request->input('filterValue', []);
         if (is_string($filterValue)) {
             $filterValue = json_decode($filterValue, true) ?? [];
         }
+        $isBinaanFilter = data_get($filterValue, 'is_binaan');
+        $useApi = ! empty($apiStudents) && ($isBinaanFilter === null || $isBinaanFilter === '' || $isBinaanFilter === 'all');
+
+        if ($useApi) {
+            $search = strtolower($request->string('globalSearch')->toString());
+            $collection = collect($apiStudents);
+
+            // Strict Cabang scoping by branch name or kantor_id
+            if (filled($branch)) {
+                $branchLower = strtolower($branch);
+                $collection = $collection->filter(function (array $s) use ($branchLower, $userKantorId) {
+                    // 1. Match by kantor_id if both present
+                    if ($userKantorId && ! empty($s['kantor_id']) && (int) $s['kantor_id'] === (int) $userKantorId) {
+                        return true;
+                    }
+
+                    // 2. Match by student's kantor_name / branch
+                    $kantor = strtolower(trim((string) ($s['kantor_name'] ?? $s['branch'] ?? '')));
+                    if ($kantor !== '') {
+                        $cleanKantor = trim(preg_replace('/^(kantor\s+)?(layanan\s+)?(cabang\s+)?/i', '', $kantor));
+                        $cleanKantor = trim(preg_replace('/\s*(cabang|kantor)\s*$/i', '', $cleanKantor));
+                        if (str_contains($kantor, $branchLower) || str_contains($branchLower, $cleanKantor)) {
+                            return true;
+                        }
+                    }
+
+                    // 3. Match by student's sanggar kantor/branch
+                    $sanggarKantor = strtolower(trim((string) ($s['sanggar']['kantor_name'] ?? $s['sanggar']['kantor'] ?? $s['sanggar']['cabang'] ?? '')));
+                    if ($sanggarKantor !== '') {
+                        $cleanSKantor = trim(preg_replace('/^(kantor\s+)?(layanan\s+)?(cabang\s+)?/i', '', $sanggarKantor));
+                        $cleanSKantor = trim(preg_replace('/\s*(cabang|kantor)\s*$/i', '', $cleanSKantor));
+                        if (str_contains($sanggarKantor, $branchLower) || str_contains($branchLower, $cleanSKantor)) {
+                            return true;
+                        }
+                    }
+
+                    return false;
+                });
+            } elseif ($user && $user->hasRole('Teacher')) {
+                // Teacher sees only its own binaan via teacher_id or sanggar/teacher match
+                $teacherId = $user->teacher_id ?? $user->penyaluran_id;
+                $teacherName = strtolower($user->name ?? '');
+                $collection = $collection->filter(function (array $s) use ($teacherId, $teacherName) {
+                    if ($teacherId && ! empty($s['teacher_id']) && (int) $s['teacher_id'] === (int) $teacherId) {
+                        return true;
+                    }
+                    $tName = strtolower($s['teacher_name'] ?? '');
+                    if ($tName !== '' && $teacherName !== '' && str_contains($tName, explode(' ', $teacherName)[0])) {
+                        return true;
+                    }
+
+                    return false;
+                });
+                if ($collection->isEmpty()) {
+                    $useApi = false;
+                }
+            }
+
+            if ($useApi) {
+                if ($search !== '') {
+                    $collection = $collection->filter(function (array $s) use ($search) {
+                        $name = strtolower($s['name'] ?? $s['full_name'] ?? '');
+                        $nik = strtolower($s['nik'] ?? '');
+                        $school = strtolower($s['school_name'] ?? '');
+                        $kantor = strtolower($s['kantor_name'] ?? '');
+                        $sanggar = strtolower($s['sanggar_name'] ?? '');
+
+                        return str_contains($name, $search) || str_contains($nik, $search) || str_contains($school, $search) || str_contains($kantor, $search) || str_contains($sanggar, $search);
+                    });
+                }
+
+                $schoolLevel = data_get($filterValue, 'school_level');
+                $provinceId = data_get($filterValue, 'province_id');
+                $mentorId = data_get($filterValue, 'mentor_id');
+                if (filled($schoolLevel) && $schoolLevel !== 'all') {
+                    $collection = $collection->filter(fn (array $s) => strtolower($s['school_level'] ?? '') === strtolower($schoolLevel));
+                }
+                // province filter maps to province_name for API data
+                if (filled($provinceId) && $provinceId !== 'all') {
+                    $collection = $collection->filter(fn (array $s) => (string) ($s['province_id'] ?? '') === (string) $provinceId || strtolower($s['province_name'] ?? '') === strtolower($provinceId));
+                }
+                // mentor filter maps to teacher_id or teacher_name
+                if (filled($mentorId) && $mentorId !== 'all') {
+                    $collection = $collection->filter(function (array $s) use ($mentorId) {
+                        if (! empty($s['teacher_id']) && (string) $s['teacher_id'] === (string) $mentorId) {
+                            return true;
+                        }
+                        if (! empty($s['mentor_id']) && (string) $s['mentor_id'] === (string) $mentorId) {
+                            return true;
+                        }
+
+                        return false;
+                    });
+                }
+
+                $allowed = ['id', 'full_name', 'name', 'school_name', 'nik', 'created_at'];
+                $orderBy = $request->input('orderBy') ?: 'id';
+                if (! in_array($orderBy, $allowed, true)) {
+                    $orderBy = 'id';
+                }
+                $sortKey = $orderBy === 'full_name' ? 'name' : $orderBy;
+                $direction = strtolower((string) $request->input('orderDirection')) === 'asc' ? 'asc' : 'desc';
+                $collection = $collection->sortBy(fn (array $s) => strtolower((string) ($s[$sortKey] ?? '')), SORT_REGULAR, $direction === 'desc')->values();
+
+                $perPage = min($request->integer('perPage') ?: 10, 100);
+                $page = max(1, $request->integer('page') ?: 1);
+                $total = $collection->count();
+                $items = $collection->forPage($page, $perPage)->values();
+
+                // Map to Student shape expected by frontend (reuse existing list columns)
+                $mapped = $items->map(function (array $s) {
+                    return [
+                        'id' => $s['id'],
+                        'penyaluran_id' => $s['id'],
+                        'full_name' => $s['name'],
+                        'nik' => $s['nik'],
+                        'school_name' => $s['school_name'],
+                        'school_level' => $s['school_level'],
+                        'class' => $s['class'] ?? $s['grade'] ?? null,
+                        'kantor_name' => $s['kantor_name'],
+                        'branch' => $s['kantor_name'],
+                        'sanggar_name' => $s['sanggar_name'],
+                        'teacher_name' => $s['teacher_name'],
+                        'province_name' => $s['province_name'],
+                        'is_binaan' => true,
+                        'is_active' => $s['status'] ?? true,
+                        'mentor' => ['name' => $s['teacher_name'] ?? '-'],
+                        'province' => ['name' => $s['province_name'] ?? '-'],
+                        'regency' => ['name' => $s['regency_name'] ?? '-'],
+                        'participants_count' => $s['sanggar_students_count'] ?? 0,
+                        'created_at' => $s['created_at'] ?? null,
+                        'updated_at' => $s['updated_at'] ?? null,
+                    ];
+                })->values();
+
+                return response()->json([
+                    'data' => $mapped,
+                    'current_page' => $page,
+                    'per_page' => $perPage,
+                    'total' => $total,
+                    'from' => $total > 0 ? ($page - 1) * $perPage + 1 : 0,
+                    'to' => $total > 0 ? min($page * $perPage, $total) : 0,
+                    'last_page' => (int) ceil($total / $perPage),
+                ]);
+            }
+        }
+
+        // Fallback to local DB
+        $allowed = ['id', 'full_name', 'school_name', 'nik', 'is_binaan', 'is_active', 'created_at', 'updated_at'];
+        $orderBy = in_array($request->input('orderBy'), $allowed, true) ? $request->input('orderBy') : 'created_at';
+        $direction = strtolower((string) $request->input('orderDirection')) === 'asc' ? 'asc' : 'desc';
 
         $query = Student::query()
             ->with(['mentor:id,name', 'province:id,name', 'regency:id,name'])
             ->withCount('participants')
             ->search($request->string('globalSearch')->toString());
 
-        // Cabang role strict scoping
-        if ($user && $user->hasRole('Cabang')) {
-            $branch = $user->getBranchName();
-            if (filled($branch)) {
-                $query->where(function ($q) use ($branch) {
-                    $q->whereHas('participants', function ($pq) use ($branch) {
-                        $pq->where('branch', $branch)->orWhere('branch', 'like', "%{$branch}%");
-                    })->orWhereHas('mentor', function ($mq) use ($branch) {
-                        $mq->where('branch', $branch)->orWhere('branch', 'like', "%{$branch}%");
-                    });
+        if ($isCabang && filled($branch)) {
+            $query->where(function ($q) use ($branch) {
+                $q->whereHas('participants', function ($pq) use ($branch) {
+                    $pq->where('branch', $branch)->orWhere('branch', 'like', "%{$branch}%");
+                })->orWhereHas('mentor', function ($mq) use ($branch) {
+                    $mq->where('branch', $branch)->orWhere('branch', 'like', "%{$branch}%");
                 });
-            }
+            });
         } elseif ($user && $user->hasRole('Teacher')) {
             $query->where('mentor_id', $user->id);
         }

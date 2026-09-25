@@ -44,6 +44,7 @@ return [
 
     'penyaluran' => [
         'url' => env('APP_PENYALURAN_URL', 'https://penyaluran.yatimmandiri.org'),
+        'api_key' => env('PENYALURAN_API_KEY', 'rPoVsZQKlLnV8nY3lDvcekFQvGzTSX89TDO48MOB'),
         'otp_enabled' => env('PENYALURAN_OTP_ENABLED', false),
     ],
 ];

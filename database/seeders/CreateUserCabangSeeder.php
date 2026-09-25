@@ -60,13 +60,14 @@ class CreateUserCabangSeeder extends Seeder
             'pasuruan@yatimmandiri.org' => 'PASURUAN',
             'magelang@yatimmandiri.org' => 'MAGELANG',
             'gresik@yatimmandiri.org' => 'GRESIK',
+            'malang@yatimmandiri.org' => 'MALANG',
         ];
 
         foreach ($cabangUsers as $email => $branchName) {
             $user = User::firstOrCreate(
                 ['email' => $email],
                 [
-                    'name' => 'Cabang ' . $branchName,
+                    'name' => 'Cabang '.$branchName,
                     'branch' => $branchName,
                     'email_verified_at' => now(),
                     'password' => Hash::make('password'),

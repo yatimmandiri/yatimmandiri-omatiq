@@ -49,12 +49,6 @@ export default function DetailPage() {
                     )}
                     <ul className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
                         <li className="flex flex-col space-y-2">
-                            <span className="text-sm font-semibold">Kode Guru</span>
-                            <span className="font-mono text-sm font-semibold text-primary">
-                                {user.penyaluran_code || '-'}
-                            </span>
-                        </li>
-                        <li className="flex flex-col space-y-2">
                             <span className="text-sm font-semibold">Nama</span>
                             <span className="text-sm">{user.name}</span>
                         </li>

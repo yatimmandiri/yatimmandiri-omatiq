@@ -99,6 +99,21 @@ class SocialiteController extends Controller
                 $request->session()->put('penyaluran_token', $token);
                 try {
                     $profile = app(PenyaluranService::class)->me($token);
+                    $teacherData = $profile['teacher'] ?? $profile['data']['teacher'] ?? $profile;
+                    $teacherId = $teacherData['teacher_id'] ?? $teacherData['id'] ?? $profile['teacher_id'] ?? $profile['guru_id'] ?? $profile['id'] ?? $user->penyaluran_id ?? null;
+                    $kantorId = $teacherData['kantor_id'] ?? $teacherData['branch_id'] ?? $profile['kantor_id'] ?? $profile['branch_id'] ?? ($teacherData['kantor']['id'] ?? null) ?? ($profile['kantor']['id'] ?? null) ?? ($profile['sanggars'][0]['kantor_id'] ?? null) ?? ($profile['sanggars'][0]['kantor']['id'] ?? null) ?? null;
+
+                    $user->forceFill(array_filter([
+                        'kantor_id' => $kantorId ? (int) $kantorId : null,
+                        'teacher_id' => $teacherId ? (int) $teacherId : null,
+                    ], fn ($v) => $v !== null))->save();
+
+                    if ($kantorId) {
+                        $request->session()->put('kantor_id', (int) $kantorId);
+                    }
+                    if ($teacherId) {
+                        $request->session()->put('teacher_id', (int) $teacherId);
+                    }
                     $request->session()->put('penyaluran_me', $profile);
                     $request->session()->put('penyaluran_sanggars', $profile['sanggars'] ?? []);
                     $request->session()->put('penyaluran_students', $profile['students'] ?? []);
@@ -107,6 +122,12 @@ class SocialiteController extends Controller
             }
             if ($user->penyaluran_id) {
                 $request->session()->put('penyaluran_id', $user->penyaluran_id);
+            }
+            if ($user->kantor_id) {
+                $request->session()->put('kantor_id', (int) $user->kantor_id);
+            }
+            if ($user->teacher_id) {
+                $request->session()->put('teacher_id', (int) $user->teacher_id);
             }
         }
 

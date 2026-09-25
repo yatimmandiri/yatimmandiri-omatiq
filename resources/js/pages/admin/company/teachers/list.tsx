@@ -18,15 +18,6 @@ export default function ListPage() {
 
     const columns = [
         {
-            header: (info: any) => renderRowHeader(info, 'Kode Guru'),
-            accessorKey: 'penyaluran_code',
-            cell: (info: any) => (
-                <span className="font-mono text-xs font-semibold text-primary">
-                    {info.getValue() || '-'}
-                </span>
-            ),
-        },
-        {
             header: (info: any) => renderRowHeader(info, 'Name'),
             accessorKey: 'name',
         },
@@ -99,7 +90,6 @@ export default function ListPage() {
                     formatDataExport={(items: any[]) =>
                         items.map((item: any, i: number) => ({
                             No: i + 1,
-                            'Kode Guru': item.penyaluran_code || '-',
                             Name: item.name,
                             Email: item.email,
                             'No. Telepon': item.phone || '-',
