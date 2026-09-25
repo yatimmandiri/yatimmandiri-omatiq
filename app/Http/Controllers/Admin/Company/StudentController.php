@@ -7,6 +7,7 @@ use App\Concerns\Traits\UploadFiles;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Company\StoreStudentRequest;
 use App\Http\Requests\Company\UpdateStudentRequest;
+use App\Models\Company\Participant;
 use App\Models\Company\Student;
 use App\Services\PenyaluranService;
 use App\Services\StudentService;
@@ -401,8 +402,49 @@ class StudentController extends Controller
                 $total = $collection->count();
                 $items = $collection->forPage($page, $perPage)->values();
 
+                $pageStudentIds = $items->pluck('id')->filter()->map(fn ($id) => (int) $id)->all();
+                $pageNiks = $items->pluck('nik')->filter(fn ($n) => filled($n) && strlen(trim((string) $n)) >= 10)->values()->all();
+
+                $participantsCountByPenyaluranId = collect();
+                $participantsCountByNik = collect();
+
+                if (! empty($pageStudentIds) || ! empty($pageNiks)) {
+                    $participantsQuery = Participant::query()
+                        ->where(function ($q) use ($pageStudentIds, $pageNiks) {
+                            if (! empty($pageStudentIds)) {
+                                $q->whereHas('student', fn ($sq) => $sq->whereIn('penyaluran_id', $pageStudentIds));
+                            }
+                            if (! empty($pageNiks)) {
+                                $q->orWhereIn('nik', $pageNiks)
+                                    ->orWhereHas('student', fn ($sq) => $sq->whereIn('nik', $pageNiks));
+                            }
+                        })
+                        ->with('student:id,penyaluran_id,nik')
+                        ->get(['id', 'student_id', 'nik', 'status']);
+
+                    $participantsCountByPenyaluranId = $participantsQuery
+                        ->filter(fn (Participant $p) => filled($p->student?->penyaluran_id))
+                        ->groupBy(fn (Participant $p) => (int) $p->student->penyaluran_id)
+                        ->map->count();
+
+                    $participantsCountByNik = $participantsQuery
+                        ->filter(fn (Participant $p) => filled($p->student?->nik ?? $p->nik))
+                        ->groupBy(fn (Participant $p) => (string) ($p->student?->nik ?? $p->nik))
+                        ->map->count();
+                }
+
                 // Map to Student shape expected by frontend (reuse existing list columns)
-                $mapped = $items->map(function (array $s) {
+                $mapped = $items->map(function (array $s) use ($participantsCountByPenyaluranId, $participantsCountByNik) {
+                    $id = (int) ($s['id'] ?? 0);
+                    $nik = trim((string) ($s['nik'] ?? ''));
+
+                    $pCount = 0;
+                    if ($nik !== '' && $participantsCountByNik->has($nik)) {
+                        $pCount = $participantsCountByNik->get($nik);
+                    } elseif ($id && $participantsCountByPenyaluranId->has($id)) {
+                        $pCount = $participantsCountByPenyaluranId->get($id);
+                    }
+
                     return [
                         'id' => $s['id'],
                         'penyaluran_id' => $s['id'],
@@ -421,7 +463,7 @@ class StudentController extends Controller
                         'mentor' => ['name' => $s['teacher_name'] ?? '-'],
                         'province' => ['name' => $s['province_name'] ?? '-'],
                         'regency' => ['name' => $s['regency_name'] ?? '-'],
-                        'participants_count' => $s['sanggar_students_count'] ?? 0,
+                        'participants_count' => $pCount,
                         'created_at' => $s['created_at'] ?? null,
                         'updated_at' => $s['updated_at'] ?? null,
                     ];
