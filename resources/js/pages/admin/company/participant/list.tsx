@@ -10,12 +10,14 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { ProofModal } from '@/components/ui/proof-modal';
 import participants from '@/routes/admin/companies/participants';
 import { router, usePage } from '@inertiajs/react';
 import {
     CheckCircle2,
     Clock3,
     ExternalLink,
+    Eye,
     Filter,
     MapPin,
     RefreshCw,
@@ -72,6 +74,8 @@ export default function ListPage() {
 
     const [filterValue, setFilterValue] = useState<Record<string, string>>({});
     const [refreshData, setRefreshData] = useState(false);
+    const [proofUrl, setProofUrl] = useState<string | null>(null);
+    const [isProofModalOpen, setIsProofModalOpen] = useState(false);
 
     const hasActiveFilter = Object.values(filterValue).some(Boolean);
     const canUpdate =
@@ -189,17 +193,17 @@ export default function ListPage() {
                             <DropdownMenuItem
                                 onClick={() => updateStatus('submitted')}
                             >
-                                <Clock3 /> Submitted
+                                <Clock3 className="size-3.5" /> Menunggu
                             </DropdownMenuItem>
                             <DropdownMenuItem
                                 onClick={() => updateStatus('verified')}
                             >
-                                <CheckCircle2 /> Verified
+                                <CheckCircle2 className="size-3.5 text-emerald-600" /> Verified
                             </DropdownMenuItem>
                             <DropdownMenuItem
                                 onClick={() => updateStatus('rejected')}
                             >
-                                <XCircle /> Rejected
+                                <XCircle className="size-3.5 text-destructive" /> Ditolak
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
@@ -210,14 +214,115 @@ export default function ListPage() {
             header: 'Pembayaran',
             accessorKey: 'payment_status',
             cell: (info: any) => {
-                const value = info.getValue();
+                const value = info.getValue() || 'unpaid';
+                const row = info.row.original;
+
+                const getPaymentBadge = (val: string) => {
+                    switch (val) {
+                        case 'paid':
+                            return (
+                                <Badge
+                                    variant="default"
+                                    className="cursor-pointer bg-emerald-600 hover:bg-emerald-700"
+                                >
+                                    <CheckCircle2 className="size-3.5" />
+                                    {paymentStatusLabels.paid}
+                                </Badge>
+                            );
+                        case 'waiting_confirmation':
+                            return (
+                                <Badge
+                                    variant="secondary"
+                                    className="cursor-pointer border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-300"
+                                >
+                                    <Clock3 className="size-3.5" />
+                                    {paymentStatusLabels.waiting_confirmation}
+                                </Badge>
+                            );
+                        default:
+                            return (
+                                <Badge
+                                    variant="outline"
+                                    className="cursor-pointer border-destructive/40 text-destructive hover:bg-destructive/10"
+                                >
+                                    <XCircle className="size-3.5" />
+                                    {paymentStatusLabels.unpaid}
+                                </Badge>
+                            );
+                    }
+                };
+
+                if (!canUpdate) {
+                    return getPaymentBadge(value);
+                }
+
+                const updatePaymentStatus = (newStatus: string) => {
+                    router.put(
+                        participants.status(row.id).url,
+                        { payment_status: newStatus },
+                        {
+                            preserveScroll: true,
+                            onSuccess: () => setRefreshData((v) => !v),
+                        },
+                    );
+                };
 
                 return (
-                    <Badge variant={value === 'paid' ? 'default' : 'outline'}>
-                        {paymentStatusLabels[value] ?? value ?? '-'}
-                    </Badge>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            {getPaymentBadge(value)}
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start">
+                            <DropdownMenuItem
+                                onClick={() => updatePaymentStatus('unpaid')}
+                            >
+                                <XCircle className="size-3.5 text-destructive" /> Belum Bayar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                onClick={() =>
+                                    updatePaymentStatus('waiting_confirmation')
+                                }
+                            >
+                                <Clock3 className="size-3.5 text-amber-600" /> Menunggu Konfirmasi
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                onClick={() => updatePaymentStatus('paid')}
+                            >
+                                <CheckCircle2 className="size-3.5 text-emerald-600" /> Lunas
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 );
             },
+        },
+        {
+            header: 'Bukti Transfer',
+            accessorKey: 'payment_proof_url',
+            cell: (info: any) => {
+                const row = info.row.original;
+                const url = row.payment_proof_url;
+
+                if (!url) {
+                    return <span className="text-xs text-muted-foreground">-</span>;
+                }
+
+                return (
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-7 gap-1.5 px-2.5 text-xs font-medium text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-950/50"
+                        onClick={() => {
+                            setProofUrl(url);
+                            setIsProofModalOpen(true);
+                        }}
+                    >
+                        <Eye className="size-3.5" />
+                        Lihat Bukti
+                    </Button>
+                );
+            },
+            enableSorting: false,
         },
     ];
 
@@ -443,6 +548,12 @@ export default function ListPage() {
                     <DataTableComponent buttonActive={{ create: false }} />
                 </DataTableProvider>
             </div>
+
+            <ProofModal
+                open={isProofModalOpen}
+                onOpenChange={setIsProofModalOpen}
+                href={proofUrl ?? ''}
+            />
         </div>
     );
 }

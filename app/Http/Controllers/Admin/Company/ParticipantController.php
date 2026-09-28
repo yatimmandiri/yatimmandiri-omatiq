@@ -237,13 +237,34 @@ class ParticipantController extends Controller
         $this->authorize('update', $participant);
 
         $request->validate([
-            'status' => ['required', 'in:submitted,verified,rejected'],
+            'status' => ['nullable', 'in:submitted,verified,rejected'],
+            'payment_status' => ['nullable', 'in:unpaid,waiting_confirmation,paid'],
             'notes' => ['nullable', 'string'],
         ]);
 
-        $participant->update($request->only(['status', 'notes']));
+        $data = array_filter($request->only(['status', 'payment_status', 'notes']), fn ($v) => ! is_null($v));
 
-        return back()->with('success', 'Participant Status Updated Successfully');
+        $participant->update($data);
+
+        return back()->with('success', 'Status Peserta berhasil diperbarui');
+    }
+
+    public function paymentStatus(Request $request, Participant $participant)
+    {
+        $this->authorize('update', $participant);
+
+        $request->validate([
+            'payment_status' => ['required', 'in:unpaid,waiting_confirmation,paid'],
+        ]);
+
+        $participant->update($request->only(['payment_status']));
+
+        $this->logSuccess('update-participant-payment', "Updated payment status: {$participant->registration_number} -> {$request->payment_status}", [
+            'participant_id' => $participant->id,
+            'payment_status' => $request->payment_status,
+        ]);
+
+        return back()->with('success', 'Status Pembayaran berhasil diperbarui');
     }
 
     public function syncSheet(Request $request)
