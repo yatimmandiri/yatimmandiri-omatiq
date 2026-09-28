@@ -65,7 +65,7 @@ class TeacherController extends Controller
         abort(403, 'Data guru diambil langsung dari Penyaluran, tidak bisa ditambah manual.');
     }
 
-    public function show(Request $request, int $teacher)
+    public function show(Request $request, int|string $teacher)
     {
         $this->authorize('viewAny', User::class);
 
@@ -81,30 +81,43 @@ class TeacherController extends Controller
             $apiTeachers = [];
         }
 
-        $found = collect($apiTeachers)->firstWhere(fn (array $t) => (int) ($t['id'] ?? 0) === $teacher);
+        $found = collect($apiTeachers)->firstWhere(fn (array $t) => (int) ($t['id'] ?? 0) === (int) $teacher);
 
-        // Fallback to local DB user
-        $local = null;
-        if (! $found) {
-            $local = User::whereHas('roles', fn ($q) => $q->where('name', 'Teacher'))->find($teacher);
-            if ($local) {
-                $local->load(['roles']);
-                $found = [
-                    'id' => $local->id,
-                    'penyaluran_id' => $local->penyaluran_id,
-                    'teacher_id' => $local->teacher_id,
-                    'kantor_id' => $local->kantor_id,
-                    'name' => $local->name,
-                    'email' => $local->email,
-                    'phone' => $local->phone,
-                    'branch' => $local->branch,
-                    'kantor_name' => $local->branch,
-                    'local' => true,
-                ];
-            }
+        // Always resolve local DB user (by penyaluran_id or local primary id)
+        $local = User::query()
+            ->where(function ($q) use ($teacher, $found) {
+                $q->where('penyaluran_id', $teacher)
+                    ->orWhere('id', $teacher);
+                if ($found && ! empty($found['code'])) {
+                    $q->orWhere('penyaluran_code', $found['code']);
+                }
+                if ($found && ! empty($found['phone'])) {
+                    $cleanPhone = preg_replace('/\D+/', '', (string) $found['phone']);
+                    if ($cleanPhone) {
+                        $q->orWhere('phone', $cleanPhone);
+                    }
+                }
+            })
+            ->whereHas('roles', fn ($q) => $q->where('name', 'Teacher'))
+            ->first();
+
+        if (! $found && $local) {
+            $local->load(['roles']);
+            $found = [
+                'id' => $local->penyaluran_id ?: $local->id,
+                'penyaluran_id' => $local->penyaluran_id,
+                'teacher_id' => $local->teacher_id,
+                'kantor_id' => $local->kantor_id,
+                'name' => $local->name,
+                'email' => $local->email,
+                'phone' => $local->phone,
+                'branch' => $local->branch,
+                'kantor_name' => $local->branch,
+                'local' => true,
+            ];
         }
 
-        if (! $found) {
+        if (! $found && ! $local) {
             abort(404);
         }
 
@@ -148,10 +161,17 @@ class TeacherController extends Controller
             }
         }
 
-        // If found is API array, wrap to show page expects user; provide both
         if ($local) {
+            $local->load(['roles']);
+
             return Inertia::render('admin/company/teachers/show', [
-                'user' => $local,
+                'user' => [
+                    ...($found ?? []),
+                    ...$local->toArray(),
+                    'id' => $found['id'] ?? $local->penyaluran_id ?? $local->id,
+                    'penyaluran_id' => $local->penyaluran_id ?? ($found['id'] ?? null),
+                    'local_id' => $local->id,
+                ],
                 'apiTeacher' => $found,
             ]);
         }
@@ -162,30 +182,112 @@ class TeacherController extends Controller
         ]);
     }
 
-    public function edit(User $teacher)
+    public function edit(int|string $teacher)
     {
         abort(403, 'Data guru diambil langsung dari Penyaluran, tidak bisa diedit.');
     }
 
-    public function update(UpdateTeacherRequest $request, User $teacher)
+    public function update(UpdateTeacherRequest $request, int|string $teacher)
     {
         abort(403, 'Data guru diambil langsung dari Penyaluran, tidak bisa diedit.');
     }
 
-    public function destroy(User $teacher)
+    public function destroy(int|string $teacher)
     {
         abort(403, 'Data guru diambil langsung dari Penyaluran, tidak bisa dihapus.');
     }
 
-    public function resetPassword(User $teacher)
+    public function resetPassword(Request $request, int|string $teacher)
     {
-        $this->authorize('update', $teacher);
+        // 1. Resolve local user by penyaluran_id or primary id
+        $teacherUser = User::query()
+            ->where(function ($q) use ($teacher) {
+                $q->where('penyaluran_id', $teacher)
+                    ->orWhere('id', $teacher);
+            })
+            ->whereHas('roles', fn ($q) => $q->where('name', 'Teacher'))
+            ->first();
 
-        $teacher->forceFill(['password' => Hash::make('password')])->save();
+        // 2. Fallback: match via Penyaluran API by code, phone, or email
+        if (! $teacherUser) {
+            try {
+                $apiTeachers = $this->penyaluran->allTeachers();
+                $foundApi = collect($apiTeachers)->firstWhere(fn (array $t) => (int) ($t['id'] ?? 0) === (int) $teacher);
+                if ($foundApi) {
+                    $phone = preg_replace('/\D+/', '', (string) ($foundApi['phone'] ?? ''));
+                    $code = $foundApi['code'] ?? null;
+                    $email = $foundApi['email'] ?? null;
 
-        $this->logSuccess('reset-teacher-password', "Reset password guru: {$teacher->name}", ['user_id' => $teacher->id]);
+                    $teacherUser = User::query()
+                        ->where(function ($q) use ($teacher, $code, $phone, $email) {
+                            $q->where('penyaluran_id', $teacher);
+                            if ($code) {
+                                $q->orWhere('penyaluran_code', $code);
+                            }
+                            if ($phone) {
+                                $q->orWhere('phone', $phone)
+                                    ->orWhere('phone', '0'.ltrim($phone, '0'))
+                                    ->orWhere('phone', '62'.ltrim($phone, '0'));
+                            }
+                            if ($email && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                                $q->orWhere('email', strtolower($email));
+                            }
+                        })
+                        ->whereHas('roles', fn ($q) => $q->where('name', 'Teacher'))
+                        ->first();
 
-        return back()->with('success', "Password guru {$teacher->name} direset ke default 'password'.");
+                    if (! $teacherUser) {
+                        $initialEmail = (! empty($email) && filter_var($email, FILTER_VALIDATE_EMAIL) && ! User::where('email', strtolower($email))->exists())
+                            ? strtolower($email)
+                            : "guru{$teacher}@penyaluran.local";
+
+                        $teacherUser = User::create([
+                            'name' => $foundApi['name'] ?? 'Guru '.$teacher,
+                            'email' => $initialEmail,
+                            'phone' => $phone ?: null,
+                            'branch' => $foundApi['kantor_name'] ?? null,
+                            'penyaluran_id' => (int) $teacher,
+                            'penyaluran_code' => $code,
+                            'password' => Hash::make('password'),
+                            'email_verified_at' => now(),
+                        ]);
+                        $teacherUser->assignRole('Teacher');
+                    }
+                }
+            } catch (\Throwable $e) {
+                // Continue with local resolution
+            }
+        }
+
+        if (! $teacherUser) {
+            return back()->withErrors(['error' => 'Data user guru tidak ditemukan di sistem.']);
+        }
+
+        $this->authorize('update', $teacherUser);
+
+        // Branch check for Cabang role
+        $authUser = Auth::user();
+        if ($authUser && $authUser->hasRole('Cabang')) {
+            $branch = $this->resolveBranch($authUser);
+            if (filled($branch)) {
+                $branchLower = strtolower($branch);
+                $teacherBranch = strtolower(trim((string) ($teacherUser->branch ?? '')));
+                if (! str_contains($teacherBranch, $branchLower) && ! str_contains($branchLower, $teacherBranch)) {
+                    abort(403, 'Akses terbatas untuk guru cabang Anda.');
+                }
+            }
+        }
+
+        $teacherUser->forceFill([
+            'password' => Hash::make('password'),
+        ])->save();
+
+        $this->logSuccess('reset-teacher-password', "Reset password guru: {$teacherUser->name}", [
+            'user_id' => $teacherUser->id,
+            'penyaluran_id' => $teacherUser->penyaluran_id,
+        ]);
+
+        return back()->with('success', "Password guru {$teacherUser->name} berhasil direset ke default 'password'.");
     }
 
     public function getData(Request $request)

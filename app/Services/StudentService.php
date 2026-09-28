@@ -12,6 +12,8 @@ use App\Models\Core\Region\Province;
 use App\Models\Core\Region\Regency;
 use App\Models\Core\Region\Village;
 use App\Models\Core\User;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class StudentService
 {
@@ -29,6 +31,58 @@ class StudentService
     ];
 
     /**
+     * Resolve a valid Bearer token for Penyaluran API.
+     * Prioritizes session/auth token, and automatically obtains a fresh token via loginGuru if expired or absent.
+     */
+    public function resolveToken(?Student $student = null, ?int $mentorId = null, bool $forceFresh = false): ?string
+    {
+        $sessionToken = request()?->session()?->get('penyaluran_token') ?? Auth::user()?->penyaluran_token;
+
+        if (! $forceFresh && $sessionToken && Auth::user()?->hasRole('Teacher')) {
+            return $sessionToken;
+        }
+
+        $targetMentorId = $mentorId ?? $student?->mentor_id;
+        $mentorUser = $targetMentorId ? User::find($targetMentorId) : null;
+
+        $phoneCandidates = array_values(array_unique(array_filter([
+            $mentorUser?->phone,
+            $student?->mentor_phone,
+            ($student?->mentor_id ? User::where('id', $student->mentor_id)->value('phone') : null),
+        ])));
+
+        if (! $forceFresh) {
+            $token = $sessionToken
+                ?? $mentorUser?->penyaluran_token
+                ?? User::whereNotNull('penyaluran_token')->where('penyaluran_token', '!=', '')->latest()->value('penyaluran_token');
+
+            if ($token) {
+                return $token;
+            }
+        }
+
+        foreach ($phoneCandidates as $teacherPhone) {
+            try {
+                $freshToken = $this->penyaluran->loginGuru($teacherPhone);
+                if ($freshToken) {
+                    if ($mentorUser) {
+                        $mentorUser->update(['penyaluran_token' => $freshToken]);
+                    }
+                    if (Auth::user()?->hasRole('Teacher')) {
+                        request()?->session()?->put('penyaluran_token', $freshToken);
+                    }
+
+                    return $freshToken;
+                }
+            } catch (\Throwable $e) {
+                Log::warning("Gagal login otomatis ke Penyaluran via nomor guru {$teacherPhone}: ".$e->getMessage());
+            }
+        }
+
+        return $sessionToken ?? $mentorUser?->penyaluran_token ?? null;
+    }
+
+    /**
      * Resolve latest student data from Penyaluran API if available.
      */
     public function resolveFromPenyaluran(Student $student): Student
@@ -37,24 +91,10 @@ class StudentService
             return $student;
         }
 
-        $token = request()?->session()?->get('penyaluran_token')
-            ?? auth()->user()?->penyaluran_token
-            ?? $student->mentor?->penyaluran_token
-            ?? ($student->mentor_id ? User::where('id', $student->mentor_id)->value('penyaluran_token') : null)
-            ?? User::whereNotNull('penyaluran_token')->where('penyaluran_token', '!=', '')->latest()->value('penyaluran_token');
+        $token = $this->resolveToken($student);
 
         if (! $token) {
-            $teacherPhone = $student->mentor?->phone
-                ?? ($student->mentor_id ? User::where('id', $student->mentor_id)->value('phone') : null)
-                ?? User::role('Teacher')->whereNotNull('phone')->latest()->value('phone');
-
-            if ($teacherPhone) {
-                try {
-                    $token = $this->penyaluran->loginGuru($teacherPhone);
-                } catch (\Throwable $e) {
-                    $token = null;
-                }
-            }
+            $token = $this->resolveToken($student, forceFresh: true);
         }
 
         if (! $token) {
@@ -63,6 +103,24 @@ class StudentService
 
         try {
             $studentsRaw = $this->penyaluran->students($token);
+        } catch (\Throwable $e) {
+            $freshToken = $this->resolveToken($student, forceFresh: true);
+            if ($freshToken && $freshToken !== $token) {
+                try {
+                    $studentsRaw = $this->penyaluran->students($freshToken);
+                } catch (\Throwable $retryE) {
+                    $studentsRaw = [];
+                }
+            } else {
+                $studentsRaw = [];
+            }
+        }
+
+        if (empty($studentsRaw)) {
+            return $student;
+        }
+
+        try {
             $found = collect($studentsRaw)->firstWhere(function (array $s) use ($student) {
                 $sid = (int) ($s['student_id'] ?? $s['id'] ?? 0);
                 $nik = $s['nik'] ?? null;
@@ -117,51 +175,70 @@ class StudentService
 
     /**
      * Sync student changes to Penyaluran if student is registered in Penyaluran.
+     * Automatically attempts to refresh the Bearer token if expired/unauthorized.
      *
      * @throws \RuntimeException
      */
-    public function syncToPenyaluran(Student $student, array $data, ?string $token = null): void
+    public function syncToPenyaluran(Student $student, array $data, ?string $token = null, bool $throwOnFailure = true): bool
     {
         if (! $student->penyaluran_id) {
-            return;
+            return true;
         }
 
-        $token ??= request()?->session()?->get('penyaluran_token')
-            ?? auth()->user()?->penyaluran_token
-            ?? $student->mentor?->penyaluran_token
-            ?? ($student->mentor_id ? User::where('id', $student->mentor_id)->value('penyaluran_token') : null)
-            ?? User::whereNotNull('penyaluran_token')->where('penyaluran_token', '!=', '')->latest()->value('penyaluran_token');
+        $token ??= $this->resolveToken($student);
 
         if (! $token) {
-            $teacherPhone = $student->mentor?->phone
-                ?? ($student->mentor_id ? User::where('id', $student->mentor_id)->value('phone') : null)
-                ?? User::role('Teacher')->whereNotNull('phone')->latest()->value('phone');
-
-            if ($teacherPhone) {
-                try {
-                    $token = $this->penyaluran->loginGuru($teacherPhone);
-                    if ($student->mentor_id && $token) {
-                        User::where('id', $student->mentor_id)->update(['penyaluran_token' => $token]);
-                    }
-                } catch (\Throwable $e) {
-                    $token = null;
-                }
-            }
+            $token = $this->resolveToken($student, forceFresh: true);
         }
 
         if (! $token) {
             if (app()->environment('testing')) {
-                return;
+                return true;
             }
-            throw new \RuntimeException('Sesi Penyaluran tidak ditemukan untuk sinkronisasi data santri.');
+            if ($throwOnFailure) {
+                throw new \RuntimeException('Sesi Penyaluran tidak ditemukan untuk sinkronisasi data santri.');
+            }
+            Log::warning("Sesi Penyaluran tidak ditemukan untuk sinkronisasi santri #{$student->penyaluran_id}");
+
+            return false;
         }
 
         $payload = $this->penyaluran->formatStudentPayload($data);
         if (empty($payload)) {
-            return;
+            return true;
         }
 
-        $this->penyaluran->updateStudent($token, $student->penyaluran_id, $payload);
+        try {
+            $this->penyaluran->updateStudent($token, $student->penyaluran_id, $payload);
+
+            return true;
+        } catch (\Throwable $e) {
+            // If token is expired or unauthorized (401/403), attempt 1 auto-refresh via teacher phone
+            if ($e->getCode() === 401 || $e->getCode() === 403 || str_contains(strtolower($e->getMessage()), 'sesi') || str_contains(strtolower($e->getMessage()), 'login')) {
+                $freshToken = $this->resolveToken($student, forceFresh: true);
+                if ($freshToken && $freshToken !== $token) {
+                    try {
+                        $this->penyaluran->updateStudent($freshToken, $student->penyaluran_id, $payload);
+
+                        return true;
+                    } catch (\Throwable $retryException) {
+                        Log::error('Penyaluran retry sync failed after fresh token: '.$retryException->getMessage());
+                        if ($throwOnFailure) {
+                            throw $retryException;
+                        }
+
+                        return false;
+                    }
+                }
+            }
+
+            Log::error("Penyaluran sync failed for student #{$student->penyaluran_id}: ".$e->getMessage());
+            if ($throwOnFailure) {
+                throw $e;
+            }
+
+            return false;
+        }
     }
 
     public function payloadFromRequest(StoreStudentRequest|UpdateStudentRequest $request, ?Student $student = null): array
