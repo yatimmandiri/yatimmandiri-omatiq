@@ -9,6 +9,7 @@ use App\Http\Requests\Company\StoreStudentRequest;
 use App\Http\Requests\Company\UpdateStudentRequest;
 use App\Models\Company\Participant;
 use App\Models\Company\Student;
+use App\Models\Core\User;
 use App\Services\PenyaluranService;
 use App\Services\StudentService;
 use Illuminate\Http\Request;
@@ -25,7 +26,7 @@ class StudentController extends Controller
         private readonly PenyaluranService $penyaluran,
     ) {}
 
-    private function resolveBranch(?\App\Models\Core\User $user): ?string
+    private function resolveBranch(?User $user): ?string
     {
         if (! $user) {
             return null;
@@ -270,6 +271,7 @@ class StudentController extends Controller
         $this->authorize('data-student', Student::class);
 
         $user = Auth::user();
+        $isCabang = $user?->hasRole('Cabang') ?? false;
         $branch = $this->resolveBranch($user);
         $userKantorId = $user?->kantor_id;
 

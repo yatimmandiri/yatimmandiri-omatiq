@@ -18,6 +18,7 @@ class DashboardService
         return match ($role) {
             'Administrators' => self::admin(),
             'Cabang' => self::cabang($user),
+            'Keuangan' => self::keuangan($user),
             'Teacher' => self::teacher($user),
             'Participant' => self::participant($user),
             default => self::user(),
@@ -253,6 +254,55 @@ class DashboardService
                 'teacherCount' => $teacherCount,
                 'studentCount' => $studentCount,
                 'sanggarCount' => $sanggarCount,
+            ],
+        ];
+    }
+
+    private static function keuangan(User $user): array
+    {
+        $branch = self::resolveBranch($user);
+
+        $participantQuery = Participant::query();
+
+        if (filled($branch)) {
+            $participantQuery->where(function ($q) use ($branch) {
+                $q->where('branch', $branch)
+                    ->orWhere('branch', 'like', "%{$branch}%");
+            });
+        }
+
+        $participantCount = (clone $participantQuery)->count();
+        $verifiedParticipantCount = (clone $participantQuery)->where('status', 'verified')->count();
+        $submittedParticipantCount = (clone $participantQuery)->where('status', 'submitted')->count();
+
+        // Payment metrics
+        $paidCount = (clone $participantQuery)->where('payment_status', 'paid')->count();
+        $waitingConfirmationCount = (clone $participantQuery)->where('payment_status', 'waiting_confirmation')->count();
+        $unpaidCount = (clone $participantQuery)->where(function ($q) {
+            $q->where('payment_status', 'unpaid')
+                ->orWhereNull('payment_status');
+        })->count();
+
+        $umumCount = (clone $participantQuery)->where('registration_type', 'umum')->count();
+        $binaanCount = (clone $participantQuery)->where('registration_type', 'binaan')->count();
+
+        $title = $branch ? "Dashboard Keuangan {$branch}" : 'Dashboard Keuangan';
+
+        return [
+            'view' => 'admin/dashboard/admin',
+            'data' => [
+                'pageTitle' => $title,
+                'branchName' => $branch,
+                'isCabang' => false,
+                'isKeuangan' => true,
+                'participantCount' => $participantCount,
+                'verifiedParticipantCount' => $verifiedParticipantCount,
+                'submittedParticipantCount' => $submittedParticipantCount,
+                'paidCount' => $paidCount,
+                'waitingConfirmationCount' => $waitingConfirmationCount,
+                'unpaidCount' => $unpaidCount,
+                'umumCount' => $umumCount,
+                'binaanCount' => $binaanCount,
             ],
         ];
     }

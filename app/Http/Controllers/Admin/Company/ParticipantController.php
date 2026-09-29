@@ -87,14 +87,16 @@ class ParticipantController extends Controller
                         'label' => trim($olimpiade->name.' '.($olimpiade->event_year ? "({$olimpiade->event_year})" : '')),
                     ]),
                 'eventYears' => $eventYearsOptions,
-                'branches' => $branchesQuery
-                    ->orderBy('branch')
-                    ->limit(150)
-                    ->pluck('branch')
-                    ->map(fn (string $branch) => [
-                        'value' => $branch,
-                        'label' => $branch,
-                    ]),
+                'branches' => ($isCabang || $userBranch)
+                    ? []
+                    : $branchesQuery
+                        ->orderBy('branch')
+                        ->limit(150)
+                        ->pluck('branch')
+                        ->map(fn (string $branch) => [
+                            'value' => $branch,
+                            'label' => $branch,
+                        ]),
             ],
         ]);
     }
@@ -113,6 +115,11 @@ class ParticipantController extends Controller
     public function edit(Participant $participant): Response
     {
         $this->authorize('update', $participant);
+
+        $user = Auth::user();
+        if ($user && $user->hasRole('Keuangan') && ! $user->hasRole('Administrators')) {
+            abort(403, 'Akun keuangan hanya memiliki akses untuk melihat detail dan mengubah status pembayaran.');
+        }
 
         $participant->loadMissing(['student', 'olimpiade']);
 
@@ -153,6 +160,11 @@ class ParticipantController extends Controller
     public function update(UpdateParticipantRequest $request, Participant $participant)
     {
         $this->authorize('update', $participant);
+
+        $user = Auth::user();
+        if ($user && $user->hasRole('Keuangan') && ! $user->hasRole('Administrators')) {
+            abort(403, 'Akun keuangan hanya memiliki akses untuk melihat detail dan mengubah status pembayaran.');
+        }
 
         $payload = $this->payload($request);
         $name = $participant->student?->full_name ?? $participant->user?->name ?? 'Unknown';
@@ -235,6 +247,18 @@ class ParticipantController extends Controller
     public function status(Request $request, Participant $participant)
     {
         $this->authorize('update', $participant);
+
+        $user = Auth::user();
+        if ($user && $user->hasRole('Keuangan') && ! $user->hasRole('Administrators')) {
+            // Role Keuangan can only update payment_status
+            $request->validate([
+                'payment_status' => ['required', 'in:unpaid,waiting_confirmation,paid'],
+            ]);
+
+            $participant->update($request->only(['payment_status']));
+
+            return back()->with('success', 'Status Pembayaran berhasil diperbarui');
+        }
 
         $request->validate([
             'status' => ['nullable', 'in:submitted,verified,rejected'],

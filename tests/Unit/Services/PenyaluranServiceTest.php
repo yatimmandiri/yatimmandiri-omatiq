@@ -232,7 +232,14 @@ it('fetches and normalizes student list from legacy penyaluran students endpoint
 
 it('fetches sanggars list', function () {
     Http::fake([
-        'https://penyaluran-test.example.com/api/v1/guru/sanggars' => Http::response([
+        'https://penyaluran-test.example.com/api/v1/sanggars*' => Http::response([
+            'success' => true,
+            'data' => [
+                ['id' => 1, 'name' => 'Sanggar Al-Falah', 'type' => 'Genius'],
+                ['id' => 2, 'name' => 'Sanggar Al-Ikhlas', 'type' => 'Al-Quran'],
+            ],
+        ], 200),
+        'https://penyaluran-test.example.com/api/v1/guru/sanggars*' => Http::response([
             'success' => true,
             'data' => [
                 ['id' => 1, 'name' => 'Sanggar Al-Falah', 'type' => 'Genius'],

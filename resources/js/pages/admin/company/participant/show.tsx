@@ -28,9 +28,11 @@ export default function ShowPage() {
     const isBinaan = !!participant.student?.is_binaan;
     const [openProof, setOpenProof] = useState(false);
 
+    const userRoles = auth?.user?.roles ?? [];
+    const isKeuangan = userRoles.includes('Keuangan');
     const canUpdate =
         (auth?.user?.permissions ?? []).includes('update-participant') ||
-        (auth?.user?.roles ?? []).includes('Administrators');
+        userRoles.includes('Administrators');
 
     return (
         <div className="flex flex-1 flex-col gap-6 p-4">
@@ -69,7 +71,7 @@ export default function ShowPage() {
                             </a>
                         </Button>
                     )}
-                    {canUpdate && (
+                    {canUpdate && !isKeuangan && (
                         <Button
                             onClick={() =>
                                 router.visit(participants.edit(participant.id).url)

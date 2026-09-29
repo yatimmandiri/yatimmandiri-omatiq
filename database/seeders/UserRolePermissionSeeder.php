@@ -29,6 +29,7 @@ class UserRolePermissionSeeder extends Seeder
             ['name' => 'Participant', 'guard_name' => 'web'],
             ['name' => 'Teacher', 'guard_name' => 'web'],
             ['name' => 'Cabang', 'guard_name' => 'web'],
+            ['name' => 'Keuangan', 'guard_name' => 'web'],
         ])->each(fn ($role) => Role::firstOrCreate($role));
 
         $adminRole = Role::where('name', 'Administrators')->first();
@@ -185,6 +186,13 @@ class UserRolePermissionSeeder extends Seeder
         if ($teacherRole) {
             $teacherRole->givePermissionTo([
                 'view-participant', 'create-participant', 'delete-participant', 'data-participant',
+            ]);
+        }
+
+        $keuanganRole = Role::where('name', 'Keuangan')->first();
+        if ($keuanganRole) {
+            $keuanganRole->givePermissionTo([
+                'view-participant', 'data-participant', 'update-participant',
             ]);
         }
 

@@ -89,7 +89,7 @@ export const NavigationList = [
     },
     {
         title: 'Partisipasi',
-        roles: ['Administrators', 'Cabang'],
+        roles: ['Administrators', 'Cabang', 'Keuangan'],
         icon: Handshake,
         children: [
             {
@@ -103,7 +103,7 @@ export const NavigationList = [
                 title: 'Data Peserta',
                 href: participants.index().url,
                 permission: 'view-participant',
-                roles: ['Administrators', 'Cabang'],
+                roles: ['Administrators', 'Cabang', 'Keuangan'],
                 icon: Users,
             },
             {

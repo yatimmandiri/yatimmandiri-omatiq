@@ -2,6 +2,7 @@
 
 use App\Models\Core\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
@@ -16,4 +17,22 @@ test('authenticated users can visit the dashboard', function () {
 
     $response = $this->get(route('admin.dashboard'));
     $response->assertOk();
+});
+
+test('keuangan role user gets dedicated keuangan dashboard', function () {
+    Role::findOrCreate('Keuangan', 'web');
+    $user = User::factory()->create();
+    $user->assignRole('Keuangan');
+    $this->actingAs($user);
+
+    $response = $this->get(route('admin.dashboard'));
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('admin/dashboard/admin')
+        ->where('pageTitle', 'Dashboard Keuangan')
+        ->where('isKeuangan', true)
+        ->has('paidCount')
+        ->has('waitingConfirmationCount')
+        ->has('unpaidCount')
+    );
 });

@@ -16,6 +16,7 @@ import { router, usePage } from '@inertiajs/react';
 import {
     CheckCircle2,
     Clock3,
+    CreditCard,
     ExternalLink,
     Eye,
     Filter,
@@ -72,15 +73,29 @@ export default function ListPage() {
         userBranch?: string | null;
     }>().props;
 
-    const [filterValue, setFilterValue] = useState<Record<string, string>>({});
+    const userRoles = auth?.user?.roles ?? [];
+    const isKeuangan = userRoles.includes('Keuangan');
+    const isCabang = userRoles.includes('Cabang');
+    const defaultFilter: Record<string, string> = isKeuangan
+        ? { registration_type: 'public' }
+        : {};
+
+    const [filterValue, setFilterValue] =
+        useState<Record<string, string>>(defaultFilter);
     const [refreshData, setRefreshData] = useState(false);
     const [proofUrl, setProofUrl] = useState<string | null>(null);
     const [isProofModalOpen, setIsProofModalOpen] = useState(false);
 
-    const hasActiveFilter = Object.values(filterValue).some(Boolean);
+    const hasActiveFilter = Object.entries(filterValue).some(([k, v]) => {
+        if (isKeuangan && k === 'registration_type' && v === 'public') {
+            return false;
+        }
+        return Boolean(v);
+    });
+
     const canUpdate =
         (auth?.user?.permissions ?? []).includes('update-participant') ||
-        (auth?.user?.roles ?? []).includes('Administrators');
+        userRoles.includes('Administrators');
 
     const columns = [
         {
@@ -158,7 +173,8 @@ export default function ListPage() {
                           : Clock3;
                 const row = info.row.original;
 
-                if (!canUpdate) {
+                // Keuangan cannot change registration status (read-only)
+                if (!canUpdate || isKeuangan) {
                     return (
                         <Badge variant={statusVariant(status) as any}>
                             <Icon />
@@ -374,7 +390,14 @@ export default function ListPage() {
                             </div>
                         )}
 
-                        {sheets && !auth?.user?.roles?.includes('Cabang') && (
+                        {isKeuangan && (
+                            <div className="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-800 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-300">
+                                <CreditCard className="size-3.5" />
+                                Akses Akun Keuangan: Verifikasi Status Pembayaran (Default Filter: Jalur Umum)
+                            </div>
+                        )}
+
+                        {sheets && !isCabang && !isKeuangan && (
                             <div className="rounded-xl border bg-muted/20 p-4">
                             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                 <div className="space-y-1">
@@ -448,7 +471,7 @@ export default function ListPage() {
                                     type="button"
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => setFilterValue({})}
+                                    onClick={() => setFilterValue(defaultFilter)}
                                 >
                                     <RotateCcw />
                                     Reset Filter
@@ -531,18 +554,20 @@ export default function ListPage() {
                                     }))
                                 }
                             />
-                            <SelectComponent
-                                label="Cabang / Kantor"
-                                placeholder="Semua cabang..."
-                                data={filterOptions?.branches ?? []}
-                                dataSelected={filterValue.branch}
-                                handleOnChange={(value: string) =>
-                                    setFilterValue((prev) => ({
-                                        ...prev,
-                                        branch: value,
-                                    }))
-                                }
-                            />
+                            {!isCabang && !userBranch && (
+                                <SelectComponent
+                                    label="Cabang / Kantor"
+                                    placeholder="Semua cabang..."
+                                    data={filterOptions?.branches ?? []}
+                                    dataSelected={filterValue.branch}
+                                    handleOnChange={(value: string) =>
+                                        setFilterValue((prev) => ({
+                                            ...prev,
+                                            branch: value,
+                                        }))
+                                    }
+                                />
+                            )}
                         </div>
                     </div>
                     <DataTableComponent buttonActive={{ create: false }} />

@@ -23,8 +23,34 @@ class SanggarController extends Controller
         $isCabang = $user?->hasRole('Cabang') ?? false;
         $userBranch = $isCabang ? $user->getBranchName() : null;
 
+        $branches = [];
+        if (! $isCabang && ! $userBranch) {
+            $apiSanggars = [];
+            try {
+                $apiSanggars = $this->penyaluran->allSanggars();
+            } catch (\Throwable $e) {
+                $apiSanggars = [];
+            }
+
+            $branches = collect($apiSanggars)
+                ->pluck('kantor_name')
+                ->merge(Participant::whereNotNull('branch')->pluck('branch'))
+                ->filter()
+                ->map(fn ($b) => trim((string) $b))
+                ->unique()
+                ->sort()
+                ->values()
+                ->map(fn ($name) => [
+                    'value' => $name,
+                    'label' => $name,
+                ]);
+        }
+
         return Inertia::render('admin/company/sanggars/list', [
             'userBranch' => $userBranch,
+            'filterOptions' => [
+                'branches' => $branches,
+            ],
         ]);
     }
 
@@ -35,6 +61,12 @@ class SanggarController extends Controller
         $user = Auth::user();
         $isCabang = $user?->hasRole('Cabang') ?? false;
         $userBranch = $isCabang ? $user->getBranchName() : null;
+
+        $filterValue = $request->input('filterValue', []);
+        if (is_string($filterValue)) {
+            $filterValue = json_decode($filterValue, true) ?? [];
+        }
+        $branchFilter = data_get($filterValue, 'branch');
 
         $token = ($request->hasSession() ? $request->session()->get('penyaluran_token') : null)
             ?? $user?->penyaluran_token
@@ -91,6 +123,23 @@ class SanggarController extends Controller
                 $kantor = $item['kantor_name'] ?? $item['branch'] ?? '';
 
                 return stripos((string) $kantor, $userBranch) !== false;
+            })->values();
+        }
+
+        // Filter by selected branch from UI
+        if (filled($branchFilter) && $branchFilter !== 'all') {
+            $branchFilterLower = strtolower(trim((string) $branchFilter));
+            $merged = $merged->filter(function ($item) use ($branchFilterLower) {
+                $kantor = strtolower(trim((string) ($item['kantor_name'] ?? $item['branch'] ?? '')));
+                if ($kantor !== '') {
+                    $cleanKantor = trim(preg_replace('/^(kantor\s+)?(layanan\s+)?(cabang\s+)?/i', '', $kantor));
+                    $cleanKantor = trim(preg_replace('/\s*(cabang|kantor)\s*$/i', '', $cleanKantor));
+                    if (str_contains($kantor, $branchFilterLower) || str_contains($branchFilterLower, $cleanKantor)) {
+                        return true;
+                    }
+                }
+
+                return false;
             })->values();
         }
 
