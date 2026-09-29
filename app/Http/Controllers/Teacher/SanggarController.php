@@ -83,34 +83,15 @@ class SanggarController extends Controller
     {
         $this->authorize('viewAny', Participant::class);
 
-        $user = Auth::user();
-        $token = request()->session()->get('penyaluran_token') ?? $user?->penyaluran_token;
-
-        $sanggars = [];
+        $sanggar = null;
         try {
-            $sanggars = $this->penyaluran->allSanggars();
+            $sanggar = $this->penyaluran->sanggar($id);
         } catch (\Throwable $e) {
-            $sanggars = [];
+            $sanggar = null;
         }
 
-        if (empty($sanggars) && $token) {
-            try {
-                $sanggars = $this->penyaluran->sanggars($token ?? 'session');
-            } catch (\Throwable $e) {
-                $sanggars = [];
-            }
-        }
-
-        if (! empty($sanggars) && $token) {
-            try {
-                $sanggars = $this->penyaluran->enrichSanggarsWithStudentCounts($sanggars, $token);
-            } catch (\Throwable $e) {
-            }
-        }
-
-        $sanggar = collect($sanggars)->firstWhere(fn (array $s) => (int) ($s['id'] ?? 0) === $id);
         if (! $sanggar) {
-            abort(404);
+            abort(404, 'Data sanggar tidak ditemukan di Penyaluran.');
         }
 
         return Inertia::render('teacher/data-sanggar/show', ['sanggar' => $sanggar]);

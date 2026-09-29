@@ -152,33 +152,121 @@ class StudentController extends Controller
         return redirect()->route('admin.companies.students.index')->with('success', "Binaan {$student->full_name} berhasil ditambahkan.");
     }
 
-    public function show(Student $student): Response
+    public function show(int|string $student): Response
     {
-        $this->authorize('view', $student);
+        $this->authorize('viewAny', Student::class);
 
+        $studentId = $student instanceof Student ? ($student->penyaluran_id ?: $student->id) : $student;
+
+        // 1. Fetch student directly from PenyaluranService (single source of truth)
+        $foundApi = null;
+        try {
+            $foundApi = $this->penyaluran->student($studentId);
+        } catch (\Throwable $e) {
+            $foundApi = null;
+        }
+
+        // 2. Look up local Student model if exists
+        $localStudent = Student::query()
+            ->where(function ($q) use ($studentId, $foundApi) {
+                $q->where('penyaluran_id', $studentId)
+                    ->orWhere('id', $studentId);
+                if ($foundApi && ! empty($foundApi['nik'])) {
+                    $cleanNik = trim((string) $foundApi['nik']);
+                    if (strlen($cleanNik) >= 10) {
+                        $q->orWhere('nik', $cleanNik);
+                    }
+                }
+            })
+            ->with(['mentor:id,name,email,branch', 'province:id,name', 'regency:id,name'])
+            ->first();
+
+        // 3. If neither found, 404
+        if (! $foundApi && ! $localStudent) {
+            abort(404, 'Data santri binaan tidak ditemukan di Penyaluran maupun sistem.');
+        }
+
+        // 4. Cabang branch check
         $user = Auth::user();
         if ($user && $user->hasRole('Cabang')) {
             $branch = $user->getBranchName();
             if (filled($branch)) {
-                $hasBranchParticipant = $student->participants()->where(function ($pq) use ($branch) {
-                    $pq->where('branch', $branch)->orWhere('branch', 'like', "%{$branch}%");
-                })->exists();
-                $mentorBranch = $student->mentor?->getBranchName();
+                $branchLower = strtolower($branch);
+                $studentKantor = strtolower(trim((string) ($foundApi['kantor_name'] ?? $foundApi['branch'] ?? $localStudent?->mentor?->getBranchName() ?? '')));
+                $matchesBranch = false;
 
-                if (! $hasBranchParticipant && (! $mentorBranch || stripos($mentorBranch, $branch) === false)) {
+                if ($user->kantor_id && ! empty($foundApi['kantor_id']) && (int) $foundApi['kantor_id'] === (int) $user->kantor_id) {
+                    $matchesBranch = true;
+                } elseif ($studentKantor !== '') {
+                    $cleanKantor = trim(preg_replace('/^(kantor\s+)?(layanan\s+)?(cabang\s+)?/i', '', $studentKantor));
+                    if (str_contains($studentKantor, $branchLower) || str_contains($branchLower, $cleanKantor)) {
+                        $matchesBranch = true;
+                    }
+                }
+
+                if (! $matchesBranch && $localStudent) {
+                    $hasBranchParticipant = $localStudent->participants()->where(function ($pq) use ($branch) {
+                        $pq->where('branch', $branch)->orWhere('branch', 'like', "%{$branch}%");
+                    })->exists();
+                    if ($hasBranchParticipant) {
+                        $matchesBranch = true;
+                    }
+                }
+
+                if (! $matchesBranch) {
                     abort(403, 'Akses terbatas untuk santri binaan cabang Anda.');
                 }
             }
         }
 
-        $student->load(['mentor:id,name,email', 'province:id,name', 'regency:id,name']);
+        // 5. Build unified student view payload prioritizing Penyaluran data
+        $studentNik = trim((string) ($foundApi['nik'] ?? $localStudent?->nik ?? ''));
+        $targetPenyaluranId = (int) ($foundApi['id'] ?? $foundApi['student_id'] ?? $localStudent?->penyaluran_id ?? $studentId);
+
+        $payload = [
+            'id' => $localStudent?->id ?? $targetPenyaluranId,
+            'penyaluran_id' => $targetPenyaluranId,
+            'nik' => $studentNik ?: null,
+            'nis' => $foundApi['nis'] ?? $localStudent?->nis ?? null,
+            'full_name' => $foundApi['name'] ?? $foundApi['full_name'] ?? $localStudent?->full_name ?? '-',
+            'nickname' => $foundApi['nickname'] ?? $localStudent?->nickname ?? null,
+            'gender' => $foundApi['gender'] ?? $localStudent?->gender ?? null,
+            'school_name' => $foundApi['school_name'] ?? $localStudent?->school_name ?? '-',
+            'school_level' => $foundApi['school_level'] ?? $localStudent?->school_level ?? null,
+            'grade' => $foundApi['class'] ?? $foundApi['grade'] ?? $localStudent?->grade ?? '-',
+            'address' => $foundApi['address'] ?? $localStudent?->address ?? '-',
+            'province' => ['name' => $foundApi['province_name'] ?? $localStudent?->province?->name ?? '-'],
+            'regency' => ['name' => $foundApi['regency_name'] ?? $localStudent?->regency?->name ?? '-'],
+            'mentor' => ['name' => $foundApi['teacher_name'] ?? $localStudent?->mentor?->name ?? '-'],
+            'mentor_name' => $foundApi['teacher_name'] ?? $localStudent?->mentor?->name ?? '-',
+            'parent_phone' => $foundApi['guardian_phone'] ?? $foundApi['parent_phone'] ?? $localStudent?->parent_phone ?? '-',
+            'kantor_name' => $foundApi['kantor_name'] ?? $foundApi['branch'] ?? $localStudent?->mentor?->branch ?? '-',
+            'sanggar_name' => $foundApi['sanggar_name'] ?? null,
+            'is_binaan' => true,
+            'is_active' => $foundApi['status'] ?? $localStudent?->is_active ?? true,
+        ];
+
+        // 6. Query participant registrations
+        $participants = Participant::query()
+            ->where(function ($q) use ($targetPenyaluranId, $studentNik, $localStudent) {
+                if ($targetPenyaluranId) {
+                    $q->whereHas('student', fn ($sq) => $sq->where('penyaluran_id', $targetPenyaluranId));
+                }
+                if (! empty($studentNik) && strlen($studentNik) >= 10) {
+                    $q->orWhere('nik', $studentNik)
+                        ->orWhereHas('student', fn ($sq) => $sq->where('nik', $studentNik));
+                }
+                if ($localStudent) {
+                    $q->orWhere('student_id', $localStudent->id);
+                }
+            })
+            ->with(['olimpiade:id,name,category'])
+            ->orderByDesc('created_at')
+            ->get(['id', 'student_id', 'olimpiade_id', 'registration_number', 'status', 'payment_status', 'created_at']);
 
         return Inertia::render('admin/company/students/show', [
-            'student' => $this->service->showPayload($student),
-            'participants' => $student->participants()
-                ->with(['olimpiade:id,name,category'])
-                ->orderByDesc('created_at')
-                ->get(['id', 'olimpiade_id', 'registration_number', 'status', 'payment_status', 'created_at']),
+            'student' => $payload,
+            'participants' => $participants,
         ]);
     }
 

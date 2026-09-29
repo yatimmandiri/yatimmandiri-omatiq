@@ -580,6 +580,14 @@ class BinaanController extends Controller
         $found = collect($studentsRaw)->firstWhere(fn (array $s) => (int) ($s['student_id'] ?? $s['id'] ?? 0) === (int) $binaan);
 
         if (! $found) {
+            try {
+                $found = $this->penyaluran->student($binaan);
+            } catch (\Throwable $e) {
+                $found = null;
+            }
+        }
+
+        if (! $found) {
             abort(404, 'Binaan tidak ditemukan di Penyaluran.');
         }
 

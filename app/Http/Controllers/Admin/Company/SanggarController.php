@@ -178,26 +178,13 @@ class SanggarController extends Controller
         $isCabang = $user?->hasRole('Cabang') ?? false;
         $userBranch = $isCabang ? $user->getBranchName() : null;
 
-        $token = request()->session()->get('penyaluran_token')
-            ?? $user?->penyaluran_token
-            ?? (! app()->environment('testing') ? User::role('Teacher')->whereNotNull('penyaluran_token')->value('penyaluran_token') : null);
-
-        $sanggars = [];
+        // Fetch sanggar directly from PenyaluranService
+        $found = null;
         try {
-            $sanggars = $this->penyaluran->allSanggars();
+            $found = $this->penyaluran->sanggar($sanggar);
         } catch (\Throwable $e) {
-            $sanggars = [];
+            $found = null;
         }
-
-        if (empty($sanggars) && $token) {
-            try {
-                $sanggars = $this->penyaluran->sanggars($token);
-            } catch (\Throwable $e) {
-                $sanggars = [];
-            }
-        }
-
-        $found = collect($sanggars)->firstWhere(fn (array $s) => (int) ($s['id'] ?? 0) === $sanggar);
 
         if (! $found) {
             // Check DB fallback
@@ -217,14 +204,14 @@ class SanggarController extends Controller
         }
 
         if (! $found) {
-            abort(404);
+            abort(404, 'Data sanggar tidak ditemukan di Penyaluran.');
         }
 
         // Strict branch check for Cabang role
         if ($isCabang && filled($userBranch)) {
             $sanggarBranch = $found['kantor_name'] ?? $found['branch'] ?? '';
             if (stripos((string) $sanggarBranch, $userBranch) === false) {
-                abort(403);
+                abort(403, 'Akses terbatas untuk sanggar cabang Anda.');
             }
         }
 

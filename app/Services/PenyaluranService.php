@@ -754,6 +754,61 @@ class PenyaluranService
     }
 
     /**
+     * Get single sanggar details from Penyaluran API (GET api/v1/sanggars/{id} or search in allSanggars).
+     *
+     * @return array|null
+     */
+    public function sanggar(int|string $id, bool $force = false): ?array
+    {
+        $cacheKey = 'penyaluran:sanggar:'.md5((string) $id);
+
+        if ($force || request()->has('refresh')) {
+            Cache::forget($cacheKey);
+        }
+
+        $cached = Cache::get($cacheKey);
+        if (! $force && ! empty($cached) && is_array($cached)) {
+            return $cached;
+        }
+
+        $sanggarData = null;
+
+        // 1. Try dedicated endpoint GET api/v1/sanggars/{id}
+        try {
+            $endpoint = "api/v1/sanggars/{$id}";
+            $response = $this->client()->get($endpoint);
+            if ($response->successful()) {
+                $raw = $response->json('data') ?? $response->json();
+                if (is_array($raw) && ! empty($raw)) {
+                    $normalized = $this->normalizeSanggars([$raw]);
+                    $sanggarData = $normalized[0] ?? null;
+                }
+            }
+        } catch (\Throwable $e) {
+            // fallback to list search
+        }
+
+        // 2. Search in allSanggars()
+        if (! $sanggarData) {
+            $all = $this->allSanggars(force: $force);
+            $found = collect($all)->firstWhere(function (array $s) use ($id) {
+                return (string) ($s['id'] ?? '') === (string) $id
+                    || (string) ($s['sanggar_id'] ?? '') === (string) $id;
+            });
+
+            if ($found) {
+                $sanggarData = $found;
+            }
+        }
+
+        if ($sanggarData) {
+            Cache::put($cacheKey, $sanggarData, 300);
+        }
+
+        return $sanggarData;
+    }
+
+    /**
      * Get all teachers from Penyaluran API (GET api/v1/teachers) using X-API-KEY header.
      * Endpoint: https://penyaluran.yatimmandiri.org/api/v1/teachers with header X-API-KEY.
      * Handles all Laravel pagination shapes and aggregates all available pages.
@@ -1095,6 +1150,62 @@ class PenyaluranService
                 'mentor_id' => $teacherId ? (int) $teacherId : null,
             ]);
         })->values()->all();
+    }
+
+    /**
+     * Get single student details from Penyaluran API (GET api/v1/students/{id} or search in allStudents).
+     *
+     * @return array|null
+     */
+    public function student(int|string $id, bool $force = false): ?array
+    {
+        $cacheKey = 'penyaluran:student:'.md5((string) $id);
+
+        if ($force || request()->has('refresh')) {
+            Cache::forget($cacheKey);
+        }
+
+        $cached = Cache::get($cacheKey);
+        if (! $force && ! empty($cached) && is_array($cached)) {
+            return $cached;
+        }
+
+        $studentData = null;
+
+        // 1. Try dedicated endpoint GET api/v1/students/{id}
+        try {
+            $endpoint = "api/v1/students/{$id}";
+            $response = $this->client()->get($endpoint);
+            if ($response->successful()) {
+                $raw = $response->json('data') ?? $response->json();
+                if (is_array($raw) && ! empty($raw)) {
+                    $normalized = $this->normalizeGlobalStudents([$raw]);
+                    $studentData = $normalized[0] ?? null;
+                }
+            }
+        } catch (\Throwable $e) {
+            // fallback to list search
+        }
+
+        // 2. Search in allStudents()
+        if (! $studentData) {
+            $all = $this->allStudents(force: $force);
+            $found = collect($all)->firstWhere(function (array $s) use ($id) {
+                return (string) ($s['id'] ?? '') === (string) $id
+                    || (string) ($s['student_id'] ?? '') === (string) $id
+                    || (string) ($s['nik'] ?? '') === (string) $id;
+            });
+
+            if ($found) {
+                $studentData = $found;
+            }
+        }
+
+        if ($studentData) {
+            Cache::put($cacheKey, $studentData, 300);
+        }
+
+        return $studentData;
     }
 
     /**
