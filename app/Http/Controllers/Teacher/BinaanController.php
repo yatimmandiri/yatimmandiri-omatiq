@@ -379,6 +379,18 @@ class BinaanController extends Controller
 
         if ($student->penyaluran_id) {
             $token = $request->session()->get('penyaluran_token') ?? Auth::user()?->penyaluran_token;
+            if (! $token && Auth::user()?->phone) {
+                try {
+                    $token = $this->penyaluran->loginGuru(Auth::user()->phone);
+                    if ($token) {
+                        $request->session()->put('penyaluran_token', $token);
+                        Auth::user()->update(['penyaluran_token' => $token]);
+                    }
+                } catch (\Throwable $e) {
+                    $token = null;
+                }
+            }
+
             if (! $token && ! app()->environment('testing')) {
                 return back()->withErrors(['nik' => 'Sesi Penyaluran tidak ditemukan. Silakan login ulang.'])->withInput();
             }
@@ -388,7 +400,23 @@ class BinaanController extends Controller
                     $payload = $this->penyaluran->formatStudentPayload($data);
                     $this->penyaluran->updateStudent($token, $student->penyaluran_id, $payload);
                 } catch (\Throwable $e) {
-                    return back()->withErrors(['nik' => 'Gagal memperbarui data santri di server Penyaluran: '.$e->getMessage()])->withInput();
+                    $freshToken = null;
+                    if (Auth::user()?->phone) {
+                        try {
+                            $freshToken = $this->penyaluran->loginGuru(Auth::user()->phone);
+                            if ($freshToken) {
+                                $request->session()->put('penyaluran_token', $freshToken);
+                                Auth::user()->update(['penyaluran_token' => $freshToken]);
+                                $this->penyaluran->updateStudent($freshToken, $student->penyaluran_id, $payload);
+                            }
+                        } catch (\Throwable $retryE) {
+                            $freshToken = null;
+                        }
+                    }
+
+                    if (! $freshToken) {
+                        return back()->withErrors(['nik' => 'Gagal memperbarui data santri di server Penyaluran: '.$e->getMessage()])->withInput();
+                    }
                 }
             }
         }

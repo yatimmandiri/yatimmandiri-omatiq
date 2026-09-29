@@ -10,7 +10,7 @@ class ParticipantPolicy
 {
     public function viewAny(User $user): bool
     {
-        if ($user->hasRole('Administrators') || $user->hasRole('Cabang')) {
+        if ($user->hasRole('Administrators') || $user->hasRole('Cabang') || $user->hasRole('Keuangan')) {
             return true;
         }
 
@@ -27,7 +27,7 @@ class ParticipantPolicy
             return false;
         }
 
-        if ($user->hasRole('Administrators')) {
+        if ($user->hasRole('Administrators') || $user->hasRole('Keuangan')) {
             return true;
         }
 
@@ -84,7 +84,7 @@ class ParticipantPolicy
             return false;
         }
 
-        if ($user->hasRole('Administrators')) {
+        if ($user->hasRole('Administrators') || $user->hasRole('Keuangan')) {
             return true;
         }
 
@@ -132,7 +132,7 @@ class ParticipantPolicy
 
     public function dataParticipant(User $user): bool
     {
-        if ($user->hasRole('Administrators') || $user->hasRole('Cabang')) {
+        if ($user->hasRole('Administrators') || $user->hasRole('Cabang') || $user->hasRole('Keuangan')) {
             return true;
         }
 
