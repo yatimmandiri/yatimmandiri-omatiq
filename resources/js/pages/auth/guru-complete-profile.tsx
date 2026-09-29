@@ -1,11 +1,12 @@
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
+import AuthCallout from '@/components/auth/auth-callout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { Head, useForm, usePage } from '@inertiajs/react';
-import { CheckCircle2, Mail, Phone, ShieldCheck } from 'lucide-react';
+import { CheckCircle2, Lock, Mail, Phone, ShieldCheck } from 'lucide-react';
 import type { FormEvent } from 'react';
 
 type PageProps = {
@@ -36,29 +37,36 @@ export default function GuruCompleteProfile() {
         <>
             <Head title="Lengkapi Akun Guru" />
 
-            <div className="rounded-2xl border bg-muted/40 p-4">
-                <div className="flex items-start gap-3">
-                    <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                        <ShieldCheck className="size-5" />
-                    </span>
-                    <div>
-                        <p className="font-semibold text-foreground">
-                            {teacher?.name ?? 'Guru OMATIQ'}
-                        </p>
-                        <p className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
-                            <Phone className="size-4" />
+            <div className="mb-5 flex items-start gap-3 rounded-xl border border-slate-200/80 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-800/50">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#17524A]/10 text-[#17524A] dark:bg-emerald-500/10 dark:text-emerald-400">
+                    <ShieldCheck className="size-5" />
+                </span>
+                <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+                        {teacher?.name ?? 'Guru OMATIQ'}
+                    </p>
+                    <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                        <Phone className="size-3.5 shrink-0" />
+                        <span className="truncate">
                             {teacher?.phone ?? '-'}
-                        </p>
-                    </div>
+                        </span>
+                    </p>
                 </div>
             </div>
 
-            <form onSubmit={submit} className="flex flex-col gap-6">
-                <div className="grid gap-5">
-                    <div className="grid gap-2">
-                        <Label htmlFor="email">Email Aktif</Label>
+            <form onSubmit={submit} className="flex flex-col gap-4">
+                <div className="grid gap-4">
+                    <div className="grid gap-1.5">
+                        <Label
+                            htmlFor="email"
+                            className="text-xs font-semibold text-slate-700 dark:text-slate-300"
+                        >
+                            Email Aktif
+                        </Label>
                         <div className="relative">
-                            <Mail className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                                <Mail className="size-4" />
+                            </div>
                             <Input
                                 id="email"
                                 type="email"
@@ -70,67 +78,92 @@ export default function GuruCompleteProfile() {
                                 autoFocus
                                 autoComplete="email"
                                 placeholder="nama@email.com"
-                                className="pl-9"
+                                className="h-11 pl-10 text-sm focus-visible:border-[#17524A] focus-visible:ring-[#17524A]/20"
                             />
                         </div>
-                        <p className="text-xs leading-5 text-muted-foreground">
+                        <p className="text-xs leading-5 text-slate-500 dark:text-slate-400">
                             Email ini akan dipakai untuk pendataan akun dan
                             persiapan login Google ke depannya.
                         </p>
                         <InputError message={form.errors.email} />
                     </div>
 
-                    <div className="grid gap-2">
-                        <Label htmlFor="password">Password Baru</Label>
-                        <PasswordInput
-                            id="password"
-                            value={form.data.password}
-                            onChange={(event) =>
-                                form.setData('password', event.target.value)
-                            }
-                            required
-                            autoComplete="new-password"
-                            placeholder="Buat password baru"
-                        />
+                    <div className="grid gap-1.5">
+                        <Label
+                            htmlFor="password"
+                            className="text-xs font-semibold text-slate-700 dark:text-slate-300"
+                        >
+                            Kata Sandi Baru
+                        </Label>
+                        <div className="relative">
+                            <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-3.5 text-slate-400">
+                                <Lock className="size-4" />
+                            </div>
+                            <PasswordInput
+                                id="password"
+                                value={form.data.password}
+                                onChange={(event) =>
+                                    form.setData('password', event.target.value)
+                                }
+                                required
+                                autoComplete="new-password"
+                                placeholder="Minimal 8 karakter"
+                                className="h-11 pl-10 text-sm focus-visible:border-[#17524A] focus-visible:ring-[#17524A]/20"
+                            />
+                        </div>
                         <InputError message={form.errors.password} />
                     </div>
 
-                    <div className="grid gap-2">
-                        <Label htmlFor="password_confirmation">
-                            Konfirmasi Password Baru
+                    <div className="grid gap-1.5">
+                        <Label
+                            htmlFor="password_confirmation"
+                            className="text-xs font-semibold text-slate-700 dark:text-slate-300"
+                        >
+                            Konfirmasi Kata Sandi Baru
                         </Label>
-                        <PasswordInput
-                            id="password_confirmation"
-                            value={form.data.password_confirmation}
-                            onChange={(event) =>
-                                form.setData(
-                                    'password_confirmation',
-                                    event.target.value,
-                                )
-                            }
-                            required
-                            autoComplete="new-password"
-                            placeholder="Ulangi password baru"
-                        />
+                        <div className="relative">
+                            <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-3.5 text-slate-400">
+                                <Lock className="size-4" />
+                            </div>
+                            <PasswordInput
+                                id="password_confirmation"
+                                value={form.data.password_confirmation}
+                                onChange={(event) =>
+                                    form.setData(
+                                        'password_confirmation',
+                                        event.target.value,
+                                    )
+                                }
+                                required
+                                autoComplete="new-password"
+                                placeholder="Ulangi kata sandi baru"
+                                className="h-11 pl-10 text-sm focus-visible:border-[#17524A] focus-visible:ring-[#17524A]/20"
+                            />
+                        </div>
                         <InputError
                             message={form.errors.password_confirmation}
                         />
                     </div>
                 </div>
 
-                <div className="rounded-2xl bg-emerald-50 p-4 text-sm leading-6 text-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-200">
-                    <div className="flex gap-3">
+                <AuthCallout tone="success">
+                    <span className="flex gap-2">
                         <CheckCircle2 className="mt-0.5 size-4 shrink-0" />
-                        <p>
-                            Setelah akun dilengkapi, Anda dapat login selanjutnya
-                            menggunakan nomor HP & password baru, atau langsung
-                            menggunakan <strong>Login with Google</strong> dengan email ini.
-                        </p>
-                    </div>
-                </div>
+                        <span>
+                            Setelah akun dilengkapi, Anda dapat masuk
+                            menggunakan nomor HP & kata sandi baru, atau
+                            langsung dengan <strong>Masuk dengan Google</strong>
+                            .
+                        </span>
+                    </span>
+                </AuthCallout>
 
-                <Button type="submit" disabled={form.processing}>
-                    {form.processing && <Spinner />}
+                <Button
+                    type="submit"
+                    disabled={form.processing}
+                    className="h-11 w-full bg-[#17524A] text-sm font-semibold text-white shadow-md shadow-[#17524A]/20 transition-all hover:bg-[#11423B] hover:shadow-lg hover:shadow-[#17524A]/30 active:scale-[0.99] dark:bg-emerald-600 dark:hover:bg-emerald-500"
+                >
+                    {form.processing && <Spinner className="mr-2" />}
                     Simpan dan Masuk Dashboard
                 </Button>
             </form>
@@ -141,5 +174,5 @@ export default function GuruCompleteProfile() {
 GuruCompleteProfile.layout = {
     title: 'Lengkapi Akun Guru',
     description:
-        'Daftarkan email aktif dan buat password baru sebelum masuk dashboard.',
+        'Daftarkan email aktif dan buat kata sandi baru sebelum masuk dashboard.',
 };

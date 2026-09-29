@@ -1,99 +1,124 @@
+import AuthDivider from '@/components/auth/auth-divider';
+import GoogleButton from '@/components/auth/google-button';
+import PortalTabs from '@/components/auth/portal-tabs';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
-import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { Form, Head } from '@inertiajs/react';
-import { FcGoogle } from 'react-icons/fc';
+import { Lock, Mail } from 'lucide-react';
 
 export default function AdminLogin() {
     return (
         <>
             <Head title="Login Admin" />
+
+            <PortalTabs active="admin" />
+
             <Form
                 method="post"
                 action="/admin/login"
-                className="flex flex-col gap-6"
+                resetOnSuccess={['password']}
+                className="flex flex-col gap-5"
             >
                 {({ processing, errors }) => (
                     <>
-                        <div className="grid gap-6">
-                            <div className="grid gap-2">
-                                <Label htmlFor="email">Email Admin</Label>
-                                <Input
-                                    id="email"
-                                    type="email"
-                                    name="email"
-                                    required
-                                    autoFocus
-                                    tabIndex={1}
-                                    autoComplete="email"
-                                    placeholder="admin@yatimmandiri.org"
-                                />
+                        <div className="grid gap-4">
+                            <div className="grid gap-1.5">
+                                <Label
+                                    htmlFor="email"
+                                    className="text-xs font-semibold text-slate-700 dark:text-slate-300"
+                                >
+                                    Email Admin
+                                </Label>
+                                <div className="relative">
+                                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                                        <Mail className="size-4" />
+                                    </div>
+                                    <Input
+                                        id="email"
+                                        type="email"
+                                        name="email"
+                                        required
+                                        autoFocus
+                                        tabIndex={1}
+                                        autoComplete="email"
+                                        placeholder="admin@yatimmandiri.org"
+                                        className="h-11 pl-10 text-sm focus-visible:border-[#17524A] focus-visible:ring-[#17524A]/20"
+                                    />
+                                </div>
                                 <InputError message={errors.email} />
                             </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="password">Password</Label>
-                                <PasswordInput
-                                    id="password"
-                                    name="password"
-                                    required
-                                    tabIndex={2}
-                                    autoComplete="current-password"
-                                    placeholder="Password"
-                                />
+
+                            <div className="grid gap-1.5">
+                                <Label
+                                    htmlFor="password"
+                                    className="text-xs font-semibold text-slate-700 dark:text-slate-300"
+                                >
+                                    Kata Sandi
+                                </Label>
+                                <div className="relative">
+                                    <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-3.5 text-slate-400">
+                                        <Lock className="size-4" />
+                                    </div>
+                                    <PasswordInput
+                                        id="password"
+                                        name="password"
+                                        required
+                                        tabIndex={2}
+                                        autoComplete="current-password"
+                                        placeholder="Masukkan kata sandi"
+                                        className="h-11 pl-10 text-sm focus-visible:border-[#17524A] focus-visible:ring-[#17524A]/20"
+                                    />
+                                </div>
                                 <InputError message={errors.password} />
                             </div>
-                            <div className="flex items-center space-x-3">
+
+                            <div className="flex items-center space-x-2 pt-1">
                                 <Checkbox
                                     id="remember"
                                     name="remember"
                                     tabIndex={3}
+                                    className="data-[state=checked]:border-[#17524A] data-[state=checked]:bg-[#17524A]"
                                 />
-                                <Label htmlFor="remember">Remember me</Label>
+                                <Label
+                                    htmlFor="remember"
+                                    className="cursor-pointer text-xs font-normal text-slate-600 dark:text-slate-400"
+                                >
+                                    Ingat sesi masuk saya
+                                </Label>
                             </div>
+
                             <Button
                                 type="submit"
-                                className="mt-2 w-full"
+                                className="mt-2 h-11 w-full bg-[#17524A] text-sm font-semibold text-white shadow-md shadow-[#17524A]/20 transition-all hover:bg-[#11423B] hover:shadow-lg hover:shadow-[#17524A]/30 active:scale-[0.99] dark:bg-emerald-600 dark:hover:bg-emerald-500"
                                 tabIndex={4}
                                 disabled={processing}
                                 data-test="admin-login-button"
                             >
-                                {processing && <Spinner />} Masuk sebagai Admin
+                                {processing && <Spinner className="mr-2" />}
+                                Masuk sebagai Admin
                             </Button>
-                        </div>
-                        <div className="text-center text-sm text-muted-foreground">
-                            Guru?{' '}
-                            <TextLink href="/teacher/login" tabIndex={5}>
-                                Login Guru
-                            </TextLink>{' '}
-                            · Student?{' '}
-                            <TextLink href="/student/login" tabIndex={5}>
-                                Login Student
-                            </TextLink>
                         </div>
                     </>
                 )}
             </Form>
 
-            <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
-                <span className="relative z-10 bg-background px-2 text-muted-foreground">
-                    Atau lanjutkan dengan
-                </span>
-            </div>
-            <Button asChild type="button" variant="outline" className="w-full">
-                <a href="/auth/google/redirect" className="w-full">
-                    <FcGoogle className="size-5" /> Login dengan Google (Admin)
-                </a>
-            </Button>
+            <AuthDivider />
+
+            <GoogleButton
+                href="/auth/google/redirect"
+                label="Masuk dengan Google (Admin)"
+            />
         </>
     );
 }
 
 AdminLogin.layout = {
-    title: 'Login Admin',
-    description: 'Masuk ke dashboard admin OMATIQ',
+    title: 'Portal Masuk Admin',
+    description:
+        'Masuk ke dashboard admin OMATIQ untuk mengelola peserta & olimpiade',
 };
