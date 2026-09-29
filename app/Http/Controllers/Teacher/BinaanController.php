@@ -60,10 +60,15 @@ class BinaanController extends Controller
         if ($token) {
             try {
                 $studentsRaw = $this->penyaluran->students($token, $sanggarId);
+            } catch (\Throwable $e) {
+                $studentsRaw = [];
+            }
+
+            try {
                 $sanggarsTmp = $this->penyaluran->sanggars($token);
                 $sanggarMap = collect($sanggarsTmp)->pluck('name', 'id');
             } catch (\Throwable $e) {
-                $studentsRaw = [];
+                $sanggarMap = collect();
             }
         }
 
@@ -86,7 +91,7 @@ class BinaanController extends Controller
             return $trimmed !== '' && $trimmed !== '-' && $trimmed !== '0' && strlen($trimmed) >= 10;
         };
 
-        $sessionIds = collect($studentsRaw)->pluck('student_id')->filter()->map(fn ($id) => (int) $id)->all();
+        $sessionIds = collect($studentsRaw)->map(fn ($s) => $s['student_id'] ?? $s['id'] ?? null)->filter()->map(fn ($id) => (int) $id)->values()->all();
         $sessionNiks = collect($studentsRaw)->pluck('nik')->filter(fn ($n) => $isValidNik($n))->unique()->values()->all();
 
         $eventYear = (int) date('Y');
@@ -191,9 +196,9 @@ class BinaanController extends Controller
                 }
 
                 $sanggarIds = $s['sanggar_ids'] ?? (isset($s['sanggar_id']) ? [$s['sanggar_id']] : []);
-                $sanggarNames = collect($sanggarIds)->map(fn ($sid) => $sanggarMap[$sid] ?? $sid)->filter()->values()->all();
+                $sanggarNames = collect($sanggarIds)->map(fn ($sid) => $sanggarMap->get($sid) ?? $sid)->filter()->values()->all();
                 if (empty($sanggarNames) && isset($s['sanggar_id']) && $s['sanggar_id']) {
-                    $sanggarNames = [$sanggarMap[$s['sanggar_id']] ?? $s['sanggar_id']];
+                    $sanggarNames = [$sanggarMap->get($s['sanggar_id']) ?? $s['sanggar_id']];
                 }
 
                 return [
@@ -454,51 +459,102 @@ class BinaanController extends Controller
                 ?? Student::find($binaan));
 
         $token = request()->session()->get('penyaluran_token') ?? Auth::user()?->penyaluran_token;
-        $found = null;
-
-        if ($token) {
+        if (! $token && Auth::user()?->phone) {
             try {
-                $studentsRaw = $this->penyaluran->students($token);
-                $found = collect($studentsRaw)->firstWhere(function (array $s) use ($binaan, $student) {
-                    $sid = (int) ($s['student_id'] ?? $s['id'] ?? 0);
-                    $nik = $s['nik'] ?? null;
-
-                    if ($student) {
-                        return ($student->penyaluran_id && $sid === (int) $student->penyaluran_id)
-                            || ($nik && $nik === $student->nik)
-                            || (app()->environment('testing') && $sid === (int) $student->id);
-                    }
-
-                    return $sid === (int) $binaan || ($nik && $nik === (string) $binaan);
-                });
+                $token = $this->penyaluran->loginGuru(Auth::user()->phone);
+                if ($token) {
+                    request()->session()->put('penyaluran_token', $token);
+                    Auth::user()->update(['penyaluran_token' => $token]);
+                }
             } catch (\Throwable $e) {
-                $found = null;
+                $token = null;
             }
         }
 
+        $found = null;
+
+        if ($token) {
+            $studentsRaw = [];
+            try {
+                $studentsRaw = $this->penyaluran->students($token);
+            } catch (\Throwable $e) {
+                if (Auth::user()?->phone) {
+                    try {
+                        $token = $this->penyaluran->loginGuru(Auth::user()->phone);
+                        if ($token) {
+                            request()->session()->put('penyaluran_token', $token);
+                            Auth::user()->update(['penyaluran_token' => $token]);
+                            $studentsRaw = $this->penyaluran->students($token);
+                        }
+                    } catch (\Throwable $e2) {
+                        $studentsRaw = [];
+                    }
+                }
+            }
+
+            $targetId = is_numeric($binaan) ? (int) $binaan : 0;
+            $targetNik = is_string($binaan) ? trim($binaan) : null;
+
+            $found = collect($studentsRaw)->firstWhere(function (array $s) use ($targetId, $targetNik, $student) {
+                $sid = (int) ($s['student_id'] ?? $s['id'] ?? 0);
+                $nik = ! empty($s['nik']) ? trim($s['nik']) : null;
+
+                if ($targetId > 0 && $sid === $targetId) {
+                    return true;
+                }
+                if ($targetNik && $nik && $nik === $targetNik) {
+                    return true;
+                }
+                if ($student && $student->penyaluran_id && $sid === (int) $student->penyaluran_id) {
+                    return true;
+                }
+                if ($student && $student->nik && $nik && $nik === $student->nik) {
+                    return true;
+                }
+                if (app()->environment('testing') && $student && $sid === (int) $student->id) {
+                    return true;
+                }
+
+                return false;
+            });
+        }
+
         if ($found) {
+            $foundPenyaluranId = (int) ($found['student_id'] ?? $found['id'] ?? 0);
+            $foundNik = ! empty($found['nik']) && $found['nik'] !== '-' && $found['nik'] !== '0' && strlen(trim($found['nik'])) >= 10 ? trim($found['nik']) : null;
+
+            $actualStudent = null;
+            if ($foundPenyaluranId > 0) {
+                $actualStudent = Student::where('penyaluran_id', $foundPenyaluranId)->first();
+            }
+            if (! $actualStudent && $foundNik) {
+                $actualStudent = Student::where('nik', $foundNik)->first();
+            }
+            if (! $actualStudent && $student instanceof Student && (int) $student->penyaluran_id === $foundPenyaluranId) {
+                $actualStudent = $student;
+            }
+
             $regions = BiodataController::resolveRegionIds($found);
             $gender = ($found['gender'] ?? 'male') === 'female' || ($found['gender'] ?? 'male') === 'P' ? 'female' : 'male';
-            $validFoundNik = ! empty($found['nik']) && $found['nik'] !== '-' && $found['nik'] !== '0' && strlen(trim($found['nik'])) >= 10 ? trim($found['nik']) : null;
 
             $attributes = [
-                'penyaluran_id' => $found['student_id'] ?? $found['id'] ?? ($student?->penyaluran_id),
-                'nik' => $validFoundNik ?? $student?->nik ?? Str::random(16),
-                'nis' => $found['nis'] ?? $student?->nis,
-                'full_name' => $found['name'] ?? $found['full_name'] ?? $student?->full_name ?? '-',
-                'nickname' => $found['nickname'] ?? $student?->nickname,
+                'penyaluran_id' => $foundPenyaluranId ?: ($actualStudent?->penyaluran_id ?? $student?->penyaluran_id),
+                'nik' => $foundNik ?? $actualStudent?->nik ?? $student?->nik ?? Str::random(16),
+                'nis' => $found['nis'] ?? $actualStudent?->nis ?? $student?->nis,
+                'full_name' => $found['name'] ?? $found['full_name'] ?? $actualStudent?->full_name ?? $student?->full_name ?? '-',
+                'nickname' => $found['nickname'] ?? $actualStudent?->nickname ?? $student?->nickname,
                 'gender' => $gender,
-                'birth_place' => $found['birth_place'] ?? $student?->birth_place,
-                'birth_date' => $found['birth_date'] ?? $student?->birth_date ?? '2015-01-01',
-                'school_name' => $found['school_name'] ?? $student?->school_name ?? '-',
-                'school_level' => $found['school_level'] ?? $student?->school_level,
-                'grade' => $found['class'] ?? $found['grade'] ?? $student?->grade ?? '-',
-                'address' => $found['address'] ?? $student?->address ?? '-',
-                'province_id' => $regions['province_id'] ?? $student?->province_id,
-                'regency_id' => $regions['regency_id'] ?? $student?->regency_id,
-                'district_id' => $regions['district_id'] ?? $student?->district_id,
-                'village_id' => $regions['village_id'] ?? $student?->village_id,
-                'parent_phone' => $found['guardian_phone'] ?? $found['parent_phone'] ?? $student?->parent_phone ?? '-',
+                'birth_place' => $found['birth_place'] ?? $actualStudent?->birth_place ?? $student?->birth_place,
+                'birth_date' => $found['birth_date'] ?? $actualStudent?->birth_date ?? $student?->birth_date ?? '2015-01-01',
+                'school_name' => $found['school_name'] ?? $actualStudent?->school_name ?? $student?->school_name ?? '-',
+                'school_level' => $found['school_level'] ?? $actualStudent?->school_level ?? $student?->school_level,
+                'grade' => $found['class'] ?? $found['grade'] ?? $actualStudent?->grade ?? $student?->grade ?? '-',
+                'address' => $found['address'] ?? $actualStudent?->address ?? $student?->address ?? '-',
+                'province_id' => $regions['province_id'] ?? $actualStudent?->province_id ?? $student?->province_id,
+                'regency_id' => $regions['regency_id'] ?? $actualStudent?->regency_id ?? $student?->regency_id,
+                'district_id' => $regions['district_id'] ?? $actualStudent?->district_id ?? $student?->district_id,
+                'village_id' => $regions['village_id'] ?? $actualStudent?->village_id ?? $student?->village_id,
+                'parent_phone' => $found['guardian_phone'] ?? $found['parent_phone'] ?? $actualStudent?->parent_phone ?? $student?->parent_phone ?? '-',
                 'mentor_id' => Auth::id(),
                 'mentor_name' => Auth::user()?->name,
                 'mentor_phone' => Auth::user()?->phone,
@@ -506,15 +562,17 @@ class BinaanController extends Controller
                 'is_active' => true,
             ];
 
-            $targetPenyaluranId = $attributes['penyaluran_id'] ?? null;
-            if ($targetPenyaluranId) {
+            if ($foundPenyaluranId) {
                 Student::withTrashed()
-                    ->where('penyaluran_id', $targetPenyaluranId)
-                    ->when($student?->id, fn ($q, $id) => $q->where('id', '!=', $id))
+                    ->where('penyaluran_id', $foundPenyaluranId)
+                    ->when($actualStudent?->id, fn ($q, $id) => $q->where('id', '!=', $id))
                     ->update(['penyaluran_id' => null]);
             }
 
-            if ($student) {
+            if ($actualStudent) {
+                $actualStudent->update($attributes);
+                $student = $actualStudent;
+            } elseif ($student instanceof Student) {
                 $student->update($attributes);
             } else {
                 $student = Student::create($attributes);
