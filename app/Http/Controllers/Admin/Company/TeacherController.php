@@ -48,10 +48,37 @@ class TeacherController extends Controller
         $this->authorize('viewAny', User::class);
 
         $user = Auth::user();
+        $isCabang = $user?->hasRole('Cabang') ?? false;
         $userBranch = $this->resolveBranch($user);
+
+        $branches = [];
+        if (! $isCabang && ! $userBranch) {
+            $apiTeachers = [];
+            try {
+                $apiTeachers = $this->penyaluran->allTeachers();
+            } catch (\Throwable $e) {
+                $apiTeachers = [];
+            }
+
+            $branches = collect($apiTeachers)
+                ->pluck('kantor_name')
+                ->merge(User::whereHas('roles', fn ($q) => $q->where('name', 'Teacher'))->whereNotNull('branch')->pluck('branch'))
+                ->filter()
+                ->map(fn ($b) => trim((string) $b))
+                ->unique()
+                ->sort()
+                ->values()
+                ->map(fn ($name) => [
+                    'value' => $name,
+                    'label' => $name,
+                ]);
+        }
 
         return Inertia::render('admin/company/teachers/list', [
             'userBranch' => $userBranch,
+            'filterOptions' => [
+                'branches' => $branches,
+            ],
         ]);
     }
 
@@ -298,6 +325,12 @@ class TeacherController extends Controller
         $branch = $this->resolveBranch($user);
         $userKantorId = $user?->kantor_id;
 
+        $filterValue = $request->input('filterValue', []);
+        if (is_string($filterValue)) {
+            $filterValue = json_decode($filterValue, true) ?? [];
+        }
+        $branchFilter = data_get($filterValue, 'branch');
+
         // Primary source: Penyaluran API api/v1/teachers (X-API-KEY)
         $apiTeachers = [];
         try {
@@ -352,6 +385,40 @@ class TeacherController extends Controller
                                 $cleanSKantor = trim(preg_replace('/^(kantor\s+)?(layanan\s+)?(cabang\s+)?/i', '', $sKantor));
                                 $cleanSKantor = trim(preg_replace('/\s*(cabang|kantor)\s*$/i', '', $cleanSKantor));
                                 if (str_contains($sKantor, $branchLower) || str_contains($branchLower, $cleanSKantor)) {
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+
+                    return false;
+                });
+            }
+
+            // Filter by selected branch from UI
+            if (filled($branchFilter) && $branchFilter !== 'all') {
+                $branchFilterLower = strtolower(trim((string) $branchFilter));
+                $collection = $collection->filter(function (array $t) use ($branchFilterLower) {
+                    $kantor = strtolower(trim((string) ($t['kantor_name'] ?? $t['branch'] ?? '')));
+                    if ($kantor !== '') {
+                        $cleanKantor = trim(preg_replace('/^(kantor\s+)?(layanan\s+)?(cabang\s+)?/i', '', $kantor));
+                        $cleanKantor = trim(preg_replace('/\s*(cabang|kantor)\s*$/i', '', $cleanKantor));
+                        if (str_contains($kantor, $branchFilterLower) || str_contains($branchFilterLower, $cleanKantor)) {
+                            return true;
+                        }
+                    }
+
+                    $sanggars = $t['sanggars'] ?? [];
+                    if (is_array($sanggars) && ! empty($sanggars)) {
+                        foreach ($sanggars as $s) {
+                            if (! is_array($s)) {
+                                continue;
+                            }
+                            $sKantor = strtolower(trim((string) ($s['kantor_name'] ?? $s['kantor'] ?? $s['cabang'] ?? '')));
+                            if ($sKantor !== '') {
+                                $cleanSKantor = trim(preg_replace('/^(kantor\s+)?(layanan\s+)?(cabang\s+)?/i', '', $sKantor));
+                                $cleanSKantor = trim(preg_replace('/\s*(cabang|kantor)\s*$/i', '', $cleanSKantor));
+                                if (str_contains($sKantor, $branchFilterLower) || str_contains($branchFilterLower, $cleanSKantor)) {
                                     return true;
                                 }
                             }
@@ -420,6 +487,16 @@ class TeacherController extends Controller
                     ->orWhere('branch', 'like', "%{$branch}%")
                     ->orWhereHas('participants', function ($pq) use ($branch) {
                         $pq->where('branch', $branch)->orWhere('branch', 'like', "%{$branch}%");
+                    });
+            });
+        }
+
+        if (filled($branchFilter) && $branchFilter !== 'all') {
+            $query->where(function ($q) use ($branchFilter) {
+                $q->where('branch', $branchFilter)
+                    ->orWhere('branch', 'like', "%{$branchFilter}%")
+                    ->orWhereHas('participants', function ($pq) use ($branchFilter) {
+                        $pq->where('branch', $branchFilter)->orWhere('branch', 'like', "%{$branchFilter}%");
                     });
             });
         }
