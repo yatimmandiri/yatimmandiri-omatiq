@@ -71,15 +71,11 @@ export default function DetailPage() {
                 <div>
                     <h1 className="text-2xl font-bold">{user?.name}</h1>
                     <p className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                        <span>
-                            {user?.penyaluran_code || user?.code
-                                ? `Kode: ${user?.penyaluran_code || user?.code}`
-                                : 'Guru Penyaluran'}
-                        </span>
                         {user?.penyaluran_id && (
-                            <span>• ID Penyaluran: {user.penyaluran_id}</span>
+                            <span>ID Penyaluran: {user.penyaluran_id}</span>
                         )}
-                        {user?.branch && <span>• Cabang: {user.branch}</span>}
+                        {user?.penyaluran_id && user?.branch && <span>•</span>}
+                        {user?.branch && <span>Cabang: {user.branch}</span>}
                     </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -244,10 +240,12 @@ export default function DetailPage() {
                                     : user?.roles?.[0]?.name || 'Teacher'
                             }
                         />
-                        <Detail
-                            label="Kode Guru / Penyaluran"
-                            value={user?.penyaluran_code || user?.code || '-'}
-                        />
+                        {user?.penyaluran_id && (
+                            <Detail
+                                label="ID Penyaluran"
+                                value={user.penyaluran_id}
+                            />
+                        )}
                         {user?.nik && <Detail label="NIK" value={user.nik} />}
                         {user?.gender && (
                             <Detail
