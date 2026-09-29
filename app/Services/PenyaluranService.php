@@ -862,6 +862,63 @@ class PenyaluranService
     }
 
     /**
+     * Get single teacher details from Penyaluran API (GET api/v1/teachers/{id} or search in allTeachers).
+     *
+     * @return array|null
+     */
+    public function teacher(int|string $id, bool $force = false): ?array
+    {
+        $cacheKey = 'penyaluran:teacher:'.md5((string) $id);
+
+        if ($force || request()->has('refresh')) {
+            Cache::forget($cacheKey);
+        }
+
+        $cached = Cache::get($cacheKey);
+        if (! $force && ! empty($cached) && is_array($cached)) {
+            return $cached;
+        }
+
+        $teacherData = null;
+
+        // 1. Try dedicated single teacher endpoint GET api/v1/teachers/{id}
+        try {
+            $endpoint = "api/v1/teachers/{$id}";
+            $response = $this->client()->get($endpoint);
+            if ($response->successful()) {
+                $raw = $response->json('data') ?? $response->json();
+                if (is_array($raw) && ! empty($raw)) {
+                    $normalized = $this->normalizeTeachers([$raw]);
+                    $teacherData = $normalized[0] ?? null;
+                }
+            }
+        } catch (\Throwable $e) {
+            // fallback to list search
+        }
+
+        // 2. If not found via direct endpoint, search in allTeachers()
+        if (! $teacherData) {
+            $all = $this->allTeachers(force: $force);
+            $found = collect($all)->firstWhere(function (array $t) use ($id) {
+                return (string) ($t['id'] ?? '') === (string) $id
+                    || (string) ($t['penyaluran_id'] ?? '') === (string) $id
+                    || (string) ($t['teacher_id'] ?? '') === (string) $id
+                    || (string) ($t['code'] ?? '') === (string) $id;
+            });
+
+            if ($found) {
+                $teacherData = $found;
+            }
+        }
+
+        if ($teacherData) {
+            Cache::put($cacheKey, $teacherData, 300);
+        }
+
+        return $teacherData;
+    }
+
+    /**
      * Get all students from Penyaluran API (GET api/v1/students) using X-API-KEY header.
      * Endpoint: https://penyaluran.yatimmandiri.org/api/v1/students with header X-API-KEY.
      * Handles all Laravel pagination shapes and aggregates all available pages.

@@ -6,6 +6,8 @@ use App\Concerns\Traits\LogActivity;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Company\StoreTeacherRequest;
 use App\Http\Requests\Company\UpdateTeacherRequest;
+use App\Models\Company\Participant;
+use App\Models\Company\Student;
 use App\Models\Core\User;
 use App\Services\PenyaluranService;
 use Illuminate\Http\Request;
@@ -73,48 +75,85 @@ class TeacherController extends Controller
         $branch = $this->resolveBranch($user);
         $userKantorId = $user?->kantor_id;
 
-        // Try API first: api/v1/teachers (X-API-KEY)
-        $apiTeachers = [];
+        // 1. Fetch teacher directly from PenyaluranService
+        $found = null;
         try {
-            $apiTeachers = $this->penyaluran->allTeachers();
+            $found = $this->penyaluran->teacher($teacher);
         } catch (\Throwable $e) {
-            $apiTeachers = [];
+            $found = null;
         }
 
-        $found = collect($apiTeachers)->firstWhere(fn (array $t) => (int) ($t['id'] ?? 0) === $teacher);
+        // 2. Look up matching local User in DB
+        $local = User::query()
+            ->with(['roles'])
+            ->where(function ($q) use ($teacher, $found) {
+                $q->where('id', $teacher)
+                    ->orWhere('penyaluran_id', $teacher)
+                    ->orWhere('teacher_id', $teacher);
 
-        // Fallback to local DB user
-        $local = null;
-        if (! $found) {
-            $local = User::whereHas('roles', fn ($q) => $q->where('name', 'Teacher'))->find($teacher);
-            if ($local) {
-                $local->load(['roles']);
-                $found = [
-                    'id' => $local->id,
-                    'penyaluran_id' => $local->penyaluran_id,
-                    'teacher_id' => $local->teacher_id,
-                    'kantor_id' => $local->kantor_id,
-                    'name' => $local->name,
-                    'email' => $local->email,
-                    'phone' => $local->phone,
-                    'branch' => $local->branch,
-                    'kantor_name' => $local->branch,
-                    'local' => true,
-                ];
+                if ($found) {
+                    if (! empty($found['code'])) {
+                        $q->orWhere('penyaluran_code', $found['code']);
+                    }
+                    if (! empty($found['phone'])) {
+                        $clean = preg_replace('/\D+/', '', (string) $found['phone']);
+                        $q->orWhere('phone', $clean);
+                    }
+                    if (! empty($found['email']) && filter_var($found['email'], FILTER_VALIDATE_EMAIL)) {
+                        $q->orWhere('email', strtolower($found['email']));
+                    }
+                }
+            })
+            ->first();
+
+        // 3. If teacher not found from ID directly, but local user has penyaluran_id, fetch from PenyaluranService using penyaluran_id
+        if (! $found && $local && $local->penyaluran_id) {
+            try {
+                $found = $this->penyaluran->teacher($local->penyaluran_id);
+            } catch (\Throwable $e) {
+                $found = null;
             }
         }
 
-        if (! $found) {
-            abort(404);
+        // 4. If neither PenyaluranService nor local DB has this teacher, 404
+        if (! $found && ! $local) {
+            abort(404, 'Data guru tidak ditemukan di Penyaluran maupun sistem.');
         }
 
-        // Cabang branch check
+        // 5. Build standardized merged teacher data
+        $merged = [
+            'id' => $found['id'] ?? $local?->penyaluran_id ?? $local?->id ?? $teacher,
+            'local_user_id' => $local?->id,
+            'penyaluran_id' => $found['penyaluran_id'] ?? $found['id'] ?? $local?->penyaluran_id ?? null,
+            'teacher_id' => $found['teacher_id'] ?? $found['id'] ?? $local?->teacher_id ?? null,
+            'code' => $found['code'] ?? $found['penyaluran_code'] ?? $local?->penyaluran_code ?? null,
+            'penyaluran_code' => $found['code'] ?? $found['penyaluran_code'] ?? $local?->penyaluran_code ?? null,
+            'name' => $local?->name ?? $found['name'] ?? 'Guru',
+            'email' => (! empty($local?->email) && ! str_ends_with($local->email, '@penyaluran.local')) ? $local->email : ($found['email'] ?? $local?->email ?? '-'),
+            'phone' => $local?->phone ?: ($found['phone'] ?? null),
+            'kantor_id' => $found['kantor_id'] ?? $local?->kantor_id ?? null,
+            'kantor_name' => $found['kantor_name'] ?? $found['branch'] ?? $local?->branch ?? '-',
+            'branch' => $found['branch'] ?? $found['kantor_name'] ?? $local?->branch ?? '-',
+            'roles' => $local ? $local->roles->pluck('name')->toArray() : ['Teacher'],
+            'email_verified_at' => $local?->email_verified_at ?? $found['email_verified_at'] ?? null,
+            'teacher_profile_completed_at' => $local?->teacher_profile_completed_at,
+            'created_at' => $local?->created_at ?? $found['created_at'] ?? null,
+            'updated_at' => $local?->updated_at ?? null,
+            'status' => $found['status'] ?? true,
+            'sanggars' => $found['sanggars'] ?? [],
+            'positions' => $found['positions'] ?? [],
+            'nik' => $found['nik'] ?? null,
+            'gender' => $found['gender'] ?? null,
+            'address' => $found['address'] ?? null,
+        ];
+
+        // 6. Cabang branch scoping check
         if (filled($branch)) {
             $branchLower = strtolower($branch);
-            $teacherKantor = strtolower(trim((string) ($found['kantor_name'] ?? $found['branch'] ?? '')));
+            $teacherKantor = strtolower(trim((string) ($merged['kantor_name'] ?? $merged['branch'] ?? '')));
             $matchesBranch = false;
 
-            if ($userKantorId && ! empty($found['kantor_id']) && (int) $found['kantor_id'] === (int) $userKantorId) {
+            if ($userKantorId && ! empty($merged['kantor_id']) && (int) $merged['kantor_id'] === (int) $userKantorId) {
                 $matchesBranch = true;
             } elseif ($teacherKantor !== '') {
                 $cleanTeacherKantor = trim(preg_replace('/^(kantor\s+)?(layanan\s+)?(cabang\s+)?/i', '', $teacherKantor));
@@ -123,8 +162,8 @@ class TeacherController extends Controller
                 }
             }
 
-            if (! $matchesBranch && ! empty($found['sanggars'])) {
-                foreach ($found['sanggars'] as $s) {
+            if (! $matchesBranch && ! empty($merged['sanggars'])) {
+                foreach ($merged['sanggars'] as $s) {
                     if (! is_array($s)) {
                         continue;
                     }
@@ -148,17 +187,22 @@ class TeacherController extends Controller
             }
         }
 
-        // If found is API array, wrap to show page expects user; provide both
+        // 7. Load participant & student statistics for this teacher if local user exists
+        $participantsCount = 0;
+        $studentsCount = 0;
         if ($local) {
-            return Inertia::render('admin/company/teachers/show', [
-                'user' => $local,
-                'apiTeacher' => $found,
-            ]);
+            $participantsCount = Participant::where('mentor_id', $local->id)->count();
+            $studentsCount = Student::where('mentor_id', $local->id)->count();
         }
 
         return Inertia::render('admin/company/teachers/show', [
-            'user' => $found,
-            'apiTeacher' => $found,
+            'user' => $merged,
+            'apiTeacher' => $found ?? $merged,
+            'stats' => [
+                'participants_count' => $participantsCount,
+                'students_count' => $studentsCount,
+                'sanggars_count' => count($merged['sanggars']),
+            ],
         ]);
     }
 
@@ -177,15 +221,49 @@ class TeacherController extends Controller
         abort(403, 'Data guru diambil langsung dari Penyaluran, tidak bisa dihapus.');
     }
 
-    public function resetPassword(User $teacher)
+    public function resetPassword(Request $request, int $teacher)
     {
-        $this->authorize('update', $teacher);
+        // 1. Find local user by ID or Penyaluran ID
+        $user = User::where('id', $teacher)
+            ->orWhere('penyaluran_id', $teacher)
+            ->first();
 
-        $teacher->forceFill(['password' => Hash::make('password')])->save();
+        // 2. If not found in local DB yet, resolve from Penyaluran API to create record
+        if (! $user) {
+            $found = null;
+            try {
+                $found = $this->penyaluran->teacher($teacher);
+            } catch (\Throwable $e) {
+                $found = null;
+            }
 
-        $this->logSuccess('reset-teacher-password', "Reset password guru: {$teacher->name}", ['user_id' => $teacher->id]);
+            if ($found) {
+                $user = User::create([
+                    'name' => $found['name'] ?? 'Guru '.$teacher,
+                    'email' => $found['email'] ?? 'guru'.$teacher.'@penyaluran.local',
+                    'phone' => $found['phone'] ?? null,
+                    'branch' => $found['kantor_name'] ?? null,
+                    'kantor_id' => $found['kantor_id'] ?? null,
+                    'penyaluran_id' => $found['id'] ?? $teacher,
+                    'penyaluran_code' => $found['code'] ?? null,
+                    'password' => Hash::make('password'),
+                    'email_verified_at' => now(),
+                ]);
+                $user->assignRole('Teacher');
+            }
+        }
 
-        return back()->with('success', "Password guru {$teacher->name} direset ke default 'password'.");
+        if (! $user) {
+            abort(404, 'Data akun guru tidak ditemukan.');
+        }
+
+        $this->authorize('update', $user);
+
+        $user->forceFill(['password' => Hash::make('password')])->save();
+
+        $this->logSuccess('reset-teacher-password', "Reset password guru: {$user->name}", ['user_id' => $user->id]);
+
+        return back()->with('success', "Password guru {$user->name} direset ke default 'password'.");
     }
 
     public function getData(Request $request)
@@ -211,10 +289,42 @@ class TeacherController extends Controller
             $apiTeachers = [];
         }
 
-        // If API returned data, serve from API with local search/pagination (DataTable expects server-side)
+        // Local registered teachers for enrichment
+        $localTeachers = User::whereHas('roles', fn ($q) => $q->where('name', 'Teacher'))->get();
+
+        // If API returned data, serve from API with local enrichment & search/pagination
         if (! empty($apiTeachers)) {
             $search = strtolower($request->string('globalSearch')->toString());
-            $collection = collect($apiTeachers);
+            $collection = collect($apiTeachers)->map(function (array $t) use ($localTeachers) {
+                $teacherId = (int) ($t['id'] ?? 0);
+                $teacherCode = $t['code'] ?? $t['penyaluran_code'] ?? null;
+                $phoneClean = preg_replace('/\D+/', '', (string) ($t['phone'] ?? ''));
+
+                $matchedLocal = $localTeachers->first(function ($u) use ($teacherId, $teacherCode, $phoneClean) {
+                    if ($teacherId && (int) $u->penyaluran_id === $teacherId) {
+                        return true;
+                    }
+                    if ($teacherCode && $u->penyaluran_code === $teacherCode) {
+                        return true;
+                    }
+                    if ($phoneClean !== '' && preg_replace('/\D+/', '', (string) $u->phone) === $phoneClean) {
+                        return true;
+                    }
+
+                    return false;
+                });
+
+                return array_merge($t, [
+                    'id' => $t['id'] ?? $matchedLocal?->penyaluran_id ?? $matchedLocal?->id,
+                    'local_user_id' => $matchedLocal?->id,
+                    'email' => (! empty($matchedLocal?->email) && ! str_ends_with($matchedLocal->email, '@penyaluran.local')) ? $matchedLocal->email : ($t['email'] ?? $matchedLocal?->email ?? null),
+                    'phone' => $matchedLocal?->phone ?: ($t['phone'] ?? null),
+                    'email_verified_at' => $matchedLocal?->email_verified_at ?? $t['email_verified_at'] ?? null,
+                    'created_at' => $matchedLocal?->created_at ?? $t['created_at'] ?? null,
+                    'branch' => $t['branch'] ?? $t['kantor_name'] ?? $matchedLocal?->branch ?? null,
+                    'kantor_name' => $t['kantor_name'] ?? $t['branch'] ?? $matchedLocal?->branch ?? null,
+                ]);
+            });
 
             // Strict Cabang scoping by branch name or kantor_id
             if (filled($branch)) {
@@ -272,7 +382,7 @@ class TeacherController extends Controller
                 });
             }
 
-            // Sorting (allow id, name, email, branch/kantor_name, created_at)
+            // Sorting
             $orderBy = $request->input('orderBy') ?: 'id';
             $direction = strtolower((string) $request->input('orderDirection')) === 'asc' ? 'asc' : 'desc';
             $allowed = ['id', 'name', 'email', 'phone', 'kantor_name', 'branch', 'created_at'];
