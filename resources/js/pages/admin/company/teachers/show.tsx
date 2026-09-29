@@ -23,8 +23,9 @@ import {
 } from 'lucide-react';
 
 export default function DetailPage() {
-    const { user, stats, auth } = usePage<{
-        user: any;
+    const { user: rawUser, teacher: rawTeacher, stats, auth } = usePage<{
+        user?: any;
+        teacher?: any;
         stats?: {
             participants_count?: number;
             students_count?: number;
@@ -37,6 +38,8 @@ export default function DetailPage() {
             };
         };
     }>().props;
+
+    const user = rawTeacher || rawUser || {};
 
     const isSuperAdmin = (auth?.user?.roles ?? []).includes('Administrators');
     const canResetPassword =
