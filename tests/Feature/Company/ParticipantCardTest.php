@@ -162,3 +162,33 @@ test('barcode service generates valid vector svg', function () {
         ->and($qr)->toContain('</svg>')
         ->and($qr)->toContain('<rect');
 });
+
+test('public can verify registered participant via verify route', function () {
+    $participant = Participant::factory()->create([
+        'student_id' => $this->student->id,
+        'olimpiade_id' => $this->olimpiade->id,
+        'event_year' => 2026,
+        'registration_number' => 'REG-2026-VERIFY01',
+        'status' => 'verified',
+    ]);
+
+    $response = $this->get(route('home.registration.verify', $participant->registration_number));
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('home/registration/verify')
+        ->where('isValid', true)
+        ->where('participant.registration_number', 'REG-2026-VERIFY01')
+        ->where('participant.status', 'verified')
+        ->where('participant.student.full_name', 'Ahmad Fauzi')
+    );
+});
+
+test('public gets invalid result when verifying non-existent registration number', function () {
+    $response = $this->get(route('home.registration.verify', 'REG-NONEXISTENT'));
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('home/registration/verify')
+        ->where('isValid', false)
+        ->where('participant', null)
+    );
+});

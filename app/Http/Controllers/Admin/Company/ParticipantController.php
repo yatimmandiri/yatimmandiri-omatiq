@@ -12,6 +12,7 @@ use App\Models\Company\Period;
 use App\Models\Core\Region\Province;
 use App\Models\Core\Region\Regency;
 use App\Models\Core\User;
+use App\Services\PenyaluranService;
 use App\Services\StudentService;
 use App\Settings\SiteSettings;
 use Illuminate\Http\Request;
@@ -30,7 +31,8 @@ class ParticipantController extends Controller
     use LogActivity, UploadFiles;
 
     public function __construct(
-        protected StudentService $studentService
+        protected StudentService $studentService,
+        protected PenyaluranService $penyaluran
     ) {}
 
     public function index(): Response
@@ -143,6 +145,62 @@ class ParticipantController extends Controller
             ->values()
             ->map(fn ($name) => ['id' => $name, 'name' => $name]);
 
+        $apiSanggars = [];
+        try {
+            $apiSanggars = $this->penyaluran->allSanggars();
+        } catch (\Throwable $e) {
+            $apiSanggars = [];
+        }
+
+        $sanggars = collect($apiSanggars)
+            ->map(fn ($s) => [
+                'id' => (int) ($s['id'] ?? 0),
+                'name' => trim((string) ($s['name'] ?? '')),
+                'branch' => trim((string) ($s['kantor_name'] ?? $s['branch'] ?? '')),
+            ])
+            ->filter(fn ($s) => ! empty($s['name']) && $s['name'] !== '-')
+            ->unique('name')
+            ->values()
+            ->all();
+
+        $apiTeachers = [];
+        try {
+            $apiTeachers = $this->penyaluran->allTeachers();
+        } catch (\Throwable $e) {
+            $apiTeachers = [];
+        }
+
+        $apiTeachersByPhone = collect($apiTeachers)->filter(fn ($t) => ! empty($t['phone']))->keyBy(fn ($t) => trim(preg_replace('/[^0-9]/', '', (string) $t['phone'])));
+        $apiTeachersByPenyaluranId = collect($apiTeachers)->filter(fn ($t) => ! empty($t['id']))->keyBy('id');
+
+        $teachers = Role::where('name', 'Teacher')->where('guard_name', 'web')->exists()
+            ? User::role('Teacher')->orderBy('name')->get(['id', 'name', 'phone', 'email', 'branch', 'penyaluran_id'])->map(function (User $u) use ($apiTeachersByPhone, $apiTeachersByPenyaluranId) {
+                $cleanPhone = $u->phone ? trim(preg_replace('/[^0-9]/', '', (string) $u->phone)) : null;
+                $apiMatch = ($u->penyaluran_id && $apiTeachersByPenyaluranId->has($u->penyaluran_id))
+                    ? $apiTeachersByPenyaluranId->get($u->penyaluran_id)
+                    : ($cleanPhone && $apiTeachersByPhone->has($cleanPhone) ? $apiTeachersByPhone->get($cleanPhone) : null);
+
+                $teacherSanggars = [];
+                if ($apiMatch && ! empty($apiMatch['sanggars'])) {
+                    $teacherSanggars = collect($apiMatch['sanggars'])->map(fn ($s) => [
+                        'id' => (int) ($s['id'] ?? $s['sanggar_id'] ?? 0),
+                        'name' => trim((string) ($s['name'] ?? $s['nama_sanggar'] ?? '')),
+                        'branch' => trim((string) ($s['kantor_name'] ?? $s['branch'] ?? $apiMatch['branch'] ?? $u->branch ?? '')),
+                    ])->filter(fn ($s) => ! empty($s['name']))->values()->all();
+                }
+
+                return [
+                    'id' => $u->id,
+                    'penyaluran_id' => $u->penyaluran_id,
+                    'name' => $u->name,
+                    'phone' => $u->phone,
+                    'email' => $u->email,
+                    'branch' => $u->branch ?? ($apiMatch['branch'] ?? null),
+                    'sanggars' => $teacherSanggars,
+                ];
+            })->values()->all()
+            : [];
+
         return Inertia::render('admin/company/participant/edit', [
             'participant' => $data,
             'olimpiades' => Olimpiade::active()->ordered()->get(['id', 'name']),
@@ -150,10 +208,9 @@ class ParticipantController extends Controller
             'regencies' => $participant->student?->province_id
                 ? Regency::where('province_id', $participant->student->province_id)->get(['id', 'name'])
                 : [],
-            'teachers' => Role::where('name', 'Teacher')->where('guard_name', 'web')->exists()
-                ? User::role('Teacher')->orderBy('name')->get(['id', 'name', 'phone', 'email', 'branch'])
-                : [],
+            'teachers' => $teachers,
             'branches' => $branches,
+            'sanggars' => $sanggars,
         ]);
     }
 
@@ -168,6 +225,21 @@ class ParticipantController extends Controller
 
         $payload = $this->payload($request);
         $name = $participant->student?->full_name ?? $participant->user?->name ?? 'Unknown';
+
+        $isBinaan = $participant->registration_type === 'teacher'
+            || ! empty($participant->mentor_id)
+            || ($participant->student && $participant->student->is_binaan)
+            || ($participant->student && $participant->student->penyaluran_id);
+
+        if (! $isBinaan) {
+            $payload['penyaluran_sanggar_name'] = null;
+            $payload['penyaluran_sanggar_id'] = null;
+        } elseif ($request->has('penyaluran_sanggar_name')) {
+            $payload['penyaluran_sanggar_name'] = $request->input('penyaluran_sanggar_name') ?: null;
+            if ($request->has('penyaluran_sanggar_id')) {
+                $payload['penyaluran_sanggar_id'] = $request->input('penyaluran_sanggar_id') ?: null;
+            }
+        }
 
         DB::transaction(function () use ($request, $participant, &$payload) {
             $studentData = $this->studentPayload($request);

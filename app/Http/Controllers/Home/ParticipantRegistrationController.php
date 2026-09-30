@@ -150,6 +150,69 @@ class ParticipantRegistrationController extends Controller
         ]);
     }
 
+    public function verify(Request $request, ?string $registrationNumber = null): Response
+    {
+        $regNo = $registrationNumber ?? $request->query('q') ?? $request->query('reg');
+        $participant = null;
+        $isValid = false;
+
+        if (! empty($regNo)) {
+            $regNo = trim((string) $regNo);
+            $participant = Participant::query()
+                ->with([
+                    'olimpiade:id,name,category,event_year',
+                    'student:id,full_name,nik,nis,school_name,school_level,grade,photo_path,regency_id,parent_phone,mentor_name,is_binaan',
+                    'student.regency:id,name',
+                    'mentor:id,name,phone',
+                    'user:id,name,email',
+                ])
+                ->where('registration_number', $regNo)
+                ->first();
+
+            if ($participant && $participant->status !== 'rejected') {
+                $isValid = true;
+            }
+        }
+
+        return Inertia::render('home/registration/verify', [
+            'pageTitle' => 'Verifikasi Keaslian Peserta OMATIQ',
+            'queryRegistrationNumber' => $regNo,
+            'isValid' => $isValid,
+            'participant' => $participant ? [
+                'id' => $participant->id,
+                'registration_number' => $participant->registration_number,
+                'status' => $participant->status,
+                'registration_type' => $participant->registration_type,
+                'event_year' => $participant->event_year ?? 2026,
+                'branch' => $participant->branch,
+                'penyaluran_sanggar_name' => $participant->penyaluran_sanggar_name,
+                'olimpiade' => [
+                    'id' => $participant->olimpiade?->id,
+                    'name' => $participant->olimpiade?->name,
+                    'category' => $participant->olimpiade?->category,
+                ],
+                'student' => $participant->student ? [
+                    'full_name' => $participant->student->full_name,
+                    'nik' => $participant->student->nik ? (strlen($participant->student->nik) === 16 ? substr($participant->student->nik, 0, 6).'******'.substr($participant->student->nik, -4) : $participant->student->nik) : null,
+                    'nis' => $participant->student->nis,
+                    'school_name' => $participant->student->school_name,
+                    'school_level' => $participant->student->school_level,
+                    'grade' => $participant->student->grade,
+                    'regency_name' => $participant->student->regency?->name,
+                    'mentor_name' => $participant->mentor?->name ?? $participant->student->mentor_name,
+                    'is_binaan' => (bool) $participant->student->is_binaan,
+                    'photo_url' => $participant->student->photo_url,
+                ] : null,
+                'verified_at' => now()->translatedFormat('d F Y, H:i').' WIB',
+            ] : null,
+            'meta' => [
+                'title' => 'Verifikasi Keaslian Peserta OMATIQ',
+                'description' => 'Halaman resmi verifikasi keaslian dan status kepesertaan OMATIQ.',
+                'keywords' => 'verifikasi peserta OMATIQ, cek kartu pendaftaran OMATIQ, keaslian peserta',
+            ],
+        ]);
+    }
+
     private function payload(StoreParticipantRequest $request): array
     {
         return $request->safe()->only([

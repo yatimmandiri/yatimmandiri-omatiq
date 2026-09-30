@@ -12,7 +12,16 @@ import { useMemo } from 'react';
 
 type Option = { id: number | string; name: string; category?: string };
 type Regency = { id: string; province_id: string; name: string };
-type TeacherOption = { id: number; name: string; phone?: string | null; email?: string; branch?: string | null };
+type SanggarOption = { id: number | string; name: string; branch?: string | null };
+type TeacherOption = {
+    id: number;
+    penyaluran_id?: number | null;
+    name: string;
+    phone?: string | null;
+    email?: string;
+    branch?: string | null;
+    sanggars?: SanggarOption[];
+};
 type BranchOption = { id: number | string; name: string };
 
 const statusOptions = [
@@ -31,6 +40,7 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
         regencies = [],
         teachers = [],
         branches = [],
+        sanggars = [],
     } = usePage<{
         participant: Record<string, any>;
         olimpiades?: Option[];
@@ -38,6 +48,7 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
         regencies?: Regency[];
         teachers?: TeacherOption[];
         branches?: BranchOption[];
+        sanggars?: SanggarOption[];
     }>().props;
 
     const student = participant?.student;
@@ -133,6 +144,66 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
 
         return list.sort((a, b) => a.label.localeCompare(b.label));
     }, [branches, form.data.branch, teachers]);
+
+    const sanggarOptions = useMemo(() => {
+        const set = new Set<string>();
+        const list: Array<{ value: string; label: string; branch?: string }> = [];
+
+        const addSanggar = (name?: string | null, branch?: string | null) => {
+            if (!name) return;
+            const trimmed = name.trim();
+            if (trimmed && !set.has(trimmed.toUpperCase())) {
+                set.add(trimmed.toUpperCase());
+                list.push({
+                    value: trimmed,
+                    label: branch ? `${trimmed} (${branch})` : trimmed,
+                    branch: branch || undefined,
+                });
+            }
+        };
+
+        // 1. Current form value
+        if (form.data.penyaluran_sanggar_name) {
+            addSanggar(form.data.penyaluran_sanggar_name, form.data.branch);
+        }
+
+        // 2. Selected teacher's sanggars
+        const selectedTeacher = teachers.find(
+            (t) => String(t.id) === String(form.data.mentor_id),
+        );
+        if (selectedTeacher?.sanggars && selectedTeacher.sanggars.length > 0) {
+            selectedTeacher.sanggars.forEach((s) =>
+                addSanggar(s.name, s.branch || selectedTeacher.branch),
+            );
+        }
+
+        // 3. Sanggars from current branch
+        const currentBranch = form.data.branch?.trim()?.toUpperCase();
+        if (currentBranch) {
+            sanggars
+                .filter((s) => {
+                    const sBranch = s.branch?.trim()?.toUpperCase();
+                    return (
+                        sBranch &&
+                        (sBranch === currentBranch ||
+                            sBranch.includes(currentBranch) ||
+                            currentBranch.includes(sBranch))
+                    );
+                })
+                .forEach((s) => addSanggar(s.name, s.branch));
+        } else {
+            // 4. All sanggars if no branch selected
+            sanggars.forEach((s) => addSanggar(s.name, s.branch));
+        }
+
+        return list.sort((a, b) => a.value.localeCompare(b.value));
+    }, [
+        form.data.penyaluran_sanggar_name,
+        form.data.mentor_id,
+        form.data.branch,
+        teachers,
+        sanggars,
+    ]);
 
     const submit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -287,16 +358,32 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
                                 />
                             </Field>
                             <Field
-                                label="Sanggar"
+                                label="Sanggar Binaan"
                                 error={error('penyaluran_sanggar_name')}
                             >
-                                <Input
-                                    value={form.data.penyaluran_sanggar_name}
-                                    onChange={(e) =>
-                                        form.setData(
-                                            'penyaluran_sanggar_name',
-                                            e.target.value,
-                                        )
+                                <SelectComponent
+                                    placeholder="Pilih / Cari Sanggar Binaan..."
+                                    data={sanggarOptions}
+                                    dataSelected={
+                                        form.data.penyaluran_sanggar_name || ''
+                                    }
+                                    handleOnChange={(value: any) => {
+                                        const strVal = value ? String(value) : '';
+                                        form.setData('penyaluran_sanggar_name', strVal);
+
+                                        if (strVal) {
+                                            const matchedSanggar = sanggars.find(
+                                                (s) => s.name.toUpperCase() === strVal.toUpperCase(),
+                                            );
+                                            if (matchedSanggar?.branch && !form.data.branch) {
+                                                form.setData('branch', matchedSanggar.branch);
+                                            }
+                                        }
+                                    }}
+                                    color={
+                                        form.errors.penyaluran_sanggar_name
+                                            ? 'danger'
+                                            : 'default'
                                     }
                                 />
                             </Field>
@@ -417,6 +504,23 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
                                                 'branch',
                                                 selected.branch,
                                             );
+                                        }
+
+                                        if (selected.sanggars && selected.sanggars.length > 0) {
+                                            if (selected.sanggars.length === 1) {
+                                                form.setData(
+                                                    'penyaluran_sanggar_name',
+                                                    selected.sanggars[0].name,
+                                                );
+                                            } else if (
+                                                !form.data.penyaluran_sanggar_name ||
+                                                !selected.sanggars.some((s) => s.name.toUpperCase() === form.data.penyaluran_sanggar_name?.toUpperCase())
+                                            ) {
+                                                form.setData(
+                                                    'penyaluran_sanggar_name',
+                                                    selected.sanggars[0].name,
+                                                );
+                                            }
                                         }
                                     } else {
                                         form.setData('mentor_name', '');

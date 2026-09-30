@@ -11,6 +11,7 @@
     "require": {
         "php": "^8.3",
         "azishapidin/indoregion": "^3.0",
+        "bacon/bacon-qr-code": "*",
         "barryvdh/laravel-dompdf": "^3.1",
         "diglactic/laravel-breadcrumbs": "^10.1",
         "inertiajs/inertia-laravel": "^3.0",
@@ -97,8 +98,7 @@
             "@php artisan package:discover --ansi"
         ],
         "post-update-cmd": [
-            "@php artisan vendor:publish --tag=laravel-assets --ansi --force",
-            "@php artisan boost:update --ansi"
+            "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
         ],
         "post-root-package-install": [
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""

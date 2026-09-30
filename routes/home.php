@@ -31,6 +31,8 @@ Route::get('/pendaftaran', [ParticipantRegistrationController::class, 'create'])
 Route::post('/pendaftaran', [ParticipantRegistrationController::class, 'store'])->name('home.registration.store');
 Route::get('/pendaftaran/sukses/{registrationNumber}', [ParticipantRegistrationController::class, 'success'])->name('home.registration.success');
 Route::get('/pendaftaran/kartu/{registrationNumber}', [ParticipantCardController::class, 'print'])->name('home.registration.card');
+Route::get('/verifikasi/{registrationNumber?}', [ParticipantRegistrationController::class, 'verify'])->name('home.registration.verify');
+Route::get('/pendaftaran/verifikasi/{registrationNumber?}', [ParticipantRegistrationController::class, 'verify'])->name('home.registration.verify.alias');
 
 // API kecil untuk cascading dropdown wilayah (dipakai pendaftaran & biodata guru)
 Route::get('/regions/regencies', function (Request $request) {
