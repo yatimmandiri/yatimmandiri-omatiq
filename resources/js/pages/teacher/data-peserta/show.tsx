@@ -367,7 +367,7 @@ export default function ShowPage() {
                                 participant.kantor_name) && (
                                 <Detail
                                     icon={<Building2 className="size-3.5" />}
-                                    label="Kantor Cabang"
+                                    label="Kantor"
                                     value={
                                         participant.branch ??
                                         participant.kantor_name

@@ -138,21 +138,21 @@ export default function ListPage() {
             },
         },
         {
-            header: 'Wilayah',
+            header: 'Sanggar',
             accessorKey: 'student.regency',
             cell: (info: any) => {
                 const row = info.row.original;
 
                 return (
-                    info.getValue()?.name ??
                     row.penyaluran_sanggar_name ??
+                    info.getValue()?.name ??
                     row.student?.school_name ??
                     '-'
                 );
             },
         },
         {
-            header: 'Kantor Cabang',
+            header: 'Kantor',
             accessorKey: 'branch',
             cell: (info: any) => {
                 const row = info.row.original;
@@ -367,16 +367,16 @@ export default function ListPage() {
                                 item.registration_type ??
                                 '-',
                             Sekolah: item.student?.school_name ?? '-',
-                            Wilayah:
-                                item.student?.regency?.name ??
+                            Sanggar:
                                 item.penyaluran_sanggar_name ??
+                                item.student?.regency?.name ??
                                 '-',
                             Status: statusLabels[item.status] ?? item.status,
                             Pembayaran:
                                 paymentStatusLabels[item.payment_status] ??
                                 item.payment_status ??
                                 '-',
-                            Cabang: item.branch ?? '-',
+                            Kantor: item.branch ?? '-',
                             Tahun: item.event_year ?? '-',
                         }))
                     }

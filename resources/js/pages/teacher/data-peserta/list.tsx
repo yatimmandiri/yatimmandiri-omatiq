@@ -82,21 +82,21 @@ export default function ListPage() {
             cell: (info: any) => info.row.original.student?.school_name ?? '-',
         },
         {
-            header: 'Wilayah',
+            header: 'Sanggar',
             accessorKey: 'student.regency',
             cell: (info: any) => {
                 const row = info.row.original;
 
                 return (
-                    row.student?.regency?.name ??
                     row.penyaluran_sanggar_name ??
+                    row.student?.regency?.name ??
                     '-'
                 );
             },
             enableSorting: false,
         },
         {
-            header: 'Kantor Cabang',
+            header: 'Kantor',
             accessorKey: 'branch',
             cell: (info: any) => {
                 const row = info.row.original;
@@ -217,10 +217,12 @@ export default function ListPage() {
                             Olimpiade: item.olimpiade?.name ?? '-',
                             Tahun: item.event_year ?? '-',
                             Sekolah: item.student?.school_name ?? '-',
-                            Wilayah:
-                                item.student?.regency?.name ??
+                            Sanggar:
                                 item.penyaluran_sanggar_name ??
+                                item.student?.regency?.name ??
                                 '-',
+                            Kantor:
+                                item.branch ?? item.kantor_name ?? '-',
                             Status: item.status,
                         }))
                     }
