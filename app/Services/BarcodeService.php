@@ -2,6 +2,13 @@
 
 namespace App\Services;
 
+use BaconQrCode\Renderer\Color\Rgb;
+use BaconQrCode\Renderer\Image\SvgImageBackEnd;
+use BaconQrCode\Renderer\ImageRenderer;
+use BaconQrCode\Renderer\RendererStyle\Fill;
+use BaconQrCode\Renderer\RendererStyle\RendererStyle;
+use BaconQrCode\Writer;
+
 class BarcodeService
 {
     /**
@@ -110,120 +117,56 @@ class BarcodeService
     }
 
     /**
-     * Generate standard QR Code as SVG using pure PHP matrix encoding.
+     * Generate standard QR Code as SVG using BaconQrCode (ISO/IEC 18004 compliant).
      */
-    public function generateQrCodeSvg(string $data, int $size = 120, string $color = '#17524A'): string
+    public function generateQrCodeSvg(string $data, int $size = 120, string $color = '#17524A', int $margin = 1): string
     {
-        $qrMatrix = $this->createSimpleQrMatrix($data);
-        $matrixSize = count($qrMatrix);
-        $moduleSize = $size / $matrixSize;
-
-        $rects = '';
-        for ($row = 0; $row < $matrixSize; $row++) {
-            for ($col = 0; $col < $matrixSize; $col++) {
-                if ($qrMatrix[$row][$col]) {
-                    $rects .= sprintf(
-                        '<rect x="%.2f" y="%.2f" width="%.2f" height="%.2f" fill="%s" />',
-                        $col * $moduleSize,
-                        $row * $moduleSize,
-                        $moduleSize + 0.1,
-                        $moduleSize + 0.1,
-                        htmlspecialchars($color, ENT_QUOTES)
-                    );
-                }
-            }
+        $data = trim($data);
+        if ($data === '') {
+            return '';
         }
 
-        return sprintf(
-            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d %d" width="%d" height="%d">%s</svg>',
-            $size,
-            $size,
-            $size,
-            $size,
-            $rects
-        );
-    }
+        try {
+            $fgColor = $this->hexToRgb($color);
+            $bgColor = new Rgb(255, 255, 255);
 
-    /**
-     * Generate structured 25x25 QR matrix containing finder patterns and hash-encoded data bits.
-     */
-    private function createSimpleQrMatrix(string $data): array
-    {
-        $size = 25;
-        $matrix = array_fill(0, $size, array_fill(0, $size, 0));
+            $renderer = new ImageRenderer(
+                new RendererStyle(
+                    $size,
+                    $margin,
+                    null,
+                    null,
+                    Fill::uniformColor($bgColor, $fgColor)
+                ),
+                new SvgImageBackEnd
+            );
 
-        // 1. Finder patterns (top-left, top-right, bottom-left)
-        $this->addFinderPattern($matrix, 0, 0);
-        $this->addFinderPattern($matrix, 0, $size - 7);
-        $this->addFinderPattern($matrix, $size - 7, 0);
+            $writer = new Writer($renderer);
+            $svg = $writer->writeString($data);
 
-        // 2. Timing patterns
-        for ($i = 8; $i < $size - 8; $i++) {
-            $matrix[6][$i] = ($i % 2 === 0) ? 1 : 0;
-            $matrix[$i][6] = ($i % 2 === 0) ? 1 : 0;
-        }
+            // Strip xml header for clean inline embedding
+            $svg = preg_replace('/<\?xml.*?\?>/i', '', $svg);
 
-        // 3. Dark module
-        $matrix[4 * 2 + 1][8] = 1;
-
-        // 4. Encode data bits via SHA-256 + CRC into matrix data area
-        $hash = hash('sha256', $data, true);
-        $hashLen = strlen($hash);
-        $bitIdx = 0;
-
-        for ($col = $size - 1; $col > 0; $col -= 2) {
-            if ($col === 6) {
-                $col--;
-            }
-            for ($row = 0; $row < $size; $row++) {
-                for ($c = 0; $c < 2; $c++) {
-                    $currCol = $col - $c;
-                    if ($this->isReserved($currCol, $row, $size)) {
-                        continue;
-                    }
-                    $byte = ord($hash[($bitIdx >> 3) % $hashLen]);
-                    $bit = ($byte >> (7 - ($bitIdx % 8))) & 1;
-                    $matrix[$row][$currCol] = $bit;
-                    $bitIdx++;
-                }
-            }
-        }
-
-        return $matrix;
-    }
-
-    private function addFinderPattern(array &$matrix, int $startRow, int $startCol): void
-    {
-        for ($r = 0; $r < 7; $r++) {
-            for ($c = 0; $c < 7; $c++) {
-                if ($r === 0 || $r === 6 || $c === 0 || $c === 6 || ($r >= 2 && $r <= 4 && $c >= 2 && $c <= 4)) {
-                    $matrix[$startRow + $r][$startCol + $c] = 1;
-                } else {
-                    $matrix[$startRow + $r][$startCol + $c] = 0;
-                }
-            }
+            return trim((string) $svg);
+        } catch (\Throwable) {
+            return '';
         }
     }
 
-    private function isReserved(int $col, int $row, int $size): bool
+    private function hexToRgb(string $hex): Rgb
     {
-        // Top-left finder + separator
-        if ($row <= 8 && $col <= 8) {
-            return true;
+        $hex = ltrim($hex, '#');
+        if (strlen($hex) === 3) {
+            $hex = $hex[0].$hex[0].$hex[1].$hex[1].$hex[2].$hex[2];
         }
-        // Top-right finder + separator
-        if ($row <= 8 && $col >= $size - 8) {
-            return true;
-        }
-        // Bottom-left finder + separator
-        if ($row >= $size - 8 && $col <= 8) {
-            return true;
-        }
-        // Timing patterns
-        if ($row === 6 || $col === 6) {
-            return true;
+        if (strlen($hex) !== 6) {
+            return new Rgb(0, 0, 0);
         }
 
-        return false;
+        $r = (int) hexdec(substr($hex, 0, 2));
+        $g = (int) hexdec(substr($hex, 2, 2));
+        $b = (int) hexdec(substr($hex, 4, 2));
+
+        return new Rgb($r, $g, $b);
     }
 }

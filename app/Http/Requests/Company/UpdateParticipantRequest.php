@@ -33,6 +33,7 @@ class UpdateParticipantRequest extends FormRequest
             'mentor_id' => ['nullable', 'integer', 'exists:users,id'],
             'mentor_name' => ['nullable', 'string', 'max:255'],
             'mentor_phone' => ['nullable', 'string', 'max:30'],
+            'penyaluran_sanggar_id' => ['nullable', 'integer'],
             'penyaluran_sanggar_name' => ['nullable', 'string', 'max:255'],
             'achievements' => ['nullable', 'string', 'max:2000'],
             'has_joined_before' => ['nullable', 'boolean'],

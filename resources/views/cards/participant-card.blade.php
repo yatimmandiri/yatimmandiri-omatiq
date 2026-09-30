@@ -388,51 +388,46 @@
             font-size: 9.5px;
         }
 
-        /* Rapid Checkpoint Barcode & QR Access Section */
+        /* Rapid Checkpoint Single QR Verification Access Section */
         .badge-scan-section {
             background-color: #f8fafc;
             border-top: 1.5px dashed #cbd5e1;
-            padding: 10px 14px 8px;
+            padding: 12px 14px 10px;
             text-align: center;
         }
 
-        .scan-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .scan-qr-td {
-            width: 75px;
-            vertical-align: middle;
-            text-align: center;
-        }
-
-        .scan-barcode-td {
-            vertical-align: middle;
-            text-align: center;
-            padding-left: 10px;
+        .scan-instruction-label {
+            font-size: 8px;
+            font-weight: 900;
+            color: #17524A;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            margin-bottom: 6px;
         }
 
         .qr-box-pass {
             display: inline-block;
             background: #ffffff;
-            padding: 4px;
-            border-radius: 8px;
-            border: 1.2px solid #17524A;
-            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+            padding: 6px;
+            border-radius: 12px;
+            border: 1.8px solid #17524A;
+            box-shadow: 0 2px 8px rgba(23, 82, 74, 0.12);
         }
 
-        .barcode-wrap-pass {
-            width: 100%;
-            text-align: center;
+        .qr-box-pass svg {
+            display: block;
+            margin: 0 auto;
+            width: 92px;
+            height: 92px;
         }
 
-        .barcode-code-pass {
-            font-size: 7.5px;
+        .qr-bib-code {
+            font-size: 10px;
             font-family: 'Courier New', monospace;
-            font-weight: 800;
+            font-weight: 900;
             color: #17524A;
-            margin-top: 1px;
+            letter-spacing: 1px;
+            margin-top: 5px;
         }
 
         .status-chip-event {
@@ -442,7 +437,7 @@
             color: #ffffff;
             font-size: 8px;
             font-weight: 900;
-            padding: 2.5px 10px;
+            padding: 2.5px 12px;
             border-radius: 10px;
             border: 1px solid #E5BE1E;
             letter-spacing: 0.6px;
@@ -652,33 +647,33 @@
             }
 
             .badge-scan-section {
-                padding: 6px 10px 5px !important;
+                padding: 6px 8px 5px !important;
             }
 
-            .scan-qr-td {
-                width: 55px !important;
+            .scan-instruction-label {
+                font-size: 5.5pt !important;
+                margin-bottom: 2px !important;
             }
 
             .qr-box-pass {
-                padding: 2px !important;
+                padding: 3px !important;
+                border-radius: 6px !important;
+                border-width: 1px !important;
             }
 
             .qr-box-pass svg {
-                width: 48px !important;
-                height: 48px !important;
+                width: 62px !important;
+                height: 62px !important;
             }
 
-            .barcode-wrap-pass svg {
-                height: 20px !important;
-            }
-
-            .barcode-code-pass {
-                font-size: 6pt !important;
+            .qr-bib-code {
+                font-size: 6.5pt !important;
+                margin-top: 2px !important;
             }
 
             .status-chip-event {
-                font-size: 6pt !important;
-                padding: 1.5px 6px !important;
+                font-size: 5.5pt !important;
+                padding: 1px 6px !important;
                 margin-top: 2px !important;
             }
 
@@ -823,34 +818,26 @@
                 </tr>
             </table>
 
-            <!-- Checkpoint Barcode & QR Access Scanning -->
+            <!-- Checkpoint Single QR Code Access Scanning -->
             <div class="badge-scan-section">
-                <table class="scan-table">
-                    <tr>
-                        <td class="scan-qr-td">
-                            <div class="qr-box-pass">
-                                {!! $qrCodeSvg !!}
-                            </div>
-                        </td>
-                        <td class="scan-barcode-td">
-                            <div class="barcode-wrap-pass">
-                                {!! $barcodeSvg !!}
-                                <div class="barcode-code-pass">{{ $participant->registration_number }}</div>
-                            </div>
-                            <div>
-                                @if($participant->status === 'submitted')
-                                    <span class="status-chip-event status-chip-pending">
-                                        &#9203; MENUNGGU VERIFIKASI ADMIN
-                                    </span>
-                                @else
-                                    <span class="status-chip-event">
-                                        &#10003; TERVERIFIKASI &bull; ACCESS GRANTED
-                                    </span>
-                                @endif
-                            </div>
-                        </td>
-                    </tr>
-                </table>
+                <div class="scan-instruction-label">
+                    <span>&#128269; SCAN UNTUK VERIFIKASI KEASLIAN</span>
+                </div>
+                <div class="qr-box-pass">
+                    {!! $qrCodeSvg !!}
+                </div>
+                <div class="qr-bib-code">{{ $participant->registration_number }}</div>
+                <div>
+                    @if($participant->status === 'submitted')
+                        <span class="status-chip-event status-chip-pending">
+                            &#9203; MENUNGGU VERIFIKASI ADMIN
+                        </span>
+                    @else
+                        <span class="status-chip-event">
+                            &#10003; TERVERIFIKASI &bull; ACCESS GRANTED
+                        </span>
+                    @endif
+                </div>
             </div>
 
             <!-- Security / Hologram Event Footer -->
@@ -860,7 +847,7 @@
                     <div>Dokumen ini adalah Bukti Pendaftaran Sementara OMATIQ. Silakan simpan dan tunggu verifikasi pembayaran/data oleh panitia untuk validasi resmi kartu lomba.</div>
                 @else
                     <div class="footer-stamp-text">&bull; OMATIQ OFFICIAL COMPETITOR PASS &bull;</div>
-                    <div>Wajib dikenakan/dibawa selama rangkaian perlombaan. Barcode &amp; QR Code digunakan untuk validasi registrasi ulang dan absensi digital panitia.</div>
+                    <div>Wajib dikenakan/dibawa selama rangkaian perlombaan. Scan QR Code untuk memeriksa keaslian kartu dan registrasi ulang panitia.</div>
                 @endif
             </div>
         </div>
