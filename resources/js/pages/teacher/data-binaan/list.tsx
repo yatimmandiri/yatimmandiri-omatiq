@@ -129,13 +129,7 @@ export default function ListPage() {
             enableSorting: false,
         },
         {
-            header: 'Terdaftar di',
-            accessorKey: 'sanggar_terdaftar',
-            cell: (info: any) => info.row.original.sanggar_terdaftar ?? '-',
-            enableSorting: false,
-        },
-        {
-            header: 'Status OMATIQ',
+            header: 'Terdaftar',
             accessorKey: 'registration_status',
             cell: (info: any) => <RegistrationBadge row={info.row.original} />,
             enableSorting: false,
@@ -162,7 +156,7 @@ export default function ListPage() {
                 <div>
                     <h1 className="flex items-center gap-2.5 text-2xl font-bold tracking-tight">
                         <span className="flex size-9 items-center justify-center rounded-xl bg-[#17524A] text-white shadow-sm">
-                            <Users className="size-5" />
+                             <Users className="size-5" />
                         </span>
                         Data Binaan
                     </h1>
@@ -223,8 +217,7 @@ export default function ListPage() {
                             Kelas: item.grade,
                             Sanggar:
                                 (item.sanggar_names ?? []).join(', ') || '-',
-                            'Terdaftar di': item.sanggar_terdaftar ?? '-',
-                            'Status OMATIQ': item.is_registered
+                            Terdaftar: item.is_registered
                                 ? `${item.olimpiade_name ?? 'Terdaftar'} (${item.registration_status ?? '-'})`
                                 : item.registration_status === 'rejected'
                                   ? `Ditolak (${item.olimpiade_name ?? '-'})`
@@ -255,7 +248,7 @@ export default function ListPage() {
                                 />
                             )}
                             <SelectComponent
-                                label="Status OMATIQ"
+                                label="Terdaftar"
                                 placeholder="Semua status..."
                                 data={[
                                     { value: 'registered', label: 'Terdaftar' },

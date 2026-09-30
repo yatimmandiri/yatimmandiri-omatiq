@@ -133,9 +133,31 @@ class BinaanController extends Controller
 
         $userId = Auth::id();
 
+        $localStudents = Student::query()
+            ->where(function ($q) use ($sessionIds, $sessionNiks) {
+                if (! empty($sessionIds)) {
+                    $q->whereIn('penyaluran_id', $sessionIds);
+                }
+                if (! empty($sessionNiks)) {
+                    $q->orWhereIn('nik', $sessionNiks);
+                }
+                if (app()->environment('testing') && ! empty($sessionIds)) {
+                    $q->orWhereIn('id', $sessionIds);
+                }
+            })
+            ->get(['id', 'penyaluran_id', 'nik', 'created_at', 'updated_at']);
+
+        $localStudentsByPenyaluranId = $localStudents
+            ->filter(fn ($ls) => filled($ls->penyaluran_id))
+            ->groupBy(fn ($ls) => (int) $ls->penyaluran_id);
+
+        $localStudentsByNik = $localStudents
+            ->filter(fn ($ls) => $isValidNik($ls->nik))
+            ->groupBy(fn ($ls) => (string) $ls->nik);
+
         $collection = collect($studentsRaw)
             ->unique(fn (array $s) => (int) ($s['student_id'] ?? $s['id'] ?? 0))
-            ->map(function (array $s) use ($participantsByPenyaluranId, $participantsByNik, $participantsByLocalIdTesting, $sanggarMap, $isValidNik, $userId) {
+            ->map(function (array $s) use ($participantsByPenyaluranId, $participantsByNik, $participantsByLocalIdTesting, $localStudentsByPenyaluranId, $localStudentsByNik, $sanggarMap, $isValidNik, $userId) {
                 $id = (int) ($s['student_id'] ?? $s['id'] ?? 0);
                 $nik = trim((string) ($s['nik'] ?? ''));
 
@@ -201,6 +223,12 @@ class BinaanController extends Controller
                     $sanggarNames = [$sanggarMap->get($s['sanggar_id']) ?? $s['sanggar_id']];
                 }
 
+                $localStudent = ($isValidNik($nik) ? $localStudentsByNik->get($nik)?->first() : null)
+                    ?? ($id ? $localStudentsByPenyaluranId->get($id)?->first() : null);
+
+                $createdAt = $s['created_at'] ?? $localStudent?->created_at?->toIso8601String() ?? $latest?->created_at?->toIso8601String() ?? $s['updated_at'] ?? now()->toIso8601String();
+                $updatedAt = $s['updated_at'] ?? $localStudent?->updated_at?->toIso8601String() ?? $latest?->updated_at?->toIso8601String() ?? $createdAt;
+
                 return [
                     'id' => $id,
                     'nik' => $s['nik'] ?? null,
@@ -216,6 +244,8 @@ class BinaanController extends Controller
                     'registration_status' => $registrationStatus,
                     'registration_number' => $registrationNumber,
                     'olimpiade_name' => $olimpiadeName,
+                    'created_at' => $createdAt,
+                    'updated_at' => $updatedAt,
                 ];
             })
             ->when($search !== '', fn ($c) => $c->filter(fn (array $item) => str_contains(strtolower($item['full_name'] ?? ''), $search) || str_contains(strtolower($item['nik'] ?? ''), $search) || str_contains(strtolower($item['school_name'] ?? ''), $search) || str_contains(strtolower(implode(',', $item['sanggar_names'] ?? [])) ?? '', $search)))
