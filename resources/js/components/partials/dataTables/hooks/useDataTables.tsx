@@ -102,13 +102,23 @@ export const DataTableProvider = ({
             })
             .then((response) => {
                 setData(response.data.data);
+                const page = response.data.current_page ?? 1;
+                const perPage = response.data.per_page ?? 10;
+                const total = response.data.total ?? 0;
+                const from =
+                    response.data.from ??
+                    (total === 0 ? 0 : (page - 1) * perPage + 1);
+                const to =
+                    response.data.to ??
+                    (total === 0 ? 0 : Math.min(page * perPage, total));
+
                 setPagination((prev) => ({
                     ...prev,
-                    perPage: response.data.per_page,
-                    page: response.data.current_page,
-                    total: response.data.total,
-                    from: response.data.from,
-                    to: response.data.to,
+                    perPage,
+                    page,
+                    total,
+                    from,
+                    to,
                 }));
             })
             .catch((error) => {

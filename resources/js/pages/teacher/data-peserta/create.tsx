@@ -69,22 +69,24 @@ export default function CreatePage() {
     const activeStudent =
         student ??
         students.find(
-            (item) => String(item.id ?? item.student_id) === String(preselected_student_id),
+            (item) =>
+                String(item.id ?? item.student_id) ===
+                String(preselected_student_id),
         ) ??
         students[0] ??
         null;
 
-    const studentName =
-        activeStudent?.full_name || activeStudent?.name || '-';
-    const studentId =
-        activeStudent?.id ?? activeStudent?.student_id ?? '';
+    const studentName = activeStudent?.full_name || activeStudent?.name || '-';
+    const studentId = activeStudent?.id ?? activeStudent?.student_id ?? '';
 
     const selectedSanggarId =
         selected_sanggar_id ?? activeStudent?.sanggar_id ?? '';
 
     const form = useForm({
         penyaluran_student_id: activeStudent ? String(studentId) : '',
-        penyaluran_sanggar_id: selectedSanggarId ? String(selectedSanggarId) : '',
+        penyaluran_sanggar_id: selectedSanggarId
+            ? String(selectedSanggarId)
+            : '',
         olimpiade_id: '',
         achievements: '',
         notes: '',
@@ -144,11 +146,12 @@ export default function CreatePage() {
                         atau catatan bila diperlukan.
                     </p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex w-full flex-col-reverse gap-2 sm:w-auto sm:flex-row">
                     <Button
                         type="button"
                         variant="outline"
                         onClick={() => router.visit(binaan.index().url)}
+                        className="w-full sm:w-auto"
                     >
                         <ArrowLeft />
                         Kembali
@@ -161,6 +164,7 @@ export default function CreatePage() {
                             !form.data.penyaluran_student_id ||
                             !hasValidNik
                         }
+                        className="w-full bg-[#17524A] text-white hover:bg-[#12423b] sm:w-auto"
                     >
                         <Save />
                         {form.processing ? 'Menyimpan...' : 'Daftarkan'}
@@ -177,9 +181,12 @@ export default function CreatePage() {
                                 NIK Santri Belum Lengkap di Penyaluran
                             </p>
                             <p className="mt-0.5 text-xs text-amber-800/90 dark:text-amber-300/90">
-                                Santri{' '}
-                                <strong>{studentName}</strong> belum
-                                memiliki NIK yang valid di data Penyaluran. Silakan hubungi <strong>Admin</strong> untuk melengkapi atau memperbarui data NIK santri terlebih dahulu agar dapat didaftarkan ke OMATIQ.
+                                Santri <strong>{studentName}</strong> belum
+                                memiliki NIK yang valid di data Penyaluran.
+                                Silakan hubungi <strong>Admin</strong> untuk
+                                melengkapi atau memperbarui data NIK santri
+                                terlebih dahulu agar dapat didaftarkan ke
+                                OMATIQ.
                             </p>
                         </div>
                     </div>
@@ -188,7 +195,8 @@ export default function CreatePage() {
 
             {!activeStudent && (
                 <div className="rounded-2xl border border-dashed p-5 text-sm text-muted-foreground">
-                    Santri binaan belum dipilih. Silakan kembali ke halaman Data Binaan untuk memilih santri yang ingin didaftarkan.
+                    Santri binaan belum dipilih. Silakan kembali ke halaman Data
+                    Binaan untuk memilih santri yang ingin didaftarkan.
                 </div>
             )}
 
@@ -205,7 +213,10 @@ export default function CreatePage() {
                                         <h2 className="text-lg font-bold">
                                             {studentName}
                                         </h2>
-                                        <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-xs text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-300">
+                                        <Badge
+                                            variant="outline"
+                                            className="border-emerald-200 bg-emerald-50 text-xs text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-300"
+                                        >
                                             Santri Terpilih
                                         </Badge>
                                     </div>

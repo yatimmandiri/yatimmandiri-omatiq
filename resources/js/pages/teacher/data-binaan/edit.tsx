@@ -18,7 +18,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { dashboard } from '@/routes/teacher';
 import binaanRoutes from '@/routes/teacher/data-binaan';
-import { useForm, usePage } from '@inertiajs/react';
+import { router, useForm, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
     GraduationCap,
@@ -197,27 +197,56 @@ export default function EditPage() {
             </p>
         ) : null;
 
+    const goBack = () => {
+        if (window.history.length > 1) {
+            window.history.back();
+        } else {
+            router.visit(binaanRoutes.index().url);
+        }
+    };
+
     return (
-        <form onSubmit={submit} className="mx-auto max-w-4xl space-y-6 p-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight">
-                        Edit Data Binaan
-                    </h1>
-                    <p className="text-sm text-muted-foreground">
-                        Pembaruan data identitas, pendidikan, dan domisili santri
-                        ini akan langsung disinkronkan ke server Penyaluran.
-                    </p>
-                </div>
-                <div className="flex gap-2">
+        <form
+            onSubmit={submit}
+            className="mx-auto max-w-4xl space-y-6 p-4 lg:p-6"
+        >
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-4">
                     <Button
                         type="button"
                         variant="outline"
-                        onClick={() => window.history.back()}
+                        size="icon"
+                        aria-label="Kembali"
+                        className="size-9 shrink-0 rounded-xl"
+                        onClick={goBack}
+                    >
+                        <ArrowLeft className="size-4" />
+                    </Button>
+                    <div>
+                        <h1 className="text-xl font-bold tracking-tight lg:text-2xl">
+                            Edit Data Binaan
+                        </h1>
+                        <p className="text-sm text-muted-foreground">
+                            Pembaruan data identitas, pendidikan, dan domisili
+                            santri ini akan langsung disinkronkan ke server
+                            Penyaluran.
+                        </p>
+                    </div>
+                </div>
+                <div className="flex flex-col-reverse gap-2 sm:flex-row">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={goBack}
+                        className="w-full sm:w-auto"
                     >
                         <ArrowLeft className="size-4" /> Kembali
                     </Button>
-                    <Button type="submit" disabled={form.processing}>
+                    <Button
+                        type="submit"
+                        disabled={form.processing}
+                        className="w-full bg-[#17524A] text-white hover:bg-[#12423b] sm:w-auto"
+                    >
                         <Save className="size-4" />{' '}
                         {form.processing ? 'Menyimpan...' : 'Simpan Perubahan'}
                     </Button>
@@ -274,10 +303,7 @@ export default function EditPage() {
                             />
                         </Field>
 
-                        <Field
-                            label="Nama Panggilan"
-                            error={error('nickname')}
-                        >
+                        <Field label="Nama Panggilan" error={error('nickname')}>
                             <Input
                                 value={form.data.nickname}
                                 onChange={(e) =>
@@ -320,15 +346,10 @@ export default function EditPage() {
                             />
                         </Field>
 
-                        <Field
-                            label="Jenis Kelamin *"
-                            error={error('gender')}
-                        >
+                        <Field label="Jenis Kelamin *" error={error('gender')}>
                             <Select
                                 value={form.data.gender || 'male'}
-                                onValueChange={(v) =>
-                                    form.setData('gender', v)
-                                }
+                                onValueChange={(v) => form.setData('gender', v)}
                             >
                                 <SelectTrigger className="w-full">
                                     <SelectValue placeholder="Pilih Jenis Kelamin" />
@@ -643,15 +664,20 @@ export default function EditPage() {
                 </CardContent>
             </Card>
 
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
                 <Button
                     type="button"
                     variant="outline"
-                    onClick={() => window.history.back()}
+                    onClick={goBack}
+                    className="w-full sm:w-auto"
                 >
                     Batal
                 </Button>
-                <Button type="submit" disabled={form.processing}>
+                <Button
+                    type="submit"
+                    disabled={form.processing}
+                    className="w-full bg-[#17524A] text-white hover:bg-[#12423b] sm:w-auto"
+                >
                     <Save className="size-4" />{' '}
                     {form.processing ? 'Menyimpan...' : 'Simpan Perubahan'}
                 </Button>

@@ -8,23 +8,24 @@ import { edit } from '@/routes/admin/profile';
 import { edit as editSecurity } from '@/routes/admin/security';
 import type { NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
+import { MonitorCog, ShieldCheck, UserRound } from 'lucide-react';
 import type { PropsWithChildren } from 'react';
 
 const sidebarNavItems: NavItem[] = [
     {
-        title: 'Profile',
+        title: 'Profil',
         href: edit(),
-        icon: null,
+        icon: UserRound,
     },
     {
-        title: 'Security',
+        title: 'Keamanan',
         href: editSecurity(),
-        icon: null,
+        icon: ShieldCheck,
     },
     {
-        title: 'Appearance',
+        title: 'Tampilan',
         href: editAppearance(),
-        icon: null,
+        icon: MonitorCog,
     },
 ];
 
@@ -32,17 +33,17 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
     const { isCurrentOrParentUrl } = useCurrentUrl();
 
     return (
-        <div className="px-4 py-6">
+        <div className="px-4 py-6 md:px-6">
             <Heading
-                title="Settings"
-                description="Manage your profile and account settings"
+                title="Pengaturan"
+                description="Kelola profil dan pengaturan akun Anda"
             />
 
             <div className="flex flex-col lg:flex-row lg:space-x-12">
                 <aside className="w-full max-w-xl lg:w-48">
                     <nav
                         className="flex flex-col space-y-1 space-x-0"
-                        aria-label="Settings"
+                        aria-label="Pengaturan"
                     >
                         {sidebarNavItems.map((item, index) => (
                             <Button
@@ -56,7 +57,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                             >
                                 <Link href={item.href}>
                                     {item.icon && (
-                                        <item.icon className="h-4 w-4" />
+                                        <item.icon className="size-4" />
                                     )}
                                     {item.title}
                                 </Link>

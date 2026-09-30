@@ -13,7 +13,7 @@ import { logout as teacherLogout } from '@/routes/teacher';
 import { logout as genericLogout } from '@/routes';
 import type { User } from '@/types';
 import { Link, router, usePage } from '@inertiajs/react';
-import { LogOut, Settings } from 'lucide-react';
+import { House, LogOut, Settings } from 'lucide-react';
 
 type Props = {
     user: User;
@@ -68,7 +68,17 @@ export function UserMenuContent({ user }: Props) {
                         onClick={cleanup}
                     >
                         <Settings className="mr-2" />
-                        Settings
+                        Pengaturan Akun
+                    </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                    <Link
+                        className="block w-full cursor-pointer"
+                        href="/"
+                        onClick={cleanup}
+                    >
+                        <House className="mr-2" />
+                        Beranda Publik
                     </Link>
                 </DropdownMenuItem>
             </DropdownMenuGroup>
@@ -83,7 +93,7 @@ export function UserMenuContent({ user }: Props) {
                     data-test="logout-button"
                 >
                     <LogOut className="mr-2" />
-                    Log out
+                    Keluar
                 </Link>
             </DropdownMenuItem>
         </>

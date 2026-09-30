@@ -12,7 +12,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { dashboard } from '@/routes/teacher';
 import binaan from '@/routes/teacher/data-binaan';
-import { useForm, usePage } from '@inertiajs/react';
+import { router, useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, GraduationCap, MapPin, Save, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
@@ -52,7 +52,8 @@ export default function CreatePage() {
 
         setRegenciesFiltered(
             regencies.filter(
-                (r: any) => String(r.province_id) === String(form.data.province_id),
+                (r: any) =>
+                    String(r.province_id) === String(form.data.province_id),
             ),
         );
     }, [form.data.province_id, regencies]);
@@ -66,7 +67,8 @@ export default function CreatePage() {
 
         setDistrictsFiltered(
             districts.filter(
-                (r: any) => String(r.regency_id) === String(form.data.regency_id),
+                (r: any) =>
+                    String(r.regency_id) === String(form.data.regency_id),
             ),
         );
     }, [form.data.regency_id, districts]);
@@ -75,8 +77,8 @@ export default function CreatePage() {
         const districtId = form.data.district_id;
 
         if (!districtId) {
-return;
-}
+            return;
+        }
 
         const controller = new AbortController();
         setIsLoadingVillages(true);
@@ -91,13 +93,13 @@ return;
             .then((payload) => setVillages(payload.data ?? []))
             .catch((fetchError) => {
                 if (fetchError.name !== 'AbortError') {
-setVillages([]);
-}
+                    setVillages([]);
+                }
             })
             .finally(() => {
                 if (!controller.signal.aborted) {
-setIsLoadingVillages(false);
-}
+                    setIsLoadingVillages(false);
+                }
             });
 
         return () => controller.abort();
@@ -109,7 +111,9 @@ setIsLoadingVillages(false);
     };
     const error = (n: string) =>
         form.errors[n] ? (
-            <p className="text-xs font-medium text-destructive">{form.errors[n]}</p>
+            <p className="text-xs font-medium text-destructive">
+                {form.errors[n]}
+            </p>
         ) : null;
 
     return (
@@ -119,15 +123,19 @@ setIsLoadingVillages(false);
                     <Button
                         variant="outline"
                         size="icon"
+                        aria-label="Kembali"
                         className="size-9 shrink-0 rounded-xl"
-                        onClick={() => window.history.back()}
+                        onClick={() => router.visit(binaan.index().url)}
                     >
                         <ArrowLeft className="size-4" />
                     </Button>
                     <div>
-                        <h1 className="text-xl font-bold tracking-tight lg:text-2xl">Tambah Binaan</h1>
+                        <h1 className="text-xl font-bold tracking-tight lg:text-2xl">
+                            Tambah Binaan
+                        </h1>
                         <p className="text-sm text-muted-foreground">
-                            Tambah santri binaan baru — akan tersimpan lokal dan disinkronkan ke Penyaluran.
+                            Tambah santri binaan baru — akan tersimpan lokal dan
+                            disinkronkan ke Penyaluran.
                         </p>
                     </div>
                 </div>
@@ -135,7 +143,9 @@ setIsLoadingVillages(false);
 
             <Card className="rounded-2xl border-[#E5BE1E]/30 bg-amber-50/60 px-4 py-3 dark:bg-amber-950/20">
                 <p className="text-xs leading-relaxed text-amber-900 dark:text-amber-200">
-                    <span className="font-semibold">Catatan:</span> Idealnya binaan berasal dari Penyaluran. Form ini untuk kasus khusus / testing lokal. NIK wajib 16 digit & unik untuk binaan.
+                    <span className="font-semibold">Catatan:</span> Idealnya
+                    binaan berasal dari Penyaluran. Form ini untuk kasus khusus
+                    / testing lokal. NIK wajib 16 digit & unik untuk binaan.
                 </p>
             </Card>
 
@@ -147,18 +157,25 @@ setIsLoadingVillages(false);
                             <span className="flex size-9 items-center justify-center rounded-xl bg-[#17524A]/10 text-[#17524A]">
                                 <User className="size-4" />
                             </span>
-                            <CardTitle className="text-base">Data Diri</CardTitle>
+                            <CardTitle className="text-base">
+                                Data Diri
+                            </CardTitle>
                         </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="grid gap-4 md:grid-cols-2">
-                            <Field label="NIK (16 digit) *" error={error('nik')}>
+                            <Field
+                                label="NIK (16 digit) *"
+                                error={error('nik')}
+                            >
                                 <Input
                                     value={form.data.nik}
                                     onChange={(e) =>
                                         form.setData(
                                             'nik',
-                                            e.target.value.replace(/\D/g, '').slice(0, 16),
+                                            e.target.value
+                                                .replace(/\D/g, '')
+                                                .slice(0, 16),
                                         )
                                     }
                                     placeholder="3201xxxxxxxxxxxx"
@@ -168,35 +185,54 @@ setIsLoadingVillages(false);
                                     className="h-10 font-mono"
                                 />
                             </Field>
-                            <Field label="Jenis Kelamin *" error={error('gender')}>
+                            <Field
+                                label="Jenis Kelamin *"
+                                error={error('gender')}
+                            >
                                 <Select
                                     value={form.data.gender}
-                                    onValueChange={(v) => form.setData('gender', v)}
+                                    onValueChange={(v) =>
+                                        form.setData('gender', v)
+                                    }
                                 >
                                     <SelectTrigger className="h-10 w-full">
                                         <SelectValue placeholder="Pilih gender" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="male">Laki-laki</SelectItem>
-                                        <SelectItem value="female">Perempuan</SelectItem>
+                                        <SelectItem value="male">
+                                            Laki-laki
+                                        </SelectItem>
+                                        <SelectItem value="female">
+                                            Perempuan
+                                        </SelectItem>
                                     </SelectContent>
                                 </Select>
                             </Field>
                         </div>
-                        <Field label="Nama Lengkap *" error={error('full_name')}>
+                        <Field
+                            label="Nama Lengkap *"
+                            error={error('full_name')}
+                        >
                             <Input
                                 value={form.data.full_name}
-                                onChange={(e) => form.setData('full_name', e.target.value)}
+                                onChange={(e) =>
+                                    form.setData('full_name', e.target.value)
+                                }
                                 placeholder="Nama lengkap santri"
                                 required
                                 className="h-10"
                             />
                         </Field>
-                        <Field label="Tanggal Lahir *" error={error('birth_date')}>
+                        <Field
+                            label="Tanggal Lahir *"
+                            error={error('birth_date')}
+                        >
                             <Input
                                 type="date"
                                 value={form.data.birth_date}
-                                onChange={(e) => form.setData('birth_date', e.target.value)}
+                                onChange={(e) =>
+                                    form.setData('birth_date', e.target.value)
+                                }
                                 required
                                 className="h-10"
                             />
@@ -211,14 +247,18 @@ setIsLoadingVillages(false);
                             <span className="flex size-9 items-center justify-center rounded-xl bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-400">
                                 <GraduationCap className="size-4" />
                             </span>
-                            <CardTitle className="text-base">Pendidikan</CardTitle>
+                            <CardTitle className="text-base">
+                                Pendidikan
+                            </CardTitle>
                         </div>
                     </CardHeader>
                     <CardContent className="grid gap-4 md:grid-cols-2">
                         <Field label="Sekolah *" error={error('school_name')}>
                             <Input
                                 value={form.data.school_name}
-                                onChange={(e) => form.setData('school_name', e.target.value)}
+                                onChange={(e) =>
+                                    form.setData('school_name', e.target.value)
+                                }
                                 placeholder="Nama sekolah asal"
                                 required
                                 className="h-10"
@@ -227,7 +267,9 @@ setIsLoadingVillages(false);
                         <Field label="Kelas *" error={error('grade')}>
                             <Input
                                 value={form.data.grade}
-                                onChange={(e) => form.setData('grade', e.target.value)}
+                                onChange={(e) =>
+                                    form.setData('grade', e.target.value)
+                                }
                                 placeholder="Contoh: 4 / IV"
                                 required
                                 className="h-10"
@@ -243,14 +285,21 @@ setIsLoadingVillages(false);
                             <span className="flex size-9 items-center justify-center rounded-xl bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400">
                                 <MapPin className="size-4" />
                             </span>
-                            <CardTitle className="text-base">Domisili & Alamat</CardTitle>
+                            <CardTitle className="text-base">
+                                Domisili & Alamat
+                            </CardTitle>
                         </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <Field label="Alamat Lengkap *" error={error('address')}>
+                        <Field
+                            label="Alamat Lengkap *"
+                            error={error('address')}
+                        >
                             <Textarea
                                 value={form.data.address}
-                                onChange={(e) => form.setData('address', e.target.value)}
+                                onChange={(e) =>
+                                    form.setData('address', e.target.value)
+                                }
                                 placeholder="Jl. / RT RW / patokan alamat"
                                 rows={3}
                                 required
@@ -258,7 +307,10 @@ setIsLoadingVillages(false);
                             />
                         </Field>
                         <div className="grid gap-4 md:grid-cols-2">
-                            <Field label="Provinsi *" error={error('province_id')}>
+                            <Field
+                                label="Provinsi *"
+                                error={error('province_id')}
+                            >
                                 <Select
                                     value={form.data.province_id || undefined}
                                     onValueChange={(v) => {
@@ -274,14 +326,20 @@ setIsLoadingVillages(false);
                                     </SelectTrigger>
                                     <SelectContent className="max-h-60">
                                         {provinces.map((p: any) => (
-                                            <SelectItem key={p.id} value={String(p.id)}>
+                                            <SelectItem
+                                                key={p.id}
+                                                value={String(p.id)}
+                                            >
                                                 {p.name}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
                             </Field>
-                            <Field label="Kabupaten / Kota *" error={error('regency_id')}>
+                            <Field
+                                label="Kabupaten / Kota *"
+                                error={error('regency_id')}
+                            >
                                 <Select
                                     value={form.data.regency_id || undefined}
                                     onValueChange={(v) => {
@@ -303,14 +361,20 @@ setIsLoadingVillages(false);
                                     </SelectTrigger>
                                     <SelectContent className="max-h-60">
                                         {regenciesFiltered.map((r: any) => (
-                                            <SelectItem key={r.id} value={String(r.id)}>
+                                            <SelectItem
+                                                key={r.id}
+                                                value={String(r.id)}
+                                            >
                                                 {r.name}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
                             </Field>
-                            <Field label="Kecamatan" error={error('district_id')}>
+                            <Field
+                                label="Kecamatan"
+                                error={error('district_id')}
+                            >
                                 <Select
                                     value={form.data.district_id || undefined}
                                     onValueChange={(v) => {
@@ -318,8 +382,8 @@ setIsLoadingVillages(false);
                                         form.setData('village_id', '');
 
                                         if (!v) {
-setVillages([]);
-}
+                                            setVillages([]);
+                                        }
                                     }}
                                     disabled={!form.data.regency_id}
                                 >
@@ -334,18 +398,29 @@ setVillages([]);
                                     </SelectTrigger>
                                     <SelectContent className="max-h-60">
                                         {districtsFiltered.map((r: any) => (
-                                            <SelectItem key={r.id} value={String(r.id)}>
+                                            <SelectItem
+                                                key={r.id}
+                                                value={String(r.id)}
+                                            >
                                                 {r.name}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
                             </Field>
-                            <Field label="Kelurahan / Desa" error={error('village_id')}>
+                            <Field
+                                label="Kelurahan / Desa"
+                                error={error('village_id')}
+                            >
                                 <Select
                                     value={form.data.village_id || undefined}
-                                    onValueChange={(v) => form.setData('village_id', v)}
-                                    disabled={!form.data.district_id || isLoadingVillages}
+                                    onValueChange={(v) =>
+                                        form.setData('village_id', v)
+                                    }
+                                    disabled={
+                                        !form.data.district_id ||
+                                        isLoadingVillages
+                                    }
                                 >
                                     <SelectTrigger className="h-10 w-full">
                                         <SelectValue
@@ -362,10 +437,16 @@ setVillages([]);
                                         {villages
                                             .filter(
                                                 (r: any) =>
-                                                    String(r.district_id) === String(form.data.district_id),
+                                                    String(r.district_id) ===
+                                                    String(
+                                                        form.data.district_id,
+                                                    ),
                                             )
                                             .map((r: any) => (
-                                                <SelectItem key={r.id} value={String(r.id)}>
+                                                <SelectItem
+                                                    key={r.id}
+                                                    value={String(r.id)}
+                                                >
                                                     {r.name}
                                                 </SelectItem>
                                             ))}
@@ -376,14 +457,19 @@ setVillages([]);
                     </CardContent>
                 </Card>
 
-                <div className="flex justify-end gap-2">
-                    <Button type="button" variant="outline" onClick={() => window.history.back()}>
+                <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => router.visit(binaan.index().url)}
+                        className="w-full sm:w-auto"
+                    >
                         Batal
                     </Button>
                     <Button
                         type="submit"
                         disabled={form.processing}
-                        className="bg-[#17524A] text-white hover:bg-[#12423b]"
+                        className="w-full bg-[#17524A] text-white hover:bg-[#12423b] sm:w-auto"
                     >
                         <Save className="size-4" />
                         {form.processing ? 'Menyimpan...' : 'Simpan Binaan'}

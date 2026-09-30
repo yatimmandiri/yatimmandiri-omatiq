@@ -37,7 +37,10 @@ export default function ShowPage() {
     const status = binaan.registration_status ?? registration?.status ?? null;
     const initial = String(fullName).charAt(0).toUpperCase();
 
-    const statusConfig: Record<string, { label: string; className: string; icon: any }> = {
+    const statusConfig: Record<
+        string,
+        { label: string; className: string; icon: any }
+    > = {
         verified: {
             label: 'Terverifikasi',
             className: 'bg-emerald-600 text-white hover:bg-emerald-700',
@@ -45,7 +48,8 @@ export default function ShowPage() {
         },
         submitted: {
             label: 'Menunggu Verifikasi',
-            className: 'bg-amber-100 text-amber-800 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-300',
+            className:
+                'bg-amber-100 text-amber-800 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-300',
             icon: Clock3,
         },
         rejected: {
@@ -63,8 +67,15 @@ export default function ShowPage() {
                     <Button
                         variant="outline"
                         size="icon"
+                        aria-label="Kembali"
                         className="size-9 shrink-0 rounded-xl"
-                        onClick={() => window.history.back()}
+                        onClick={() => {
+                            if (window.history.length > 1) {
+                                window.history.back();
+                            } else {
+                                router.visit(binaanRoute.index().url);
+                            }
+                        }}
                     >
                         <ArrowLeft className="size-4" />
                     </Button>
@@ -73,14 +84,20 @@ export default function ShowPage() {
                             Detail Binaan
                         </h1>
                         <p className="text-sm text-muted-foreground">
-                            Data santri binaan — sinkron langsung dari Penyaluran
+                            Data santri binaan — sinkron langsung dari
+                            Penyaluran
                         </p>
                     </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
                     <Button
                         variant="outline"
-                        onClick={() => router.visit(binaanRoute.edit(binaan.student_id ?? binaan.id).url)}
+                        onClick={() =>
+                            router.visit(
+                                binaanRoute.edit(binaan.student_id ?? binaan.id)
+                                    .url,
+                            )
+                        }
                     >
                         <Pencil className="size-4" />
                         Edit Data
@@ -143,16 +160,28 @@ export default function ShowPage() {
             </div>
 
             {/* Hero */}
-            <div className="overflow-hidden rounded-2xl border bg-gradient-to-br from-[#17524A] via-[#1e6a5e] to-[#2a8a7d] p-6 text-white shadow-sm lg:p-8">
-                <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div className="relative overflow-hidden rounded-2xl border bg-gradient-to-br from-[#17524A] via-[#1e6a5e] to-[#2a8a7d] p-6 text-white shadow-sm lg:p-8">
+                <div
+                    aria-hidden
+                    className="pointer-events-none absolute -top-16 -right-16 size-64 rounded-full bg-white/10 blur-3xl"
+                />
+                <div
+                    aria-hidden
+                    className="pointer-events-none absolute -bottom-20 -left-12 size-64 rounded-full bg-[#E5BE1E]/15 blur-3xl"
+                />
+                <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
                     <div className="flex items-center gap-5">
                         <div className="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-white/15 text-xl font-black backdrop-blur lg:size-20 lg:text-2xl">
                             {initial}
                         </div>
                         <div>
-                            <h2 className="text-xl font-bold lg:text-2xl">{fullName}</h2>
+                            <h2 className="text-xl font-bold lg:text-2xl">
+                                {fullName}
+                            </h2>
                             <p className="mt-1 text-sm text-white/80">
-                                {binaan.nickname ? `"${binaan.nickname}" • ` : ''}
+                                {binaan.nickname
+                                    ? `"${binaan.nickname}" • `
+                                    : ''}
                                 {binaan.nik &&
                                 String(binaan.nik).trim() !== '' &&
                                 String(binaan.nik).trim() !== '-'
@@ -188,11 +217,15 @@ export default function ShowPage() {
                                 className={`gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${statusConfig[status]?.className ?? ''}`}
                             >
                                 {(() => {
-                                    const Icon = statusConfig[status]?.icon ?? Clock3;
+                                    const Icon =
+                                        statusConfig[status]?.icon ?? Clock3;
 
                                     return <Icon className="size-3.5" />;
                                 })()}
-                                {statusConfig[status]?.label ?? status} {binaan.olimpiade_name ? `• ${binaan.olimpiade_name}` : ''}
+                                {statusConfig[status]?.label ?? status}{' '}
+                                {binaan.olimpiade_name
+                                    ? `• ${binaan.olimpiade_name}`
+                                    : ''}
                             </Badge>
                         ) : (
                             <Badge
@@ -220,9 +253,12 @@ export default function ShowPage() {
                                 <User className="size-4" />
                             </span>
                             <div>
-                                <CardTitle className="text-base">Biodata Binaan</CardTitle>
+                                <CardTitle className="text-base">
+                                    Biodata Binaan
+                                </CardTitle>
                                 <p className="text-xs text-muted-foreground">
-                                    Sumber: Penyaluran API — edit untuk sinkronisasi 2-arah
+                                    Sumber: Penyaluran API — edit untuk
+                                    sinkronisasi 2-arah
                                 </p>
                             </div>
                         </div>
@@ -236,7 +272,9 @@ export default function ShowPage() {
                                     binaan.nik &&
                                     String(binaan.nik).trim() !== '' &&
                                     String(binaan.nik).trim() !== '-' ? (
-                                        <span className="font-mono font-medium">{binaan.nik}</span>
+                                        <span className="font-mono font-medium">
+                                            {binaan.nik}
+                                        </span>
                                     ) : (
                                         <span className="font-medium text-amber-600 dark:text-amber-400">
                                             Belum diisi di Penyaluran
@@ -244,17 +282,41 @@ export default function ShowPage() {
                                     )
                                 }
                             />
-                            <Detail icon={<GraduationCap className="size-3.5" />} label="NIS" value={binaan.nis} />
-                            <Detail label="Nama Lengkap" value={fullName} highlight />
-                            <Detail label="Nama Panggilan" value={binaan.nickname} />
-                            <Detail label="Jenis Kelamin" value={formatGender(binaan.gender)} />
+                            <Detail
+                                icon={<GraduationCap className="size-3.5" />}
+                                label="NIS"
+                                value={binaan.nis}
+                            />
+                            <Detail
+                                label="Nama Lengkap"
+                                value={fullName}
+                                highlight
+                            />
+                            <Detail
+                                label="Nama Panggilan"
+                                value={binaan.nickname}
+                            />
+                            <Detail
+                                label="Jenis Kelamin"
+                                value={formatGender(binaan.gender)}
+                            />
                             <Detail
                                 label="Tempat, Tanggal Lahir"
                                 value={`${binaan.birth_place ?? '-'} • ${binaan.birth_date ? String(binaan.birth_date).slice(0, 10) : '-'}`}
                             />
-                            <Detail icon={<School className="size-3.5" />} label="Sekolah" value={binaan.school_name} />
-                            <Detail label="Jenjang" value={binaan.school_level} />
-                            <Detail label="Kelas" value={binaan.class ?? binaan.grade} />
+                            <Detail
+                                icon={<School className="size-3.5" />}
+                                label="Sekolah"
+                                value={binaan.school_name}
+                            />
+                            <Detail
+                                label="Jenjang"
+                                value={binaan.school_level}
+                            />
+                            <Detail
+                                label="Kelas"
+                                value={binaan.class ?? binaan.grade}
+                            />
                             <Detail
                                 icon={<MapPin className="size-3.5" />}
                                 label="Alamat"
@@ -274,8 +336,15 @@ export default function ShowPage() {
                                     '-'
                                 }
                             />
-                            <Detail label="Kantor Cabang" value={binaan.kantor_name} />
-                            <Detail label="ID Penyaluran" value={binaan.student_id ?? binaan.id} mono />
+                            <Detail
+                                label="Kantor Cabang"
+                                value={binaan.kantor_name}
+                            />
+                            <Detail
+                                label="ID Penyaluran"
+                                value={binaan.student_id ?? binaan.id}
+                                mono
+                            />
                         </div>
                     </CardContent>
                 </Card>
@@ -284,16 +353,20 @@ export default function ShowPage() {
                 <div className="space-y-6">
                     <Card className="rounded-2xl shadow-sm">
                         <CardHeader className="pb-3">
-                            <CardTitle className="text-base">Status OMATIQ</CardTitle>
+                            <CardTitle className="text-base">
+                                Status OMATIQ
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             {status === 'verified' ? (
                                 <div className="rounded-xl bg-emerald-50 p-4 dark:bg-emerald-950/30">
                                     <div className="flex items-center gap-2 font-semibold text-emerald-800 dark:text-emerald-300">
-                                        <CheckCircle2 className="size-4" /> Terverifikasi
+                                        <CheckCircle2 className="size-4" />{' '}
+                                        Terverifikasi
                                     </div>
                                     <p className="mt-1 text-sm text-emerald-700 dark:text-emerald-400">
-                                        {binaan.olimpiade_name ?? 'OMATIQ'} — pendaftaran binaan telah diverifikasi.
+                                        {binaan.olimpiade_name ?? 'OMATIQ'} —
+                                        pendaftaran binaan telah diverifikasi.
                                     </p>
                                 </div>
                             ) : status === 'rejected' ? (
@@ -302,7 +375,8 @@ export default function ShowPage() {
                                         <XCircle className="size-4" /> Ditolak
                                     </div>
                                     <p className="mt-1 text-sm text-rose-700 dark:text-rose-400">
-                                        Pengajuan ditolak — silakan cek alasan dan daftar ulang.
+                                        Pengajuan ditolak — silakan cek alasan
+                                        dan daftar ulang.
                                     </p>
                                 </div>
                             ) : status === 'submitted' ? (
@@ -316,9 +390,12 @@ export default function ShowPage() {
                                 </div>
                             ) : (
                                 <div className="rounded-xl bg-muted/50 p-4">
-                                    <p className="text-sm font-medium">Belum Terdaftar</p>
+                                    <p className="text-sm font-medium">
+                                        Belum Terdaftar
+                                    </p>
                                     <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                                        Binaan belum didaftarkan ke OMATIQ. Klik “Daftarkan ke OMATIQ” untuk mendaftar.
+                                        Binaan belum didaftarkan ke OMATIQ. Klik
+                                        “Daftarkan ke OMATIQ” untuk mendaftar.
                                     </p>
                                 </div>
                             )}
@@ -328,7 +405,9 @@ export default function ShowPage() {
                                     <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                                         No. Registrasi
                                     </p>
-                                    <p className="mt-1 font-mono text-sm font-bold">{binaan.registration_number}</p>
+                                    <p className="mt-1 font-mono text-sm font-bold">
+                                        {binaan.registration_number}
+                                    </p>
                                 </div>
                             )}
                             {registration?.olimpiade?.name && (
@@ -336,17 +415,22 @@ export default function ShowPage() {
                                     <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                                         Olimpiade
                                     </p>
-                                    <p className="mt-1 text-sm font-semibold">{registration.olimpiade.name}</p>
-                                </div>
-                            )}
-                            {binaan.olimpiade_name && !registration?.olimpiade?.name && (
-                                <div className="rounded-xl border bg-card px-3 py-2.5">
-                                    <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                                        Olimpiade
+                                    <p className="mt-1 text-sm font-semibold">
+                                        {registration.olimpiade.name}
                                     </p>
-                                    <p className="mt-1 text-sm font-semibold">{binaan.olimpiade_name}</p>
                                 </div>
                             )}
+                            {binaan.olimpiade_name &&
+                                !registration?.olimpiade?.name && (
+                                    <div className="rounded-xl border bg-card px-3 py-2.5">
+                                        <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                                            Olimpiade
+                                        </p>
+                                        <p className="mt-1 text-sm font-semibold">
+                                            {binaan.olimpiade_name}
+                                        </p>
+                                    </div>
+                                )}
                         </CardContent>
                     </Card>
 
@@ -356,7 +440,9 @@ export default function ShowPage() {
                                 Butuh bantuan?
                             </p>
                             <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                                Jika NIK belum terisi, lengkapi terlebih dahulu di Penyaluran atau edit data binaan sebelum mendaftar.
+                                Jika NIK belum terisi, lengkapi terlebih dahulu
+                                di Penyaluran atau edit data binaan sebelum
+                                mendaftar.
                             </p>
                         </CardContent>
                     </Card>
@@ -376,16 +462,16 @@ ShowPage.layout = {
 
 function formatGender(g: string | null | undefined): string {
     if (!g) {
-return '-';
-}
+        return '-';
+    }
 
     if (g === 'male' || g === 'L') {
-return 'Laki-laki';
-}
+        return 'Laki-laki';
+    }
 
     if (g === 'female' || g === 'P') {
-return 'Perempuan';
-}
+        return 'Perempuan';
+    }
 
     return g;
 }
@@ -405,13 +491,13 @@ const Detail = ({
     highlight?: boolean;
     mono?: boolean;
 }) => (
-    <div className={className}>
+    <div className={`min-w-0 ${className}`}>
         <p className="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
             {icon}
             {label}
         </p>
         <p
-            className={`mt-1 text-sm leading-relaxed whitespace-pre-wrap ${highlight ? 'font-bold text-foreground' : ''} ${mono ? 'font-mono' : ''}`}
+            className={`mt-1 text-sm leading-relaxed break-words whitespace-pre-wrap ${highlight ? 'font-bold text-foreground' : ''} ${mono ? 'font-mono' : ''}`}
         >
             {value ?? '-'}
         </p>

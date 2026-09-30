@@ -228,6 +228,8 @@ class BinaanController extends Controller
             'current_page' => $page,
             'per_page' => $perPage,
             'total' => $total,
+            'from' => $total > 0 ? ($page - 1) * $perPage + 1 : 0,
+            'to' => $total > 0 ? min($page * $perPage, $total) : 0,
             'last_page' => (int) ceil($total / $perPage),
         ]);
     }

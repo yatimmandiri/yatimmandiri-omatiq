@@ -117,7 +117,10 @@ export const MainNav = ({ items }: any) => {
     };
 
     const isDashboard =
-        currentPath === '/admin' || currentPath === '/admin/dashboard';
+        currentPath === '/admin' ||
+        currentPath === '/admin/dashboard' ||
+        currentPath === '/teacher/dashboard' ||
+        currentPath === '/student/dashboard';
 
     const [prevPath, setPrevPath] = useState(currentPath);
 
@@ -167,6 +170,16 @@ export const MainNav = ({ items }: any) => {
         }));
     };
 
+    const isPathActive = (itemPath: string): boolean => {
+        if (!itemPath || itemPath === '/') {
+            return currentPath === itemPath;
+        }
+
+        return (
+            currentPath === itemPath || currentPath.startsWith(`${itemPath}/`)
+        );
+    };
+
     const renderMenuItems = (
         menuItems: any[],
         level = 0,
@@ -174,10 +187,12 @@ export const MainNav = ({ items }: any) => {
     ) => {
         return menuItems.map((item) => {
             const itemPath = getPathname(item.href || '');
-            const isActive = currentPath === itemPath;
             const hasChildren = !!item.children?.length;
             const menuKey = getMenuKey(item, parents);
             const isOpen = openMenus[menuKey] || false;
+            const activeDescendant =
+                hasChildren && hasExactMatchingChild(item.children || []);
+            const isActive = !hasChildren && isPathActive(itemPath);
 
             return (
                 <SidebarMenuItem
@@ -188,41 +203,50 @@ export const MainNav = ({ items }: any) => {
                         'pl-3': level >= 3,
                     })}
                 >
-                    <div className="flex w-full items-center justify-between">
-                        <SidebarMenuButton
-                            asChild
-                            isActive={isActive}
-                            tooltip={{ children: item.title }}
-                            onClick={(e) => {
-                                if (hasChildren) {
-                                    e.preventDefault();
-                                    toggleMenu(menuKey);
-                                }
-                            }}
-                        >
+                    <SidebarMenuButton
+                        asChild={!hasChildren}
+                        isActive={isActive || activeDescendant}
+                        tooltip={{ children: item.title }}
+                        aria-expanded={hasChildren ? isOpen : undefined}
+                        onClick={(e) => {
+                            if (hasChildren) {
+                                e.preventDefault();
+                                toggleMenu(menuKey);
+                            }
+                        }}
+                        className={cn(
+                            hasChildren && 'cursor-pointer',
+                            hasChildren &&
+                                activeDescendant &&
+                                !isOpen &&
+                                'text-[#17524A] dark:text-emerald-400',
+                        )}
+                    >
+                        {hasChildren ? (
+                            <span className="flex w-full items-center gap-2">
+                                {item.icon && (
+                                    <item.icon className="size-4 shrink-0" />
+                                )}
+                                <span className="flex-1 truncate text-left">
+                                    {item.title}
+                                </span>
+                                {isOpen ? (
+                                    <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
+                                ) : (
+                                    <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                                )}
+                            </span>
+                        ) : (
                             <Link href={item.href || '#'} prefetch>
                                 {item.icon && (
-                                    <item.icon className="mr-2 h-4 w-4" />
+                                    <item.icon className="size-4 shrink-0" />
                                 )}
                                 <span className="flex-1 truncate text-left">
                                     {item.title}
                                 </span>
                             </Link>
-                        </SidebarMenuButton>
-
-                        {hasChildren && (
-                            <button
-                                onClick={() => toggleMenu(menuKey)}
-                                className="focus:outline-none"
-                            >
-                                {isOpen ? (
-                                    <ChevronDown className="h-4 w-4" />
-                                ) : (
-                                    <ChevronRight className="h-4 w-4" />
-                                )}
-                            </button>
                         )}
-                    </div>
+                    </SidebarMenuButton>
 
                     {hasChildren && isOpen && (
                         <SidebarMenu className="mt-1">

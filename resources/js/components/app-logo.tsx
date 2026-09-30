@@ -4,7 +4,6 @@ import { usePage } from '@inertiajs/react';
 
 export default function AppLogo() {
     const { settings } = usePage<any>().props;
-    const year = new Date().getFullYear();
 
     const logoUrl = (() => {
         if (!settings?.logo) {
@@ -37,8 +36,11 @@ export default function AppLogo() {
                 )}
             </div>
             <div className="ml-1 grid flex-1 text-left text-sm">
-                <span className="mb-0.5 truncate leading-tight font-semibold">
-                    OMATIQ {year}
+                <span className="truncate leading-tight font-semibold">
+                    OMATIQ
+                </span>
+                <span className="truncate text-[11px] leading-tight font-normal text-muted-foreground">
+                    Yatim Mandiri
                 </span>
             </div>
         </>

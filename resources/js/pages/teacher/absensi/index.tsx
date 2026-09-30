@@ -40,6 +40,7 @@ import {
     GraduationCap,
     Layers,
     Plus,
+    Save,
     Search,
     Sparkles,
     UserCheck,
@@ -95,24 +96,9 @@ export default function AbsensiPage() {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [searchStudent, setSearchStudent] = useState('');
 
-    // Sample initial teaching sessions
-    const [sessions, setSessions] = useState<SessionHistory[]>([
-        {
-            id: 'sess-1',
-            sanggar_id: sanggars[0]?.id ?? 1,
-            sanggar_name: sanggars[0]?.name ?? 'Sanggar Binaan Utama',
-            date: new Date().toISOString().slice(0, 10),
-            time: '15:30 - 17:00 WIB',
-            module_title: 'Modul Matematika: Pecahan & Desimal',
-            step_topic: 'Pertemuan 4: Operasi Perkalian & Pembagian Pecahan',
-            total_students: students.length || 8,
-            present_count: Math.max((students.length || 8) - 1, 1),
-            sick_count: 1,
-            permitted_count: 0,
-            absent_count: 0,
-            notes: 'Santri sangat antusias mengerjakan latihan soal cerita pecahan.',
-        },
-    ]);
+    // Riwayat sesi mengajar — dimulai kosong, diisi guru via modal.
+    // (Belum ada backend: tersimpan di state lokal selama halaman dibuka.)
+    const [sessions, setSessions] = useState<SessionHistory[]>([]);
 
     // Modal Form State
     const [formData, setFormData] = useState({
@@ -281,6 +267,30 @@ export default function AbsensiPage() {
         );
     }, [sessions, selectedSanggarFilter]);
 
+    // Rata-rata kehadiran riil dari sesi yang sudah dicatat
+    const averageAttendance = useMemo(() => {
+        if (sessions.length === 0) {
+            return null;
+        }
+
+        const totalPresent = sessions.reduce(
+            (sum, s) => sum + s.present_count,
+            0,
+        );
+        const totalStudents = sessions.reduce(
+            (sum, s) => sum + Math.max(s.total_students, 1),
+            0,
+        );
+
+        if (totalStudents === 0) {
+            return null;
+        }
+
+        return Math.round((totalPresent / totalStudents) * 100);
+    }, [sessions]);
+
+    const hasRoster = students.length > 0 && sanggars.length > 0;
+
     return (
         <div className="flex flex-1 flex-col gap-6 p-4 lg:p-6">
             {/* Header Area */}
@@ -326,6 +336,12 @@ export default function AbsensiPage() {
 
                     <Button
                         onClick={handleOpenModal}
+                        disabled={!hasRoster}
+                        title={
+                            hasRoster
+                                ? 'Catat kehadiran sesi baru'
+                                : 'Data sanggar / binaan belum tersedia dari Penyaluran'
+                        }
                         className="bg-[#17524A] text-white hover:bg-[#12423b]"
                     >
                         <Plus className="mr-2 size-4" />
@@ -333,6 +349,19 @@ export default function AbsensiPage() {
                     </Button>
                 </div>
             </div>
+
+            {!hasRoster && (
+                <Card className="flex items-start gap-3 rounded-2xl border-[#E5BE1E]/30 bg-amber-50/60 px-4 py-3 dark:bg-amber-950/20">
+                    <GraduationCap className="mt-0.5 size-4 shrink-0 text-amber-700 dark:text-amber-400" />
+                    <p className="text-xs leading-relaxed text-amber-900 dark:text-amber-200">
+                        <span className="font-semibold">
+                            Data belum tersedia:
+                        </span>{' '}
+                        daftar sanggar / santri binaan belum tersinkron dari
+                        Penyaluran, sehingga sesi absensi belum bisa dicatat.
+                    </p>
+                </Card>
+            )}
 
             {/* Quick Stats Grid */}
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -362,10 +391,14 @@ export default function AbsensiPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-black text-foreground">
-                            95.8%
+                            {averageAttendance === null
+                                ? '—'
+                                : `${averageAttendance}%`}
                         </div>
                         <p className="mt-1 text-xs text-muted-foreground">
-                            Tingkat kehadiran santri
+                            {averageAttendance === null
+                                ? 'Belum ada sesi tercatat'
+                                : 'Tingkat kehadiran santri'}
                         </p>
                     </CardContent>
                 </Card>
@@ -396,10 +429,12 @@ export default function AbsensiPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-black text-foreground">
-                            Aktif
+                            {sessions.length > 0 ? 'Aktif' : 'Belum mulai'}
                         </div>
                         <p className="mt-1 text-xs text-muted-foreground">
-                            Sesuai silabus Penyaluran
+                            {sessions.length > 0
+                                ? 'Sesuai silabus Penyaluran'
+                                : 'Catat sesi pertama untuk memulai'}
                         </p>
                     </CardContent>
                 </Card>
@@ -426,11 +461,18 @@ export default function AbsensiPage() {
                             </p>
                             <Button
                                 onClick={handleOpenModal}
+                                disabled={!hasRoster}
                                 className="mt-4 bg-[#17524A] text-white hover:bg-[#12423b]"
                             >
                                 <Plus className="mr-2 size-4" /> Input Sesi
                                 Pertama
                             </Button>
+                            {!hasRoster && (
+                                <p className="mt-2 max-w-sm text-xs text-muted-foreground">
+                                    Data sanggar / binaan belum tersedia —
+                                    sinkronkan Penyaluran terlebih dahulu.
+                                </p>
+                            )}
                         </Card>
                     ) : (
                         <div className="grid gap-4 md:grid-cols-2">
@@ -536,51 +578,71 @@ export default function AbsensiPage() {
                                 Daftar Santri Binaan
                             </CardTitle>
                             <CardDescription>
-                                Total {students.length} santri binaan aktif di
-                                sanggar Anda.
+                                {students.length === 0
+                                    ? 'Belum ada santri tersinkron dari Penyaluran.'
+                                    : `Total ${students.length} santri binaan aktif di sanggar Anda.`}
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <div className="divide-y">
-                                {students.map((st, idx) => (
-                                    <div
-                                        key={st.student_id || idx}
-                                        className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between"
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <div className="flex size-9 items-center justify-center rounded-full bg-[#17524A]/10 font-bold text-[#17524A] dark:bg-[#17524A]/30 dark:text-emerald-400">
-                                                {st.name.charAt(0)}
-                                            </div>
-                                            <div>
-                                                <div className="font-semibold text-foreground">
-                                                    {st.name}
+                            {students.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed p-8 text-center">
+                                    <GraduationCap className="size-10 text-muted-foreground/40" />
+                                    <p className="mt-3 text-sm font-bold">
+                                        Belum ada data binaan
+                                    </p>
+                                    <p className="mt-1 max-w-sm text-xs text-muted-foreground">
+                                        Sinkronkan data Penyaluran terlebih
+                                        dahulu agar daftar santri muncul di sini
+                                        dan bisa dicatat kehadirannya.
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="divide-y">
+                                    {students.map((st, idx) => (
+                                        <div
+                                            key={st.student_id || idx}
+                                            className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="flex size-9 items-center justify-center rounded-full bg-[#17524A]/10 font-bold text-[#17524A] dark:bg-[#17524A]/30 dark:text-emerald-400">
+                                                    {st.name.charAt(0)}
                                                 </div>
-                                                <div className="text-xs text-muted-foreground">
-                                                    {st.school_name ??
-                                                        'Sekolah Belum Diisi'}{' '}
-                                                    &bull; Kelas{' '}
-                                                    {st.class ?? '-'}
+                                                <div>
+                                                    <div className="font-semibold text-foreground">
+                                                        {st.name}
+                                                    </div>
+                                                    <div className="text-xs text-muted-foreground">
+                                                        {st.school_name ??
+                                                            'Sekolah Belum Diisi'}{' '}
+                                                        &bull; Kelas{' '}
+                                                        {st.class ?? '-'}
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
 
-                                        <div className="flex items-center gap-2">
-                                            <Badge
-                                                variant="secondary"
-                                                className="text-xs font-normal"
-                                            >
-                                                {st.gender === 'female' ||
-                                                st.gender === 'P'
-                                                    ? 'Perempuan'
-                                                    : 'Laki-laki'}
-                                            </Badge>
-                                            <Badge className="bg-emerald-600/15 font-semibold text-emerald-700 hover:bg-emerald-600/20 dark:text-emerald-400">
-                                                100% Hadir
-                                            </Badge>
+                                            <div className="flex items-center gap-2">
+                                                <Badge
+                                                    variant="secondary"
+                                                    className="text-xs font-normal"
+                                                >
+                                                    {st.gender === 'female' ||
+                                                    st.gender === 'P'
+                                                        ? 'Perempuan'
+                                                        : 'Laki-laki'}
+                                                </Badge>
+                                                <Badge
+                                                    variant="outline"
+                                                    className="font-semibold text-muted-foreground"
+                                                >
+                                                    {sessions.length === 0
+                                                        ? 'Belum ada sesi'
+                                                        : 'Terdaftar'}
+                                                </Badge>
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
-                            </div>
+                                    ))}
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
                 </TabsContent>
@@ -925,36 +987,15 @@ export default function AbsensiPage() {
                         <Button
                             type="button"
                             onClick={handleSaveSession}
+                            disabled={modalStudents.length === 0}
                             className="bg-[#17524A] text-white hover:bg-[#12423b]"
                         >
-                            <SaveIcon className="mr-2 size-4" /> Simpan Sesi
-                            Absensi
+                            <Save className="mr-2 size-4" /> Simpan Sesi Absensi
                         </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
         </div>
-    );
-}
-
-function SaveIcon(props: React.SVGProps<SVGSVGElement>) {
-    return (
-        <svg
-            {...props}
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-        >
-            <path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" />
-            <path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7" />
-            <path d="M7 3v4a1 1 0 0 0 1 1h7" />
-        </svg>
     );
 }
 

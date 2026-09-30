@@ -1,17 +1,10 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
 import { ProofModal } from '@/components/ui/proof-modal';
 import { dashboard } from '@/routes/teacher';
 import dataPeserta from '@/routes/teacher/data-peserta';
+import { confirmAction } from '@/utils/sweetalert';
 import { router, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
@@ -46,12 +39,27 @@ export default function ShowPage() {
         !!participant.student?.is_binaan ||
         !!participant.student?.penyaluran_id;
     const [openProof, setOpenProof] = useState(false);
-    const [openDelete, setOpenDelete] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
 
-    const handleDelete = () => {
+    const handleDelete = async () => {
+        const name =
+            participant.student?.full_name ?? participant.nik ?? 'Peserta';
+        const isConfirmed = await confirmAction({
+            title: 'Batalkan Pendaftaran Peserta?',
+            html: `Apakah Anda yakin ingin membatalkan pendaftaran untuk <strong>${name}</strong> (${participant.registration_number})?<br/><br/><span class="text-xs text-muted-foreground">Data binaan tidak akan terhapus dan dapat didaftarkan kembali ke olimpiade jika pendaftaran masih dibuka.</span>`,
+            icon: 'warning',
+            confirmButtonText: 'Ya, Batalkan Pendaftaran',
+            cancelButtonText: 'Kembali',
+            isDanger: true,
+        });
+
+        if (!isConfirmed) {
+            return;
+        }
+
         setIsDeleting(true);
         router.delete(dataPeserta.destroy(participant.id).url, {
+            preserveScroll: true,
             onFinish: () => setIsDeleting(false),
         });
     };
@@ -68,8 +76,15 @@ export default function ShowPage() {
                     <Button
                         variant="outline"
                         size="icon"
+                        aria-label="Kembali"
                         className="size-9 shrink-0 rounded-xl"
-                        onClick={() => window.history.back()}
+                        onClick={() => {
+                            if (window.history.length > 1) {
+                                window.history.back();
+                            } else {
+                                router.visit(dataPeserta.index().url);
+                            }
+                        }}
                     >
                         <ArrowLeft className="size-4" />
                     </Button>
@@ -103,40 +118,58 @@ export default function ShowPage() {
                     )}
                     <Button
                         variant="destructive"
-                        onClick={() => setOpenDelete(true)}
+                        onClick={handleDelete}
+                        disabled={isDeleting}
                         className="gap-2"
                     >
                         <Trash2 className="size-4" />
-                        Batalkan Pendaftaran
+                        {isDeleting ? 'Membatalkan...' : 'Batalkan Pendaftaran'}
                     </Button>
                 </div>
             </div>
 
             {/* Hero */}
-            <div className="overflow-hidden rounded-2xl border bg-gradient-to-br from-[#17524A] via-[#1e6a5e] to-[#2a8a7d] p-6 text-white shadow-sm lg:p-8">
-                <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div className="relative overflow-hidden rounded-2xl border bg-gradient-to-br from-[#17524A] via-[#1e6a5e] to-[#2a8a7d] p-6 text-white shadow-sm lg:p-8">
+                <div
+                    aria-hidden
+                    className="pointer-events-none absolute -top-16 -right-16 size-64 rounded-full bg-white/10 blur-3xl"
+                />
+                <div
+                    aria-hidden
+                    className="pointer-events-none absolute -bottom-20 -left-12 size-64 rounded-full bg-[#E5BE1E]/15 blur-3xl"
+                />
+                <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
                     <div className="flex items-center gap-5">
                         <div className="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-white/15 text-xl font-black backdrop-blur lg:size-20">
                             {initial}
                         </div>
                         <div>
-                            <h2 className="text-xl font-bold lg:text-2xl">{fullName}</h2>
+                            <h2 className="text-xl font-bold lg:text-2xl">
+                                {fullName}
+                            </h2>
                             <p className="mt-1 text-sm text-white/80">
                                 {participant.student?.nik ?? participant.nik} •{' '}
-                                {labels[participant.student?.gender ?? ''] ?? participant.student?.gender ?? '-'}
+                                {labels[participant.student?.gender ?? ''] ??
+                                    participant.student?.gender ??
+                                    '-'}
                             </p>
                             <p className="mt-1 text-xs text-white/70">
-                                {participant.olimpiade?.name ?? '-'} • Event {participant.event_year}
+                                {participant.olimpiade?.name ?? '-'} • Event{' '}
+                                {participant.event_year}
                             </p>
                         </div>
                     </div>
                     <div className="flex flex-col gap-2 lg:items-end">
                         {status === 'verified' ? (
                             <Badge className="gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-bold text-emerald-700">
-                                <CheckCircle2 className="size-3.5" /> Terverifikasi
+                                <CheckCircle2 className="size-3.5" />{' '}
+                                Terverifikasi
                             </Badge>
                         ) : status === 'rejected' ? (
-                            <Badge variant="destructive" className="gap-1.5 rounded-full px-3 py-1.5">
+                            <Badge
+                                variant="destructive"
+                                className="gap-1.5 rounded-full px-3 py-1.5"
+                            >
                                 <XCircle className="size-3.5" /> Ditolak
                             </Badge>
                         ) : (
@@ -151,48 +184,6 @@ export default function ShowPage() {
                 </div>
             </div>
 
-            <Dialog open={openDelete} onOpenChange={setOpenDelete}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Batalkan Pendaftaran Peserta</DialogTitle>
-                        <DialogDescription className="space-y-2 pt-2">
-                            <p>
-                                Apakah Anda yakin ingin membatalkan pendaftaran
-                                untuk{' '}
-                                <strong>
-                                    {participant.student?.full_name ??
-                                        participant.nik}
-                                </strong>{' '}
-                                ({participant.registration_number})?
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                                Data binaan tidak akan terhapus dan dapat
-                                didaftarkan kembali ke olimpiade jika
-                                pendaftaran masih dibuka.
-                            </p>
-                        </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter className="gap-2 sm:gap-0">
-                        <Button
-                            variant="outline"
-                            onClick={() => setOpenDelete(false)}
-                            disabled={isDeleting}
-                        >
-                            Batal
-                        </Button>
-                        <Button
-                            variant="destructive"
-                            onClick={handleDelete}
-                            disabled={isDeleting}
-                        >
-                            {isDeleting
-                                ? 'Membatalkan...'
-                                : 'Batalkan Pendaftaran'}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
             <div className="grid gap-6 lg:grid-cols-[1.35fr_0.85fr]">
                 <Card className="rounded-2xl shadow-sm">
                     <CardHeader className="pb-4">
@@ -201,7 +192,9 @@ export default function ShowPage() {
                                 <User className="size-4" />
                             </span>
                             <div>
-                                <CardTitle className="text-base">Data Peserta</CardTitle>
+                                <CardTitle className="text-base">
+                                    Data Peserta
+                                </CardTitle>
                                 <p className="text-xs text-muted-foreground">
                                     Biodata santri terdaftar
                                 </p>
@@ -212,7 +205,9 @@ export default function ShowPage() {
                         <div className="grid gap-5 sm:grid-cols-2">
                             <Detail
                                 label="NIK"
-                                value={participant.student?.nik ?? participant.nik}
+                                value={
+                                    participant.student?.nik ?? participant.nik
+                                }
                                 mono
                             />
                             <Detail
@@ -228,7 +223,10 @@ export default function ShowPage() {
                             )}
                             <Detail
                                 label="Jenis Kelamin"
-                                value={labels[participant.student?.gender ?? ''] ?? participant.student?.gender}
+                                value={
+                                    labels[participant.student?.gender ?? ''] ??
+                                    participant.student?.gender
+                                }
                             />
                             {isBinaan ? (
                                 <>
@@ -247,7 +245,9 @@ export default function ShowPage() {
                                     />
                                     <Detail
                                         label="Jenjang"
-                                        value={participant.student?.school_level}
+                                        value={
+                                            participant.student?.school_level
+                                        }
                                     />
                                 </>
                             ) : (
@@ -270,26 +270,37 @@ export default function ShowPage() {
                                     <Detail
                                         icon={<MapPin className="size-3.5" />}
                                         label="Provinsi"
-                                        value={participant.student?.province?.name}
+                                        value={
+                                            participant.student?.province?.name
+                                        }
                                     />
                                     <Detail
                                         label="Kota/Kabupaten"
-                                        value={participant.student?.regency?.name}
+                                        value={
+                                            participant.student?.regency?.name
+                                        }
                                     />
                                     <Detail
                                         icon={<Phone className="size-3.5" />}
                                         label="HP Orang Tua/Wali"
-                                        value={participant.student?.parent_phone}
+                                        value={
+                                            participant.student?.parent_phone
+                                        }
                                     />
                                 </>
                             )}
-                            {isBinaan && participant.penyaluran_sanggar_name && (
-                                <Detail
-                                    icon={<Building2 className="size-3.5" />}
-                                    label="Sanggar"
-                                    value={participant.penyaluran_sanggar_name}
-                                />
-                            )}
+                            {isBinaan &&
+                                participant.penyaluran_sanggar_name && (
+                                    <Detail
+                                        icon={
+                                            <Building2 className="size-3.5" />
+                                        }
+                                        label="Sanggar"
+                                        value={
+                                            participant.penyaluran_sanggar_name
+                                        }
+                                    />
+                                )}
                             <Detail
                                 label="Status"
                                 value={
@@ -310,7 +321,9 @@ export default function ShowPage() {
                         <div className="mt-5 grid gap-5 sm:grid-cols-2">
                             <Detail
                                 label="ID Penyaluran"
-                                value={participant.student?.penyaluran_id ?? '-'}
+                                value={
+                                    participant.student?.penyaluran_id ?? '-'
+                                }
                                 mono
                             />
                             {!isBinaan && (
@@ -329,7 +342,9 @@ export default function ShowPage() {
                         <CardHeader className="pb-3">
                             <div className="flex items-center gap-2">
                                 <Award className="size-4 text-[#17524A]" />
-                                <CardTitle className="text-base">Kategori & Dokumen</CardTitle>
+                                <CardTitle className="text-base">
+                                    Kategori & Dokumen
+                                </CardTitle>
                             </div>
                         </CardHeader>
                         <CardContent className="space-y-4">
@@ -348,11 +363,15 @@ export default function ShowPage() {
                                 label="HP Pendamping"
                                 value={participant.student?.mentor_phone}
                             />
-                            {(participant.branch || participant.kantor_name) && (
+                            {(participant.branch ||
+                                participant.kantor_name) && (
                                 <Detail
                                     icon={<Building2 className="size-3.5" />}
                                     label="Kantor Cabang"
-                                    value={participant.branch ?? participant.kantor_name}
+                                    value={
+                                        participant.branch ??
+                                        participant.kantor_name
+                                    }
                                 />
                             )}
                             {participant.payment_proof_url && (
@@ -366,7 +385,8 @@ export default function ShowPage() {
                                         className="mt-2 w-full justify-center gap-2"
                                         onClick={() => setOpenProof(true)}
                                     >
-                                        Lihat Bukti <ExternalLink className="size-4" />
+                                        Lihat Bukti{' '}
+                                        <ExternalLink className="size-4" />
                                     </Button>
                                     <ProofModal
                                         href={participant.payment_proof_url}
@@ -384,12 +404,16 @@ export default function ShowPage() {
 
                     <Card className="rounded-2xl bg-muted/30 shadow-none">
                         <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-bold">Prestasi</CardTitle>
+                            <CardTitle className="text-sm font-bold">
+                                Prestasi
+                            </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                            <p className="text-sm leading-relaxed whitespace-pre-wrap">
                                 {participant.achievements || (
-                                    <span className="text-muted-foreground">Tidak ada catatan prestasi.</span>
+                                    <span className="text-muted-foreground">
+                                        Tidak ada catatan prestasi.
+                                    </span>
                                 )}
                             </p>
                         </CardContent>
@@ -430,13 +454,13 @@ const Detail = ({
     highlight?: boolean;
     mono?: boolean;
 }) => (
-    <div>
+    <div className="min-w-0">
         <p className="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
             {icon}
             {label}
         </p>
         <div
-            className={`mt-1 text-sm leading-6 whitespace-pre-wrap ${highlight ? 'font-bold' : ''} ${mono ? 'font-mono' : ''}`}
+            className={`mt-1 text-sm leading-6 break-words whitespace-pre-wrap ${highlight ? 'font-bold' : ''} ${mono ? 'font-mono' : ''}`}
         >
             {value ?? '-'}
         </div>
