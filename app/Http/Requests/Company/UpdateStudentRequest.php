@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Company;
 
+use App\Models\Company\Student;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -14,7 +15,10 @@ class UpdateStudentRequest extends FormRequest
 
     public function rules(): array
     {
-        $studentId = $this->route('student')?->id;
+        $rawStudent = $this->route('student') ?? $this->route('binaan');
+        $studentId = $rawStudent instanceof Student
+            ? $rawStudent->id
+            : (is_numeric($rawStudent) ? (Student::where('penyaluran_id', $rawStudent)->value('id') ?? Student::where('id', $rawStudent)->value('id') ?? $rawStudent) : null);
 
         return [
             'nik' => ['required', 'string', 'size:16', Rule::unique('students', 'nik')->where('is_binaan', $this->boolean('is_binaan'))->whereNull('deleted_at')->ignore($studentId)],

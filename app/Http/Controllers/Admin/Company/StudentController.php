@@ -270,11 +270,11 @@ class StudentController extends Controller
         ]);
     }
 
-    public function edit(Student $student): Response
+    public function edit(int|string|Student $student): Response
     {
-        $this->authorize('update', $student);
+        $student = $this->service->resolveStudent($student);
 
-        $student = $this->service->resolveFromPenyaluran($student);
+        $this->authorize('update', $student);
 
         return Inertia::render('admin/company/students/edit', [
             'student' => $student->load(['mentor:id,name,email,phone', 'province:id,name', 'regency:id,name', 'district:id,name', 'village:id,name']),
@@ -282,8 +282,10 @@ class StudentController extends Controller
         ]);
     }
 
-    public function update(UpdateStudentRequest $request, Student $student)
+    public function update(UpdateStudentRequest $request, int|string|Student $student)
     {
+        $student = $this->service->resolveStudent($student);
+
         $this->authorize('update', $student);
 
         $payload = $this->service->payloadFromRequest($request, $student);
@@ -333,8 +335,10 @@ class StudentController extends Controller
         return redirect()->route('admin.companies.students.index')->with('success', "Binaan {$name} berhasil dihapus.");
     }
 
-    public function status(Request $request, Student $student)
+    public function status(Request $request, int|string|Student $student)
     {
+        $student = $this->service->resolveStudent($student);
+
         $this->authorize('update', $student);
 
         $newStatus = ! $student->is_active;

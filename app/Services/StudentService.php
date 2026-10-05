@@ -51,6 +51,18 @@ class StudentService
             ($student?->mentor_id ? User::where('id', $student->mentor_id)->value('phone') : null),
         ])));
 
+        // If specific mentor phone candidates are unavailable, fall back to teacher accounts in the system
+        if (empty($phoneCandidates)) {
+            $teacherPhones = User::query()
+                ->whereHas('roles', fn ($q) => $q->where('name', 'Teacher'))
+                ->whereNotNull('phone')
+                ->where('phone', '!=', '')
+                ->limit(5)
+                ->pluck('phone')
+                ->all();
+            $phoneCandidates = array_values(array_unique(array_filter($teacherPhones)));
+        }
+
         if (! $forceFresh) {
             $token = $sessionToken
                 ?? $mentorUser?->penyaluran_token
@@ -116,19 +128,26 @@ class StudentService
             }
         }
 
-        if (empty($studentsRaw)) {
-            return $student;
-        }
-
         try {
-            $found = collect($studentsRaw)->firstWhere(function (array $s) use ($student) {
-                $sid = (int) ($s['student_id'] ?? $s['id'] ?? 0);
-                $nik = $s['nik'] ?? null;
+            $found = null;
+            if (! empty($studentsRaw)) {
+                $found = collect($studentsRaw)->firstWhere(function (array $s) use ($student) {
+                    $sid = (int) ($s['student_id'] ?? $s['id'] ?? 0);
+                    $nik = $s['nik'] ?? null;
 
-                return ($student->penyaluran_id && $sid === (int) $student->penyaluran_id)
-                    || ($nik && $nik === $student->nik)
-                    || (app()->environment('testing') && $sid === (int) $student->id);
-            });
+                    return ($student->penyaluran_id && $sid === (int) $student->penyaluran_id)
+                        || ($nik && $nik === $student->nik)
+                        || (app()->environment('testing') && $sid === (int) $student->id);
+                });
+            }
+
+            if (! $found && $student->penyaluran_id) {
+                try {
+                    $found = $this->penyaluran->student($student->penyaluran_id);
+                } catch (\Throwable $singleE) {
+                    $found = null;
+                }
+            }
 
             if ($found) {
                 $regions = BiodataController::resolveRegionIds($found);
@@ -171,6 +190,121 @@ class StudentService
         }
 
         return $student;
+    }
+
+    /**
+     * Resolve or instantiate a Student model given an ID, Penyaluran ID, or Student instance.
+     * If the student exists only in Penyaluran API, creates or links a local Student record.
+     */
+    public function resolveStudent(int|string|Student $student): Student
+    {
+        if ($student instanceof Student) {
+            return $this->resolveFromPenyaluran($student);
+        }
+
+        $studentId = is_numeric($student) ? (int) $student : $student;
+
+        // 1. Direct match by local ID or Penyaluran ID
+        $local = Student::query()
+            ->where('penyaluran_id', $studentId)
+            ->orWhere('id', $studentId)
+            ->first();
+
+        if ($local) {
+            return $this->resolveFromPenyaluran($local);
+        }
+
+        // 2. Fetch from Penyaluran API by ID
+        $found = null;
+        try {
+            $found = $this->penyaluran->student($studentId);
+        } catch (\Throwable $e) {
+            $found = null;
+        }
+
+        if (! $found) {
+            // Also check allStudents cache / query
+            try {
+                $allStudents = $this->penyaluran->allStudents();
+                $found = collect($allStudents)->firstWhere(fn ($s) => (int) ($s['id'] ?? $s['student_id'] ?? 0) === (int) $studentId);
+            } catch (\Throwable $e) {
+                $found = null;
+            }
+        }
+
+        if (! $found) {
+            abort(404, 'Data santri binaan tidak ditemukan di Penyaluran maupun sistem.');
+        }
+
+        $penyaluranId = (int) ($found['id'] ?? $found['student_id'] ?? $studentId);
+        $cleanNik = ! empty($found['nik']) && $found['nik'] !== '-' && $found['nik'] !== '0' && strlen(trim($found['nik'])) >= 10
+            ? trim($found['nik'])
+            : null;
+
+        // Check if matching NIK already exists in local DB
+        if ($cleanNik) {
+            $localByNik = Student::where('nik', $cleanNik)->first();
+            if ($localByNik) {
+                if ($penyaluranId > 0) {
+                    Student::withTrashed()
+                        ->where('penyaluran_id', $penyaluranId)
+                        ->where('id', '!=', $localByNik->id)
+                        ->update(['penyaluran_id' => null]);
+                    $localByNik->update(['penyaluran_id' => $penyaluranId, 'is_binaan' => true]);
+                }
+
+                return $this->resolveFromPenyaluran($localByNik);
+            }
+        }
+
+        // Create new local student synced from Penyaluran
+        $regions = BiodataController::resolveRegionIds($found);
+        $gender = ($found['gender'] ?? 'male') === 'female' || ($found['gender'] ?? 'male') === 'P' ? 'female' : 'male';
+
+        $mentorId = null;
+        $mentorName = $found['teacher_name'] ?? null;
+        $mentorPhone = $found['teacher_phone'] ?? null;
+
+        if ($mentorPhone) {
+            $mentorUser = User::where('phone', $mentorPhone)->first();
+            if ($mentorUser) {
+                $mentorId = $mentorUser->id;
+                $mentorName = $mentorUser->name;
+            }
+        }
+
+        $attributes = [
+            'penyaluran_id' => $penyaluranId ?: null,
+            'nik' => $cleanNik ?? \Illuminate\Support\Str::random(16),
+            'nis' => $found['nis'] ?? null,
+            'full_name' => $found['name'] ?? $found['full_name'] ?? '-',
+            'nickname' => $found['nickname'] ?? null,
+            'gender' => $gender,
+            'birth_place' => $found['birth_place'] ?? null,
+            'birth_date' => $found['birth_date'] ?? '2015-01-01',
+            'school_name' => $found['school_name'] ?? '-',
+            'school_level' => $found['school_level'] ?? null,
+            'grade' => $found['class'] ?? $found['grade'] ?? '-',
+            'address' => $found['address'] ?? '-',
+            'province_id' => $regions['province_id'] ?? null,
+            'regency_id' => $regions['regency_id'] ?? null,
+            'district_id' => $regions['district_id'] ?? null,
+            'village_id' => $regions['village_id'] ?? null,
+            'parent_phone' => $found['guardian_phone'] ?? $found['parent_phone'] ?? '-',
+            'mentor_id' => $mentorId,
+            'mentor_name' => $mentorName,
+            'mentor_phone' => $mentorPhone,
+            'is_binaan' => true,
+            'is_active' => filter_var($found['status'] ?? true, FILTER_VALIDATE_BOOLEAN),
+        ];
+
+        if ($penyaluranId) {
+            Student::withTrashed()
+                ->where('penyaluran_id', $penyaluranId)
+                ->update(['penyaluran_id' => null]);
+        }
+
+        return Student::create(array_filter($attributes, fn ($v) => $v !== null));
     }
 
     /**
