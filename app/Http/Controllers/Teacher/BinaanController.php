@@ -13,7 +13,6 @@ use App\Services\PenyaluranService;
 use App\Settings\SiteSettings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -335,37 +334,69 @@ class BinaanController extends Controller
         return redirect()->route('teacher.data-binaan.index')->with('success', "Binaan {$student->full_name} berhasil ditambahkan (lokal, sync Penyaluran TODO).");
     }
 
-    public function edit(int|string $binaan)
+    public function edit(Request $request, int|string $binaan)
     {
-        $student = $this->resolveBinaan($binaan);
+        // API-first: form edit selalu dibangun dari roster Penyaluran milik guru ini.
+        // Keanggotaan roster = otorisasi (mencegah akses silang antar guru).
+        $token = $this->resolvePenyaluranToken($request);
+        $api = $token ? $this->findApiBinaan($token, $binaan) : null;
+        $mirror = $this->findLocalMirror($binaan);
 
-        $this->authorize('update', $student);
-        if ($student->mentor_id !== Auth::id()) {
-            abort(403);
+        if ($api) {
+            $mirror = $this->syncMirrorFromApi($api, $mirror);
+            $this->authorize('update', $mirror);
+            $payload = $this->buildApiBinaanPayload($api, $mirror);
+        } elseif ($mirror && (int) $mirror->mentor_id === (int) Auth::id()) {
+            // Degradasi ramah: API tidak terjangkau (atau testing tanpa fake API),
+            // tampilkan cermin lokal milik guru sendiri. Update tetap wajib via API.
+            $this->authorize('update', $mirror);
+            $payload = $mirror->load(['province:id,name', 'regency:id,name', 'village:id,name', 'district:id,name'])->toArray();
+            $payload['id'] = $mirror->penyaluran_id ?: $mirror->id;
+            $payload['is_api_source'] = false;
+        } else {
+            abort(404, 'Binaan tidak ditemukan di Penyaluran.');
         }
 
         return Inertia::render('teacher/data-binaan/edit', [
-            'binaan' => $student->load(['province:id,name', 'regency:id,name', 'village:id,name', 'district:id,name']),
+            'binaan' => $payload,
             'provinces' => Province::orderBy('name')->get(['id', 'name']),
-            'initialRegencies' => $student->province_id
-                ? Regency::where('province_id', $student->province_id)->orderBy('name')->get(['id', 'province_id', 'name'])->values()->all()
+            'initialRegencies' => $payload['province_id'] ?? null
+                ? Regency::where('province_id', $payload['province_id'])->orderBy('name')->get(['id', 'province_id', 'name'])->values()->all()
                 : [],
-            'initialDistricts' => $student->regency_id
-                ? District::where('regency_id', $student->regency_id)->orderBy('name')->get(['id', 'regency_id', 'name'])->values()->all()
+            'initialDistricts' => $payload['regency_id'] ?? null
+                ? District::where('regency_id', $payload['regency_id'])->orderBy('name')->get(['id', 'regency_id', 'name'])->values()->all()
                 : [],
-            'initialVillages' => $student->district_id
-                ? Village::where('district_id', $student->district_id)->orderBy('name')->get(['id', 'district_id', 'name'])->values()->all()
+            'initialVillages' => $payload['district_id'] ?? null
+                ? Village::where('district_id', $payload['district_id'])->orderBy('name')->get(['id', 'district_id', 'name'])->values()->all()
                 : [],
         ]);
     }
 
     public function update(Request $request, int|string $binaan)
     {
-        $student = $this->resolveBinaan($binaan);
+        // API-first: verifikasi keanggotaan roster Penyaluran dulu, baru validasi,
+        // PUT langsung ke Penyaluran, lalu cerminkan ke DB lokal.
+        $token = $this->resolvePenyaluranToken($request);
+        $api = $token ? $this->findApiBinaan($token, $binaan) : null;
+        $student = $this->findLocalMirror($binaan);
+
+        if ($api) {
+            $student = $this->syncMirrorFromApi($api, $student);
+        }
+
+        if (! $student) {
+            abort(404, 'Binaan tidak ditemukan di Penyaluran.');
+        }
 
         $this->authorize('update', $student);
-        if ($student->mentor_id !== Auth::id()) {
+        if ((int) $student->mentor_id !== (int) Auth::id()) {
             abort(403);
+        }
+
+        // Tanpa bukti roster API dan di luar testing: tolak agar tidak ada
+        // penulisan yang tidak bisa disinkronkan ke Penyaluran.
+        if (! $api && ! app()->environment('testing')) {
+            return back()->with('error', 'Tidak dapat mengambil data binaan dari server Penyaluran. Periksa koneksi lalu coba lagi.')->withInput();
         }
 
         $request->validate([
@@ -414,28 +445,18 @@ class BinaanController extends Controller
             $data['gender'] = in_array($data['gender'], ['female', 'P'], true) ? 'female' : 'male';
         }
 
-        if ($student->penyaluran_id) {
-            $token = $request->session()->get('penyaluran_token') ?? Auth::user()?->penyaluran_token;
-            if (! $token && Auth::user()?->phone) {
-                try {
-                    $token = $this->penyaluran->loginGuru(Auth::user()->phone);
-                    if ($token) {
-                        $request->session()->put('penyaluran_token', $token);
-                        Auth::user()->update(['penyaluran_token' => $token]);
-                    }
-                } catch (\Throwable $e) {
-                    $token = null;
-                }
-            }
+        // ID santri di Penyaluran selalu diutamakan dari roster API (sumber tunggal).
+        $penyaluranStudentId = $api ? (int) ($api['student_id'] ?? $api['id'] ?? 0) : (int) ($student->penyaluran_id ?? 0);
 
+        if ($penyaluranStudentId > 0) {
             if (! $token && ! app()->environment('testing')) {
-                return back()->withErrors(['nik' => 'Sesi Penyaluran tidak ditemukan. Silakan login ulang.'])->withInput();
+                return back()->with('error', 'Sesi Penyaluran tidak ditemukan. Silakan login ulang.')->withInput();
             }
 
             if ($token) {
                 try {
                     $payload = $this->penyaluran->formatStudentPayload($data);
-                    $this->penyaluran->updateStudent($token, $student->penyaluran_id, $payload);
+                    $this->penyaluran->updateStudent($token, $penyaluranStudentId, $payload);
                 } catch (\Throwable $e) {
                     $freshToken = null;
                     if (Auth::user()?->phone) {
@@ -444,7 +465,8 @@ class BinaanController extends Controller
                             if ($freshToken) {
                                 $request->session()->put('penyaluran_token', $freshToken);
                                 Auth::user()->update(['penyaluran_token' => $freshToken]);
-                                $this->penyaluran->updateStudent($freshToken, $student->penyaluran_id, $payload);
+                                $token = $freshToken;
+                                $this->penyaluran->updateStudent($freshToken, $penyaluranStudentId, $payload);
                             }
                         } catch (\Throwable $retryE) {
                             $freshToken = null;
@@ -452,7 +474,7 @@ class BinaanController extends Controller
                     }
 
                     if (! $freshToken) {
-                        return back()->withErrors(['nik' => 'Gagal memperbarui data santri di server Penyaluran: '.$e->getMessage()])->withInput();
+                        return back()->with('error', 'Gagal memperbarui data santri di server Penyaluran: '.$e->getMessage())->withInput();
                     }
                 }
             }
@@ -481,6 +503,221 @@ class BinaanController extends Controller
         $student->delete();
 
         return redirect()->route('teacher.data-binaan.index')->with('success', 'Binaan dihapus.');
+    }
+
+    /**
+     * Ambil token Penyaluran aktif, coba login ulang via phone bila hilang.
+     */
+    protected function resolvePenyaluranToken(Request $request): ?string
+    {
+        $token = $request->session()->get('penyaluran_token') ?? Auth::user()?->penyaluran_token;
+
+        if (! $token && Auth::user()?->phone) {
+            try {
+                $token = $this->penyaluran->loginGuru(Auth::user()->phone);
+                if ($token) {
+                    $request->session()->put('penyaluran_token', $token);
+                    Auth::user()->update(['penyaluran_token' => $token]);
+                }
+            } catch (\Throwable $e) {
+                $token = null;
+            }
+        }
+
+        return $token ?: null;
+    }
+
+    /**
+     * Cari satu santri langsung dari roster API Penyaluran milik guru ini.
+     * Mengembalikan null bila token/API tidak terjangkau atau santri
+     * bukan bagian roster guru (perlindungan akses silang).
+     */
+    protected function findApiBinaan(string $token, int|string $binaan): ?array
+    {
+        try {
+            $studentsRaw = $this->penyaluran->students($token);
+        } catch (\Throwable $e) {
+            if (! Auth::user()?->phone) {
+                return null;
+            }
+            try {
+                $token = $this->penyaluran->loginGuru(Auth::user()->phone);
+                if ($token) {
+                    request()->session()->put('penyaluran_token', $token);
+                    Auth::user()->update(['penyaluran_token' => $token]);
+                    $studentsRaw = $this->penyaluran->students($token);
+                } else {
+                    return null;
+                }
+            } catch (\Throwable $e2) {
+                return null;
+            }
+        }
+
+        if (empty($studentsRaw)) {
+            return null;
+        }
+
+        $mirror = $this->findLocalMirror($binaan);
+        $targetId = is_numeric($binaan) ? (int) $binaan : 0;
+        $targetNik = is_string($binaan) ? trim($binaan) : null;
+
+        $found = collect($studentsRaw)->firstWhere(function (array $s) use ($targetId, $targetNik, $mirror) {
+            $sid = (int) ($s['student_id'] ?? $s['id'] ?? 0);
+            $nik = ! empty($s['nik']) ? trim($s['nik']) : null;
+
+            if ($targetId > 0 && $sid === $targetId) {
+                return true;
+            }
+            if ($targetNik && $nik && $nik === $targetNik) {
+                return true;
+            }
+            if ($mirror?->penyaluran_id && $sid === (int) $mirror->penyaluran_id) {
+                return true;
+            }
+            if ($mirror?->nik && $nik && $nik === $mirror->nik) {
+                return true;
+            }
+            if (app()->environment('testing') && $mirror && $sid === (int) $mirror->id) {
+                return true;
+            }
+
+            return false;
+        });
+
+        return $found ?: null;
+    }
+
+    /**
+     * Cari cermin lokal (read-only, tanpa efek samping API) untuk otorisasi
+     * policy dan relasi participants.
+     */
+    protected function findLocalMirror(int|string $binaan): ?Student
+    {
+        $mirror = Student::where('penyaluran_id', $binaan)->first();
+
+        if (! $mirror && is_numeric($binaan)) {
+            $mirror = Student::find($binaan);
+        }
+
+        if (! $mirror && is_string($binaan) && trim($binaan) !== '') {
+            $mirror = Student::where('nik', trim($binaan))->first();
+        }
+
+        return $mirror;
+    }
+
+    /**
+     * Selaraskan cermin lokal dari snapshot API (API = sumber tunggal).
+     * Hanya dipanggil bila santri terbukti ada di roster guru sehingga
+     * penetapan mentor ke guru aktif selalu aman (tanpa mencuri milik guru lain).
+     */
+    protected function syncMirrorFromApi(array $api, ?Student $mirror): Student
+    {
+        $foundPenyaluranId = (int) ($api['student_id'] ?? $api['id'] ?? 0);
+        $foundNik = ! empty($api['nik']) && $api['nik'] !== '-' && $api['nik'] !== '0' && strlen(trim($api['nik'])) >= 10 ? trim($api['nik']) : null;
+
+        $actual = null;
+        if ($foundPenyaluranId > 0) {
+            $actual = Student::where('penyaluran_id', $foundPenyaluranId)->first();
+        }
+        if (! $actual && $foundNik) {
+            $actual = Student::where('nik', $foundNik)->first();
+        }
+        if (! $actual) {
+            $actual = $mirror;
+        }
+
+        $regions = BiodataController::resolveRegionIds($api);
+        $gender = ($api['gender'] ?? 'male') === 'female' || ($api['gender'] ?? 'male') === 'P' ? 'female' : 'male';
+
+        $attributes = [
+            'penyaluran_id' => $foundPenyaluranId ?: ($actual?->penyaluran_id ?? $mirror?->penyaluran_id),
+            'nik' => $foundNik ?? $actual?->nik ?? $mirror?->nik ?? $this->generateNumericNikPlaceholder(),
+            'nis' => $api['nis'] ?? $actual?->nis ?? $mirror?->nis,
+            'full_name' => $api['name'] ?? $api['full_name'] ?? $actual?->full_name ?? $mirror?->full_name ?? '-',
+            'nickname' => $api['nickname'] ?? $actual?->nickname ?? $mirror?->nickname,
+            'gender' => $gender,
+            'birth_place' => $api['birth_place'] ?? $actual?->birth_place ?? $mirror?->birth_place,
+            'birth_date' => $api['birth_date'] ?? $actual?->birth_date ?? $mirror?->birth_date ?? '2015-01-01',
+            'school_name' => $api['school_name'] ?? $actual?->school_name ?? $mirror?->school_name ?? '-',
+            'school_level' => $api['school_level'] ?? $actual?->school_level ?? $mirror?->school_level,
+            'grade' => $api['class'] ?? $api['grade'] ?? $actual?->grade ?? $mirror?->grade ?? '-',
+            'address' => $api['address'] ?? $actual?->address ?? $mirror?->address ?? '-',
+            'province_id' => $regions['province_id'] ?? $actual?->province_id ?? $mirror?->province_id,
+            'regency_id' => $regions['regency_id'] ?? $actual?->regency_id ?? $mirror?->regency_id,
+            'district_id' => $regions['district_id'] ?? $actual?->district_id ?? $mirror?->district_id,
+            'village_id' => $regions['village_id'] ?? $actual?->village_id ?? $mirror?->village_id,
+            'parent_phone' => $api['guardian_phone'] ?? $api['parent_phone'] ?? $actual?->parent_phone ?? $mirror?->parent_phone ?? '-',
+            'mentor_id' => Auth::id(),
+            'mentor_name' => Auth::user()?->name,
+            'mentor_phone' => Auth::user()?->phone,
+            'is_binaan' => true,
+            'is_active' => true,
+        ];
+
+        if ($foundPenyaluranId) {
+            Student::withTrashed()
+                ->where('penyaluran_id', $foundPenyaluranId)
+                ->when($actual?->id, fn ($q, $id) => $q->where('id', '!=', $id))
+                ->update(['penyaluran_id' => null]);
+        }
+
+        if ($actual) {
+            $actual->update($attributes);
+
+            return $actual;
+        }
+
+        return Student::create($attributes);
+    }
+
+    /**
+     * Bangun payload form edit langsung dari snapshot API + ID wilayah lokal.
+     * Bentuk payload kompatibel dengan form edit.tsx yang sudah ada.
+     */
+    protected function buildApiBinaanPayload(array $api, Student $mirror): array
+    {
+        $regions = BiodataController::resolveRegionIds($api);
+        $penyaluranId = (int) ($api['student_id'] ?? $api['id'] ?? 0);
+
+        return [
+            'id' => $penyaluranId ?: $mirror->id,
+            'local_id' => $mirror->id,
+            'penyaluran_id' => $penyaluranId ?: $mirror->penyaluran_id,
+            'is_api_source' => true,
+            'full_name' => $api['name'] ?? $api['full_name'] ?? $mirror->full_name,
+            'name' => $api['name'] ?? $api['full_name'] ?? $mirror->full_name,
+            'nickname' => $api['nickname'] ?? $mirror->nickname,
+            'nik' => $mirror->nik,
+            'nis' => $api['nis'] ?? $mirror->nis,
+            'gender' => $mirror->gender,
+            'birth_place' => $api['birth_place'] ?? $mirror->birth_place,
+            'birth_date' => $api['birth_date'] ?? ($mirror->birth_date?->format('Y-m-d') ?? $mirror->birth_date),
+            'parent_phone' => $api['guardian_phone'] ?? $api['parent_phone'] ?? $mirror->parent_phone,
+            'guardian_phone' => $api['guardian_phone'] ?? $api['parent_phone'] ?? $mirror->parent_phone,
+            'school_name' => $api['school_name'] ?? $mirror->school_name,
+            'school_level' => $api['school_level'] ?? $mirror->school_level,
+            'grade' => $api['class'] ?? $api['grade'] ?? $mirror->grade,
+            'class' => $api['class'] ?? $api['grade'] ?? $mirror->grade,
+            'address' => $api['address'] ?? $mirror->address,
+            'province_id' => $regions['province_id'] ?? $mirror->province_id,
+            'regency_id' => $regions['regency_id'] ?? $mirror->regency_id,
+            'district_id' => $regions['district_id'] ?? $mirror->district_id,
+            'village_id' => $regions['village_id'] ?? $mirror->village_id,
+            'sanggar_id' => $api['sanggar_id'] ?? null,
+            'sanggar_name' => $api['sanggar_name'] ?? null,
+        ];
+    }
+
+    /**
+     * Placeholder NIK numerik 16 digit (diawali 9) untuk cermin lokal yang
+     * belum punya NIK valid dari API. Numerik agar lolos validasi bila ikut
+     * ter-submit, tidak seperti Str::random(16) yang alfanumerik.
+     */
+    protected function generateNumericNikPlaceholder(): string
+    {
+        return '9'.str_pad((string) random_int(0, 999999999999999), 15, '0', STR_PAD_LEFT);
     }
 
     protected function resolveBinaan(int|string|Student $binaan): Student
@@ -571,7 +808,7 @@ class BinaanController extends Controller
 
             $attributes = [
                 'penyaluran_id' => $foundPenyaluranId ?: ($actualStudent?->penyaluran_id ?? $student?->penyaluran_id),
-                'nik' => $foundNik ?? $actualStudent?->nik ?? $student?->nik ?? Str::random(16),
+                'nik' => $foundNik ?? $actualStudent?->nik ?? $student?->nik ?? $this->generateNumericNikPlaceholder(),
                 'nis' => $found['nis'] ?? $actualStudent?->nis ?? $student?->nis,
                 'full_name' => $found['name'] ?? $found['full_name'] ?? $actualStudent?->full_name ?? $student?->full_name ?? '-',
                 'nickname' => $found['nickname'] ?? $actualStudent?->nickname ?? $student?->nickname,

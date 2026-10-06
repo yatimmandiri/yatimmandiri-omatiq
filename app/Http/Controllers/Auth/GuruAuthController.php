@@ -65,7 +65,9 @@ class GuruAuthController extends Controller
         }
 
         try {
-            $profile = $this->penyaluran->me($token);
+            // Selalu ambil fresh dari API Penyaluran saat login (bypass cache 300s)
+            // agar data teacher, sanggar, dan students selalu sinkron terbaru.
+            $profile = $this->penyaluran->me($token, force: true);
         } catch (\Throwable $e) {
             return back()->withErrors(['phone' => $e->getMessage() ?: 'Gagal mengambil data profil guru dari server Penyaluran.'])->withInput();
         }
@@ -264,6 +266,24 @@ class GuruAuthController extends Controller
         $request->session()->put('penyaluran_sanggars', $profile['sanggars'] ?? []);
         $request->session()->put('penyaluran_students', $profile['students'] ?? []);
 
+        // Hangatkan roster fresh langsung dari API Penyaluran (sanggar + students
+        // ternormalisasi) agar dashboard & list guru langsung membaca data API
+        // terbaru, bukan sisa cache lama. Kegagalan di sini tidak menggagalkan login.
+        try {
+            $freshSanggars = $this->penyaluran->sanggars($token);
+            if (! empty($freshSanggars)) {
+                $request->session()->put('penyaluran_sanggars', $freshSanggars);
+            }
+        } catch (\Throwable $e) {
+        }
+        try {
+            $freshStudents = $this->penyaluran->students($token, null, force: true);
+            if (! empty($freshStudents)) {
+                $request->session()->put('penyaluran_students', $freshStudents);
+            }
+        } catch (\Throwable $e) {
+        }
+
         if ($user->needsTeacherProfileCompletion()) {
             return redirect()->route('teacher.profile.edit');
         }
@@ -380,7 +400,8 @@ class GuruAuthController extends Controller
                 $request->session()->put('penyaluran_id', $penyaluranId);
             }
             try {
-                $profile = app(PenyaluranService::class)->me($token);
+                $penyaluranService = app(PenyaluranService::class);
+                $profile = $penyaluranService->me($token, force: true);
                 $teacherData = $profile['teacher'] ?? $profile['data']['teacher'] ?? $profile;
                 $teacherId = $teacherData['teacher_id'] ?? $teacherData['id'] ?? $profile['teacher_id'] ?? $profile['guru_id'] ?? $profile['id'] ?? $penyaluranId ?? null;
                 $kantorId = $teacherData['kantor_id'] ?? $teacherData['branch_id'] ?? $profile['kantor_id'] ?? $profile['branch_id'] ?? ($teacherData['kantor']['id'] ?? null) ?? ($profile['kantor']['id'] ?? null) ?? ($profile['sanggars'][0]['kantor_id'] ?? null) ?? ($profile['sanggars'][0]['kantor']['id'] ?? null) ?? null;
@@ -399,6 +420,21 @@ class GuruAuthController extends Controller
                 $request->session()->put('penyaluran_me', $profile);
                 $request->session()->put('penyaluran_sanggars', $profile['sanggars'] ?? []);
                 $request->session()->put('penyaluran_students', $profile['students'] ?? []);
+
+                try {
+                    $freshSanggars = $penyaluranService->sanggars($token);
+                    if (! empty($freshSanggars)) {
+                        $request->session()->put('penyaluran_sanggars', $freshSanggars);
+                    }
+                } catch (\Throwable $warmE) {
+                }
+                try {
+                    $freshStudents = $penyaluranService->students($token, null, force: true);
+                    if (! empty($freshStudents)) {
+                        $request->session()->put('penyaluran_students', $freshStudents);
+                    }
+                } catch (\Throwable $warmE) {
+                }
             } catch (\Throwable $e) {
             }
         }
