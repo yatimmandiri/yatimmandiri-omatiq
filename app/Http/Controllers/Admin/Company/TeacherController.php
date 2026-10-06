@@ -157,7 +157,7 @@ class TeacherController extends Controller
             'penyaluran_code' => $found['code'] ?? $found['penyaluran_code'] ?? $local?->penyaluran_code ?? null,
             'name' => $found['name'] ?? $local?->name ?? 'Guru',
             'email' => (! empty($local?->email) && ! str_ends_with($local->email, '@penyaluran.local')) ? $local->email : ($found['email'] ?? $local?->email ?? '-'),
-            'phone' => $found['phone'] ?: ($local?->phone ?? null),
+            'phone' => $found['phone'] ?? ($local?->phone ?? null),
             'kantor_id' => $found['kantor_id'] ?? $local?->kantor_id ?? null,
             'kantor_name' => $found['kantor_name'] ?? $found['branch'] ?? $local?->branch ?? '-',
             'branch' => $found['branch'] ?? $found['kantor_name'] ?? $local?->branch ?? '-',
