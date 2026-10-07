@@ -11,6 +11,7 @@ use App\Models\Company\Student;
 use App\Models\Core\Region\Province;
 use App\Models\Core\Region\Village;
 use App\Models\Core\User;
+use App\Services\PenyaluranService;
 use App\Settings\SiteSettings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -59,6 +60,98 @@ class ParticipantRegistrationController extends Controller
                 'keywords' => 'pendaftaran OMATIQ, daftar olimpiade, peserta OMATIQ',
             ],
         ]);
+    }
+
+    public function checkNik(Request $request)
+    {
+        $request->validate([
+            'nik' => ['required', 'string', 'size:16', 'regex:/^[0-9]{16}$/'],
+        ], [
+            'nik.size' => 'NIK harus 16 digit angka.',
+            'nik.regex' => 'NIK harus berupa 16 digit angka.',
+        ]);
+
+        $nik = trim($request->input('nik'));
+        $binaanInfo = $this->findBinaanByNik($nik);
+
+        if ($binaanInfo) {
+            $sanggarName = $binaanInfo['sanggar_name'] ?? 'Sanggar Yatim Mandiri';
+            $teacherName = $binaanInfo['teacher_name'] ?? 'Guru Pembina';
+
+            return response()->json([
+                'is_binaan' => true,
+                'name' => $binaanInfo['name'] ?? null,
+                'sanggar_name' => $sanggarName,
+                'teacher_name' => $teacherName,
+                'message' => "Anda sudah terdaftar di sanggar {$sanggarName} dan guru {$teacherName}. Silahkan daftar melalui guru anda.",
+            ]);
+        }
+
+        return response()->json([
+            'is_binaan' => false,
+        ]);
+    }
+
+    protected function findBinaanByNik(string $nik): ?array
+    {
+        // 1. Cek DB lokal
+        $localStudent = Student::query()
+            ->where('nik', $nik)
+            ->where('is_binaan', true)
+            ->first();
+
+        if ($localStudent) {
+            $sanggarName = Participant::where('student_id', $localStudent->id)
+                ->whereNotNull('penyaluran_sanggar_name')
+                ->latest()
+                ->value('penyaluran_sanggar_name')
+                ?? 'Yatim Mandiri';
+
+            $teacherName = $localStudent->mentor_name
+                ?? $localStudent->mentor?->name
+                ?? 'Guru Pembina';
+
+            return [
+                'name' => $localStudent->full_name,
+                'sanggar_name' => $sanggarName,
+                'teacher_name' => $teacherName,
+            ];
+        }
+
+        // 2. Cek API Penyaluran
+        try {
+            $penyaluran = app(PenyaluranService::class);
+            $cachedIndex = Cache::get('penyaluran:all_students_index');
+
+            if (is_array($cachedIndex) && isset($cachedIndex['byNik'][$nik])) {
+                $apiStudent = $cachedIndex['byNik'][$nik];
+
+                return [
+                    'name' => $apiStudent['name'] ?? null,
+                    'sanggar_name' => $apiStudent['sanggar_name'] ?? 'Sanggar Yatim Mandiri',
+                    'teacher_name' => $apiStudent['teacher_name'] ?? 'Guru Pembina',
+                ];
+            }
+
+            $allStudents = $penyaluran->allStudents();
+            $foundApi = collect($allStudents)->firstWhere(function ($s) use ($nik) {
+                $sNik = ! empty($s['nik']) ? trim((string) $s['nik']) : null;
+
+                return $sNik && $sNik === $nik;
+            });
+
+            if ($foundApi) {
+                return [
+                    'name' => $foundApi['name'] ?? $foundApi['full_name'] ?? null,
+                    'sanggar_name' => $foundApi['sanggar_name'] ?? 'Sanggar Yatim Mandiri',
+                    'teacher_name' => $foundApi['teacher_name'] ?? $foundApi['guru_name'] ?? 'Guru Pembina',
+                ];
+            }
+        } catch (\Throwable $e) {
+            // Silently swallow error to prevent blocking on network glitch
+        }
+
+        return null;
     }
 
     public function villages(Request $request)
