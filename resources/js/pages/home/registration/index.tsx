@@ -18,6 +18,8 @@ import {
     Check,
     CheckCircle2,
     ClipboardCheck,
+    Copy,
+    CreditCard,
     FileUp,
     HeartHandshake,
     RotateCcw,
@@ -26,7 +28,7 @@ import {
     Trophy,
     UserRound,
 } from 'lucide-react';
-import { confirmAction } from '@/utils/sweetalert';
+import brandSwal, { confirmAction } from '@/utils/sweetalert';
 import type { FormEvent, ReactNode } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
@@ -53,6 +55,33 @@ type RegistrationProps = {
 };
 
 const DRAFT_STORAGE_KEY = 'omatiq_registration_draft_v1';
+
+const BANK_ACCOUNTS = [
+    {
+        key: 'bsi',
+        name: 'Bank Syariah Indonesia',
+        code: 'BSI',
+        number: '7106057747',
+        holder: 'Yayasan Yatim Mandiri',
+        badgeBg: 'bg-emerald-500/10 text-emerald-700 border-emerald-500/20 dark:bg-emerald-500/20 dark:text-emerald-300',
+    },
+    {
+        key: 'mandiri',
+        name: 'Bank Mandiri',
+        code: 'MANDIRI',
+        number: '1300034000177',
+        holder: 'Yayasan Yatim Mandiri',
+        badgeBg: 'bg-amber-500/10 text-amber-700 border-amber-500/20 dark:bg-amber-500/20 dark:text-amber-300',
+    },
+    {
+        key: 'bri',
+        name: 'Bank Rakyat Indonesia',
+        code: 'BRI',
+        number: '009601004532307',
+        holder: 'Yayasan Yatim Mandiri',
+        badgeBg: 'bg-blue-500/10 text-blue-700 border-blue-500/20 dark:bg-blue-500/20 dark:text-blue-300',
+    },
+];
 
 function getStoredDraft(): {
     currentStep?: number;
@@ -175,6 +204,66 @@ export default function RegistrationPage() {
     });
 
     const [localErrors, setLocalErrors] = useState<RegistrationErrors>({});
+    const [checkingNik, setCheckingNik] = useState(false);
+    const [copiedAccount, setCopiedAccount] = useState<string | null>(null);
+
+    const handleCopyAccount = (number: string, bankKey: string) => {
+        if (typeof window !== 'undefined' && navigator.clipboard) {
+            navigator.clipboard.writeText(number);
+            setCopiedAccount(bankKey);
+            setTimeout(() => setCopiedAccount(null), 2500);
+        }
+    };
+
+    const checkNikBinaan = async (nikVal: string) => {
+        if (nikVal.length !== 16 || checkingNik) {
+            return false;
+        }
+
+        setCheckingNik(true);
+        try {
+            const csrfToken =
+                (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '';
+            const res = await fetch('/pendaftaran/check-nik', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                },
+                body: JSON.stringify({ nik: nikVal }),
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                if (data.is_binaan) {
+                    const sanggarName = data.sanggar_name || 'Sanggar Yatim Mandiri';
+                    const teacherName = data.teacher_name || 'Guru Pembina';
+                    const msg = `Anda sudah terdaftar di sanggar ${sanggarName} dan guru ${teacherName}. Silahkan daftar melalui guru anda.`;
+
+                    await brandSwal.fire({
+                        icon: 'warning',
+                        title: 'Santri Binaan Terdeteksi',
+                        html: `Anda sudah terdaftar di <strong>${sanggarName}</strong> dan guru <strong>${teacherName}</strong>. Silahkan daftar melalui guru anda.`,
+                        confirmButtonText: 'Mengerti',
+                    });
+
+                    setLocalErrors((prev) => ({
+                        ...prev,
+                        nik: msg,
+                    }));
+
+                    return true;
+                }
+            }
+        } catch (e) {
+            // Silently ignore network glitch
+        } finally {
+            setCheckingNik(false);
+        }
+
+        return false;
+    };
 
     const [regencies, setRegencies] = useState<Option[]>([]);
     const [districts, setDistricts] = useState<Option[]>([]);
@@ -759,14 +848,20 @@ export default function RegistrationPage() {
                                     >
                                         <Input
                                             value={form.data.nik}
-                                            onChange={(event) =>
-                                                setData(
-                                                    'nik',
-                                                    event.target.value
-                                                        .replace(/\D/g, '')
-                                                        .slice(0, 16),
-                                                )
-                                            }
+                                            onChange={(event) => {
+                                                const val = event.target.value
+                                                    .replace(/\D/g, '')
+                                                    .slice(0, 16);
+                                                setData('nik', val);
+                                                if (val.length === 16) {
+                                                    checkNikBinaan(val);
+                                                }
+                                            }}
+                                            onBlur={() => {
+                                                if (form.data.nik && form.data.nik.length === 16) {
+                                                    checkNikBinaan(form.data.nik);
+                                                }
+                                            }}
                                             maxLength={16}
                                             placeholder="16 digit NIK"
                                         />
@@ -1165,8 +1260,87 @@ export default function RegistrationPage() {
                             <FormSection
                                 icon={FileUp}
                                 title="C. Dokumen Pendukung"
-                                description="Lampirkan bukti transfer pendaftaran dan kartu pelajar."
+                                description="Silakan transfer biaya pendaftaran ke salah satu rekening resmi di bawah ini, lalu unggah bukti transfer dan kartu pelajar."
                             >
+                                <div className="mb-6 rounded-3xl border border-slate-200 bg-[#F8FAFC] p-5 dark:border-slate-700 dark:bg-slate-800/80">
+                                    <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                                        <div className="flex items-center gap-2.5">
+                                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#17524A] text-white shadow-md shadow-[#17524A]/20">
+                                                <CreditCard className="h-5 w-5" />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-base font-black text-[#1E293B] dark:text-white">
+                                                    Rekening Resmi Pendaftaran
+                                                </h3>
+                                                <p className="text-xs font-semibold text-[#64748B] dark:text-slate-400">
+                                                    Transfer tepat & simpan struk/bukti bayar untuk di-upload
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <span className="mt-2 text-xs font-black text-[#17524A] sm:mt-0 dark:text-[#56CCF2]">
+                                            a.n. Yayasan Yatim Mandiri
+                                        </span>
+                                    </div>
+
+                                    <div className="grid gap-3 sm:grid-cols-3">
+                                        {BANK_ACCOUNTS.map((bank) => {
+                                            const isCopied = copiedAccount === bank.key;
+                                            return (
+                                                <div
+                                                    key={bank.key}
+                                                    className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md dark:border-slate-700 dark:bg-slate-900"
+                                                >
+                                                    <div>
+                                                        <div className="mb-2 flex items-center justify-between gap-2">
+                                                            <span
+                                                                className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] font-black tracking-wider uppercase ${bank.badgeBg}`}
+                                                            >
+                                                                {bank.code}
+                                                            </span>
+                                                            <span className="text-[10px] font-bold text-[#64748B] dark:text-slate-400">
+                                                                Bank Transfer
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-[11px] font-semibold text-[#64748B] dark:text-slate-400">
+                                                            No. Rekening
+                                                        </p>
+                                                        <p className="mt-0.5 font-mono text-base font-black tracking-tight text-[#1E293B] sm:text-lg dark:text-white">
+                                                            {bank.number}
+                                                        </p>
+                                                    </div>
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            handleCopyAccount(
+                                                                bank.number,
+                                                                bank.key,
+                                                            )
+                                                        }
+                                                        className={`mt-3 inline-flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold transition-all duration-200 ${
+                                                            isCopied
+                                                                ? 'bg-[#22C55E] text-white shadow-sm'
+                                                                : 'bg-[#E7F0ED] text-[#17524A] hover:bg-[#17524A] hover:text-white dark:bg-slate-800 dark:text-[#56CCF2] dark:hover:bg-[#17524A] dark:hover:text-white'
+                                                        }`}
+                                                    >
+                                                        {isCopied ? (
+                                                            <>
+                                                                <Check className="h-3.5 w-3.5 text-white" />
+                                                                <span>Tersalin!</span>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <Copy className="h-3.5 w-3.5" />
+                                                                <span>Salin Rekening</span>
+                                                            </>
+                                                        )}
+                                                    </button>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
                                 <div className="grid gap-5 md:grid-cols-2">
                                     <FileField
                                         label="Upload Bukti Transfer Pendaftaran"

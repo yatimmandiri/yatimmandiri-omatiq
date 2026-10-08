@@ -4,6 +4,7 @@ namespace App\Http\Requests\Company;
 
 use App\Models\Company\Olimpiade;
 use App\Models\Company\Student;
+use App\Services\PenyaluranService;
 use Closure;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Cache;
@@ -25,6 +26,44 @@ class StoreParticipantRequest extends FormRequest
                 'string',
                 'size:16',
                 function (string $attribute, mixed $value, Closure $fail) {
+                    $nikVal = trim((string) $value);
+
+                    // 1. Pengecekan Santri Binaan (Penyaluran API / DB Lokal)
+                    $localBinaan = Student::where('nik', $nikVal)->where('is_binaan', true)->first();
+                    $sanggarName = null;
+                    $teacherName = null;
+
+                    if ($localBinaan) {
+                        $sanggarName = $localBinaan->participants()->whereNotNull('penyaluran_sanggar_name')->latest()->value('penyaluran_sanggar_name') ?? 'Sanggar Yatim Mandiri';
+                        $teacherName = $localBinaan->mentor_name ?? $localBinaan->mentor?->name ?? 'Guru Pembina';
+                    } else {
+                        try {
+                            $cachedIndex = Cache::get('penyaluran:all_students_index');
+                            if (is_array($cachedIndex) && isset($cachedIndex['byNik'][$nikVal])) {
+                                $apiStudent = $cachedIndex['byNik'][$nikVal];
+                                $sanggarName = $apiStudent['sanggar_name'] ?? 'Sanggar Yatim Mandiri';
+                                $teacherName = $apiStudent['teacher_name'] ?? 'Guru Pembina';
+                            } else {
+                                $allStudents = app(PenyaluranService::class)->allStudents();
+                                $foundApi = collect($allStudents)->firstWhere(fn ($s) => trim((string) ($s['nik'] ?? '')) === $nikVal);
+                                if ($foundApi) {
+                                    $sanggarName = $foundApi['sanggar_name'] ?? 'Sanggar Yatim Mandiri';
+                                    $teacherName = $foundApi['teacher_name'] ?? $foundApi['guru_name'] ?? 'Guru Pembina';
+                                }
+                            }
+                        } catch (\Throwable $e) {
+                            // Fallback jika API gagal
+                        }
+                    }
+
+                    if ($sanggarName) {
+                        $teacherName = $teacherName ?? 'guru anda';
+                        $fail("Anda sudah terdaftar di sanggar {$sanggarName} dan guru {$teacherName}. Silahkan daftar melalui guru anda.");
+
+                        return;
+                    }
+
+                    // 2. Pengecekan pendaftaran aktif tahun berjalan
                     $eventYear = null;
                     if ($this->filled('olimpiade_id')) {
                         $eventYear = Olimpiade::find($this->input('olimpiade_id'))?->event_year ?? 2026;

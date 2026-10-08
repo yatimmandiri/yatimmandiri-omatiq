@@ -15,6 +15,7 @@ uses(RefreshDatabase::class);
 
 beforeEach(function () {
     Role::firstOrCreate(['name' => 'Participant', 'guard_name' => 'web']);
+    Role::firstOrCreate(['name' => 'Teacher', 'guard_name' => 'web']);
 
     $settings = app(SiteSettings::class);
     $settings->registration_public_open = true;
@@ -204,4 +205,67 @@ test('validates required fields on public registration', function () {
         'school_name', 'grade', 'address', 'province_id', 'regency_id',
         'parent_phone', 'email', 'password',
     ]);
+});
+
+test('check-nik endpoint identifies santri binaan and returns sanggar and teacher name', function () {
+    $teacher = User::create([
+        'name' => 'Ustadz Ahmad',
+        'email' => 'ahmad@example.com',
+        'password' => bcrypt('password'),
+    ]);
+    $teacher->assignRole('Teacher');
+
+    Student::create([
+        'nik' => '3578019999990001',
+        'full_name' => 'Santri Binaan Mawar',
+        'gender' => 'male',
+        'birth_date' => '2015-01-01',
+        'address' => 'Surabaya',
+        'school_name' => 'SD Binaan',
+        'grade' => 'IV',
+        'mentor_id' => $teacher->id,
+        'mentor_name' => 'Ustadz Ahmad',
+        'is_binaan' => true,
+    ]);
+
+    $response = $this->postJson(route('home.registration.check-nik'), [
+        'nik' => '3578019999990001',
+    ]);
+
+    $response->assertOk()
+        ->assertJson([
+            'is_binaan' => true,
+            'teacher_name' => 'Ustadz Ahmad',
+        ]);
+});
+
+test('submitting public registration is blocked for santri binaan', function () {
+    $olimpiade = Olimpiade::create([
+        'name' => 'Olimpiade Matematika 2026',
+        'category' => 'Matematika',
+        'status' => true,
+        'event_year' => 2026,
+    ]);
+
+    Student::create([
+        'nik' => '3578019999990002',
+        'full_name' => 'Santri Binaan Melati',
+        'gender' => 'female',
+        'birth_date' => '2015-02-02',
+        'address' => 'Surabaya',
+        'school_name' => 'SD Binaan Melati',
+        'grade' => 'V',
+        'mentor_name' => 'Ustadzah Fatimah',
+        'is_binaan' => true,
+    ]);
+
+    $payload = validRegistrationPayload($olimpiade->id, [
+        'nik' => '3578019999990002',
+        'email' => 'binaan@example.com',
+    ]);
+
+    $response = $this->post(route('home.registration.store'), $payload);
+
+    $response->assertSessionHasErrors(['nik']);
+    expect(Participant::count())->toBe(0);
 });
