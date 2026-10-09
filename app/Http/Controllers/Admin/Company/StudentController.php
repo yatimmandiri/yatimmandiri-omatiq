@@ -502,6 +502,9 @@ class StudentController extends Controller
                 $participantsCountByPenyaluranId = collect();
                 $participantsCountByNik = collect();
 
+                $localStudentsByPenyaluranId = [];
+                $localStudentsByNik = [];
+
                 if (! empty($pageStudentIds) || ! empty($pageNiks)) {
                     $participantsQuery = Participant::query()
                         ->where(function ($q) use ($pageStudentIds, $pageNiks) {
@@ -525,12 +528,33 @@ class StudentController extends Controller
                         ->filter(fn (Participant $p) => filled($p->student?->nik ?? $p->nik))
                         ->groupBy(fn (Participant $p) => (string) ($p->student?->nik ?? $p->nik))
                         ->map->count();
+
+                    if (! empty($pageStudentIds)) {
+                        $localStudentsByPenyaluranId = Student::query()
+                            ->whereIn('penyaluran_id', $pageStudentIds)
+                            ->pluck('id', 'penyaluran_id')
+                            ->all();
+                    }
+
+                    if (! empty($pageNiks)) {
+                        $localStudentsByNik = Student::query()
+                            ->whereIn('nik', $pageNiks)
+                            ->pluck('id', 'nik')
+                            ->all();
+                    }
                 }
 
                 // Map to Student shape expected by frontend (reuse existing list columns)
-                $mapped = $items->map(function (array $s) use ($participantsCountByPenyaluranId, $participantsCountByNik) {
+                $mapped = $items->map(function (array $s) use ($participantsCountByPenyaluranId, $participantsCountByNik, $localStudentsByPenyaluranId, $localStudentsByNik) {
                     $id = (int) ($s['id'] ?? 0);
                     $nik = trim((string) ($s['nik'] ?? ''));
+
+                    $localId = null;
+                    if ($id && isset($localStudentsByPenyaluranId[$id])) {
+                        $localId = $localStudentsByPenyaluranId[$id];
+                    } elseif ($nik !== '' && isset($localStudentsByNik[$nik])) {
+                        $localId = $localStudentsByNik[$nik];
+                    }
 
                     $pCount = 0;
                     if ($nik !== '' && $participantsCountByNik->has($nik)) {
@@ -540,7 +564,7 @@ class StudentController extends Controller
                     }
 
                     return [
-                        'id' => $s['id'],
+                        'id' => $localId ?? $s['id'],
                         'penyaluran_id' => $s['id'],
                         'full_name' => $s['name'],
                         'nik' => $s['nik'],

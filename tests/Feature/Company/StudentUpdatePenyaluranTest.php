@@ -131,6 +131,8 @@ test('admin updating student without penyaluran_id does not call penyaluran api'
 
 test('local database is not updated if penyaluran API fails', function () {
     Http::fake([
+        '*/api/v1/students*' => Http::response(['success' => true, 'data' => []], 200),
+        '*/api/v1/guru/students' => Http::response(['success' => true, 'data' => []], 200),
         '*/api/v1/guru/students/915' => Http::response([
             'success' => false,
             'message' => 'NIK sudah digunakan di Penyaluran.',
