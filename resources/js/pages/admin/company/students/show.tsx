@@ -70,8 +70,20 @@ export default function ShowPage() {
                     <Detail label="Kelas" value={student.grade} />
                     <Detail label="Alamat" value={student.address} />
                     <Detail
-                        label="Wilayah"
-                        value={`${student.province?.name ?? ''} ${student.regency?.name ?? ''}`}
+                        label="Kabupaten / Kota"
+                        value={
+                            [student.regency?.name, student.province?.name]
+                                .filter(Boolean)
+                                .join(', ') || '-'
+                        }
+                    />
+                    <Detail
+                        label="Cabang Kantor"
+                        value={student.kantor_name ?? student.branch}
+                    />
+                    <Detail
+                        label="Sanggar"
+                        value={student.sanggar_name}
                     />
                     <Detail
                         label="Mentor"

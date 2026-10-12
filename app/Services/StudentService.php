@@ -14,6 +14,7 @@ use App\Models\Core\Region\Village;
 use App\Models\Core\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class StudentService
 {
@@ -36,7 +37,7 @@ class StudentService
      */
     public function resolveToken(?Student $student = null, ?int $mentorId = null, bool $forceFresh = false): ?string
     {
-        $sessionToken = request()?->session()?->get('penyaluran_token') ?? Auth::user()?->penyaluran_token;
+        $sessionToken = (request() && request()->hasSession()) ? request()->session()->get('penyaluran_token') : Auth::user()?->penyaluran_token;
 
         if (! $forceFresh && $sessionToken && Auth::user()?->hasRole('Teacher')) {
             return $sessionToken;
@@ -80,8 +81,8 @@ class StudentService
                     if ($mentorUser) {
                         $mentorUser->update(['penyaluran_token' => $freshToken]);
                     }
-                    if (Auth::user()?->hasRole('Teacher')) {
-                        request()?->session()?->put('penyaluran_token', $freshToken);
+                    if (Auth::user()?->hasRole('Teacher') && request() && request()->hasSession()) {
+                        request()->session()->put('penyaluran_token', $freshToken);
                     }
 
                     return $freshToken;
@@ -136,8 +137,7 @@ class StudentService
                     $nik = $s['nik'] ?? null;
 
                     return ($student->penyaluran_id && $sid === (int) $student->penyaluran_id)
-                        || ($nik && $nik === $student->nik)
-                        || (app()->environment('testing') && $sid === (int) $student->id);
+                        || ($nik && $nik === $student->nik);
                 });
             }
 
@@ -204,17 +204,25 @@ class StudentService
 
         $studentId = is_numeric($student) ? (int) $student : $student;
 
-        // 1. Direct match by local ID or Penyaluran ID
-        $local = Student::query()
-            ->where('penyaluran_id', $studentId)
-            ->orWhere('id', $studentId)
+        // 1. Direct match by local primary key ID first
+        $localById = Student::query()
+            ->where('id', $studentId)
             ->first();
 
-        if ($local) {
-            return $this->resolveFromPenyaluran($local);
+        if ($localById) {
+            return $this->resolveFromPenyaluran($localById);
         }
 
-        // 2. Fetch from Penyaluran API by ID
+        // 2. Direct match by Penyaluran ID if not matched by local primary key
+        $localByPenyaluranId = Student::query()
+            ->where('penyaluran_id', $studentId)
+            ->first();
+
+        if ($localByPenyaluranId) {
+            return $this->resolveFromPenyaluran($localByPenyaluranId);
+        }
+
+        // 3. Check Penyaluran API by ID
         $found = null;
         try {
             $found = $this->penyaluran->student($studentId);
@@ -223,7 +231,6 @@ class StudentService
         }
 
         if (! $found) {
-            // Also check allStudents cache / query
             try {
                 $allStudents = $this->penyaluran->allStudents();
                 $found = collect($allStudents)->firstWhere(fn ($s) => (int) ($s['id'] ?? $s['student_id'] ?? 0) === (int) $studentId);
@@ -275,7 +282,7 @@ class StudentService
 
         $attributes = [
             'penyaluran_id' => $penyaluranId ?: null,
-            'nik' => $cleanNik ?? \Illuminate\Support\Str::random(16),
+            'nik' => $cleanNik ?? Str::random(16),
             'nis' => $found['nis'] ?? null,
             'full_name' => $found['name'] ?? $found['full_name'] ?? '-',
             'nickname' => $found['nickname'] ?? null,

@@ -44,6 +44,7 @@ type Option = {
 type Branch = {
     id: number | string;
     name: string;
+    label?: string;
 };
 type RegistrationErrors = Record<string, string | undefined>;
 
@@ -299,7 +300,10 @@ export default function RegistrationPage() {
         village_id: initialDraft?.form?.village_id ?? '',
         parent_phone: initialDraft?.form?.parent_phone ?? '',
         referral_source: initialDraft?.form?.referral_source ?? '',
-        branch: initialDraft?.form?.branch ?? '',
+        branch:
+            initialDraft?.form?.branch === 'SURABAYA'
+                ? 'PUSAT 2'
+                : (initialDraft?.form?.branch ?? ''),
         olimpiade_id: initialDraft?.form?.olimpiade_id ?? '',
         payment_proof: null,
         student_card: null,
@@ -1190,14 +1194,30 @@ export default function RegistrationPage() {
                                             error={mergedErrors.branch}
                                         >
                                             <Select
-                                                value={String(form.data.branch)}
+                                                value={
+                                                    form.data.branch === 'SURABAYA'
+                                                        ? 'PUSAT 2'
+                                                        : String(form.data.branch)
+                                                }
                                                 onChange={(value) =>
-                                                    setData('branch', value)
+                                                    setData(
+                                                        'branch',
+                                                        value === 'SURABAYA'
+                                                            ? 'PUSAT 2'
+                                                            : value,
+                                                    )
                                                 }
                                                 placeholder="Pilih cabang"
                                                 options={branches.map((b) => ({
-                                                    value: b.name,
-                                                    label: b.name,
+                                                    value:
+                                                        b.name === 'SURABAYA'
+                                                            ? 'PUSAT 2'
+                                                            : b.name,
+                                                    label:
+                                                        b.label ??
+                                                        (b.name === 'PUSAT 2'
+                                                            ? 'SURABAYA'
+                                                            : b.name),
                                                 }))}
                                             />
                                         </Field>

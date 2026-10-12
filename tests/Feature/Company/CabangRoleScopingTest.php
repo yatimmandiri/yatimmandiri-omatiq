@@ -10,6 +10,11 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
+    Http::fake([
+        '*/api/v1/teachers*' => Http::response(['success' => true, 'data' => []], 200),
+        '*/api/v1/students*' => Http::response(['success' => true, 'data' => []], 200),
+        '*/api/v1/sanggars*' => Http::response(['success' => true, 'data' => []], 200),
+    ]);
     $this->seed(UserRolePermissionSeeder::class);
 });
 
@@ -264,5 +269,3 @@ test('cabang user cannot view participant or teacher from other branch', functio
         ->get(route('admin.companies.teachers.show', $teacherMlg->id))
         ->assertForbidden();
 });
-
-

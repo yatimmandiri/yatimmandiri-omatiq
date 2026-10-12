@@ -18,6 +18,13 @@ class StoreParticipantRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        if (strtoupper(trim((string) $this->branch)) === 'SURABAYA') {
+            $this->merge(['branch' => 'PUSAT 2']);
+        }
+    }
+
     public function rules(): array
     {
         return [
@@ -93,7 +100,8 @@ class StoreParticipantRequest extends FormRequest
             'branch' => ['required', 'string', 'max:255', function (string $attribute, mixed $value, $fail) {
                 $branches = Cache::remember('branch_offices', 3600, fn () => json_decode(Storage::disk('local')->get('branch-offices.json'), true) ?? []);
                 $names = array_column($branches, 'name');
-                if (! in_array($value, $names, true)) {
+                $allowed = array_unique(array_merge($names, ['PUSAT 2', 'SURABAYA']));
+                if (! in_array($value, $allowed, true)) {
                     $fail('Cabang tidak valid.');
                 }
             }],

@@ -8,10 +8,10 @@ import participants from '@/routes/admin/companies/participants';
 import { useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, Save } from 'lucide-react';
 import type { FormEvent, ReactNode } from 'react';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 type Option = { id: number | string; name: string; category?: string };
-type Regency = { id: string; province_id: string; name: string };
+type RegionOption = { id: string | number; province_id?: string | number; regency_id?: string | number; district_id?: string | number; name: string };
 type SanggarOption = { id: number | string; name: string; branch?: string | null };
 type TeacherOption = {
     id: number;
@@ -37,7 +37,9 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
         participant,
         olimpiades = [],
         provinces = [],
-        regencies = [],
+        regencies: initialRegencies = [],
+        districts: initialDistricts = [],
+        villages: initialVillages = [],
         teachers = [],
         branches = [],
         sanggars = [],
@@ -45,7 +47,9 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
         participant: Record<string, any>;
         olimpiades?: Option[];
         provinces?: Option[];
-        regencies?: Regency[];
+        regencies?: RegionOption[];
+        districts?: RegionOption[];
+        villages?: RegionOption[];
         teachers?: TeacherOption[];
         branches?: BranchOption[];
         sanggars?: SanggarOption[];
@@ -57,6 +61,25 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
         !!participant?.mentor_id ||
         !!student?.is_binaan ||
         !!student?.penyaluran_id;
+
+    const [regencyList, setRegencyList] = useState<RegionOption[]>(initialRegencies);
+    const [districtList, setDistrictList] = useState<RegionOption[]>(initialDistricts);
+    const [villageList, setVillageList] = useState<RegionOption[]>(initialVillages);
+
+    const [loadingRegencies, setLoadingRegencies] = useState(false);
+    const [loadingDistricts, setLoadingDistricts] = useState(false);
+    const [loadingVillages, setLoadingVillages] = useState(false);
+
+    const regionCache = useRef<{
+        regencies: Record<string, RegionOption[]>;
+        districts: Record<string, RegionOption[]>;
+        villages: Record<string, RegionOption[]>;
+    }>({
+        regencies: student?.province_id ? { [String(student.province_id)]: initialRegencies } : {},
+        districts: student?.regency_id ? { [String(student.regency_id)]: initialDistricts } : {},
+        villages: student?.district_id ? { [String(student.district_id)]: initialVillages } : {},
+    });
+
     const form = useForm<any>({
         olimpiade_id: participant?.olimpiade_id
             ? String(participant.olimpiade_id)
@@ -72,8 +95,10 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
         nis: student?.nis ?? '',
         grade: student?.grade ?? '',
         address: student?.address ?? '',
-        province_id: student?.province_id ?? '',
-        regency_id: student?.regency_id ?? '',
+        province_id: student?.province_id ? String(student.province_id) : '',
+        regency_id: student?.regency_id ? String(student.regency_id) : '',
+        district_id: student?.district_id ? String(student.district_id) : '',
+        village_id: student?.village_id ? String(student.village_id) : '',
         parent_phone: student?.parent_phone ?? '',
         mentor_id: participant?.mentor_id
             ? String(participant.mentor_id)
@@ -112,14 +137,160 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
         rules_consent: data.rules_consent ? 1 : 0,
     }));
 
-    const filteredRegencies = useMemo(
+    // Fetch regencies when province_id changes
+    useEffect(() => {
+        const pid = form.data.province_id;
+        if (!pid) {
+            setRegencyList([]);
+            return;
+        }
+
+        if (regionCache.current.regencies[pid]) {
+            setRegencyList(regionCache.current.regencies[pid]);
+            return;
+        }
+
+        const controller = new AbortController();
+        setLoadingRegencies(true);
+
+        fetch(`/regions/regencies?province_id=${encodeURIComponent(pid)}`, {
+            headers: { Accept: 'application/json' },
+            signal: controller.signal,
+        })
+            .then((r) => (r.ok ? r.json() : { data: [] }))
+            .then((p) => {
+                const data = p.data ?? [];
+                regionCache.current.regencies[pid] = data;
+                setRegencyList(data);
+            })
+            .catch((e) => {
+                if (e.name !== 'AbortError') {
+                    setRegencyList([]);
+                }
+            })
+            .finally(() => {
+                if (!controller.signal.aborted) {
+                    setLoadingRegencies(false);
+                }
+            });
+
+        return () => controller.abort();
+    }, [form.data.province_id]);
+
+    // Fetch districts when regency_id changes
+    useEffect(() => {
+        const rid = form.data.regency_id;
+        if (!rid) {
+            setDistrictList([]);
+            return;
+        }
+
+        if (regionCache.current.districts[rid]) {
+            setDistrictList(regionCache.current.districts[rid]);
+            return;
+        }
+
+        const controller = new AbortController();
+        setLoadingDistricts(true);
+
+        fetch(`/regions/districts?regency_id=${encodeURIComponent(rid)}`, {
+            headers: { Accept: 'application/json' },
+            signal: controller.signal,
+        })
+            .then((r) => (r.ok ? r.json() : { data: [] }))
+            .then((p) => {
+                const data = p.data ?? [];
+                regionCache.current.districts[rid] = data;
+                setDistrictList(data);
+            })
+            .catch((e) => {
+                if (e.name !== 'AbortError') {
+                    setDistrictList([]);
+                }
+            })
+            .finally(() => {
+                if (!controller.signal.aborted) {
+                    setLoadingDistricts(false);
+                }
+            });
+
+        return () => controller.abort();
+    }, [form.data.regency_id]);
+
+    // Fetch villages when district_id changes
+    useEffect(() => {
+        const did = form.data.district_id;
+        if (!did) {
+            setVillageList([]);
+            return;
+        }
+
+        if (regionCache.current.villages[did]) {
+            setVillageList(regionCache.current.villages[did]);
+            return;
+        }
+
+        const controller = new AbortController();
+        setLoadingVillages(true);
+
+        fetch(`/regions/villages?district_id=${encodeURIComponent(did)}`, {
+            headers: { Accept: 'application/json' },
+            signal: controller.signal,
+        })
+            .then((r) => (r.ok ? r.json() : { data: [] }))
+            .then((p) => {
+                const data = p.data ?? [];
+                regionCache.current.villages[did] = data;
+                setVillageList(data);
+            })
+            .catch((e) => {
+                if (e.name !== 'AbortError') {
+                    setVillageList([]);
+                }
+            })
+            .finally(() => {
+                if (!controller.signal.aborted) {
+                    setLoadingVillages(false);
+                }
+            });
+
+        return () => controller.abort();
+    }, [form.data.district_id]);
+
+    const provinceOptions = useMemo(
         () =>
-            regencies.filter(
-                (regency) =>
-                    String(regency.province_id) ===
-                    String(form.data.province_id),
-            ),
-        [form.data.province_id, regencies],
+            provinces.map((item) => ({
+                value: String(item.id),
+                label: item.name,
+            })),
+        [provinces],
+    );
+
+    const regencyOptions = useMemo(
+        () =>
+            regencyList.map((item) => ({
+                value: String(item.id),
+                label: item.name,
+            })),
+        [regencyList],
+    );
+
+    const districtOptions = useMemo(
+        () =>
+            districtList.map((item) => ({
+                value: String(item.id),
+                label: item.name,
+            })),
+        [districtList],
+    );
+
+    const villageOptions = useMemo(
+        () =>
+            villageList.map((item) => ({
+                value: String(item.id),
+                label: item.name,
+            })),
+        [villageList],
     );
 
     const branchOptions = useMemo(() => {
@@ -415,31 +586,95 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
                 {!isBinaan && (
                     <div className="grid gap-5 md:grid-cols-2">
                         <Field label="Provinsi" error={error('province_id')}>
-                            <Select
-                                value={form.data.province_id}
-                                onChange={(value) => {
-                                    form.setData('province_id', value);
-                                    form.setData('regency_id', '');
+                            <SelectComponent
+                                placeholder="Pilih / Cari Provinsi..."
+                                data={provinceOptions}
+                                dataSelected={form.data.province_id || ''}
+                                handleOnChange={(value: any) => {
+                                    form.setData((d: any) => ({
+                                        ...d,
+                                        province_id: value ? String(value) : '',
+                                        regency_id: '',
+                                        district_id: '',
+                                        village_id: '',
+                                    }));
                                 }}
-                                options={provinces.map((item) => ({
-                                    value: String(item.id),
-                                    label: item.name,
-                                }))}
+                                color={form.errors.province_id ? 'danger' : 'default'}
                             />
                         </Field>
                         <Field
                             label="Kota/Kabupaten"
                             error={error('regency_id')}
                         >
-                            <Select
-                                value={form.data.regency_id}
-                                onChange={(value) =>
-                                    form.setData('regency_id', value)
+                            <SelectComponent
+                                placeholder={
+                                    loadingRegencies
+                                        ? 'Memuat data...'
+                                        : form.data.province_id
+                                          ? 'Pilih / Cari Kota/Kabupaten...'
+                                          : 'Pilih provinsi terlebih dahulu'
                                 }
-                                options={filteredRegencies.map((item) => ({
-                                    value: item.id,
-                                    label: item.name,
-                                }))}
+                                data={regencyOptions}
+                                dataSelected={form.data.regency_id || ''}
+                                handleOnChange={(value: any) => {
+                                    form.setData((d: any) => ({
+                                        ...d,
+                                        regency_id: value ? String(value) : '',
+                                        district_id: '',
+                                        village_id: '',
+                                    }));
+                                }}
+                                disabled={!form.data.province_id || loadingRegencies}
+                                color={form.errors.regency_id ? 'danger' : 'default'}
+                            />
+                        </Field>
+                        <Field
+                            label="Kecamatan"
+                            error={error('district_id')}
+                        >
+                            <SelectComponent
+                                placeholder={
+                                    loadingDistricts
+                                        ? 'Memuat data...'
+                                        : form.data.regency_id
+                                          ? 'Pilih / Cari Kecamatan...'
+                                          : 'Pilih kabupaten/kota terlebih dahulu'
+                                }
+                                data={districtOptions}
+                                dataSelected={form.data.district_id || ''}
+                                handleOnChange={(value: any) => {
+                                    form.setData((d: any) => ({
+                                        ...d,
+                                        district_id: value ? String(value) : '',
+                                        village_id: '',
+                                    }));
+                                }}
+                                disabled={!form.data.regency_id || loadingDistricts}
+                                color={form.errors.district_id ? 'danger' : 'default'}
+                            />
+                        </Field>
+                        <Field
+                            label="Kelurahan/Desa"
+                            error={error('village_id')}
+                        >
+                            <SelectComponent
+                                placeholder={
+                                    loadingVillages
+                                        ? 'Memuat data...'
+                                        : form.data.district_id
+                                          ? 'Pilih / Cari Kelurahan/Desa...'
+                                          : 'Pilih kecamatan terlebih dahulu'
+                                }
+                                data={villageOptions}
+                                dataSelected={form.data.village_id || ''}
+                                handleOnChange={(value: any) => {
+                                    form.setData(
+                                        'village_id',
+                                        value ? String(value) : '',
+                                    );
+                                }}
+                                disabled={!form.data.district_id || loadingVillages}
+                                color={form.errors.village_id ? 'danger' : 'default'}
                             />
                         </Field>
                     </div>
@@ -763,19 +998,24 @@ const Select = ({
     onChange,
     options,
     required = true,
+    disabled = false,
+    placeholder = 'Pilih data',
 }: {
     value: string;
     onChange: (value: string) => void;
     options: Array<{ value: string; label: string }>;
     required?: boolean;
+    disabled?: boolean;
+    placeholder?: string;
 }) => (
     <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+        disabled={disabled}
+        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
         required={required}
     >
-        <option value="">Pilih data</option>
+        <option value="">{placeholder}</option>
         {options.map((option) => (
             <option key={option.value} value={option.value}>
                 {option.label}

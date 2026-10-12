@@ -43,7 +43,24 @@ class ParticipantRegistrationController extends Controller
 
         $branches = Cache::remember('branch_offices', 3600, function () {
             if (Storage::disk('local')->exists('branch-offices.json')) {
-                return json_decode(Storage::disk('local')->get('branch-offices.json'), true) ?? [];
+                $raw = json_decode(Storage::disk('local')->get('branch-offices.json'), true) ?? [];
+
+                return array_map(function (array $b) {
+                    $name = strtoupper(trim((string) ($b['name'] ?? '')));
+                    if ($name === 'SURABAYA' || $name === 'PUSAT 2') {
+                        return [
+                            'id' => $b['id'] ?? 49,
+                            'name' => 'PUSAT 2',
+                            'label' => 'SURABAYA',
+                        ];
+                    }
+
+                    return [
+                        'id' => $b['id'] ?? null,
+                        'name' => $name,
+                        'label' => $b['label'] ?? $name,
+                    ];
+                }, $raw);
             }
 
             return [];
@@ -308,11 +325,17 @@ class ParticipantRegistrationController extends Controller
 
     private function payload(StoreParticipantRequest $request): array
     {
-        return $request->safe()->only([
+        $data = $request->safe()->only([
             'nik', 'olimpiade_id', 'referral_source', 'branch',
             'has_joined_before', 'previous_year', 'achievements',
             'participant_signature_name', 'guardian_signature_name',
         ]);
+
+        if (strtoupper(trim((string) ($data['branch'] ?? ''))) === 'SURABAYA') {
+            $data['branch'] = 'PUSAT 2';
+        }
+
+        return $data;
     }
 
     private function studentData(StoreParticipantRequest $request): array
