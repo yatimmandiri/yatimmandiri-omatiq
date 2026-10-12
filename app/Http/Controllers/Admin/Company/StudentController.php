@@ -571,6 +571,7 @@ class StudentController extends Controller
                         'school_name' => $s['school_name'],
                         'school_level' => $s['school_level'],
                         'class' => $s['class'] ?? $s['grade'] ?? null,
+                        'address' => $s['address'] ?? null,
                         'kantor_name' => $s['kantor_name'],
                         'branch' => $s['kantor_name'],
                         'sanggar_name' => $s['sanggar_name'],

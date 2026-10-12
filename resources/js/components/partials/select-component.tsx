@@ -36,6 +36,7 @@ interface SelectComponentProps {
     handleOnChange?: any;
     fetchDataUrl?: string;
     color?: 'default' | 'info' | 'success' | 'warning' | 'danger';
+    disabled?: boolean;
     [key: string]: any;
 }
 
@@ -50,6 +51,7 @@ export const SelectComponent = ({
     handleOnChange,
     fetchDataUrl,
     color = 'default',
+    disabled = false,
 }: SelectComponentProps) => {
     const [isLoading, setIsLoading] = useState(false);
     const [searchValue, setSearchValue] = useState('');
@@ -162,11 +164,12 @@ export const SelectComponent = ({
                 {label && <FieldLabel htmlFor={label}>{label}</FieldLabel>}
             </div>
 
-            <Popover open={open} onOpenChange={setOpen}>
+            <Popover open={disabled ? false : open} onOpenChange={(nextOpen) => !disabled && setOpen(nextOpen)}>
                 <PopoverTrigger asChild>
                     <Button
                         variant="outline"
                         role="combobox"
+                        disabled={disabled}
                         className={cn(
                             'relative w-full justify-between',
                             variants[color],

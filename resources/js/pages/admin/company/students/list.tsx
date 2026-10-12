@@ -93,12 +93,40 @@ export default function ListPage() {
             },
         },
         {
-            header: 'Wilayah',
+            header: 'Alamat',
             accessorKey: 'regency',
             cell: (info: any) => {
                 const row = info.row.original;
+                const regency = row.regency?.name ?? row.province?.name;
+                const address = row.address;
 
-                return row.regency?.name ?? row.province?.name ?? '-';
+                if (address && regency) {
+                    return (
+                        <div className="max-w-[220px]">
+                            <p
+                                className="truncate text-xs font-medium text-foreground"
+                                title={address}
+                            >
+                                {address}
+                            </p>
+                            <p
+                                className="truncate text-[11px] text-muted-foreground"
+                                title={regency}
+                            >
+                                {regency}
+                            </p>
+                        </div>
+                    );
+                }
+
+                return (
+                    <span
+                        className="text-xs"
+                        title={address ?? regency ?? '-'}
+                    >
+                        {address ?? regency ?? '-'}
+                    </span>
+                );
             },
         },
         {
@@ -225,10 +253,11 @@ export default function ListPage() {
                             Nama: item.full_name,
                             Sekolah: item.school_name ?? '-',
                             Jenjang: item.school_level ?? '-',
-                            Wilayah:
-                                item.regency?.name ??
-                                item.province?.name ??
-                                '-',
+                            Alamat: item.address
+                                ? `${item.address}, ${item.regency?.name ?? item.province?.name ?? ''}`.trim()
+                                : (item.regency?.name ??
+                                    item.province?.name ??
+                                    '-'),
                             Mentor: item.mentor?.name ?? '-',
                             Jenis: item.is_binaan ? 'Binaan' : 'Umum',
                             Status: item.is_active ? 'Aktif' : 'Non-aktif',

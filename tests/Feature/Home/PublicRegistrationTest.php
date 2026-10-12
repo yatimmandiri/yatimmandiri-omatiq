@@ -269,3 +269,47 @@ test('submitting public registration is blocked for santri binaan', function () 
     $response->assertSessionHasErrors(['nik']);
     expect(Participant::count())->toBe(0);
 });
+
+test('submitting branch SURABAYA is stored as PUSAT 2 in database', function () {
+    $olimpiade = Olimpiade::create([
+        'name' => 'Olimpiade IPA 2026',
+        'category' => 'IPA',
+        'status' => true,
+        'event_year' => 2026,
+    ]);
+
+    $payload = validRegistrationPayload($olimpiade->id, [
+        'nik' => '3578018888880001',
+        'email' => 'surabaya_peserta@example.com',
+        'branch' => 'SURABAYA',
+    ]);
+
+    $response = $this->post(route('home.registration.store'), $payload);
+
+    $response->assertRedirect();
+    $participant = Participant::where('nik', '3578018888880001')->first();
+    expect($participant)->not->toBeNull();
+    expect($participant->branch)->toBe('PUSAT 2');
+});
+
+test('submitting branch PUSAT 2 is stored as PUSAT 2 in database', function () {
+    $olimpiade = Olimpiade::create([
+        'name' => 'Olimpiade IPA 2026 B',
+        'category' => 'IPA',
+        'status' => true,
+        'event_year' => 2026,
+    ]);
+
+    $payload = validRegistrationPayload($olimpiade->id, [
+        'nik' => '3578018888880002',
+        'email' => 'pusat2_peserta@example.com',
+        'branch' => 'PUSAT 2',
+    ]);
+
+    $response = $this->post(route('home.registration.store'), $payload);
+
+    $response->assertRedirect();
+    $participant = Participant::where('nik', '3578018888880002')->first();
+    expect($participant)->not->toBeNull();
+    expect($participant->branch)->toBe('PUSAT 2');
+});

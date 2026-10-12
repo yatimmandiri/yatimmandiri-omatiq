@@ -9,8 +9,11 @@ use App\Http\Requests\Company\UpdateParticipantRequest;
 use App\Models\Company\Olimpiade;
 use App\Models\Company\Participant;
 use App\Models\Company\Period;
+use App\Models\Company\Student;
+use App\Models\Core\Region\District;
 use App\Models\Core\Region\Province;
 use App\Models\Core\Region\Regency;
+use App\Models\Core\Region\Village;
 use App\Models\Core\User;
 use App\Services\PenyaluranService;
 use App\Services\StudentService;
@@ -206,7 +209,13 @@ class ParticipantController extends Controller
             'olimpiades' => Olimpiade::active()->ordered()->get(['id', 'name']),
             'provinces' => Province::all(['id', 'name']),
             'regencies' => $participant->student?->province_id
-                ? Regency::where('province_id', $participant->student->province_id)->get(['id', 'name'])
+                ? Regency::where('province_id', $participant->student->province_id)->orderBy('name')->get(['id', 'province_id', 'name'])
+                : [],
+            'districts' => $participant->student?->regency_id
+                ? District::where('regency_id', $participant->student->regency_id)->orderBy('name')->get(['id', 'regency_id', 'name'])
+                : [],
+            'villages' => $participant->student?->district_id
+                ? Village::where('district_id', $participant->student->district_id)->orderBy('name')->get(['id', 'district_id', 'name'])
                 : [],
             'teachers' => $teachers,
             'branches' => $branches,
@@ -269,6 +278,11 @@ class ParticipantController extends Controller
                     }
                 }
                 $participant->student->update($studentData);
+            } else {
+                $studentData['is_binaan'] = false;
+                $student = Student::create($studentData);
+                $participant->student_id = $student->id;
+                $payload['student_id'] = $student->id;
             }
 
             if ($request->hasFile('payment_proof')) {
@@ -456,6 +470,8 @@ class ParticipantController extends Controller
             'address',
             'province_id',
             'regency_id',
+            'district_id',
+            'village_id',
             'parent_phone',
             'nik',
             'student_card',
@@ -484,7 +500,7 @@ class ParticipantController extends Controller
         return $request->safe()->only([
             'full_name', 'nickname', 'gender', 'birth_place', 'birth_date',
             'school_name', 'grade', 'address', 'province_id',
-            'regency_id', 'parent_phone', 'nik', 'school_level', 'nis',
+            'regency_id', 'district_id', 'village_id', 'parent_phone', 'nik', 'school_level', 'nis',
             'mentor_name', 'mentor_phone', 'mentor_id',
         ]);
     }
