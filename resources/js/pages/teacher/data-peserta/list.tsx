@@ -49,6 +49,7 @@ export default function ListPage() {
                 const row = info.row.original;
                 const name = row.student?.full_name ?? row.full_name ?? '-';
                 const regNo = row.registration_number ?? '-';
+                const nik = row.student?.nik ?? row.nik;
                 const initial = String(name).charAt(0).toUpperCase();
 
                 return (
@@ -58,9 +59,17 @@ export default function ListPage() {
                         </span>
                         <div className="space-y-0.5">
                             <p className="font-semibold leading-none">{name}</p>
-                            <p className="font-mono text-xs text-muted-foreground">
-                                {regNo}
-                            </p>
+                            <div className="flex flex-wrap items-center gap-1.5 font-mono text-xs text-muted-foreground">
+                                <span>{regNo}</span>
+                                {nik && (
+                                    <>
+                                        <span>•</span>
+                                        <span className="text-[11px] text-foreground/80">
+                                            NIK: {nik}
+                                        </span>
+                                    </>
+                                )}
+                            </div>
                         </div>
                     </div>
                 );

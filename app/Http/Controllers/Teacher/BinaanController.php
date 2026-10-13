@@ -596,12 +596,8 @@ class BinaanController extends Controller
     {
         $mirror = Student::where('penyaluran_id', $binaan)->first();
 
-        if (! $mirror && is_numeric($binaan)) {
-            $mirror = Student::find($binaan);
-        }
-
         if (! $mirror && is_string($binaan) && trim($binaan) !== '') {
-            $mirror = Student::where('nik', trim($binaan))->first();
+            $mirror = Student::where('nik', trim($binaan))->where('is_binaan', true)->first();
         }
 
         return $mirror;
@@ -622,9 +618,9 @@ class BinaanController extends Controller
             $actual = Student::where('penyaluran_id', $foundPenyaluranId)->first();
         }
         if (! $actual && $foundNik) {
-            $actual = Student::where('nik', $foundNik)->first();
+            $actual = Student::where('nik', $foundNik)->where('is_binaan', true)->first();
         }
-        if (! $actual) {
+        if (! $actual && $mirror && (int) ($mirror->penyaluran_id ?? 0) === $foundPenyaluranId) {
             $actual = $mirror;
         }
 

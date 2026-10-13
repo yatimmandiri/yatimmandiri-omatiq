@@ -410,7 +410,7 @@ class ParticipantController extends Controller
         $query = Participant::query()
             ->with([
                 'olimpiade:id,name',
-                'student:id,full_name,school_name,gender,province_id,regency_id',
+                'student:id,full_name,nik,school_name,gender,province_id,regency_id',
                 'student.regency:id,name',
             ])
             ->search($request->string('globalSearch')->toString());
