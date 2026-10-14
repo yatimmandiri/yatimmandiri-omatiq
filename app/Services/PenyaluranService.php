@@ -307,11 +307,13 @@ class PenyaluranService
         Cache::forget($baseKey.':all');
         Cache::forget('penyaluran:me:'.sha1($token));
 
-        session()->forget([
-            'penyaluran_me',
-            'penyaluran_sanggars',
-            'penyaluran_students',
-        ]);
+        if (request() && request()->hasSession()) {
+            session()->forget([
+                'penyaluran_me',
+                'penyaluran_sanggars',
+                'penyaluran_students',
+            ]);
+        }
 
         try {
             $sanggars = $this->sanggars($token);
@@ -949,8 +951,6 @@ class PenyaluranService
 
     /**
      * Get single sanggar details from Penyaluran API (GET api/v1/sanggars/{id} or search in allSanggars).
-     *
-     * @return array|null
      */
     public function sanggar(int|string $id, bool $force = false): ?array
     {
@@ -1160,8 +1160,6 @@ class PenyaluranService
 
     /**
      * Get single teacher details from Penyaluran API (GET api/v1/teachers/{id} or search in allTeachers).
-     *
-     * @return array|null
      */
     public function teacher(int|string $id, bool $force = false): ?array
     {
@@ -1386,8 +1384,6 @@ class PenyaluranService
 
     /**
      * Get single student details from Penyaluran API (GET api/v1/students/{id} or search in allStudents).
-     *
-     * @return array|null
      */
     public function student(int|string $id, bool $force = false): ?array
     {

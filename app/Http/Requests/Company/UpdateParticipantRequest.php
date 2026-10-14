@@ -29,6 +29,8 @@ class UpdateParticipantRequest extends FormRequest
             'address' => ['nullable', 'string'],
             'province_id' => ['nullable', 'exists:provinces,id'],
             'regency_id' => ['nullable', 'exists:regencies,id'],
+            'district_id' => ['nullable', 'exists:districts,id'],
+            'village_id' => ['nullable', 'exists:villages,id'],
             'parent_phone' => ['nullable', 'string', 'max:30'],
             'mentor_id' => ['nullable', 'integer', 'exists:users,id'],
             'mentor_name' => ['nullable', 'string', 'max:255'],

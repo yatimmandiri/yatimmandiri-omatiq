@@ -29,6 +29,7 @@ Route::get('/kontak', [MainController::class, 'contact'])->name('home.contact');
 // Pendaftaran peserta umum
 Route::get('/pendaftaran', [ParticipantRegistrationController::class, 'create'])->name('home.registration.create');
 Route::post('/pendaftaran', [ParticipantRegistrationController::class, 'store'])->name('home.registration.store');
+Route::post('/pendaftaran/check-nik', [ParticipantRegistrationController::class, 'checkNik'])->name('home.registration.check-nik');
 Route::get('/pendaftaran/sukses/{registrationNumber}', [ParticipantRegistrationController::class, 'success'])->name('home.registration.success');
 Route::get('/pendaftaran/kartu/{registrationNumber}', [ParticipantCardController::class, 'print'])->name('home.registration.card');
 Route::get('/verifikasi/{registrationNumber?}', [ParticipantRegistrationController::class, 'verify'])->name('home.registration.verify');

@@ -11,6 +11,11 @@ use Illuminate\Support\Facades\Http;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
+    Http::fake([
+        '*/api/v1/teachers*' => Http::response(['success' => true, 'data' => []], 200),
+        '*/api/v1/students*' => Http::response(['success' => true, 'data' => []], 200),
+        '*/api/v1/sanggars*' => Http::response(['success' => true, 'data' => []], 200),
+    ]);
     $this->seed(UserRolePermissionSeeder::class);
 
     // Hermetik: jangan bergantung pada API Penyaluran produksi nyata.

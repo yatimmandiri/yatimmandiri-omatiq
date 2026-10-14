@@ -18,6 +18,10 @@ class StoreTeacherParticipantRequest extends FormRequest
         if (! $this->has('penyaluran_student_id') && $this->has('student_id')) {
             $this->merge(['penyaluran_student_id' => $this->input('student_id')]);
         }
+
+        if (strtoupper(trim((string) $this->branch)) === 'SURABAYA') {
+            $this->merge(['branch' => 'PUSAT 2']);
+        }
     }
 
     public function authorize(): bool
@@ -161,7 +165,8 @@ class StoreTeacherParticipantRequest extends FormRequest
                 }
                 $branches = Cache::remember('branch_offices', 3600, fn () => json_decode(Storage::disk('local')->get('branch-offices.json'), true) ?? []);
                 $names = array_column($branches, 'name');
-                if (! in_array($value, $names, true)) {
+                $allowed = array_unique(array_merge($names, ['PUSAT 2', 'SURABAYA']));
+                if (! in_array($value, $allowed, true)) {
                     $fail('Cabang tidak valid.');
                 }
             }],
