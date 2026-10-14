@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Http\Client\Response;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -21,6 +22,14 @@ class PenyaluranService
 
     private function client(?string $token = null)
     {
+        if ($token === null) {
+            if (function_exists('request') && request()?->hasSession()) {
+                $token = request()->session()->get('penyaluran_token') ?? Auth::user()?->penyaluran_token;
+            } elseif (Auth::check()) {
+                $token = Auth::user()?->penyaluran_token;
+            }
+        }
+
         $client = Http::baseUrl($this->baseUrl())
             ->acceptJson()
             ->withoutVerifying()
@@ -129,8 +138,13 @@ class PenyaluranService
         }
 
         $data = Cache::remember($cacheKey, 300, function () use ($token) {
-            $response = $this->client($token)->get('api/v1/guru/me');
-            $this->assertSuccess($response);
+            $endpoint = 'api/v1/guru/me';
+            $response = $this->client($token)->get($endpoint);
+            if (! $response->successful() && $response->status() === 404) {
+                $endpoint = 'api/v1/me';
+                $response = $this->client($token)->get($endpoint);
+            }
+            $this->assertSuccess($response, $endpoint);
 
             return $response->json('data') ?? $response->json();
         });
@@ -239,6 +253,10 @@ class PenyaluranService
             try {
                 $endpoint = 'api/v1/guru/students';
                 $response = $this->client($token)->get($endpoint);
+                if (! $response->successful() && $response->status() === 404) {
+                    $endpoint = 'api/v1/students';
+                    $response = $this->client($token)->get($endpoint);
+                }
                 if ($response->successful()) {
                     $data = $response->json('data');
                     if (is_array($data) && ! empty($data)) {
@@ -312,6 +330,10 @@ class PenyaluranService
 
         try {
             $response = $this->client($token)->get($endpoint, ['sanggar_id' => $sanggarId]);
+            if (! $response->successful() && $response->status() === 404) {
+                $endpoint = 'api/v1/students';
+                $response = $this->client($token)->get($endpoint, ['sanggar_id' => $sanggarId]);
+            }
         } catch (\Throwable $e) {
             Log::error("Penyaluran API Connection Error on {$endpoint}", [
                 'endpoint' => $endpoint,
@@ -402,7 +424,7 @@ class PenyaluranService
     }
 
     /**
-     * Update guru profile on Penyaluran (PUT api/v1/guru/me). Invalidates me cache.
+     * Update guru profile on Penyaluran (PUT/PATCH api/v1/guru/me or api/v1/me). Invalidates me cache.
      *
      * @param  array{name?:string, email?:string}  $attributes
      *
@@ -414,6 +436,10 @@ class PenyaluranService
 
         try {
             $response = $this->client($token)->put($endpoint, $attributes);
+            if (! $response->successful() && $response->status() === 404) {
+                $endpoint = 'api/v1/me';
+                $response = $this->client($token)->put($endpoint, $attributes);
+            }
         } catch (\Throwable $e) {
             Log::error("Penyaluran API Connection Error on PUT {$endpoint}", [
                 'endpoint' => $endpoint,
@@ -442,7 +468,7 @@ class PenyaluranService
     }
 
     /**
-     * Update student data on Penyaluran (PUT api/v1/guru/students/{studentId}).
+     * Update student data on Penyaluran (PUT/PATCH api/v1/guru/students/{studentId} or api/v1/students/{studentId}).
      *
      * @throws \RuntimeException
      */
@@ -452,6 +478,10 @@ class PenyaluranService
 
         try {
             $response = $this->client($token)->put($endpoint, $attributes);
+            if (! $response->successful() && $response->status() === 404) {
+                $endpoint = "api/v1/students/{$studentId}";
+                $response = $this->client($token)->put($endpoint, $attributes);
+            }
         } catch (\Throwable $e) {
             Log::error("Penyaluran API Connection Error on PUT {$endpoint}", [
                 'endpoint' => $endpoint,
@@ -469,6 +499,160 @@ class PenyaluranService
         $this->forgetStudentsCache($token);
 
         return $response->json('data') ?? $response->json();
+    }
+
+    /**
+     * Update sanggar data on Penyaluran (PUT/PATCH api/v1/guru/sanggars/{sanggarId} or api/v1/sanggars/{sanggarId}).
+     *
+     * @throws \RuntimeException
+     */
+    public function updateSanggar(string $token, int|string $sanggarId, array $attributes): array
+    {
+        $endpoint = "api/v1/guru/sanggars/{$sanggarId}";
+
+        try {
+            $response = $this->client($token)->put($endpoint, $attributes);
+            if (! $response->successful() && $response->status() === 404) {
+                $endpoint = "api/v1/sanggars/{$sanggarId}";
+                $response = $this->client($token)->put($endpoint, $attributes);
+            }
+        } catch (\Throwable $e) {
+            Log::error("Penyaluran API Connection Error on PUT {$endpoint}", [
+                'endpoint' => $endpoint,
+                'sanggar_id' => $sanggarId,
+                'attributes' => $attributes,
+                'error_class' => get_class($e),
+                'error_message' => $e->getMessage(),
+            ]);
+
+            throw new \RuntimeException('Tidak dapat terhubung ke server Penyaluran untuk memperbarui data sanggar. Silakan coba beberapa saat lagi.');
+        }
+
+        $this->assertSuccess($response, $endpoint, $attributes);
+
+        Cache::forget('penyaluran:sanggar:'.md5((string) $sanggarId));
+        Cache::forget('penyaluran:sanggars:all:'.md5(json_encode([])));
+        session()->forget(['penyaluran_sanggars', 'penyaluran_me']);
+
+        return $response->json('data') ?? $response->json();
+    }
+
+    /**
+     * Logout teacher from Penyaluran (POST api/v1/guru/logout or POST api/v1/logout).
+     */
+    public function logoutGuru(?string $token = null): bool
+    {
+        $token ??= request()?->session()?->get('penyaluran_token') ?? Auth::user()?->penyaluran_token;
+        if (! $token) {
+            return true;
+        }
+
+        $endpoint = 'api/v1/guru/logout';
+        try {
+            $response = $this->client($token)->post($endpoint);
+            if (! $response->successful() && $response->status() === 404) {
+                $endpoint = 'api/v1/logout';
+                $response = $this->client($token)->post($endpoint);
+            }
+
+            return $response->successful();
+        } catch (\Throwable $e) {
+            Log::warning('Penyaluran logout error: '.$e->getMessage());
+
+            return false;
+        }
+    }
+
+    /**
+     * Get teacher attendance meetings list (GET api/v1/guru/meetings or GET api/v1/meetings).
+     */
+    public function meetings(string $token, array $queryParams = []): array
+    {
+        $endpoint = 'api/v1/guru/meetings';
+        try {
+            $response = $this->client($token)->get($endpoint, $queryParams);
+            if (! $response->successful() && $response->status() === 404) {
+                $endpoint = 'api/v1/meetings';
+                $response = $this->client($token)->get($endpoint, $queryParams);
+            }
+        } catch (\Throwable $e) {
+            Log::error("Penyaluran API Connection Error on {$endpoint}", [
+                'error' => $e->getMessage(),
+            ]);
+
+            return [];
+        }
+
+        if (! $response->successful()) {
+            return [];
+        }
+
+        return $response->json('data') ?? $response->json() ?? [];
+    }
+
+    /**
+     * Store new attendance meeting session (POST api/v1/guru/meetings or POST api/v1/meetings).
+     */
+    public function storeMeeting(string $token, array $payload): array
+    {
+        $endpoint = 'api/v1/guru/meetings';
+        try {
+            $response = $this->client($token)->post($endpoint, $payload);
+            if (! $response->successful() && $response->status() === 404) {
+                $endpoint = 'api/v1/meetings';
+                $response = $this->client($token)->post($endpoint, $payload);
+            }
+        } catch (\Throwable $e) {
+            throw new \RuntimeException('Tidak dapat terhubung ke server Penyaluran untuk membuat sesi pertemuan.');
+        }
+
+        $this->assertSuccess($response, $endpoint, $payload);
+
+        return $response->json('data') ?? $response->json() ?? [];
+    }
+
+    /**
+     * Show meeting detail (GET api/v1/guru/meetings/{meetingId} or GET api/v1/meetings/{meetingId}).
+     */
+    public function meeting(string $token, int|string $meetingId): ?array
+    {
+        $endpoint = "api/v1/guru/meetings/{$meetingId}";
+        try {
+            $response = $this->client($token)->get($endpoint);
+            if (! $response->successful() && $response->status() === 404) {
+                $endpoint = "api/v1/meetings/{$meetingId}";
+                $response = $this->client($token)->get($endpoint);
+            }
+        } catch (\Throwable $e) {
+            return null;
+        }
+
+        if (! $response->successful()) {
+            return null;
+        }
+
+        return $response->json('data') ?? $response->json();
+    }
+
+    /**
+     * Store student attendances for a meeting (POST api/v1/guru/meetings/{meetingId}/attendances or POST api/v1/meetings/{meetingId}/attendances).
+     */
+    public function storeAttendance(string $token, int|string $meetingId, array $attendances): array
+    {
+        $endpoint = "api/v1/guru/meetings/{$meetingId}/attendances";
+        try {
+            $response = $this->client($token)->post($endpoint, $attendances);
+            if (! $response->successful() && $response->status() === 404) {
+                $endpoint = "api/v1/meetings/{$meetingId}/attendances";
+                $response = $this->client($token)->post($endpoint, $attendances);
+            }
+        } catch (\Throwable $e) {
+            throw new \RuntimeException('Tidak dapat terhubung ke server Penyaluran untuk mencatat absensi.');
+        }
+
+        $this->assertSuccess($response, $endpoint, $attendances);
+
+        return $response->json('data') ?? $response->json() ?? [];
     }
 
     /**
@@ -627,7 +811,7 @@ class PenyaluranService
      *
      * @return array<int, array>
      */
-    public function allSanggars(array $queryParams = [], bool $force = false): array
+    public function allSanggars(array $queryParams = [], bool $force = false, ?string $token = null): array
     {
         $cacheKey = 'penyaluran:sanggars:all:'.md5(json_encode($queryParams));
 
@@ -640,7 +824,8 @@ class PenyaluranService
             return $cached;
         }
 
-        $endpoint = 'api/v1/sanggars';
+        $endpoints = ['api/v1/all-sanggars', 'api/v1/guru/all-sanggars', 'api/v1/sanggars', 'api/v1/guru/sanggars'];
+        $endpoint = $endpoints[0];
         $allData = [];
         $page = 1;
         $lastPage = 1;
@@ -651,12 +836,21 @@ class PenyaluranService
                     'page' => $page,
                 ]);
 
-                $response = $this->client()->get($endpoint, $query);
+                $response = $this->client($token)->get($endpoint, $query);
 
-                // Fallback only on first page if primary endpoint not successful
+                // Fallback across candidate endpoints on first page if primary endpoint not successful
                 if (! $response->successful() && $page === 1) {
-                    $endpoint = 'api/v1/guru/sanggars';
-                    $response = $this->client()->get($endpoint, $query);
+                    foreach ($endpoints as $candidate) {
+                        if ($candidate === $endpoint) {
+                            continue;
+                        }
+                        $candidateResponse = $this->client($token)->get($candidate, $query);
+                        if ($candidateResponse->successful()) {
+                            $endpoint = $candidate;
+                            $response = $candidateResponse;
+                            break;
+                        }
+                    }
                 }
             } catch (\Throwable $e) {
                 Log::error("Penyaluran API Connection Error on {$endpoint}", [
@@ -773,10 +967,14 @@ class PenyaluranService
 
         $sanggarData = null;
 
-        // 1. Try dedicated endpoint GET api/v1/sanggars/{id}
+        // 1. Try dedicated endpoint GET api/v1/guru/sanggars/{id} or GET api/v1/sanggars/{id}
         try {
-            $endpoint = "api/v1/sanggars/{$id}";
+            $endpoint = "api/v1/guru/sanggars/{$id}";
             $response = $this->client()->get($endpoint);
+            if (! $response->successful() && $response->status() === 404) {
+                $endpoint = "api/v1/sanggars/{$id}";
+                $response = $this->client()->get($endpoint);
+            }
             if ($response->successful()) {
                 $raw = $response->json('data') ?? $response->json();
                 if (is_array($raw) && ! empty($raw)) {
@@ -809,13 +1007,12 @@ class PenyaluranService
     }
 
     /**
-     * Get all teachers from Penyaluran API (GET api/v1/teachers) using X-API-KEY header.
-     * Endpoint: https://penyaluran.yatimmandiri.org/api/v1/teachers with header X-API-KEY.
+     * Get all teachers from Penyaluran API (GET api/v1/all-teachers or api/v1/teachers).
      * Handles all Laravel pagination shapes and aggregates all available pages.
      *
      * @return array<int, array>
      */
-    public function allTeachers(array $queryParams = [], bool $force = false): array
+    public function allTeachers(array $queryParams = [], bool $force = false, ?string $token = null): array
     {
         $cacheKey = 'penyaluran:teachers:all:'.md5(json_encode($queryParams));
 
@@ -828,7 +1025,8 @@ class PenyaluranService
             return $cached;
         }
 
-        $endpoint = 'api/v1/teachers';
+        $endpoints = ['api/v1/all-teachers', 'api/v1/guru/all-teachers', 'api/v1/teachers', 'api/v1/guru/teachers'];
+        $endpoint = $endpoints[0];
         $allData = [];
         $page = 1;
         $lastPage = 1;
@@ -839,7 +1037,22 @@ class PenyaluranService
                     'page' => $page,
                 ]);
 
-                $response = $this->client()->get($endpoint, $query);
+                $response = $this->client($token)->get($endpoint, $query);
+
+                // Fallback across candidate endpoints on first page if primary endpoint not successful
+                if (! $response->successful() && $page === 1) {
+                    foreach ($endpoints as $candidate) {
+                        if ($candidate === $endpoint) {
+                            continue;
+                        }
+                        $candidateResponse = $this->client($token)->get($candidate, $query);
+                        if ($candidateResponse->successful()) {
+                            $endpoint = $candidate;
+                            $response = $candidateResponse;
+                            break;
+                        }
+                    }
+                }
             } catch (\Throwable $e) {
                 Log::error("Penyaluran API Connection Error on {$endpoint}", [
                     'endpoint' => $endpoint,
@@ -965,10 +1178,14 @@ class PenyaluranService
 
         $teacherData = null;
 
-        // 1. Try dedicated single teacher endpoint GET api/v1/teachers/{id}
+        // 1. Try dedicated single teacher endpoint GET api/v1/guru/teachers/{id} or GET api/v1/teachers/{id}
         try {
-            $endpoint = "api/v1/teachers/{$id}";
+            $endpoint = "api/v1/guru/teachers/{$id}";
             $response = $this->client()->get($endpoint);
+            if (! $response->successful() && $response->status() === 404) {
+                $endpoint = "api/v1/teachers/{$id}";
+                $response = $this->client()->get($endpoint);
+            }
             if ($response->successful()) {
                 $raw = $response->json('data') ?? $response->json();
                 if (is_array($raw) && ! empty($raw)) {
@@ -1003,13 +1220,12 @@ class PenyaluranService
     }
 
     /**
-     * Get all students from Penyaluran API (GET api/v1/students) using X-API-KEY header.
-     * Endpoint: https://penyaluran.yatimmandiri.org/api/v1/students with header X-API-KEY.
+     * Get all students from Penyaluran API (GET api/v1/all-students or api/v1/students).
      * Handles all Laravel pagination shapes and aggregates all available pages.
      *
      * @return array<int, array>
      */
-    public function allStudents(array $queryParams = [], bool $force = false): array
+    public function allStudents(array $queryParams = [], bool $force = false, ?string $token = null): array
     {
         $cacheKey = 'penyaluran:students:all:'.md5(json_encode($queryParams));
 
@@ -1022,7 +1238,8 @@ class PenyaluranService
             return $cached;
         }
 
-        $endpoint = 'api/v1/students';
+        $endpoints = ['api/v1/all-students', 'api/v1/guru/all-students', 'api/v1/students', 'api/v1/guru/students'];
+        $endpoint = $endpoints[0];
         $allData = [];
         $page = 1;
         $lastPage = 1;
@@ -1033,7 +1250,22 @@ class PenyaluranService
                     'page' => $page,
                 ]);
 
-                $response = $this->client()->get($endpoint, $query);
+                $response = $this->client($token)->get($endpoint, $query);
+
+                // Fallback across candidate endpoints on first page if primary endpoint not successful
+                if (! $response->successful() && $page === 1) {
+                    foreach ($endpoints as $candidate) {
+                        if ($candidate === $endpoint) {
+                            continue;
+                        }
+                        $candidateResponse = $this->client($token)->get($candidate, $query);
+                        if ($candidateResponse->successful()) {
+                            $endpoint = $candidate;
+                            $response = $candidateResponse;
+                            break;
+                        }
+                    }
+                }
             } catch (\Throwable $e) {
                 Log::error("Penyaluran API Connection Error on {$endpoint}", [
                     'endpoint' => $endpoint,
@@ -1172,10 +1404,14 @@ class PenyaluranService
 
         $studentData = null;
 
-        // 1. Try dedicated endpoint GET api/v1/students/{id}
+        // 1. Try dedicated endpoint GET api/v1/guru/students/{id} or GET api/v1/students/{id}
         try {
-            $endpoint = "api/v1/students/{$id}";
+            $endpoint = "api/v1/guru/students/{$id}";
             $response = $this->client()->get($endpoint);
+            if (! $response->successful() && $response->status() === 404) {
+                $endpoint = "api/v1/students/{$id}";
+                $response = $this->client()->get($endpoint);
+            }
             if ($response->successful()) {
                 $raw = $response->json('data') ?? $response->json();
                 if (is_array($raw) && ! empty($raw)) {
@@ -1236,12 +1472,12 @@ class PenyaluranService
         }
 
         if ($sanggars === null) {
-            $endpoint = 'api/v1/sanggars';
+            $endpoint = 'api/v1/guru/sanggars';
 
             try {
                 $response = $this->client($token)->get($endpoint);
-                if (! $response->successful()) {
-                    $endpoint = 'api/v1/guru/sanggars';
+                if (! $response->successful() && $response->status() === 404) {
+                    $endpoint = 'api/v1/sanggars';
                     $response = $this->client($token)->get($endpoint);
                 }
             } catch (\Throwable $e) {

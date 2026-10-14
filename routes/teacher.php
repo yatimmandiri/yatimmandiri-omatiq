@@ -41,6 +41,7 @@ Route::prefix('teacher')->as('teacher.')->middleware(['auth', 'verified', 'teach
     // Data Sanggar (Daftar Sanggar Penyaluran)
     Route::get('data-sanggar/data', [SanggarController::class, 'getData'])->name('data-sanggar.data');
     Route::get('data-sanggar/{sanggar}', [SanggarController::class, 'show'])->name('data-sanggar.show');
+    Route::put('data-sanggar/{sanggar}', [SanggarController::class, 'update'])->name('data-sanggar.update');
     Route::get('data-sanggar', [SanggarController::class, 'index'])->name('data-sanggar.index');
 
     // Sync Penyaluran Data

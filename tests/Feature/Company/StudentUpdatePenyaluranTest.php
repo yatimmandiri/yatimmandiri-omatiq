@@ -135,6 +135,12 @@ test('local database is not updated if penyaluran API fails', function () {
             'success' => false,
             'message' => 'NIK sudah digunakan di Penyaluran.',
         ], 422),
+        // Tutup semua endpoint baca agar tidak bocor ke API produksi nyata.
+        // Catatan: stub tanpa wildcard TIDAK match URL ber-query
+        // (?per_page=100&page=1), jadi gunakan trailing wildcard.
+        '*/api/v1/guru/me' => Http::response(['success' => false, 'message' => 'Unauthenticated.'], 401),
+        '*/api/v1/guru/students' => Http::response(['success' => true, 'data' => []], 200),
+        '*/api/v1/students*' => Http::response(['success' => true, 'data' => []], 200),
     ]);
 
     $admin = User::factory()->create();

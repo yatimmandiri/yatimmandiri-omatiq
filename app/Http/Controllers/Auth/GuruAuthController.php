@@ -466,6 +466,15 @@ class GuruAuthController extends Controller
 
     public function destroy(Request $request)
     {
+        $token = $request->session()->get('penyaluran_token') ?? Auth::user()?->penyaluran_token;
+        if ($token) {
+            try {
+                $this->penyaluran->logoutGuru($token);
+            } catch (\Throwable $e) {
+                // Silently ignore remote logout error
+            }
+        }
+
         Auth::logout();
         $request->session()->forget([
             'penyaluran_token',
