@@ -155,14 +155,45 @@ class ParticipantController extends Controller
             $apiSanggars = [];
         }
 
-        $sanggars = collect($apiSanggars)
-            ->map(fn ($s) => [
-                'id' => (int) ($s['id'] ?? 0),
-                'name' => trim((string) ($s['name'] ?? '')),
-                'branch' => trim((string) ($s['kantor_name'] ?? $s['branch'] ?? '')),
+        $apiSanggarsMapped = collect($apiSanggars)->map(fn ($s) => [
+            'id' => (int) ($s['id'] ?? 0),
+            'name' => trim((string) ($s['name'] ?? '')),
+            'branch' => trim((string) ($s['kantor_name'] ?? $s['branch'] ?? '')),
+        ])->filter(fn ($s) => ! empty($s['name']) && $s['name'] !== '-');
+
+        // Resilient fallback: gather sanggars from database participants
+        $dbSanggars = Participant::query()
+            ->whereNotNull('penyaluran_sanggar_name')
+            ->where('penyaluran_sanggar_name', '<>', '')
+            ->selectRaw('penyaluran_sanggar_id as id, penyaluran_sanggar_name as name, branch')
+            ->groupBy('penyaluran_sanggar_id', 'penyaluran_sanggar_name', 'branch')
+            ->get()
+            ->map(fn ($row) => [
+                'id' => (int) ($row->id ?: crc32($row->name)),
+                'name' => trim((string) $row->name),
+                'branch' => trim((string) $row->branch),
             ])
-            ->filter(fn ($s) => ! empty($s['name']) && $s['name'] !== '-')
-            ->unique('name')
+            ->filter(fn ($s) => ! empty($s['name']) && $s['name'] !== '-');
+
+        // Fetch participant mentor's live sanggars if available
+        $mentorUser = $participant->mentor_id ? User::find($participant->mentor_id) : ($participant->student?->mentor_id ? User::find($participant->student->mentor_id) : null);
+        $mentorLiveSanggars = [];
+        if ($mentorUser && $mentorUser->penyaluran_token) {
+            try {
+                $mentorLiveSanggars = $this->penyaluran->sanggars($mentorUser->penyaluran_token);
+            } catch (\Throwable $e) {
+                $mentorLiveSanggars = [];
+            }
+        }
+
+        $mentorMappedSanggars = collect($mentorLiveSanggars)->map(fn ($s) => [
+            'id' => (int) ($s['id'] ?? $s['sanggar_id'] ?? 0),
+            'name' => trim((string) ($s['name'] ?? $s['nama_sanggar'] ?? '')),
+            'branch' => trim((string) ($s['kantor_name'] ?? $s['branch'] ?? $mentorUser?->branch ?? '')),
+        ])->filter(fn ($s) => ! empty($s['name']));
+
+        $sanggars = collect([...$mentorMappedSanggars, ...$apiSanggarsMapped, ...$dbSanggars])
+            ->unique(fn ($s) => strtoupper($s['name']).'|'.strtoupper($s['branch']))
             ->values()
             ->all();
 
@@ -176,19 +207,36 @@ class ParticipantController extends Controller
         $apiTeachersByPhone = collect($apiTeachers)->filter(fn ($t) => ! empty($t['phone']))->keyBy(fn ($t) => trim(preg_replace('/[^0-9]/', '', (string) $t['phone'])));
         $apiTeachersByPenyaluranId = collect($apiTeachers)->filter(fn ($t) => ! empty($t['id']))->keyBy('id');
 
+        $dbTeacherSanggars = Participant::query()
+            ->whereNotNull('mentor_id')
+            ->whereNotNull('penyaluran_sanggar_name')
+            ->where('penyaluran_sanggar_name', '<>', '')
+            ->selectRaw('mentor_id, penyaluran_sanggar_id as id, penyaluran_sanggar_name as name, branch')
+            ->groupBy('mentor_id', 'penyaluran_sanggar_id', 'penyaluran_sanggar_name', 'branch')
+            ->get()
+            ->groupBy('mentor_id');
+
         $teachers = Role::where('name', 'Teacher')->where('guard_name', 'web')->exists()
-            ? User::role('Teacher')->orderBy('name')->get(['id', 'name', 'phone', 'email', 'branch', 'penyaluran_id'])->map(function (User $u) use ($apiTeachersByPhone, $apiTeachersByPenyaluranId) {
+            ? User::role('Teacher')->orderBy('name')->get(['id', 'name', 'phone', 'email', 'branch', 'penyaluran_id'])->map(function (User $u) use ($apiTeachersByPhone, $apiTeachersByPenyaluranId, $dbTeacherSanggars, $mentorUser, $mentorMappedSanggars) {
                 $cleanPhone = $u->phone ? trim(preg_replace('/[^0-9]/', '', (string) $u->phone)) : null;
                 $apiMatch = ($u->penyaluran_id && $apiTeachersByPenyaluranId->has($u->penyaluran_id))
                     ? $apiTeachersByPenyaluranId->get($u->penyaluran_id)
                     : ($cleanPhone && $apiTeachersByPhone->has($cleanPhone) ? $apiTeachersByPhone->get($cleanPhone) : null);
 
                 $teacherSanggars = [];
-                if ($apiMatch && ! empty($apiMatch['sanggars'])) {
+                if ($mentorUser && $u->id === $mentorUser->id && $mentorMappedSanggars->isNotEmpty()) {
+                    $teacherSanggars = $mentorMappedSanggars->values()->all();
+                } elseif ($apiMatch && ! empty($apiMatch['sanggars'])) {
                     $teacherSanggars = collect($apiMatch['sanggars'])->map(fn ($s) => [
                         'id' => (int) ($s['id'] ?? $s['sanggar_id'] ?? 0),
                         'name' => trim((string) ($s['name'] ?? $s['nama_sanggar'] ?? '')),
                         'branch' => trim((string) ($s['kantor_name'] ?? $s['branch'] ?? $apiMatch['branch'] ?? $u->branch ?? '')),
+                    ])->filter(fn ($s) => ! empty($s['name']))->values()->all();
+                } elseif ($dbTeacherSanggars->has($u->id)) {
+                    $teacherSanggars = $dbTeacherSanggars->get($u->id)->map(fn ($s) => [
+                        'id' => (int) $s->id,
+                        'name' => trim((string) $s->name),
+                        'branch' => trim((string) ($s->branch ?? $u->branch ?? '')),
                     ])->filter(fn ($s) => ! empty($s['name']))->values()->all();
                 }
 
@@ -244,10 +292,32 @@ class ParticipantController extends Controller
             $payload['penyaluran_sanggar_name'] = null;
             $payload['penyaluran_sanggar_id'] = null;
         } elseif ($request->has('penyaluran_sanggar_name')) {
-            $payload['penyaluran_sanggar_name'] = $request->input('penyaluran_sanggar_name') ?: null;
-            if ($request->has('penyaluran_sanggar_id')) {
-                $payload['penyaluran_sanggar_id'] = $request->input('penyaluran_sanggar_id') ?: null;
+            $sanggarName = trim((string) $request->input('penyaluran_sanggar_name')) ?: null;
+            $payload['penyaluran_sanggar_name'] = $sanggarName;
+
+            $sanggarId = $request->input('penyaluran_sanggar_id');
+            if (empty($sanggarId) && $sanggarName) {
+                $mentorUser = $request->filled('mentor_id') ? User::find($request->input('mentor_id')) : $participant->mentor;
+                if ($mentorUser && $mentorUser->penyaluran_token) {
+                    try {
+                        $mSanggars = $this->penyaluran->sanggars($mentorUser->penyaluran_token);
+                        $matched = collect($mSanggars)->first(fn ($s) => strcasecmp(trim((string) ($s['name'] ?? '')), $sanggarName) === 0);
+                        if ($matched && ! empty($matched['id'])) {
+                            $sanggarId = (int) $matched['id'];
+                        }
+                    } catch (\Throwable $e) {
+                    }
+                }
+
+                if (empty($sanggarId)) {
+                    $sanggarId = Participant::where('penyaluran_sanggar_name', $sanggarName)
+                        ->whereNotNull('penyaluran_sanggar_id')
+                        ->where('penyaluran_sanggar_id', '<>', 60)
+                        ->value('penyaluran_sanggar_id');
+                }
             }
+
+            $payload['penyaluran_sanggar_id'] = $sanggarId ? (int) $sanggarId : null;
         }
 
         DB::transaction(function () use ($request, $participant, &$payload) {
