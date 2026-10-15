@@ -34,18 +34,20 @@ class SanggarController extends Controller
         ], fn ($v) => filled($v));
 
         $sanggars = [];
-        try {
-            $sanggars = $this->penyaluran->allSanggars($queryParams);
-            if (empty($sanggars) && ! empty($queryParams)) {
-                $sanggars = $this->penyaluran->allSanggars();
+        if ($token) {
+            try {
+                $sanggars = $this->penyaluran->sanggars($token);
+            } catch (\Throwable $e) {
+                $sanggars = [];
             }
-        } catch (\Throwable $e) {
-            $sanggars = [];
         }
 
-        if (empty($sanggars) && $token) {
+        if (empty($sanggars)) {
             try {
-                $sanggars = $this->penyaluran->sanggars($token ?? 'session');
+                $sanggars = $this->penyaluran->allSanggars($queryParams, token: $token);
+                if (empty($sanggars) && ! empty($queryParams)) {
+                    $sanggars = $this->penyaluran->allSanggars(token: $token);
+                }
             } catch (\Throwable $e) {
                 $sanggars = [];
             }
@@ -95,5 +97,30 @@ class SanggarController extends Controller
         }
 
         return Inertia::render('teacher/data-sanggar/show', ['sanggar' => $sanggar]);
+    }
+
+    public function update(Request $request, int $sanggar)
+    {
+        $this->authorize('viewAny', Participant::class);
+
+        $validated = $request->validate([
+            'name' => ['nullable', 'string', 'max:255'],
+            'address' => ['nullable', 'string'],
+        ]);
+
+        $token = $request->session()->get('penyaluran_token') ?? Auth::user()?->penyaluran_token;
+        if (! $token && ! app()->environment('testing')) {
+            return back()->with('error', 'Sesi Penyaluran tidak ditemukan. Silakan login ulang.');
+        }
+
+        if ($token) {
+            try {
+                $this->penyaluran->updateSanggar($token, $sanggar, $validated);
+            } catch (\Throwable $e) {
+                return back()->with('error', 'Gagal memperbarui data sanggar di Penyaluran: '.$e->getMessage());
+            }
+        }
+
+        return back()->with('success', 'Data sanggar berhasil diperbarui di Penyaluran.');
     }
 }

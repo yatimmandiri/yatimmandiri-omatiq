@@ -6,6 +6,7 @@ use App\Models\Company\Student;
 use App\Models\Core\User;
 use Database\Seeders\UserRolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 
 uses(RefreshDatabase::class);
 
@@ -16,6 +17,16 @@ beforeEach(function () {
         '*/api/v1/sanggars*' => Http::response(['success' => true, 'data' => []], 200),
     ]);
     $this->seed(UserRolePermissionSeeder::class);
+
+    // Hermetik: jangan bergantung pada API Penyaluran produksi nyata.
+    // Stub tanpa wildcard TIDAK match URL ber-query (?per_page=100&page=1),
+    // jadi gunakan trailing wildcard. API kosong memicu fallback DB lokal.
+    Http::fake([
+        '*/api/v1/teachers*' => Http::response(['success' => true, 'data' => []], 200),
+        '*/api/v1/students*' => Http::response(['success' => true, 'data' => []], 200),
+        '*/api/v1/sanggars*' => Http::response(['success' => true, 'data' => []], 200),
+        '*/api/v1/guru/*' => Http::response(['success' => false, 'message' => 'Unauthenticated.'], 401),
+    ]);
 });
 
 test('cabang user sees scoped dashboard metrics for their branch', function () {
