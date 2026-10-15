@@ -107,6 +107,7 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
               : '',
         mentor_name: student?.mentor_name ?? '',
         mentor_phone: student?.mentor_phone ?? '',
+        penyaluran_sanggar_id: participant?.penyaluran_sanggar_id ?? null,
         penyaluran_sanggar_name: participant?.penyaluran_sanggar_name ?? '',
         achievements: participant?.achievements ?? '',
         has_joined_before: participant?.has_joined_before ?? false,
@@ -543,12 +544,39 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
                                         form.setData('penyaluran_sanggar_name', strVal);
 
                                         if (strVal) {
-                                            const matchedSanggar = sanggars.find(
-                                                (s) => s.name.toUpperCase() === strVal.toUpperCase(),
+                                            const currentMentor = teachers.find(
+                                                (t) =>
+                                                    String(t.id) ===
+                                                    String(form.data.mentor_id),
                                             );
-                                            if (matchedSanggar?.branch && !form.data.branch) {
-                                                form.setData('branch', matchedSanggar.branch);
+                                            const matchedSanggar =
+                                                sanggars.find(
+                                                    (s: any) =>
+                                                        s.name.toUpperCase() ===
+                                                        strVal.toUpperCase(),
+                                                ) ||
+                                                currentMentor?.sanggars?.find(
+                                                    (s: any) =>
+                                                        s.name.toUpperCase() ===
+                                                        strVal.toUpperCase(),
+                                                );
+                                            if (matchedSanggar?.id) {
+                                                form.setData(
+                                                    'penyaluran_sanggar_id',
+                                                    matchedSanggar.id,
+                                                );
                                             }
+                                            if (
+                                                matchedSanggar?.branch &&
+                                                !form.data.branch
+                                            ) {
+                                                form.setData(
+                                                    'branch',
+                                                    matchedSanggar.branch,
+                                                );
+                                            }
+                                        } else {
+                                            form.setData('penyaluran_sanggar_id', null);
                                         }
                                     }}
                                     color={
@@ -747,6 +775,12 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
                                                     'penyaluran_sanggar_name',
                                                     selected.sanggars[0].name,
                                                 );
+                                                if (selected.sanggars[0].id) {
+                                                    form.setData(
+                                                        'penyaluran_sanggar_id',
+                                                        selected.sanggars[0].id,
+                                                    );
+                                                }
                                             } else if (
                                                 !form.data.penyaluran_sanggar_name ||
                                                 !selected.sanggars.some((s) => s.name.toUpperCase() === form.data.penyaluran_sanggar_name?.toUpperCase())
@@ -755,6 +789,12 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
                                                     'penyaluran_sanggar_name',
                                                     selected.sanggars[0].name,
                                                 );
+                                                if (selected.sanggars[0].id) {
+                                                    form.setData(
+                                                        'penyaluran_sanggar_id',
+                                                        selected.sanggars[0].id,
+                                                    );
+                                                }
                                             }
                                         }
                                     } else {

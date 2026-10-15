@@ -104,13 +104,22 @@ export default function ListPage() {
             cell: (info: any) => {
                 const row = info.row.original;
                 const name = info.getValue() ?? row.full_name ?? '-';
+                const nik = row.student?.nik ?? row.nik;
 
                 return (
                     <div className="space-y-1">
                         <p className="font-semibold">{name}</p>
-                        <p className="text-xs text-muted-foreground">
-                            {row.registration_number}
-                        </p>
+                        <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                            <span>{row.registration_number}</span>
+                            {nik && (
+                                <>
+                                    <span>•</span>
+                                    <span className="font-mono text-[11px] text-foreground/80">
+                                        NIK: {nik}
+                                    </span>
+                                </>
+                            )}
+                        </div>
                     </div>
                 );
             },
@@ -355,6 +364,7 @@ export default function ListPage() {
                         items.map((item, index) => ({
                             No: index + 1,
                             Registrasi: item.registration_number,
+                            NIK: item.student?.nik ?? item.nik ?? '-',
                             Nama:
                                 item.student?.full_name ??
                                 item.full_name ??

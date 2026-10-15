@@ -99,6 +99,10 @@ export default function Dashboard() {
                                 value={participant.student?.full_name}
                             />
                             <Detail
+                                label="NIK"
+                                value={participant.student?.nik}
+                            />
+                            <Detail
                                 label="Nama Panggilan"
                                 value={participant.student?.nickname}
                             />

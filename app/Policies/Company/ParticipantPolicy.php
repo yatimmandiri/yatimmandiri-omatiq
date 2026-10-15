@@ -106,9 +106,15 @@ class ParticipantPolicy
         }
 
         if ($user->hasRole('Teacher')) {
+            // Guru HANYA boleh menghapus pendaftaran binaan miliknya sendiri, TIDAK BISA menghapus pendaftaran umum
+            if ($participant->registration_type !== 'teacher') {
+                return false;
+            }
+
             if ($participant->mentor_id === $user->id || $participant->student?->mentor_id === $user->id) {
                 return true;
             }
+
             $token = session('penyaluran_token') ?? $user->penyaluran_token;
             if ($token && $participant->student) {
                 try {
