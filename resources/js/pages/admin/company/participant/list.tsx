@@ -74,6 +74,7 @@ export default function ListPage() {
     }>().props;
 
     const userRoles = auth?.user?.roles ?? [];
+    const isAdmin = userRoles.includes('Administrators');
     const isKeuangan = userRoles.includes('Keuangan');
     const isCabang = userRoles.includes('Cabang');
     const defaultFilter: Record<string, string> = isKeuangan
@@ -169,72 +170,76 @@ export default function ListPage() {
                 return row.branch ?? row.kantor_name ?? '-';
             },
         },
-        {
-            header: 'Status',
-            accessorKey: 'status',
-            cell: (info: any) => {
-                const status = info.getValue();
-                const Icon =
-                    status === 'verified'
-                        ? CheckCircle2
-                        : status === 'rejected'
-                          ? XCircle
-                          : Clock3;
-                const row = info.row.original;
+        ...(isAdmin
+            ? [
+                  {
+                      header: 'Status',
+                      accessorKey: 'status',
+                      cell: (info: any) => {
+                          const status = info.getValue();
+                          const Icon =
+                              status === 'verified'
+                                  ? CheckCircle2
+                                  : status === 'rejected'
+                                    ? XCircle
+                                    : Clock3;
+                          const row = info.row.original;
 
-                // Keuangan cannot change registration status (read-only)
-                if (!canUpdate || isKeuangan) {
-                    return (
-                        <Badge variant={statusVariant(status) as any}>
-                            <Icon />
-                            {statusLabels[status] ?? status}
-                        </Badge>
-                    );
-                }
+                          // Keuangan cannot change registration status (read-only)
+                          if (!canUpdate || isKeuangan) {
+                              return (
+                                  <Badge variant={statusVariant(status) as any}>
+                                      <Icon />
+                                      {statusLabels[status] ?? status}
+                                  </Badge>
+                              );
+                          }
 
-                const updateStatus = (newStatus: string) => {
-                    router.put(
-                        participants.status(row.id).url,
-                        { status: newStatus },
-                        {
-                            preserveScroll: true,
-                            onSuccess: () => setRefreshData((v) => !v),
-                        },
-                    );
-                };
+                          const updateStatus = (newStatus: string) => {
+                              router.put(
+                                  participants.status(row.id).url,
+                                  { status: newStatus },
+                                  {
+                                      preserveScroll: true,
+                                      onSuccess: () => setRefreshData((v) => !v),
+                                  },
+                              );
+                          };
 
-                return (
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Badge
-                                variant={statusVariant(status) as any}
-                                className="cursor-pointer"
-                            >
-                                <Icon />
-                                {statusLabels[status] ?? status}
-                            </Badge>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start">
-                            <DropdownMenuItem
-                                onClick={() => updateStatus('submitted')}
-                            >
-                                <Clock3 className="size-3.5" /> Menunggu
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                onClick={() => updateStatus('verified')}
-                            >
-                                <CheckCircle2 className="size-3.5 text-emerald-600" /> Verified
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                onClick={() => updateStatus('rejected')}
-                            >
-                                <XCircle className="size-3.5 text-destructive" /> Ditolak
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                );
-            },
-        },
+                          return (
+                              <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                      <Badge
+                                          variant={statusVariant(status) as any}
+                                          className="cursor-pointer"
+                                      >
+                                          <Icon />
+                                          {statusLabels[status] ?? status}
+                                      </Badge>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="start">
+                                      <DropdownMenuItem
+                                          onClick={() => updateStatus('submitted')}
+                                      >
+                                          <Clock3 className="size-3.5" /> Menunggu
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem
+                                          onClick={() => updateStatus('verified')}
+                                      >
+                                          <CheckCircle2 className="size-3.5 text-emerald-600" /> Verified
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem
+                                          onClick={() => updateStatus('rejected')}
+                                      >
+                                          <XCircle className="size-3.5 text-destructive" /> Ditolak
+                                      </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                              </DropdownMenu>
+                          );
+                      },
+                  },
+              ]
+            : []),
         {
             header: 'Pembayaran',
             accessorKey: 'payment_status',
@@ -277,10 +282,6 @@ export default function ListPage() {
                     }
                 };
 
-                if (!canUpdate) {
-                    return getPaymentBadge(value);
-                }
-
                 const updatePaymentStatus = (newStatus: string) => {
                     router.put(
                         participants.status(row.id).url,
@@ -292,7 +293,9 @@ export default function ListPage() {
                     );
                 };
 
-                return (
+                const badgeNode = !canUpdate ? (
+                    getPaymentBadge(value)
+                ) : (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             {getPaymentBadge(value)}
@@ -317,6 +320,20 @@ export default function ListPage() {
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
+                );
+
+                return (
+                    <div className="flex flex-col items-start gap-1">
+                        {badgeNode}
+                        {!isAdmin && row.status === 'rejected' && (
+                            <Badge
+                                variant="destructive"
+                                className="gap-1 px-1.5 py-0.5 text-[10px]"
+                            >
+                                <XCircle className="size-3" /> Ditolak Admin
+                            </Badge>
+                        )}
+                    </div>
                 );
             },
         },
@@ -502,22 +519,24 @@ export default function ListPage() {
                                     }))
                                 }
                             />
-                            <SelectComponent
-                                label="Status Peserta"
-                                placeholder="Semua status..."
-                                data={[
-                                    { value: 'submitted', label: 'Menunggu' },
-                                    { value: 'verified', label: 'Verified' },
-                                    { value: 'rejected', label: 'Ditolak' },
-                                ]}
-                                dataSelected={filterValue.status}
-                                handleOnChange={(value: string) =>
-                                    setFilterValue((prev) => ({
-                                        ...prev,
-                                        status: value,
-                                    }))
-                                }
-                            />
+                            {isAdmin && (
+                                <SelectComponent
+                                    label="Status Peserta"
+                                    placeholder="Semua status..."
+                                    data={[
+                                        { value: 'submitted', label: 'Menunggu' },
+                                        { value: 'verified', label: 'Verified' },
+                                        { value: 'rejected', label: 'Ditolak' },
+                                    ]}
+                                    dataSelected={filterValue.status}
+                                    handleOnChange={(value: string) =>
+                                        setFilterValue((prev) => ({
+                                            ...prev,
+                                            status: value,
+                                        }))
+                                    }
+                                />
+                            )}
                             <SelectComponent
                                 label="Jalur Pendaftaran"
                                 placeholder="Semua jalur..."

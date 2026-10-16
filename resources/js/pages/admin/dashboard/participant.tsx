@@ -1,10 +1,21 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { ProofModal } from '@/components/ui/proof-modal';
 import { dashboard } from '@/routes/admin';
-import { Head, usePage } from '@inertiajs/react';
-import { ExternalLink, Printer } from 'lucide-react';
+import { paymentProof } from '@/routes/student';
+import { Head, useForm, usePage } from '@inertiajs/react';
+import { AlertCircle, ExternalLink, Eye, Loader2, Printer, Upload } from 'lucide-react';
 import { useState } from 'react';
 
 const labels: Record<string, string> = {
@@ -26,6 +37,25 @@ export default function Dashboard() {
     const { participant } = usePage<{ participant: Record<string, any> }>()
         .props;
     const [openProof, setOpenProof] = useState(false);
+    const [openUploadModal, setOpenUploadModal] = useState(false);
+
+    const uploadForm = useForm<{ payment_proof: File | null }>({
+        payment_proof: null,
+    });
+
+    const handleUploadSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!uploadForm.data.payment_proof) return;
+
+        uploadForm.post(paymentProof.url(), {
+            forceFormData: true,
+            preserveScroll: true,
+            onSuccess: () => {
+                setOpenUploadModal(false);
+                uploadForm.reset();
+            },
+        });
+    };
 
     if (!participant) {
         return (
@@ -89,6 +119,34 @@ export default function Dashboard() {
                         </div>
                     )}
                 </div>
+
+                {participant.status === 'rejected' && (
+                    <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-destructive">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex items-start gap-3">
+                                <AlertCircle className="mt-0.5 size-5 shrink-0" />
+                                <div className="space-y-1">
+                                    <p className="text-sm font-semibold">
+                                        Status Pendaftaran / Pembayaran: Ditolak
+                                    </p>
+                                    <p className="text-xs leading-relaxed text-destructive/90">
+                                        {participant.notes ||
+                                            'Bukti transfer atau berkas yang diunggah belum sesuai. Silakan unggah bukti transfer terbaru yang valid agar dapat diverifikasi ulang oleh tim panitia/keuangan.'}
+                                    </p>
+                                </div>
+                            </div>
+                            <Button
+                                size="sm"
+                                variant="destructive"
+                                className="shrink-0 gap-1.5 self-start sm:self-auto"
+                                onClick={() => setOpenUploadModal(true)}
+                            >
+                                <Upload className="size-4" />
+                                Unggah Bukti Baru
+                            </Button>
+                        </div>
+                    </div>
+                )}
 
                 <div className="grid gap-6 lg:grid-cols-[1fr_0.8fr]">
                     <Card className="space-y-5 p-5">
@@ -187,45 +245,60 @@ export default function Dashboard() {
                     </div>
                 </Card>
 
-                {participant.payment_status && (
-                    <Card className="space-y-5 p-5">
+                <Card className="space-y-5 p-5">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <h2 className="text-lg font-bold">Pembayaran</h2>
-                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                            <Detail
-                                label="Status"
-                                value={
-                                    participant.payment_status === 'paid'
-                                        ? 'Lunas'
-                                        : participant.payment_status ===
-                                            'unpaid'
-                                          ? 'Belum Bayar'
-                                          : participant.payment_status ===
-                                              'waiting_confirmation'
-                                            ? 'Menunggu Konfirmasi'
-                                            : participant.payment_status
-                                }
-                            />
-                            <Detail
-                                label="Jumlah"
-                                value={
-                                    participant.payment_amount
-                                        ? `Rp ${Number(participant.payment_amount).toLocaleString('id-ID')}`
-                                        : null
-                                }
-                            />
-                            {participant.payment_proof_url && (
-                                <div>
-                                    <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                                        Bukti Bayar
-                                    </p>
+                        {participant.payment_status !== 'paid' && (
+                            <Button
+                                size="sm"
+                                className="gap-2 bg-[#17524A] font-semibold text-white hover:bg-[#17524A]/90"
+                                onClick={() => setOpenUploadModal(true)}
+                            >
+                                <Upload className="size-4" />
+                                {participant.payment_proof_url
+                                    ? 'Unggah Ulang Bukti Transfer'
+                                    : 'Unggah Bukti Transfer'}
+                            </Button>
+                        )}
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        <Detail
+                            label="Status Pembayaran"
+                            value={
+                                participant.payment_status === 'paid'
+                                    ? 'Lunas'
+                                    : participant.payment_status ===
+                                        'waiting_confirmation'
+                                      ? 'Menunggu Konfirmasi'
+                                      : participant.payment_status ===
+                                          'unpaid'
+                                        ? 'Belum Bayar'
+                                        : (participant.payment_status ??
+                                          'Belum Bayar')
+                            }
+                        />
+                        <Detail
+                            label="Jumlah"
+                            value={
+                                participant.payment_amount
+                                    ? `Rp ${Number(participant.payment_amount).toLocaleString('id-ID')}`
+                                    : null
+                            }
+                        />
+                        {participant.payment_proof_url ? (
+                            <div>
+                                <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                                    Bukti Bayar
+                                </p>
+                                <div className="mt-1 flex items-center gap-2">
                                     <Button
                                         variant="outline"
                                         size="sm"
-                                        className="mt-1"
                                         onClick={() => setOpenProof(true)}
                                     >
-                                        Lihat Bukti{' '}
-                                        <ExternalLink className="size-4" />
+                                        <Eye className="mr-1.5 size-4" />
+                                        Lihat Bukti
                                     </Button>
                                     <ProofModal
                                         href={participant.payment_proof_url}
@@ -233,14 +306,114 @@ export default function Dashboard() {
                                         onOpenChange={setOpenProof}
                                     />
                                 </div>
-                            )}
+                            </div>
+                        ) : (
+                            <div>
+                                <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                                    Bukti Bayar
+                                </p>
+                                <p className="mt-1 text-sm text-muted-foreground">
+                                    Belum ada bukti bayar
+                                </p>
+                            </div>
+                        )}
+                    </div>
+
+                    {participant.payment_note && (
+                        <div className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">
+                            <span className="font-semibold text-foreground">
+                                Catatan Pembayaran:{' '}
+                            </span>
+                            {participant.payment_note}
                         </div>
-                    </Card>
-                )}
+                    )}
+                </Card>
+
+                <Dialog
+                    open={openUploadModal}
+                    onOpenChange={setOpenUploadModal}
+                >
+                    <DialogContent className="sm:max-w-md">
+                        <form onSubmit={handleUploadSubmit}>
+                            <DialogHeader>
+                                <DialogTitle>
+                                    {participant.payment_proof_url
+                                        ? 'Unggah Ulang Bukti Transfer'
+                                        : 'Unggah Bukti Transfer'}
+                                </DialogTitle>
+                                <DialogDescription>
+                                    Unggah foto atau dokumen bukti transfer
+                                    pembayaran pendaftaran OMATIQ. Format yang
+                                    didukung: JPG, PNG, atau PDF (maksimal 4MB).
+                                </DialogDescription>
+                            </DialogHeader>
+
+                            <div className="space-y-4 py-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="payment_proof">
+                                        File Bukti Transfer
+                                    </Label>
+                                    <Input
+                                        id="payment_proof"
+                                        type="file"
+                                        accept="image/jpeg,image/png,image/jpg,application/pdf"
+                                        onChange={(e) =>
+                                            uploadForm.setData(
+                                                'payment_proof',
+                                                e.target.files?.[0] ?? null,
+                                            )
+                                        }
+                                        required
+                                    />
+                                    {uploadForm.errors.payment_proof && (
+                                        <p className="text-xs font-medium text-destructive">
+                                            {uploadForm.errors.payment_proof}
+                                        </p>
+                                    )}
+                                </div>
+
+                                {participant.status === 'rejected' && (
+                                    <p className="rounded-md bg-muted p-2.5 text-xs text-muted-foreground">
+                                        Setelah bukti transfer baru diunggah,
+                                        status pendaftaran Anda akan otomatis
+                                        kembali menjadi{' '}
+                                        <strong>Menunggu Verifikasi</strong>{' '}
+                                        oleh panitia/keuangan.
+                                    </p>
+                                )}
+                            </div>
+
+                            <DialogFooter className="gap-2 sm:gap-0">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setOpenUploadModal(false)}
+                                    disabled={uploadForm.processing}
+                                >
+                                    Batal
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    className="bg-[#17524A] text-white hover:bg-[#17524A]/90"
+                                    disabled={
+                                        uploadForm.processing ||
+                                        !uploadForm.data.payment_proof
+                                    }
+                                >
+                                    {uploadForm.processing && (
+                                        <Loader2 className="mr-2 size-4 animate-spin" />
+                                    )}
+                                    Simpan & Unggah
+                                </Button>
+                            </DialogFooter>
+                        </form>
+                    </DialogContent>
+                </Dialog>
             </div>
         </>
     );
 }
+
 
 Dashboard.layout = {
     breadcrumbs: [
@@ -268,23 +441,37 @@ const Detail = ({
     </div>
 );
 
-const FileLink = ({ label, href }: { label: string; href?: string | null }) => (
-    <div>
-        <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-            {label}
-        </p>
-        {href ? (
-            <a
-                href={href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-1 inline-flex items-center gap-2 text-sm font-semibold text-primary underline"
-            >
-                Lihat file
-                <ExternalLink className="h-4 w-4" />
-            </a>
-        ) : (
-            <p className="mt-1 text-sm">-</p>
-        )}
-    </div>
-);
+const FileLink = ({ label, href }: { label: string; href?: string | null }) => {
+    const [open, setOpen] = useState(false);
+
+    return (
+        <div>
+            <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                {label}
+            </p>
+            {href ? (
+                <>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="mt-1 gap-1.5"
+                        onClick={() => setOpen(true)}
+                    >
+                        <Eye className="size-4" />
+                        Lihat {label}
+                    </Button>
+                    <ProofModal
+                        href={href}
+                        open={open}
+                        onOpenChange={setOpen}
+                        title={label}
+                    />
+                </>
+            ) : (
+                <p className="mt-1 text-sm text-muted-foreground">-</p>
+            )}
+        </div>
+    );
+};
+

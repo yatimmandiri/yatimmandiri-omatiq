@@ -320,6 +320,11 @@ class ParticipantController extends Controller
             $payload['penyaluran_sanggar_id'] = $sanggarId ? (int) $sanggarId : null;
         }
 
+        // Auto-verify if payment_status is paid and status was not explicitly set to rejected
+        if (($payload['payment_status'] ?? null) === 'paid' && ($payload['status'] ?? null) === 'submitted') {
+            $payload['status'] = 'verified';
+        }
+
         DB::transaction(function () use ($request, $participant, &$payload) {
             $studentData = $this->studentPayload($request);
 
@@ -356,14 +361,27 @@ class ParticipantController extends Controller
             }
 
             if ($request->hasFile('payment_proof')) {
-                if ($participant->payment_proof_path) {
-                    $this->deleteFile($participant->payment_proof_path);
-                }
-
                 $payload['payment_proof_path'] = $this->uploadFile(
+                    $participant->payment_proof_path,
                     $request->file('payment_proof'),
                     'participants/payment_proofs'
                 );
+
+                if ($participant->status === 'rejected' && ! $request->filled('status')) {
+                    $payload['status'] = 'submitted';
+                }
+                if ($participant->payment_status === 'unpaid' && ! $request->filled('payment_status')) {
+                    $payload['payment_status'] = 'waiting_confirmation';
+                }
+            }
+
+            if ($request->hasFile('student_card') && $participant->student) {
+                $studentCardPath = $this->uploadFile(
+                    $participant->student->student_card_path,
+                    $request->file('student_card'),
+                    'students/student_cards'
+                );
+                $participant->student->update(['student_card_path' => $studentCardPath]);
             }
 
             $participant->update($payload);
@@ -411,9 +429,25 @@ class ParticipantController extends Controller
                 'payment_status' => ['required', 'in:unpaid,waiting_confirmation,paid'],
             ]);
 
-            $participant->update($request->only(['payment_status']));
+            $newPaymentStatus = $request->payment_status;
+            $data = ['payment_status' => $newPaymentStatus];
 
-            return back()->with('success', 'Status Pembayaran berhasil diperbarui');
+            // Auto-sync status: jika lunas dan bukan rejected -> auto-verified
+            if ($newPaymentStatus === 'paid' && $participant->status !== 'rejected') {
+                $data['status'] = 'verified';
+            } elseif (in_array($newPaymentStatus, ['unpaid', 'waiting_confirmation'], true) && $participant->status === 'verified' && $participant->registration_type !== 'teacher') {
+                $data['status'] = 'submitted';
+            }
+
+            $participant->update($data);
+
+            $this->logSuccess('update-participant-payment', "Keuangan updated payment status: {$participant->registration_number} -> {$newPaymentStatus}".(isset($data['status']) ? " (status: {$data['status']})" : ''), [
+                'participant_id' => $participant->id,
+                'payment_status' => $newPaymentStatus,
+                'status' => $data['status'] ?? $participant->status,
+            ]);
+
+            return back()->with('success', 'Status Pembayaran berhasil diperbarui'.(isset($data['status']) && $data['status'] === 'verified' ? ' dan peserta otomatis Terverifikasi' : ''));
         }
 
         $request->validate([
@@ -424,7 +458,22 @@ class ParticipantController extends Controller
 
         $data = array_filter($request->only(['status', 'payment_status', 'notes']), fn ($v) => ! is_null($v));
 
+        // Auto-sync status jika payment_status diubah dan status pendaftaran tidak dispesifikasikan secara eksplisit
+        if (isset($data['payment_status']) && ! isset($data['status'])) {
+            if ($data['payment_status'] === 'paid' && $participant->status !== 'rejected') {
+                $data['status'] = 'verified';
+            } elseif (in_array($data['payment_status'], ['unpaid', 'waiting_confirmation'], true) && $participant->status === 'verified' && $participant->registration_type !== 'teacher') {
+                $data['status'] = 'submitted';
+            }
+        }
+
         $participant->update($data);
+
+        $this->logSuccess('update-participant-status', "Status updated: {$participant->registration_number}".(isset($data['status']) ? " status -> {$data['status']}" : '').(isset($data['payment_status']) ? " payment -> {$data['payment_status']}" : ''), [
+            'participant_id' => $participant->id,
+            'status' => $participant->status,
+            'payment_status' => $participant->payment_status,
+        ]);
 
         return back()->with('success', 'Status Peserta berhasil diperbarui');
     }
@@ -437,14 +486,24 @@ class ParticipantController extends Controller
             'payment_status' => ['required', 'in:unpaid,waiting_confirmation,paid'],
         ]);
 
-        $participant->update($request->only(['payment_status']));
+        $newPaymentStatus = $request->payment_status;
+        $data = ['payment_status' => $newPaymentStatus];
 
-        $this->logSuccess('update-participant-payment', "Updated payment status: {$participant->registration_number} -> {$request->payment_status}", [
+        if ($newPaymentStatus === 'paid' && $participant->status !== 'rejected') {
+            $data['status'] = 'verified';
+        } elseif (in_array($newPaymentStatus, ['unpaid', 'waiting_confirmation'], true) && $participant->status === 'verified' && $participant->registration_type !== 'teacher') {
+            $data['status'] = 'submitted';
+        }
+
+        $participant->update($data);
+
+        $this->logSuccess('update-participant-payment', "Updated payment status: {$participant->registration_number} -> {$newPaymentStatus}".(isset($data['status']) ? " (status: {$data['status']})" : ''), [
             'participant_id' => $participant->id,
-            'payment_status' => $request->payment_status,
+            'payment_status' => $newPaymentStatus,
+            'status' => $data['status'] ?? $participant->status,
         ]);
 
-        return back()->with('success', 'Status Pembayaran berhasil diperbarui');
+        return back()->with('success', 'Status Pembayaran berhasil diperbarui'.(isset($data['status']) && $data['status'] === 'verified' ? ' dan peserta otomatis Terverifikasi' : ''));
     }
 
     public function syncSheet(Request $request)

@@ -6,7 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import participants from '@/routes/admin/companies/participants';
 import { useForm, usePage } from '@inertiajs/react';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ProofModal } from '@/components/ui/proof-modal';
+import { ArrowLeft, Eye, Save } from 'lucide-react';
 import type { FormEvent, ReactNode } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
@@ -973,9 +974,18 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
                     >
                         <Select
                             value={form.data.payment_status}
-                            onChange={(value) =>
-                                form.setData('payment_status', value)
-                            }
+                            onChange={(value) => {
+                                form.setData('payment_status', value);
+                                if (value === 'paid' && form.data.status !== 'rejected') {
+                                    form.setData('status', 'verified');
+                                } else if (
+                                    (value === 'unpaid' || value === 'waiting_confirmation') &&
+                                    form.data.status === 'verified' &&
+                                    !isBinaan
+                                ) {
+                                    form.setData('status', 'submitted');
+                                }
+                            }}
                             options={[
                                 { value: 'unpaid', label: 'Belum Bayar' },
                                 {
@@ -1074,25 +1084,42 @@ const FileField = ({
     current?: string | null;
     onChange: (file?: File | null) => void;
     error?: string;
-}) => (
-    <div className="space-y-2">
-        <Label>{label}</Label>
-        {current && (
-            <a
-                href={current}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block text-sm font-medium text-primary underline"
-            >
-                Lihat file saat ini
-            </a>
-        )}
-        <Input
-            type="file"
-            onChange={(event) => onChange(event.target.files?.[0])}
-        />
-        {error && (
-            <p className="text-sm font-medium text-destructive">{error}</p>
-        )}
-    </div>
-);
+}) => {
+    const [openProof, setOpenProof] = useState(false);
+
+    return (
+        <div className="space-y-2">
+            <div className="flex items-center justify-between">
+                <Label>{label}</Label>
+                {current && (
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2 text-xs text-primary hover:text-primary/80 gap-1.5"
+                        onClick={() => setOpenProof(true)}
+                    >
+                        <Eye className="size-3.5" />
+                        Lihat File
+                    </Button>
+                )}
+            </div>
+            {current && (
+                <ProofModal
+                    href={current}
+                    open={openProof}
+                    onOpenChange={setOpenProof}
+                    title={label}
+                />
+            )}
+            <Input
+                type="file"
+                onChange={(event) => onChange(event.target.files?.[0])}
+            />
+            {error && (
+                <p className="text-sm font-medium text-destructive">{error}</p>
+            )}
+        </div>
+    );
+};
+
