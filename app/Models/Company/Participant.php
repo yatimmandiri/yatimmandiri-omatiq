@@ -47,11 +47,35 @@ class Participant extends Model
 
     protected $appends = [
         'kantor_name',
+        'companion_phone',
+        'parent_phone',
     ];
 
     public function getKantorNameAttribute(): ?string
     {
         return $this->branch;
+    }
+
+    public function getCompanionPhoneAttribute(): ?string
+    {
+        $isBinaan = $this->registration_type === 'teacher'
+            || ! empty($this->mentor_id)
+            || (bool) ($this->student?->is_binaan);
+
+        if ($isBinaan) {
+            return $this->mentor?->phone
+                ?? $this->student?->mentor_phone
+                ?? null;
+        }
+
+        return $this->student?->mentor_phone
+            ?? $this->mentor?->phone
+            ?? null;
+    }
+
+    public function getParentPhoneAttribute(): ?string
+    {
+        return $this->student?->parent_phone;
     }
 
     protected function casts(): array

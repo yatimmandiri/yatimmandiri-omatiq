@@ -539,8 +539,9 @@ class ParticipantController extends Controller
         $query = Participant::query()
             ->with([
                 'olimpiade:id,name',
-                'student:id,full_name,nik,school_name,gender,province_id,regency_id',
+                'student:id,full_name,nik,school_name,gender,province_id,regency_id,parent_phone,mentor_name,mentor_phone,is_binaan',
                 'student.regency:id,name',
+                'mentor:id,name,phone',
             ])
             ->search($request->string('globalSearch')->toString());
 
@@ -670,6 +671,16 @@ class ParticipantController extends Controller
             ];
         }
 
+        if ($participant->relationLoaded('mentor') && $participant->mentor) {
+            $payload['mentor'] = [
+                'id' => $participant->mentor->id,
+                'name' => $participant->mentor->name,
+                'phone' => $participant->mentor->phone,
+            ];
+        }
+
+        $payload['companion_phone'] = $participant->companion_phone;
+        $payload['parent_phone'] = $participant->parent_phone;
         $payload['payment_proof_url'] = $participant->payment_proof_url;
 
         return $payload;

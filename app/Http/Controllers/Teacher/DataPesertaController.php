@@ -316,8 +316,9 @@ class DataPesertaController extends Controller
             })
             ->with([
                 'olimpiade:id,name,event_year',
-                'student:id,full_name,nik,nis,school_name,school_level,grade,gender,regency_id,penyaluran_id,parent_phone',
+                'student:id,full_name,nik,nis,school_name,school_level,grade,gender,regency_id,penyaluran_id,parent_phone,mentor_name,mentor_phone,is_binaan',
                 'student.regency:id,name',
+                'mentor:id,name,phone',
             ])
             ->search($request->string('globalSearch')->toString());
 
@@ -361,6 +362,17 @@ class DataPesertaController extends Controller
         if ($participant->relationLoaded('olimpiade') && $participant->olimpiade) {
             $payload['olimpiade'] = $participant->olimpiade->toArray();
         }
+
+        if ($participant->relationLoaded('mentor') && $participant->mentor) {
+            $payload['mentor'] = [
+                'id' => $participant->mentor->id,
+                'name' => $participant->mentor->name,
+                'phone' => $participant->mentor->phone,
+            ];
+        }
+
+        $payload['companion_phone'] = $participant->companion_phone;
+        $payload['parent_phone'] = $participant->parent_phone;
 
         return $payload;
     }

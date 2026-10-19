@@ -136,15 +136,28 @@ class GoogleSheetService
 
     public function rowFromParticipant(Participant $participant): array
     {
-        $participant->loadMissing(['olimpiade:id,name,category', 'student:id,full_name,nik,nis,gender,school_name,grade,school_level,regency_id,parent_phone,mentor_name', 'student.regency:id,name', 'mentor:id,name']);
+        $participant->loadMissing([
+            'olimpiade:id,name,category',
+            'student:id,full_name,nik,nis,gender,school_name,grade,school_level,regency_id,parent_phone,mentor_name,mentor_phone,is_binaan',
+            'student.regency:id,name',
+            'mentor:id,name,phone',
+        ]);
 
         $student = $participant->student;
+        $nik = trim((string) ($student?->nik ?? $participant->nik ?? ''));
+        $nikStr = $nik !== '' && $nik !== '-' ? (str_starts_with($nik, "'") ? $nik : "'{$nik}") : ($nik ?: '-');
+
+        $nis = trim((string) ($student?->nis ?? ''));
+        $nisStr = $nis !== '' && $nis !== '-' ? (str_starts_with($nis, "'") ? $nis : "'{$nis}") : '';
+
+        $waliPhone = trim((string) ($student?->parent_phone ?? $participant->companion_phone ?? ''));
+        $phoneStr = $waliPhone !== '' && $waliPhone !== '-' ? (str_starts_with($waliPhone, "'") ? $waliPhone : "'{$waliPhone}") : '';
 
         return [
             '', // No - filled by sheet formula or sequential
             $participant->registration_number ?? '',
-            $student?->nik ?? $participant->nik ?? '',
-            $student?->nis ?? '',
+            $nikStr,
+            $nisStr,
             $student?->full_name ?? $participant->nik ?? '-',
             $student?->gender ?? '',
             $student?->school_name ?? '',
@@ -158,7 +171,7 @@ class GoogleSheetService
             $participant->registration_type ?? '',
             $participant->status ?? '',
             $participant->payment_status ?? '',
-            $student?->parent_phone ?? '',
+            $phoneStr,
             $participant->mentor?->name ?? $student?->mentor_name ?? '',
             $participant->created_at?->format('Y-m-d H:i') ?? '',
         ];

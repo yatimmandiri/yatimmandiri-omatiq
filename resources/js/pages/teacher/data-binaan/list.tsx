@@ -16,6 +16,7 @@ import {
 import { dashboard } from '@/routes/teacher';
 import binaan from '@/routes/teacher/data-binaan';
 import dataPeserta from '@/routes/teacher/data-peserta';
+import { formatExportString } from '@/utils/formatCsv';
 import { router, usePage } from '@inertiajs/react';
 import {
     CheckCircle2,
@@ -211,7 +212,7 @@ export default function ListPage() {
                     formatDataExport={(items: any[]) =>
                         items.map((item, index) => ({
                             No: index + 1,
-                            NIK: item.nik,
+                            NIK: formatExportString(item.nik),
                             Nama: item.full_name,
                             Sekolah: item.school_name,
                             Kelas: item.grade,
