@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ProofModal } from '@/components/ui/proof-modal';
 import participants from '@/routes/admin/companies/participants';
+import { formatExportString } from '@/utils/formatCsv';
 import { router, usePage } from '@inertiajs/react';
 import {
     CheckCircle2,
@@ -378,34 +379,60 @@ export default function ListPage() {
                     setRefreshData={setRefreshData}
                     urlFetchData={participants.data().url}
                     formatDataExport={(items: any[]) =>
-                        items.map((item, index) => ({
-                            No: index + 1,
-                            Registrasi: item.registration_number,
-                            NIK: item.student?.nik ?? item.nik ?? '-',
-                            Nama:
-                                item.student?.full_name ??
-                                item.full_name ??
-                                '-',
-                            Olimpiade: item.olimpiade?.name || '-',
-                            Jalur:
-                                registrationTypeLabels[
-                                    item.registration_type
-                                ] ??
-                                item.registration_type ??
-                                '-',
-                            Sekolah: item.student?.school_name ?? '-',
-                            Sanggar:
-                                item.penyaluran_sanggar_name ??
-                                item.student?.regency?.name ??
-                                '-',
-                            Status: statusLabels[item.status] ?? item.status,
-                            Pembayaran:
-                                paymentStatusLabels[item.payment_status] ??
-                                item.payment_status ??
-                                '-',
-                            Kantor: item.branch ?? '-',
-                            Tahun: item.event_year ?? '-',
-                        }))
+                        items.map((item, index) => {
+                            const isBinaan =
+                                item.registration_type === 'teacher' ||
+                                Boolean(item.mentor_id) ||
+                                Boolean(item.student?.is_binaan);
+
+                            const rawCompanionPhone =
+                                item.companion_phone ||
+                                (isBinaan
+                                    ? item.mentor?.phone ||
+                                      item.student?.mentor_phone
+                                    : item.student?.mentor_phone ||
+                                      item.mentor?.phone);
+
+                            const rawParentPhone =
+                                item.parent_phone ||
+                                item.student?.parent_phone;
+
+                            return {
+                                No: index + 1,
+                                Registrasi: item.registration_number,
+                                NIK: formatExportString(
+                                    item.student?.nik ?? item.nik,
+                                ),
+                                Nama:
+                                    item.student?.full_name ??
+                                    item.full_name ??
+                                    '-',
+                                'No. HP Pendamping':
+                                    formatExportString(rawCompanionPhone),
+                                'No. HP Ortu/Wali':
+                                    formatExportString(rawParentPhone),
+                                Olimpiade: item.olimpiade?.name || '-',
+                                Jalur:
+                                    registrationTypeLabels[
+                                        item.registration_type
+                                    ] ??
+                                    item.registration_type ??
+                                    '-',
+                                Sekolah: item.student?.school_name ?? '-',
+                                Sanggar:
+                                    item.penyaluran_sanggar_name ??
+                                    item.student?.regency?.name ??
+                                    '-',
+                                Status:
+                                    statusLabels[item.status] ?? item.status,
+                                Pembayaran:
+                                    paymentStatusLabels[item.payment_status] ??
+                                    item.payment_status ??
+                                    '-',
+                                Kantor: item.branch ?? '-',
+                                Tahun: item.event_year ?? '-',
+                            };
+                        })
                     }
                 >
                     <div className="flex flex-col gap-4 px-4 pt-8 md:px-8">

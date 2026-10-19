@@ -106,8 +106,12 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
             : student?.mentor_id
               ? String(student.mentor_id)
               : '',
-        mentor_name: student?.mentor_name ?? '',
-        mentor_phone: student?.mentor_phone ?? '',
+        mentor_name: isBinaan
+            ? (student?.mentor_name ?? '')
+            : (student?.mentor_name || participant?.guardian_signature_name || ''),
+        mentor_phone: isBinaan
+            ? (student?.mentor_phone ?? '')
+            : (student?.mentor_phone || student?.parent_phone || ''),
         penyaluran_sanggar_id: participant?.penyaluran_sanggar_id ?? null,
         penyaluran_sanggar_name: participant?.penyaluran_sanggar_name ?? '',
         achievements: participant?.achievements ?? '',
@@ -813,7 +817,38 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
                         </Field>
                     ) : (
                         <Field
-                            label="Nama Pendamping"
+                            label={
+                                <div className="flex items-center justify-between">
+                                    <span>Nama Pendamping</span>
+                                    {form.data.guardian_signature_name &&
+                                        form.data.mentor_name !==
+                                            form.data.guardian_signature_name && (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    form.setData(
+                                                        'mentor_name',
+                                                        form.data
+                                                            .guardian_signature_name,
+                                                    );
+                                                    if (
+                                                        form.data.parent_phone &&
+                                                        !form.data.mentor_phone
+                                                    ) {
+                                                        form.setData(
+                                                            'mentor_phone',
+                                                            form.data
+                                                                .parent_phone,
+                                                        );
+                                                    }
+                                                }}
+                                                className="text-xs font-medium text-emerald-700 hover:underline dark:text-emerald-400"
+                                            >
+                                                Gunakan Nama Wali
+                                            </button>
+                                        )}
+                                </div>
+                            }
                             error={error('mentor_name')}
                         >
                             <Input
@@ -825,7 +860,31 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
                             />
                         </Field>
                     )}
-                    <Field label="HP Pendamping" error={error('mentor_phone')}>
+                    <Field
+                        label={
+                            <div className="flex items-center justify-between">
+                                <span>HP Pendamping</span>
+                                {!isBinaan &&
+                                    form.data.parent_phone &&
+                                    form.data.mentor_phone !==
+                                        form.data.parent_phone && (
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                form.setData(
+                                                    'mentor_phone',
+                                                    form.data.parent_phone,
+                                                )
+                                            }
+                                            className="text-xs font-medium text-emerald-700 hover:underline dark:text-emerald-400"
+                                        >
+                                            Gunakan HP Wali
+                                        </button>
+                                    )}
+                            </div>
+                        }
+                        error={error('mentor_phone')}
+                    >
                         <Input
                             value={form.data.mentor_phone}
                             onChange={(e) =>
@@ -1032,7 +1091,7 @@ const Field = ({
     children,
     error,
 }: {
-    label: string;
+    label: ReactNode;
     children: ReactNode;
     error?: ReactNode;
 }) => (

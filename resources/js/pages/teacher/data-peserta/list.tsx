@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { dashboard } from '@/routes/teacher';
 import dataPeserta from '@/routes/teacher/data-peserta';
+import { formatExportString } from '@/utils/formatCsv';
 import { confirmAction } from '@/utils/sweetalert';
 import { router, usePage } from '@inertiajs/react';
 import { Card } from '@/components/ui/card';
@@ -218,22 +219,39 @@ export default function ListPage() {
                     setRefreshData={setRefreshData}
                     urlFetchData={dataPeserta.data().url}
                     formatDataExport={(items: any[]) =>
-                        items.map((item, index) => ({
-                            No: index + 1,
-                            Registrasi: item.registration_number,
-                            Nama: item.student?.full_name ?? '-',
-                            NIK: item.student?.nik ?? '-',
-                            Olimpiade: item.olimpiade?.name ?? '-',
-                            Tahun: item.event_year ?? '-',
-                            Sekolah: item.student?.school_name ?? '-',
-                            Sanggar:
-                                item.penyaluran_sanggar_name ??
-                                item.student?.regency?.name ??
-                                '-',
-                            Kantor:
-                                item.branch ?? item.kantor_name ?? '-',
-                            Status: item.status,
-                        }))
+                        items.map((item, index) => {
+                            const rawCompanionPhone =
+                                item.companion_phone ||
+                                item.mentor?.phone ||
+                                item.student?.mentor_phone;
+
+                            const rawParentPhone =
+                                item.parent_phone ||
+                                item.student?.parent_phone;
+
+                            return {
+                                No: index + 1,
+                                Registrasi: item.registration_number,
+                                Nama: item.student?.full_name ?? '-',
+                                NIK: formatExportString(
+                                    item.student?.nik ?? item.nik,
+                                ),
+                                'No. HP Pendamping':
+                                    formatExportString(rawCompanionPhone),
+                                'No. HP Ortu/Wali':
+                                    formatExportString(rawParentPhone),
+                                Olimpiade: item.olimpiade?.name ?? '-',
+                                Tahun: item.event_year ?? '-',
+                                Sekolah: item.student?.school_name ?? '-',
+                                Sanggar:
+                                    item.penyaluran_sanggar_name ??
+                                    item.student?.regency?.name ??
+                                    '-',
+                                Kantor:
+                                    item.branch ?? item.kantor_name ?? '-',
+                                Status: item.status,
+                            };
+                        })
                     }
                 >
                     <div className="flex flex-col gap-4 border-b bg-muted/20 px-4 py-5 md:px-6">

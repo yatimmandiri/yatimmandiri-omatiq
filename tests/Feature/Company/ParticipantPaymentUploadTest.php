@@ -111,3 +111,72 @@ test('admin can update participant with new payment proof without argument type 
     expect($participant->payment_proof_path)->not->toBe($oldProof);
     Storage::disk('public')->assertExists($participant->payment_proof_path);
 });
+
+test('participant companion_phone resolves correctly for binaan and umum participants', function () {
+    $teacher = User::factory()->create([
+        'name' => 'Ustadz Ahmad',
+        'phone' => '081299990001',
+    ]);
+    $teacher->assignRole('Teacher');
+
+    $studentBinaan = Student::factory()->create([
+        'full_name' => 'Santri Binaan',
+        'is_binaan' => true,
+        'parent_phone' => '081388880002',
+        'mentor_phone' => '081577770003',
+    ]);
+
+    // Binaan dengan mentor_id relasi user
+    $participantBinaan = Participant::factory()->create([
+        'student_id' => $studentBinaan->id,
+        'mentor_id' => $teacher->id,
+        'registration_type' => 'teacher',
+    ]);
+
+    expect($participantBinaan->companion_phone)->toBe('081299990001')
+        ->and($participantBinaan->parent_phone)->toBe('081388880002');
+
+    // Binaan tanpa mentor_id tapi punya student mentor_phone
+    $participantBinaanNoTeacher = Participant::factory()->create([
+        'student_id' => $studentBinaan->id,
+        'mentor_id' => null,
+        'registration_type' => 'teacher',
+    ]);
+
+    expect($participantBinaanNoTeacher->companion_phone)->toBe('081577770003')
+        ->and($participantBinaanNoTeacher->parent_phone)->toBe('081388880002');
+
+    // Peserta umum dengan parent_phone dan mentor_phone
+    $studentUmumWithMentor = Student::factory()->create([
+        'full_name' => 'Peserta Umum Bermentor',
+        'is_binaan' => false,
+        'parent_phone' => '081911112222',
+        'mentor_phone' => '081933334444',
+    ]);
+
+    $participantUmumWithMentor = Participant::factory()->create([
+        'student_id' => $studentUmumWithMentor->id,
+        'mentor_id' => null,
+        'registration_type' => 'public',
+    ]);
+
+    expect($participantUmumWithMentor->companion_phone)->toBe('081933334444')
+        ->and($participantUmumWithMentor->parent_phone)->toBe('081911112222');
+
+    // Peserta umum mandiri hanya dengan parent_phone
+    $studentUmum = Student::factory()->create([
+        'full_name' => 'Peserta Umum Mandiri',
+        'is_binaan' => false,
+        'parent_phone' => '081911115555',
+        'mentor_phone' => null,
+    ]);
+
+    $participantUmum = Participant::factory()->create([
+        'student_id' => $studentUmum->id,
+        'mentor_id' => null,
+        'registration_type' => 'public',
+    ]);
+
+    expect($participantUmum->companion_phone)->toBeNull()
+        ->and($participantUmum->parent_phone)->toBe('081911115555');
+});

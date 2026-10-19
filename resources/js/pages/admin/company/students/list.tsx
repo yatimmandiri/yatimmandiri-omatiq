@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { dashboard } from '@/routes/admin';
 import students from '@/routes/admin/companies/students';
+import { formatExportString } from '@/utils/formatCsv';
 import { router, usePage } from '@inertiajs/react';
 import {
     CheckCircle2,
@@ -248,8 +249,8 @@ export default function ListPage() {
                     formatDataExport={(items: any[]) =>
                         items.map((item, index) => ({
                             No: index + 1,
-                            NIK: item.nik,
-                            NIS: item.nis ?? '-',
+                            NIK: formatExportString(item.nik),
+                            NIS: formatExportString(item.nis),
                             Nama: item.full_name,
                             Sekolah: item.school_name ?? '-',
                             Jenjang: item.school_level ?? '-',

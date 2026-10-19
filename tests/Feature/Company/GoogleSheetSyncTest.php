@@ -45,8 +45,8 @@ it('formats participant data correctly into 20 columns for Google Sheets', funct
     expect(count($row))->toBe(20)
         ->and(count(GoogleSheetService::HEADERS))->toBe(20)
         ->and($row[1])->toBe('OMQ-SYNC-001') // Registrasi
-        ->and($row[2])->toBe('3525011505120099') // NIK
-        ->and($row[3])->toBe('12345') // NIS
+        ->and($row[2])->toBe("'3525011505120099") // NIK formatted as text string
+        ->and($row[3])->toBe("'12345") // NIS formatted as text string
         ->and($row[4])->toBe('Ahmad Dahlan') // Nama
         ->and($row[5])->toBe('male') // Gender
         ->and($row[6])->toBe('SD IT Al-Hikmah') // Sekolah
@@ -59,7 +59,7 @@ it('formats participant data correctly into 20 columns for Google Sheets', funct
         ->and($row[14])->toBe('public') // Jalur
         ->and($row[15])->toBe('verified') // Status
         ->and($row[16])->toBe('paid') // Pembayaran
-        ->and($row[17])->toBe('081234567890'); // HP Wali
+        ->and($row[17])->toBe("'081234567890"); // No Pendamping formatted as text string
 });
 
 it('handles upsert job execution via GoogleSheetService', function () {
