@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Student\ParticipantPaymentController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -15,4 +16,5 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('student')->as('student.')->middleware(['auth', 'verified'])->group(function () {
     Route::redirect('/', '/student/dashboard')->name('index');
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::post('payment-proof', [ParticipantPaymentController::class, 'uploadProof'])->name('payment-proof');
 });
