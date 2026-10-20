@@ -51,8 +51,8 @@ class StoreParticipantRequest extends FormRequest
                                 $sanggarName = $apiStudent['sanggar_name'] ?? 'Sanggar Yatim Mandiri';
                                 $teacherName = $apiStudent['teacher_name'] ?? 'Guru Pembina';
                             } else {
-                                $allStudents = app(PenyaluranService::class)->allStudents();
-                                $foundApi = collect($allStudents)->firstWhere(fn ($s) => trim((string) ($s['nik'] ?? '')) === $nikVal);
+                                $matched = app(PenyaluranService::class)->allStudents(['search' => $nikVal]);
+                                $foundApi = collect($matched)->firstWhere(fn ($s) => trim((string) ($s['nik'] ?? '')) === $nikVal);
                                 if ($foundApi) {
                                     $sanggarName = $foundApi['sanggar_name'] ?? 'Sanggar Yatim Mandiri';
                                     $teacherName = $foundApi['teacher_name'] ?? $foundApi['guru_name'] ?? 'Guru Pembina';

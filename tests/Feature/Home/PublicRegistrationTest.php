@@ -313,3 +313,54 @@ test('submitting branch PUSAT 2 is stored as PUSAT 2 in database', function () {
     expect($participant)->not->toBeNull();
     expect($participant->branch)->toBe('PUSAT 2');
 });
+
+test('registration number generation considers soft-deleted participants and avoids duplicate entry', function () {
+    $olimpiade = Olimpiade::create([
+        'name' => 'Olimpiade IPA 2026 C',
+        'category' => 'IPA',
+        'status' => true,
+        'event_year' => 2026,
+    ]);
+
+    $prefix = 'OMQ-'.now()->format('Ymd');
+
+    // Create participant 1 with 0008
+    $student1 = Student::create([
+        'nik' => '3578019999990001',
+        'full_name' => 'Peserta Satu',
+        'is_binaan' => false,
+    ]);
+    $user1 = User::create([
+        'name' => 'Peserta Satu',
+        'email' => 'peserta1@example.com',
+        'password' => bcrypt('password123'),
+    ]);
+    $participant1 = Participant::create([
+        'nik' => '3578019999990001',
+        'student_id' => $student1->id,
+        'user_id' => $user1->id,
+        'olimpiade_id' => $olimpiade->id,
+        'event_year' => 2026,
+        'registration_number' => "{$prefix}-0008",
+        'status' => 'submitted',
+        'registration_type' => 'public',
+        'payment_status' => 'waiting_confirmation',
+    ]);
+
+    // Soft delete participant 1
+    $participant1->delete();
+
+    // Now submit a new registration via HTTP endpoint
+    $payload = validRegistrationPayload($olimpiade->id, [
+        'nik' => '3578019999990002',
+        'email' => 'peserta2@example.com',
+    ]);
+
+    $response = $this->post(route('home.registration.store'), $payload);
+
+    $response->assertRedirect();
+    $participant2 = Participant::where('nik', '3578019999990002')->first();
+    expect($participant2)->not->toBeNull();
+    // It must be 0009, NOT 0008 (which was soft-deleted)!
+    expect($participant2->registration_number)->toBe("{$prefix}-0009");
+});

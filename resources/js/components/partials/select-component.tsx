@@ -58,10 +58,14 @@ export const SelectComponent = ({
     const [resultData, setResultData] = useState(data ?? []);
     const [open, setOpen] = useState(false);
 
-    const listItems = useMemo(
-        () => (!fetchDataUrl ? (data ?? []) : resultData),
-        [data, fetchDataUrl, resultData],
-    );
+    const listItems = useMemo(() => {
+        const raw = !fetchDataUrl ? (data ?? []) : resultData;
+        return (raw ?? []).map((item: any) => ({
+            ...item,
+            value: item.value !== undefined ? item.value : item.id,
+            label: item.label !== undefined ? item.label : item.name,
+        }));
+    }, [data, fetchDataUrl, resultData]);
 
     const isSelected = (value: string | number) => {
         return Array.isArray(dataSelected)

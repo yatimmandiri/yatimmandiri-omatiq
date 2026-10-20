@@ -22,6 +22,7 @@ import {
     CreditCard,
     FileUp,
     HeartHandshake,
+    Loader2,
     RotateCcw,
     Save,
     Sparkles,
@@ -29,6 +30,7 @@ import {
     UserRound,
 } from 'lucide-react';
 import brandSwal, { confirmAction } from '@/utils/sweetalert';
+import { compressImageFile } from '@/utils/image-compression';
 import type { FormEvent, ReactNode } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
@@ -494,8 +496,29 @@ export default function RegistrationPage() {
         }
     }
 
-    const setFile = (name: string, file?: File | null) => {
-        form.setData(name, file ?? null);
+    const [compressingFile, setCompressingFile] = useState<string | null>(null);
+
+    const setFile = async (name: string, file?: File | null) => {
+        if (!file) {
+            form.setData(name, null);
+            setLocalErrors((errors) => ({ ...errors, [name]: undefined }));
+            return;
+        }
+
+        if (file.type?.startsWith('image/')) {
+            try {
+                setCompressingFile(name);
+                const compressed = await compressImageFile(file);
+                form.setData(name, compressed);
+            } catch {
+                form.setData(name, file);
+            } finally {
+                setCompressingFile(null);
+            }
+        } else {
+            form.setData(name, file);
+        }
+
         setLocalErrors((errors) => ({ ...errors, [name]: undefined }));
     };
 
@@ -1366,6 +1389,9 @@ export default function RegistrationPage() {
                                         label="Upload Bukti Transfer Pendaftaran"
                                         file={form.data.payment_proof}
                                         error={mergedErrors.payment_proof}
+                                        isCompressing={
+                                            compressingFile === 'payment_proof'
+                                        }
                                         onChange={(file) =>
                                             setFile('payment_proof', file)
                                         }
@@ -1375,6 +1401,9 @@ export default function RegistrationPage() {
                                         label="Upload Kartu Pelajar/KIA/KK/AKTA"
                                         file={form.data.student_card}
                                         error={mergedErrors.student_card}
+                                        isCompressing={
+                                            compressingFile === 'student_card'
+                                        }
                                         onChange={(file) =>
                                             setFile('student_card', file)
                                         }
@@ -1702,29 +1731,40 @@ const FileField = ({
     accept,
     file,
     onChange,
+    isCompressing,
 }: {
     label: string;
     error?: string;
     accept: string;
     file?: File | null;
     onChange: (file?: File | null) => void;
+    isCompressing?: boolean;
 }) => (
     <div className="space-y-2">
         <Label className="font-black text-[#1E293B] dark:text-white">
             {label}
         </Label>
         <label className="flex cursor-pointer flex-col items-center justify-center rounded-3xl border border-dashed border-slate-300 bg-[#F8FAFC] px-5 py-8 text-center transition hover:border-[#17524A] hover:bg-[#E7F0ED] dark:border-slate-600 dark:bg-slate-800 dark:hover:border-[#17524A] dark:hover:bg-[#17524A]/10">
-            <FileUp className="h-7 w-7 text-[#17524A]" />
+            {isCompressing ? (
+                <Loader2 className="h-7 w-7 animate-spin text-[#17524A]" />
+            ) : (
+                <FileUp className="h-7 w-7 text-[#17524A]" />
+            )}
             <span className="mt-3 text-sm font-black text-[#1E293B] dark:text-white">
-                {file?.name ?? 'Pilih file'}
+                {isCompressing
+                    ? 'Mengompresi gambar...'
+                    : (file?.name ?? 'Pilih file')}
             </span>
             <span className="mt-1 text-xs font-semibold text-[#64748B] dark:text-slate-400">
-                JPG, PNG, atau PDF
+                {isCompressing
+                    ? 'Menyesuaikan resolusi terbaik'
+                    : 'JPG, PNG, atau PDF'}
             </span>
             <input
                 type="file"
                 accept={accept}
                 className="sr-only"
+                disabled={isCompressing}
                 onChange={(event) => onChange(event.target.files?.[0])}
             />
         </label>

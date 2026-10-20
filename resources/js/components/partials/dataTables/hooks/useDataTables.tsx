@@ -29,6 +29,7 @@ interface DataTableProps {
     customButtons?: any;
     rowSelection?: any;
     setRowSelection?: any;
+    initialSorting?: SortingState;
     children: ReactNode;
 }
 
@@ -54,12 +55,15 @@ export const DataTableProvider = ({
     formatDataExport,
     customButtons,
     setRowSelection,
+    initialSorting,
     children,
 }: DataTableProps) => {
     const [isLoading, setIsLoading] = useState(false);
     const [data, setData] = useState<any>([]);
     const [globalFilter, setGlobalFilter] = useState('');
-    const [sorting, setSorting] = useState<SortingState>([]);
+    const [sorting, setSorting] = useState<SortingState>(
+        initialSorting ?? [],
+    );
 
     const [pagination, setPagination] = useState(() => {
         if (typeof window === 'undefined') {
@@ -95,7 +99,12 @@ export const DataTableProvider = ({
                     page: pagination.page,
                     perPage: pagination.perPage,
                     globalSearch: globalFilter,
-                    orderDirection: sorting[0]?.desc ? 'desc' : 'asc',
+                    orderDirection:
+                        sorting.length > 0
+                            ? sorting[0]?.desc
+                                ? 'desc'
+                                : 'asc'
+                            : 'desc',
                     orderBy: sorting[0]?.id ?? 'id',
                     filterValue: filterValue,
                 },
