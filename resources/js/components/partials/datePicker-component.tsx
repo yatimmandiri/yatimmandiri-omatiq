@@ -55,7 +55,15 @@ export const DatePickerComponent = ({
     const [internalRange, setInternalRange] = useState<any>();
 
     // CLEAN CONTROLLED VALUE
-    const selectedDate = group ? null : (value ?? internalDate);
+    const parsedDate = useMemo(() => {
+        if (!value) return null;
+        const d = value instanceof Date ? value : new Date(value);
+        return isNaN(d.getTime()) ? null : d;
+    }, [value]);
+
+    const selectedDate: Date | undefined = group
+        ? undefined
+        : (parsedDate ?? internalDate ?? undefined);
     const selectedRange = group ? (value ?? internalRange) : null;
 
     const handleSelect = (val: any) => {
@@ -98,21 +106,20 @@ export const DatePickerComponent = ({
             return placeholder;
         }
 
-        return moment(selectedDate).tz('Asia/Jakarta').format('DD MMM YYYY');
+        const m = moment(selectedDate).tz('Asia/Jakarta');
+        return m.isValid() ? m.format('DD MMM YYYY') : placeholder;
     }, [group, selectedDate, selectedRange, placeholder]);
 
     // SAFE SYNC
     const [prevValue, setPrevValue] = useState(value);
 
-    if (value && !isSameDateValue(prevValue, value)) {
+    if (!isSameDateValue(prevValue, value)) {
         setPrevValue(value);
 
         if (group) {
-            if (value?.from) {
-                setInternalRange(value);
-            }
+            setInternalRange(value?.from ? value : undefined);
         } else {
-            setInternalDate(value);
+            setInternalDate(parsedDate ?? undefined);
         }
     }
 

@@ -13,6 +13,8 @@ use App\Models\Core\Region\Village;
 use App\Models\Core\User;
 use App\Services\PenyaluranService;
 use App\Settings\SiteSettings;
+use Illuminate\Database\QueryException;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -150,8 +152,8 @@ class ParticipantRegistrationController extends Controller
                 ];
             }
 
-            $allStudents = $penyaluran->allStudents();
-            $foundApi = collect($allStudents)->firstWhere(function ($s) use ($nik) {
+            $matched = $penyaluran->allStudents(['search' => $nik]);
+            $foundApi = collect($matched)->firstWhere(function ($s) use ($nik) {
                 $sNik = ! empty($s['nik']) ? trim((string) $s['nik']) : null;
 
                 return $sNik && $sNik === $nik;
@@ -198,39 +200,59 @@ class ParticipantRegistrationController extends Controller
             return back()->with('error', 'Pendaftaran umum sedang ditutup.');
         }
 
-        $participant = DB::transaction(function () use ($request) {
-            $user = User::create([
-                'name' => $request->full_name,
-                'email' => $request->email,
-                'password' => Hash::make($request->password),
-                'email_verified_at' => now(),
-            ]);
-            $user->assignRole('Participant');
+        $paymentProofPath = $this->handlePaymentProof($request);
 
-            $olimpiade = Olimpiade::find($request->olimpiade_id);
-            $data = $this->payload($request);
-            $data['user_id'] = $user->id;
-            $data['event_year'] = $olimpiade?->event_year ?? (int) date('Y');
-            $data['registration_number'] = $this->registrationNumber();
-            $data['status'] = 'submitted';
-            $data['registration_type'] = 'public';
-            $data['payment_status'] = 'waiting_confirmation';
-            $data['payment_proof_path'] = $this->handlePaymentProof($request);
+        $maxAttempts = 5;
+        $participant = null;
 
-            $student = Student::firstOrCreate(
-                [
-                    'nik' => $request->nik,
-                    'is_binaan' => false,
-                ],
-                $this->studentData($request),
-            );
+        for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
+            try {
+                $participant = DB::transaction(function () use ($request, $paymentProofPath) {
+                    $user = User::create([
+                        'name' => $request->full_name,
+                        'email' => $request->email,
+                        'password' => Hash::make($request->password),
+                        'email_verified_at' => now(),
+                    ]);
+                    $user->assignRole('Participant');
 
-            $this->handleStudentFiles($student, $request);
+                    $olimpiade = Olimpiade::find($request->olimpiade_id);
+                    $data = $this->payload($request);
+                    $data['user_id'] = $user->id;
+                    $data['event_year'] = $olimpiade?->event_year ?? (int) date('Y');
+                    $data['registration_number'] = Participant::generateRegistrationNumber();
+                    $data['status'] = 'submitted';
+                    $data['registration_type'] = 'public';
+                    $data['payment_status'] = 'waiting_confirmation';
+                    $data['payment_proof_path'] = $paymentProofPath;
 
-            $data['student_id'] = $student->id;
+                    $student = Student::firstOrCreate(
+                        [
+                            'nik' => $request->nik,
+                            'is_binaan' => false,
+                        ],
+                        $this->studentData($request),
+                    );
 
-            return Participant::create($data);
-        });
+                    $this->handleStudentFiles($student, $request);
+
+                    $data['student_id'] = $student->id;
+
+                    return Participant::create($data);
+                });
+
+                break;
+            } catch (UniqueConstraintViolationException|QueryException $e) {
+                $isRegNumberCollision = str_contains($e->getMessage(), 'participants_registration_number_unique')
+                    || (str_contains($e->getMessage(), 'Duplicate entry') && str_contains($e->getMessage(), 'OMQ-'));
+
+                if (! $isRegNumberCollision || $attempt >= $maxAttempts) {
+                    throw $e;
+                }
+
+                usleep(50000 * $attempt);
+            }
+        }
 
         return redirect()
             ->route('home.registration.success', $participant->registration_number)
@@ -390,19 +412,6 @@ class ParticipantRegistrationController extends Controller
 
     private function registrationNumber(): string
     {
-        return DB::transaction(function () {
-            $prefix = 'OMQ-'.now()->format('Ymd');
-            $max = Participant::query()
-                ->where('registration_number', 'like', "{$prefix}%")
-                ->lockForUpdate()
-                ->max('registration_number');
-
-            $next = 1;
-            if ($max && preg_match('/-(\d{4})$/', $max, $m)) {
-                $next = ((int) $m[1]) + 1;
-            }
-
-            return $prefix.'-'.str_pad((string) $next, 4, '0', STR_PAD_LEFT);
-        });
+        return Participant::generateRegistrationNumber();
     }
 }

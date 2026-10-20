@@ -68,15 +68,26 @@ export default function ListPage({
         setRefreshData((prev) => !prev);
     };
 
+    const hasActiveFilter = Boolean(
+        (filterValue.event && filterValue.event !== 'all') ||
+        (filterValue.subject_type && filterValue.subject_type !== 'all') ||
+        filterValue.date_from ||
+        filterValue.date_to,
+    );
+
     const fmtVal = (val: any) => {
         if (val === null || val === undefined || val === '') return '-';
+
         if (typeof val === 'boolean') return val ? 'true' : 'false';
+
         if (typeof val === 'object') return JSON.stringify(val);
+        
         return String(val);
     };
 
     const renderEventBadge = (event: string) => {
         const ev = String(event || '').toLowerCase();
+
         if (ev === 'created') {
             return (
                 <Badge className="bg-emerald-600 font-semibold text-white hover:bg-emerald-700">
@@ -301,22 +312,33 @@ export default function ListPage({
                         urlFetchData={activities.data().url}
                         formatDataExport={formatDataExport}
                         withActions={false}
+                        initialSorting={[{ id: 'created_at', desc: true }]}
                     >
                         <div className="flex flex-col space-y-4 border-b bg-muted/20 px-4 py-5 md:px-6">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                                     <Filter className="size-3.5" />
                                     Filter Aktivitas
+                                    {hasActiveFilter && (
+                                        <Badge
+                                            variant="secondary"
+                                            className="ml-1 h-5 bg-emerald-100 text-[10px] font-semibold text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300"
+                                        >
+                                            Aktif
+                                        </Badge>
+                                    )}
                                 </div>
-                                <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="h-7 gap-1 px-2 text-xs text-muted-foreground hover:text-foreground"
-                                    onClick={resetFilter}
-                                >
-                                    <RotateCcw className="size-3" />
-                                    Reset Filter
-                                </Button>
+                                {hasActiveFilter && (
+                                    <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-7 gap-1 px-2 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
+                                        onClick={resetFilter}
+                                    >
+                                        <RotateCcw className="size-3" />
+                                        Reset Filter
+                                    </Button>
+                                )}
                             </div>
 
                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -328,7 +350,7 @@ export default function ListPage({
                                     handleOnChange={(val: any) =>
                                         setFilterValue((prev: any) => ({
                                             ...prev,
-                                            event: val,
+                                            event: val || 'all',
                                         }))
                                     }
                                 />
@@ -341,7 +363,7 @@ export default function ListPage({
                                     handleOnChange={(val: any) =>
                                         setFilterValue((prev: any) => ({
                                             ...prev,
-                                            subject_type: val,
+                                            subject_type: val || 'all',
                                         }))
                                     }
                                 />

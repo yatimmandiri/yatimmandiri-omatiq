@@ -15,25 +15,29 @@ class LogActivityController extends Controller
         $this->authorize('viewAny', LogActivity::class);
 
         $events = [
-            ['id' => 'all', 'name' => 'Semua Event'],
-            ['id' => 'created', 'name' => 'Tambah Data (Create)'],
-            ['id' => 'updated', 'name' => 'Ubah Data (Update)'],
-            ['id' => 'deleted', 'name' => 'Hapus Data (Delete)'],
+            ['value' => 'all', 'label' => 'Semua Event', 'id' => 'all', 'name' => 'Semua Event'],
+            ['value' => 'created', 'label' => 'Tambah Data (Create)', 'id' => 'created', 'name' => 'Tambah Data (Create)'],
+            ['value' => 'updated', 'label' => 'Ubah Data (Update)', 'id' => 'updated', 'name' => 'Ubah Data (Update)'],
+            ['value' => 'deleted', 'label' => 'Hapus Data (Delete)', 'id' => 'deleted', 'name' => 'Hapus Data (Delete)'],
         ];
 
         $subjectTypes = [
-            ['id' => 'all', 'name' => 'Semua Modul'],
-            ['id' => 'App\Models\Company\Participant', 'name' => 'Peserta (Participant)'],
-            ['id' => 'App\Models\Company\Student', 'name' => 'Siswa (Student)'],
-            ['id' => 'App\Models\Company\Olimpiade', 'name' => 'Olimpiade'],
-            ['id' => 'App\Models\Core\User', 'name' => 'Pengguna (User)'],
-            ['id' => 'App\Models\Core\Role', 'name' => 'Peran (Role)'],
-            ['id' => 'App\Models\Core\Permission', 'name' => 'Izin (Permission)'],
-            ['id' => 'App\Models\Company\Period', 'name' => 'Periode'],
-            ['id' => 'App\Models\Company\Slider', 'name' => 'Slider'],
-            ['id' => 'App\Models\Company\Review', 'name' => 'Ulasan'],
-            ['id' => 'App\Models\Company\Testimonial', 'name' => 'Testimoni'],
-            ['id' => 'App\Models\Company\FaqCompany', 'name' => 'FAQ'],
+            ['value' => 'all', 'label' => 'Semua Modul', 'id' => 'all', 'name' => 'Semua Modul'],
+            ['value' => 'App\Models\Company\Participant', 'label' => 'Peserta (Participant)', 'id' => 'App\Models\Company\Participant', 'name' => 'Peserta (Participant)'],
+            ['value' => 'App\Models\Company\Student', 'label' => 'Santri / Binaan (Student)', 'id' => 'App\Models\Company\Student', 'name' => 'Santri / Binaan (Student)'],
+            ['value' => 'App\Models\Company\Olimpiade', 'label' => 'Olimpiade', 'id' => 'App\Models\Company\Olimpiade', 'name' => 'Olimpiade'],
+            ['value' => 'App\Models\Company\OlimpiadeSchedule', 'label' => 'Jadwal Olimpiade', 'id' => 'App\Models\Company\OlimpiadeSchedule', 'name' => 'Jadwal Olimpiade'],
+            ['value' => 'App\Models\Company\OlimpiadeObjective', 'label' => 'Tujuan Olimpiade', 'id' => 'App\Models\Company\OlimpiadeObjective', 'name' => 'Tujuan Olimpiade'],
+            ['value' => 'App\Models\Company\OlimpiadeGallery', 'label' => 'Galeri Olimpiade', 'id' => 'App\Models\Company\OlimpiadeGallery', 'name' => 'Galeri Olimpiade'],
+            ['value' => 'App\Models\Company\OlimpiadeVideo', 'label' => 'Video Olimpiade', 'id' => 'App\Models\Company\OlimpiadeVideo', 'name' => 'Video Olimpiade'],
+            ['value' => 'App\Models\Core\User', 'label' => 'Pengguna (User)', 'id' => 'App\Models\Core\User', 'name' => 'Pengguna (User)'],
+            ['value' => 'App\Models\Core\Role', 'label' => 'Peran (Role)', 'id' => 'App\Models\Core\Role', 'name' => 'Peran (Role)'],
+            ['value' => 'App\Models\Core\Permission', 'label' => 'Izin (Permission)', 'id' => 'App\Models\Core\Permission', 'name' => 'Izin (Permission)'],
+            ['value' => 'App\Models\Company\Period', 'label' => 'Periode', 'id' => 'App\Models\Company\Period', 'name' => 'Periode'],
+            ['value' => 'App\Models\Company\Slider', 'label' => 'Slider', 'id' => 'App\Models\Company\Slider', 'name' => 'Slider'],
+            ['value' => 'App\Models\Company\Review', 'label' => 'Ulasan (Review)', 'id' => 'App\Models\Company\Review', 'name' => 'Ulasan (Review)'],
+            ['value' => 'App\Models\Company\Testimonial', 'label' => 'Testimoni', 'id' => 'App\Models\Company\Testimonial', 'name' => 'Testimoni'],
+            ['value' => 'App\Models\Company\FaqCompany', 'label' => 'FAQ', 'id' => 'App\Models\Company\FaqCompany', 'name' => 'FAQ'],
         ];
 
         return Inertia::render('admin/core/log-activity/list', [
@@ -46,14 +50,14 @@ class LogActivityController extends Controller
     {
         $this->authorize('data-log-activity', LogActivity::class);
 
-        $perPage = (int) ($request->input('perPage', 10) ?: 10);
+        $perPage = min((int) ($request->input('perPage', 10) ?: 10), 100);
         $page = (int) ($request->input('page', 1) ?: 1);
         $globalSearch = (string) $request->input('globalSearch', '');
         $orderDirection = strtolower((string) $request->input('orderDirection', 'desc')) === 'asc' ? 'asc' : 'desc';
-        $orderBy = $request->input('orderBy', 'id');
+        $orderBy = (string) $request->input('orderBy', 'created_at');
         $allowedSorts = ['id', 'log_name', 'event', 'subject_type', 'subject_id', 'created_at'];
         if (! in_array($orderBy, $allowedSorts, true)) {
-            $orderBy = 'id';
+            $orderBy = 'created_at';
         }
 
         $filterValue = $request->input('filterValue', []);
@@ -69,21 +73,34 @@ class LogActivityController extends Controller
         $query = LogActivity::query()
             ->with(['causer:id,name,email,branch'])
             ->when(filled($event) && $event !== 'all', fn ($q) => $q->where('event', $event))
-            ->when(filled($subjectType) && $subjectType !== 'all', fn ($q) => $q->where('subject_type', $subjectType))
-            ->when(filled($dateFrom), function ($q) use ($dateFrom) {
-                try {
-                    $q->whereDate('created_at', '>=', Carbon::parse($dateFrom)->format('Y-m-d'));
-                } catch (\Throwable $e) {
-                }
-            })
-            ->when(filled($dateTo), function ($q) use ($dateTo) {
-                try {
-                    $q->whereDate('created_at', '<=', Carbon::parse($dateTo)->format('Y-m-d'));
-                } catch (\Throwable $e) {
-                }
-            })
+            ->when(filled($subjectType) && $subjectType !== 'all', function ($q) use ($subjectType) {
+                $base = class_basename($subjectType);
+                $q->where(function ($sub) use ($subjectType, $base) {
+                    $sub->where('subject_type', $subjectType)
+                        ->orWhere('subject_type', 'like', "%{$base}");
+                });
+            });
+
+        if (filled($dateFrom)) {
+            try {
+                $from = Carbon::parse($dateFrom, 'Asia/Jakarta')->startOfDay();
+                $query->where('created_at', '>=', $from);
+            } catch (\Throwable $e) {
+            }
+        }
+
+        if (filled($dateTo)) {
+            try {
+                $to = Carbon::parse($dateTo, 'Asia/Jakarta')->endOfDay();
+                $query->where('created_at', '<=', $to);
+            } catch (\Throwable $e) {
+            }
+        }
+
+        $query
             ->search($globalSearch)
-            ->orderBy($orderBy, $orderDirection);
+            ->orderBy($orderBy, $orderDirection)
+            ->orderBy('id', $orderDirection);
 
         $paginated = $query->paginate($perPage, ['*'], 'page', $page);
 

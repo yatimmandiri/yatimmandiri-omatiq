@@ -6,6 +6,8 @@ use App\Models\Company\Olimpiade;
 use App\Models\Company\Participant;
 use App\Models\Company\Student;
 use App\Models\Core\User;
+use Illuminate\Database\QueryException;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 
 class TeacherService
@@ -39,141 +41,156 @@ class TeacherService
         $olimpiade = Olimpiade::findOrFail($data['olimpiade_id']);
         $eventYear = $olimpiade->event_year ?? (int) date('Y');
 
-        return DB::transaction(function () use ($teacher, $data, $penyaluranStudent, $mapGender, $eventYear) {
-            $penyaluranId = $penyaluranStudent['student_id'] ?? $penyaluranStudent['id'] ?? $data['penyaluran_student_id'];
-            $nik = trim((string) ($penyaluranStudent['nik'] ?? ''));
+        $maxAttempts = 5;
 
-            if ($nik === '' || $nik === '-' || $nik === '0' || strtolower($nik) === 'null' || strlen($nik) < 10) {
-                throw new \DomainException('Santri binaan belum memiliki NIK yang valid di Penyaluran.');
-            }
+        for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
+            try {
+                return DB::transaction(function () use ($teacher, $data, $penyaluranStudent, $mapGender, $eventYear) {
+                    $penyaluranId = $penyaluranStudent['student_id'] ?? $penyaluranStudent['id'] ?? $data['penyaluran_student_id'];
+                    $nik = trim((string) ($penyaluranStudent['nik'] ?? ''));
 
-            if (Student::hasActiveRegistrationFor($nik, $eventYear)) {
-                throw new \DomainException("Binaan dengan NIK {$nik} sudah terdaftar pada OMATIQ {$eventYear}.");
-            }
-
-            $existingActive = Participant::query()
-                ->where(function ($q) use ($eventYear) {
-                    $q->where('event_year', $eventYear);
-                    if ($eventYear == 2026) {
-                        $q->orWhereNull('event_year');
+                    if ($nik === '' || $nik === '-' || $nik === '0' || strtolower($nik) === 'null' || strlen($nik) < 10) {
+                        throw new \DomainException('Santri binaan belum memiliki NIK yang valid di Penyaluran.');
                     }
-                })
-                ->whereIn('status', ['submitted', 'verified'])
-                ->whereHas('student', fn ($q) => $q->where('penyaluran_id', $penyaluranId))
-                ->exists();
 
-            if ($existingActive) {
-                throw new \DomainException("Binaan ini sudah terdaftar pada OMATIQ {$eventYear}.");
-            }
+                    if (Student::hasActiveRegistrationFor($nik, $eventYear)) {
+                        throw new \DomainException("Binaan dengan NIK {$nik} sudah terdaftar pada OMATIQ {$eventYear}.");
+                    }
 
-            $studentNik = ! empty($penyaluranStudent['nik']) ? trim((string) $penyaluranStudent['nik']) : null;
+                    $existingActive = Participant::query()
+                        ->where(function ($q) use ($eventYear) {
+                            $q->where('event_year', $eventYear);
+                            if ($eventYear == 2026) {
+                                $q->orWhereNull('event_year');
+                            }
+                        })
+                        ->whereIn('status', ['submitted', 'verified'])
+                        ->whereHas('student', fn ($q) => $q->where('penyaluran_id', $penyaluranId))
+                        ->exists();
 
-            // Resolve existing student by penyaluran_id and by NIK
-            $studentByPenyaluran = $penyaluranId
-                ? Student::withTrashed()->where('penyaluran_id', $penyaluranId)->first()
-                : null;
+                    if ($existingActive) {
+                        throw new \DomainException("Binaan ini sudah terdaftar pada OMATIQ {$eventYear}.");
+                    }
 
-            $studentByNik = $studentNik
-                ? Student::withTrashed()->where('nik', $studentNik)->where('is_binaan', true)->first()
-                : null;
+                    $studentNik = ! empty($penyaluranStudent['nik']) ? trim((string) $penyaluranStudent['nik']) : null;
 
-            $student = null;
+                    // Resolve existing student by penyaluran_id and by NIK
+                    $studentByPenyaluran = $penyaluranId
+                        ? Student::withTrashed()->where('penyaluran_id', $penyaluranId)->first()
+                        : null;
 
-            if ($studentByPenyaluran && $studentByNik) {
-                if ($studentByPenyaluran->id === $studentByNik->id) {
-                    $student = $studentByPenyaluran;
-                } else {
-                    // Two different rows exist (one with penyaluran_id, one with the NIK).
-                    // Reconcile by prioritizing the row with participants or the one matching NIK.
-                    $penyaluranHasParticipants = Participant::where('student_id', $studentByPenyaluran->id)->exists();
-                    $nikHasParticipants = Participant::where('student_id', $studentByNik->id)->exists();
+                    $studentByNik = $studentNik
+                        ? Student::withTrashed()->where('nik', $studentNik)->where('is_binaan', true)->first()
+                        : null;
 
-                    if ($penyaluranHasParticipants && ! $nikHasParticipants) {
-                        // Reassign NIK to studentByPenyaluran and clear studentByNik
-                        $studentByNik->update(['nik' => 'DUP-'.uniqid().'-'.$studentByNik->id]);
-                        $studentByNik->delete();
+                    $student = null;
+
+                    if ($studentByPenyaluran && $studentByNik) {
+                        if ($studentByPenyaluran->id === $studentByNik->id) {
+                            $student = $studentByPenyaluran;
+                        } else {
+                            // Two different rows exist (one with penyaluran_id, one with the NIK).
+                            // Reconcile by prioritizing the row with participants or the one matching NIK.
+                            $penyaluranHasParticipants = Participant::where('student_id', $studentByPenyaluran->id)->exists();
+                            $nikHasParticipants = Participant::where('student_id', $studentByNik->id)->exists();
+
+                            if ($penyaluranHasParticipants && ! $nikHasParticipants) {
+                                // Reassign NIK to studentByPenyaluran and clear studentByNik
+                                $studentByNik->update(['nik' => 'DUP-'.uniqid().'-'.$studentByNik->id]);
+                                $studentByNik->delete();
+                                $student = $studentByPenyaluran;
+                            } else {
+                                // Reassign any participants from studentByPenyaluran to studentByNik
+                                if ($penyaluranHasParticipants) {
+                                    Participant::where('student_id', $studentByPenyaluran->id)->update(['student_id' => $studentByNik->id]);
+                                }
+                                // Free the penyaluran_id from old student so studentByNik can take it
+                                $studentByPenyaluran->update(['penyaluran_id' => null]);
+                                if (! $penyaluranHasParticipants) {
+                                    $studentByPenyaluran->delete();
+                                }
+                                $student = $studentByNik;
+                            }
+                        }
+                    } elseif ($studentByPenyaluran) {
                         $student = $studentByPenyaluran;
-                    } else {
-                        // Reassign any participants from studentByPenyaluran to studentByNik
-                        if ($penyaluranHasParticipants) {
-                            Participant::where('student_id', $studentByPenyaluran->id)->update(['student_id' => $studentByNik->id]);
-                        }
-                        // Free the penyaluran_id from old student so studentByNik can take it
-                        $studentByPenyaluran->update(['penyaluran_id' => null]);
-                        if (! $penyaluranHasParticipants) {
-                            $studentByPenyaluran->delete();
-                        }
+                    } elseif ($studentByNik) {
                         $student = $studentByNik;
                     }
+
+                    if ($student && $student->trashed()) {
+                        $student->restore();
+                    }
+
+                    // Ensure no other record holds this penyaluran_id
+                    if ($penyaluranId) {
+                        Student::withTrashed()
+                            ->where('penyaluran_id', $penyaluranId)
+                            ->when($student?->id, fn ($q, $id) => $q->where('id', '!=', $id))
+                            ->update(['penyaluran_id' => null]);
+                    }
+
+                    // Create/update Student master (is_binaan true, no User) with full data
+                    $student ??= new Student;
+                    $student->fill([
+                        'penyaluran_id' => $penyaluranId,
+                        'nik' => $penyaluranStudent['nik'] ?? $student->nik,
+                        'full_name' => $penyaluranStudent['name'] ?? $penyaluranStudent['full_name'] ?? $student->full_name ?? '',
+                        'nickname' => $data['nickname'] ?? $penyaluranStudent['nickname'] ?? $student->nickname,
+                        'gender' => $mapGender($penyaluranStudent['gender'] ?? null) ?? $student->gender,
+                        'birth_place' => $data['birth_place'] ?? $penyaluranStudent['birth_place'] ?? $student->birth_place,
+                        'birth_date' => $data['birth_date'] ?? $penyaluranStudent['birth_date'] ?? $student->birth_date,
+                        'nis' => $penyaluranStudent['nis'] ?? $student->nis,
+                        'school_level' => $penyaluranStudent['school_level'] ?? $student->school_level,
+                        'school_name' => $penyaluranStudent['school_name'] ?? $student->school_name,
+                        'grade' => $penyaluranStudent['class'] ?? $penyaluranStudent['grade'] ?? $student->grade,
+                        'address' => $data['address'] ?? $penyaluranStudent['address'] ?? $student->address,
+                        'province_id' => $data['province_id'] ?? $student->province_id,
+                        'regency_id' => $data['regency_id'] ?? $student->regency_id,
+                        'district_id' => $data['district_id'] ?? $student->district_id,
+                        'village_id' => $data['village_id'] ?? $student->village_id,
+                        'parent_phone' => $data['parent_phone'] ?? $penyaluranStudent['guardian_phone'] ?? $student->parent_phone,
+                        'mentor_name' => $teacher->name,
+                        'mentor_phone' => $data['mentor_phone'] ?? $teacher->phone ?? $student->mentor_phone,
+                        'mentor_id' => $teacher->id,
+                        'is_binaan' => true,
+                    ])->save();
+
+                    return Participant::create([
+                        'student_id' => $student->id,
+                        'nik' => $student->nik,
+                        'penyaluran_sanggar_id' => $data['penyaluran_sanggar_id'] ?? $penyaluranStudent['sanggar_id'] ?? null,
+                        'penyaluran_sanggar_name' => $data['penyaluran_sanggar_name'] ?? $penyaluranStudent['sanggar_name'] ?? null,
+                        'mentor_id' => $teacher->id,
+                        'olimpiade_id' => $data['olimpiade_id'],
+                        'event_year' => $eventYear,
+                        'registration_type' => 'teacher',
+                        'registration_number' => Participant::generateRegistrationNumber(),
+                        'status' => 'verified',
+                        'payment_status' => 'paid',
+                        'payment_amount' => 0,
+                        'achievements' => $data['achievements'] ?? null,
+                        'has_joined_before' => $data['has_joined_before'] ?? false,
+                        'previous_year' => $data['previous_year'] ?? null,
+                        'referral_source' => $data['referral_source'] ?? null,
+                        'branch' => $penyaluranStudent['kantor_name'] ?? $teacher->branch ?? $data['branch'] ?? null,
+                        'notes' => $data['notes'] ?? null,
+                        'data_truth_consent' => true,
+                        'documentation_consent' => true,
+                        'rules_consent' => true,
+                    ]);
+                });
+            } catch (UniqueConstraintViolationException|QueryException $e) {
+                $isRegNumberCollision = str_contains($e->getMessage(), 'participants_registration_number_unique')
+                    || (str_contains($e->getMessage(), 'Duplicate entry') && str_contains($e->getMessage(), 'OMQ-'));
+
+                if (! $isRegNumberCollision || $attempt >= $maxAttempts) {
+                    throw $e;
                 }
-            } elseif ($studentByPenyaluran) {
-                $student = $studentByPenyaluran;
-            } elseif ($studentByNik) {
-                $student = $studentByNik;
+
+                usleep(50000 * $attempt);
             }
-
-            if ($student && $student->trashed()) {
-                $student->restore();
-            }
-
-            // Ensure no other record holds this penyaluran_id
-            if ($penyaluranId) {
-                Student::withTrashed()
-                    ->where('penyaluran_id', $penyaluranId)
-                    ->when($student?->id, fn ($q, $id) => $q->where('id', '!=', $id))
-                    ->update(['penyaluran_id' => null]);
-            }
-
-            // Create/update Student master (is_binaan true, no User) with full data
-            $student ??= new Student;
-            $student->fill([
-                'penyaluran_id' => $penyaluranId,
-                'nik' => $penyaluranStudent['nik'] ?? $student->nik,
-                'full_name' => $penyaluranStudent['name'] ?? $penyaluranStudent['full_name'] ?? $student->full_name ?? '',
-                'nickname' => $data['nickname'] ?? $penyaluranStudent['nickname'] ?? $student->nickname,
-                'gender' => $mapGender($penyaluranStudent['gender'] ?? null) ?? $student->gender,
-                'birth_place' => $data['birth_place'] ?? $penyaluranStudent['birth_place'] ?? $student->birth_place,
-                'birth_date' => $data['birth_date'] ?? $penyaluranStudent['birth_date'] ?? $student->birth_date,
-                'nis' => $penyaluranStudent['nis'] ?? $student->nis,
-                'school_level' => $penyaluranStudent['school_level'] ?? $student->school_level,
-                'school_name' => $penyaluranStudent['school_name'] ?? $student->school_name,
-                'grade' => $penyaluranStudent['class'] ?? $penyaluranStudent['grade'] ?? $student->grade,
-                'address' => $data['address'] ?? $penyaluranStudent['address'] ?? $student->address,
-                'province_id' => $data['province_id'] ?? $student->province_id,
-                'regency_id' => $data['regency_id'] ?? $student->regency_id,
-                'district_id' => $data['district_id'] ?? $student->district_id,
-                'village_id' => $data['village_id'] ?? $student->village_id,
-                'parent_phone' => $data['parent_phone'] ?? $penyaluranStudent['guardian_phone'] ?? $student->parent_phone,
-                'mentor_name' => $teacher->name,
-                'mentor_phone' => $data['mentor_phone'] ?? $teacher->phone ?? $student->mentor_phone,
-                'mentor_id' => $teacher->id,
-                'is_binaan' => true,
-            ])->save();
-
-            return Participant::create([
-                'student_id' => $student->id,
-                'nik' => $student->nik,
-                'penyaluran_sanggar_id' => $data['penyaluran_sanggar_id'] ?? $penyaluranStudent['sanggar_id'] ?? null,
-                'penyaluran_sanggar_name' => $data['penyaluran_sanggar_name'] ?? $penyaluranStudent['sanggar_name'] ?? null,
-                'mentor_id' => $teacher->id,
-                'olimpiade_id' => $data['olimpiade_id'],
-                'event_year' => $eventYear,
-                'registration_type' => 'teacher',
-                'registration_number' => $this->generateRegistrationNumber(),
-                'status' => 'verified',
-                'payment_status' => 'paid',
-                'payment_amount' => 0,
-                'achievements' => $data['achievements'] ?? null,
-                'has_joined_before' => $data['has_joined_before'] ?? false,
-                'previous_year' => $data['previous_year'] ?? null,
-                'referral_source' => $data['referral_source'] ?? null,
-                'branch' => $penyaluranStudent['kantor_name'] ?? $teacher->branch ?? $data['branch'] ?? null,
-                'notes' => $data['notes'] ?? null,
-                'data_truth_consent' => true,
-                'documentation_consent' => true,
-                'rules_consent' => true,
-            ]);
-        });
+        }
     }
 
     /**
@@ -263,20 +280,6 @@ class TeacherService
 
     private function generateRegistrationNumber(): string
     {
-        $prefix = 'OMQ-'.now()->format('Ymd');
-
-        return DB::transaction(function () use ($prefix) {
-            $max = Participant::query()
-                ->where('registration_number', 'like', "{$prefix}%")
-                ->lockForUpdate()
-                ->max('registration_number');
-
-            $next = 1;
-            if ($max && preg_match('/-(\d{4})$/', $max, $m)) {
-                $next = ((int) $m[1]) + 1;
-            }
-
-            return $prefix.'-'.str_pad((string) $next, 4, '0', STR_PAD_LEFT);
-        });
+        return Participant::generateRegistrationNumber();
     }
 }

@@ -9,6 +9,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
@@ -146,6 +149,34 @@ class Participant extends Model
             ->logFillable()
             ->logOnlyDirty()
             ->useLogName('System');
+    }
+
+    public static function generateRegistrationNumber(?string $date = null): string
+    {
+        $prefix = 'OMQ-'.($date ? Carbon::parse($date)->format('Ymd') : now()->format('Ymd'));
+        $lockKey = "participant_reg_lock:{$prefix}";
+
+        $generator = function () use ($prefix) {
+            $max = static::withTrashed()
+                ->where('registration_number', 'like', "{$prefix}%")
+                ->lockForUpdate()
+                ->max('registration_number');
+
+            $next = 1;
+            if ($max && preg_match('/-(\d{4})$/', $max, $m)) {
+                $next = ((int) $m[1]) + 1;
+            }
+
+            return $prefix.'-'.str_pad((string) $next, 4, '0', STR_PAD_LEFT);
+        };
+
+        try {
+            return Cache::lock($lockKey, 10)->block(5, function () use ($generator) {
+                return DB::transaction($generator);
+            });
+        } catch (\Throwable $e) {
+            return DB::transaction($generator);
+        }
     }
 
     private function storageUrl(?string $path): ?string
