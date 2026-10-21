@@ -6,12 +6,23 @@ import {
 import { Card, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Plus, Trash2, MessageSquare } from 'lucide-react';
+import { parseWhatsappContacts, WhatsappContact } from '@/utils/whatsapp';
 import { router, useForm, usePage } from '@inertiajs/react';
 
 import { useState } from 'react';
 
 export const SiteForm = () => {
     const { settings } = usePage<any>().props;
+
+    const initialContacts = parseWhatsappContacts(settings?.whatsapp);
+    const [whatsappContacts, setWhatsappContacts] = useState<WhatsappContact[]>(
+        initialContacts.length > 0
+            ? initialContacts
+            : [{ name: 'Admin OMATIQ', number: '' }],
+    );
 
     const { data, setData, post, processing, errors } = useForm({
         saveBack: 'false',
@@ -27,7 +38,11 @@ export const SiteForm = () => {
         twitter: settings?.twitter || '',
         youtube: settings?.youtube || '',
         linkedin: settings?.linkedin || '',
-        whatsapp: settings?.whatsapp || '',
+        whatsapp: JSON.stringify(
+            initialContacts.length > 0
+                ? initialContacts
+                : [{ name: 'Admin OMATIQ', number: '' }],
+        ),
         tiktok: settings?.tiktok || '',
         registration_public_open: settings?.registration_public_open ?? true,
         registration_binaan_open: settings?.registration_binaan_open ?? true,
@@ -37,6 +52,36 @@ export const SiteForm = () => {
         sheets_sheet_name: settings?.sheets_sheet_name ?? 'Data Peserta',
         _method: 'PUT',
     });
+
+    const updateWhatsappList = (updated: WhatsappContact[]) => {
+        setWhatsappContacts(updated);
+        setData('whatsapp', JSON.stringify(updated));
+    };
+
+    const handleAddContact = () => {
+        const nextIdx = whatsappContacts.length + 1;
+        updateWhatsappList([
+            ...whatsappContacts,
+            { name: `Admin ${nextIdx}`, number: '' },
+        ]);
+    };
+
+    const handleRemoveContact = (index: number) => {
+        const updated = whatsappContacts.filter((_, i) => i !== index);
+        updateWhatsappList(
+            updated.length > 0 ? updated : [{ name: 'Admin 1', number: '' }],
+        );
+    };
+
+    const handleContactChange = (
+        index: number,
+        field: keyof WhatsappContact,
+        value: string,
+    ) => {
+        const updated = [...whatsappContacts];
+        updated[index] = { ...updated[index], [field]: value };
+        updateWhatsappList(updated);
+    };
 
     // PREVIEW
     const [logoPreview, setLogoPreview] = useState(
@@ -169,17 +214,102 @@ export const SiteForm = () => {
                                 errors={errors.address}
                                 color={errors.address ? 'danger' : 'default'}
                             />
-                            <InputTextComponent
-                                type="text"
-                                label="Whatsapp"
-                                name="whatsapp"
-                                value={data.whatsapp}
-                                handleOnChange={(value: string) =>
-                                    setData('whatsapp', value)
-                                }
-                                errors={errors.whatsapp}
-                                color={errors.whatsapp ? 'danger' : 'default'}
-                            />
+                            <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-4 dark:border-slate-800 dark:bg-slate-900/40">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                                            <MessageSquare className="h-4 w-4" />
+                                        </div>
+                                        <div>
+                                            <Label className="text-sm font-bold text-slate-800 dark:text-slate-100">
+                                                Kontak WhatsApp Admin (Multi-Admin)
+                                            </Label>
+                                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                                                Daftar admin WhatsApp yang tampil di floating chat dan footer.
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={handleAddContact}
+                                        className="h-8 gap-1.5 rounded-lg border-emerald-600/30 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 dark:border-emerald-500/30 dark:text-emerald-400 dark:hover:bg-emerald-950/30"
+                                    >
+                                        <Plus className="h-3.5 w-3.5" />
+                                        Tambah Admin
+                                    </Button>
+                                </div>
+
+                                <div className="space-y-2.5 pt-1">
+                                    {whatsappContacts.map((contact, index) => (
+                                        <div
+                                            key={index}
+                                            className="flex flex-col gap-2 rounded-xl border border-slate-200/80 bg-white p-3 shadow-xs sm:flex-row sm:items-center dark:border-slate-800 dark:bg-slate-900"
+                                        >
+                                            <div className="flex-1">
+                                                <Label className="mb-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                                                    Nama / Jabatan Admin
+                                                </Label>
+                                                <Input
+                                                    type="text"
+                                                    value={contact.name}
+                                                    onChange={(e) =>
+                                                        handleContactChange(
+                                                            index,
+                                                            'name',
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    placeholder="Contoh: CS Pendaftaran / Admin 1"
+                                                    className="h-9 text-xs"
+                                                />
+                                            </div>
+                                            <div className="flex-1">
+                                                <Label className="mb-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                                                    Nomor WhatsApp
+                                                </Label>
+                                                <Input
+                                                    type="text"
+                                                    value={contact.number}
+                                                    onChange={(e) =>
+                                                        handleContactChange(
+                                                            index,
+                                                            'number',
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    placeholder="Contoh: 081234567890"
+                                                    className="h-9 text-xs"
+                                                />
+                                            </div>
+                                            {whatsappContacts.length > 1 && (
+                                                <div className="flex sm:self-end">
+                                                    <Button
+                                                        type="button"
+                                                        size="icon"
+                                                        variant="ghost"
+                                                        onClick={() =>
+                                                            handleRemoveContact(
+                                                                index,
+                                                            )
+                                                        }
+                                                        className="h-9 w-9 text-rose-500 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/30"
+                                                        title="Hapus Kontak Ini"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                                {errors.whatsapp && (
+                                    <p className="text-xs font-medium text-rose-500">
+                                        {errors.whatsapp}
+                                    </p>
+                                )}
+                            </div>
                             <InputTextComponent
                                 type="text"
                                 label="Facebook"
