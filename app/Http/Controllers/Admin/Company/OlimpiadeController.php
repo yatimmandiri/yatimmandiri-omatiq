@@ -172,6 +172,42 @@ class OlimpiadeController extends Controller
         return back()->with('success', 'Olimpiade Status Updated Successfully');
     }
 
+    public function togglePublic(Olimpiade $olimpiade)
+    {
+        $this->authorize('update', $olimpiade);
+
+        $olimpiade->update(['is_open_public' => ! $olimpiade->is_open_public]);
+
+        $this->logSuccess(
+            'change-open-public-olimpiade',
+            "Changed Olimpiade open public status: {$olimpiade->name}",
+            [
+                'olimpiade_id' => $olimpiade->id,
+                'is_open_public' => $olimpiade->is_open_public,
+            ],
+        );
+
+        return back()->with('success', 'Status Pendaftaran Umum Berhasil Diperbarui');
+    }
+
+    public function toggleBinaan(Olimpiade $olimpiade)
+    {
+        $this->authorize('update', $olimpiade);
+
+        $olimpiade->update(['is_open_binaan' => ! $olimpiade->is_open_binaan]);
+
+        $this->logSuccess(
+            'change-open-binaan-olimpiade',
+            "Changed Olimpiade open binaan status: {$olimpiade->name}",
+            [
+                'olimpiade_id' => $olimpiade->id,
+                'is_open_binaan' => $olimpiade->is_open_binaan,
+            ],
+        );
+
+        return back()->with('success', 'Status Pendaftaran Binaan Berhasil Diperbarui');
+    }
+
     public function recommended(Olimpiade $olimpiade)
     {
         $this->authorize('update', $olimpiade);
@@ -272,6 +308,14 @@ class OlimpiadeController extends Controller
 
         if ($request->has('status')) {
             $data['status'] = $request->boolean('status');
+        }
+
+        if ($request->has('is_open_public')) {
+            $data['is_open_public'] = $request->boolean('is_open_public');
+        }
+
+        if ($request->has('is_open_binaan')) {
+            $data['is_open_binaan'] = $request->boolean('is_open_binaan');
         }
 
         if ($request->has('recommended')) {

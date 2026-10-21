@@ -10,6 +10,7 @@ use Closure;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class StoreTeacherParticipantRequest extends FormRequest
 {
@@ -142,7 +143,13 @@ class StoreTeacherParticipantRequest extends FormRequest
                     }
                 },
             ],
-            'olimpiade_id' => ['required', 'integer', 'exists:olimpiades,id'],
+            'olimpiade_id' => [
+                'required',
+                'integer',
+                Rule::exists('olimpiades', 'id')->where(function ($query) {
+                    $query->where('status', true)->where('is_open_binaan', true);
+                }),
+            ],
             'penyaluran_sanggar_id' => ['nullable', 'integer'],
             'penyaluran_sanggar_name' => ['nullable', 'string', 'max:255'],
             'birth_date' => ['nullable', 'date', 'before:today'],

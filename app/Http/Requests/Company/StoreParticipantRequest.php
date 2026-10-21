@@ -80,7 +80,13 @@ class StoreParticipantRequest extends FormRequest
                     }
                 },
             ],
-            'olimpiade_id' => ['required', 'integer', 'exists:olimpiades,id'],
+            'olimpiade_id' => [
+                'required',
+                'integer',
+                Rule::exists('olimpiades', 'id')->where(function ($query) {
+                    $query->where('status', true)->where('is_open_public', true);
+                }),
+            ],
             'full_name' => ['required', 'string', 'max:255'],
             'nickname' => ['nullable', 'string', 'max:120'],
             'gender' => ['required', Rule::in(['male', 'female'])],

@@ -32,6 +32,8 @@ use Spatie\Sluggable\Attributes\Sluggable;
     'cta_description',
     'registration_url',
     'status',
+    'is_open_public',
+    'is_open_binaan',
     'recommended',
     'sort_order',
     'event_year',
@@ -43,6 +45,8 @@ class Olimpiade extends Model
 
     protected $attributes = [
         'status' => true,
+        'is_open_public' => true,
+        'is_open_binaan' => true,
         'recommended' => false,
         'sort_order' => 0,
     ];
@@ -68,6 +72,8 @@ class Olimpiade extends Model
             'gallery' => 'array',
             'videos' => 'array',
             'status' => 'boolean',
+            'is_open_public' => 'boolean',
+            'is_open_binaan' => 'boolean',
             'recommended' => 'boolean',
             'sort_order' => 'integer',
             'event_year' => 'integer',
@@ -94,6 +100,16 @@ class Olimpiade extends Model
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('status', true);
+    }
+
+    public function scopeOpenForPublic(Builder $query): Builder
+    {
+        return $query->where('is_open_public', true);
+    }
+
+    public function scopeOpenForBinaan(Builder $query): Builder
+    {
+        return $query->where('is_open_binaan', true);
     }
 
     public function scopeRecommended(Builder $query): Builder

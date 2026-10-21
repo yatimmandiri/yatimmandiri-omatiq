@@ -43,6 +43,8 @@ class UpdateOlimpiadeRequest extends FormRequest
             'registration_url' => ['nullable', 'string', 'max:2048'],
             'event_year' => ['nullable', 'integer', 'min:2020', 'max:2099'],
             'status' => ['sometimes', 'boolean'],
+            'is_open_public' => ['sometimes', 'boolean'],
+            'is_open_binaan' => ['sometimes', 'boolean'],
             'recommended' => ['sometimes', 'boolean'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
         ];

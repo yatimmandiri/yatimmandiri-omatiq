@@ -73,6 +73,8 @@ Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'auth.admi
 
         Route::put('olimpiades/{olimpiade}/recommended', [OlimpiadeController::class, 'recommended'])->name('olimpiades.recommended');
         Route::put('olimpiades/{olimpiade}/status', [OlimpiadeController::class, 'status'])->name('olimpiades.status');
+        Route::put('olimpiades/{olimpiade}/toggle-public', [OlimpiadeController::class, 'togglePublic'])->name('olimpiades.toggle-public');
+        Route::put('olimpiades/{olimpiade}/toggle-binaan', [OlimpiadeController::class, 'toggleBinaan'])->name('olimpiades.toggle-binaan');
         Route::get('olimpiades/data', [OlimpiadeController::class, 'getData'])->name('olimpiades.data');
         Route::resource('olimpiades', OlimpiadeController::class);
 

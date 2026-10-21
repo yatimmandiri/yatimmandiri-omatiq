@@ -33,6 +33,7 @@ type VerifyProps = {
         event_year: number;
         branch?: string | null;
         penyaluran_sanggar_name?: string | null;
+        guardian_name?: string | null;
         olimpiade?: {
             id?: number;
             name?: string;
@@ -47,6 +48,7 @@ type VerifyProps = {
             grade?: string | null;
             regency_name?: string | null;
             mentor_name?: string | null;
+            guardian_name?: string | null;
             is_binaan?: boolean;
             photo_url?: string | null;
         } | null;
@@ -261,20 +263,48 @@ export default function RegistrationVerifyPage({
                                         </p>
                                     </div>
 
-                                    <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200/70">
-                                        <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
-                                            <UserCheck className="h-4 w-4 text-[#17524A]" />
-                                            Guru Pendamping / Wali
-                                        </div>
-                                        <p className="mt-1 text-sm font-black text-slate-800">
-                                            {participant.student?.mentor_name ?? '-'}
-                                        </p>
-                                        <p className="text-xs font-semibold text-slate-500">
-                                            {participant.student?.is_binaan
-                                                ? 'Guru Binaan Sanggar'
-                                                : 'Pendamping Resmi'}
-                                        </p>
-                                    </div>
+                                    {(() => {
+                                        const isBinaan = Boolean(
+                                            participant.student?.is_binaan,
+                                        );
+                                        const mentorName =
+                                            participant.student?.mentor_name?.trim();
+                                        const guardianName = (
+                                            participant.guardian_name ??
+                                            participant.student?.guardian_name
+                                        )?.trim();
+
+                                        const displayName = isBinaan
+                                            ? mentorName || '-'
+                                            : mentorName || guardianName || '-';
+
+                                        const label = isBinaan
+                                            ? 'Guru Pembina Sanggar'
+                                            : 'Orang Tua / Wali';
+
+                                        const subtitle = isBinaan
+                                            ? 'Guru Binaan Sanggar'
+                                            : mentorName &&
+                                                guardianName &&
+                                                mentorName !== guardianName
+                                              ? `Wali: ${guardianName}`
+                                              : 'Orang Tua / Wali Santri';
+
+                                        return (
+                                            <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200/70">
+                                                <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
+                                                    <UserCheck className="h-4 w-4 text-[#17524A]" />
+                                                    {label}
+                                                </div>
+                                                <p className="mt-1 text-sm font-black text-slate-800">
+                                                    {displayName}
+                                                </p>
+                                                <p className="text-xs font-semibold text-slate-500">
+                                                    {subtitle}
+                                                </p>
+                                            </div>
+                                        );
+                                    })()}
 
                                     {participant.penyaluran_sanggar_name ? (
                                         <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200/70">

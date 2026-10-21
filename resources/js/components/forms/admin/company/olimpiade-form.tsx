@@ -47,6 +47,8 @@ type OlimpiadeRecord = {
     cta_description?: string | null;
     registration_url?: string | null;
     status: boolean;
+    is_open_public: boolean;
+    is_open_binaan: boolean;
     recommended: boolean;
     sort_order: number;
     event_year?: number | null;
@@ -104,6 +106,8 @@ export const OlimpiadeForm = ({ dataId }: { dataId?: number }) => {
         cta_description: olimpiade?.cta_description ?? '',
         registration_url: olimpiade?.registration_url ?? '/kontak',
         status: olimpiade?.status ?? true,
+        is_open_public: olimpiade?.is_open_public ?? true,
+        is_open_binaan: olimpiade?.is_open_binaan ?? true,
         recommended: olimpiade?.recommended ?? false,
         sort_order: olimpiade?.sort_order ?? 0,
         event_year:
@@ -118,6 +122,8 @@ export const OlimpiadeForm = ({ dataId }: { dataId?: number }) => {
             ...(dataId ? { _method: 'put' } : {}),
             benefits: parseLines(benefitsText),
             status: current.status ? 1 : 0,
+            is_open_public: current.is_open_public ? 1 : 0,
+            is_open_binaan: current.is_open_binaan ? 1 : 0,
             recommended: current.recommended ? 1 : 0,
         };
     });
@@ -299,15 +305,33 @@ export const OlimpiadeForm = ({ dataId }: { dataId?: number }) => {
                 </Field>
                 <div className="grid gap-5 md:grid-cols-2">
                     <ToggleField
-                        label="Aktif"
+                        label="Status Master Web (Tampil di Website)"
+                        description="Jika nonaktif, olimpiade tidak akan tampil sama sekali di web umum & portal guru"
                         checked={form.data.status}
                         onChange={(checked) => form.setData('status', checked)}
                     />
                     <ToggleField
                         label="Direkomendasikan"
+                        description="Tampilkan badge rekomendasi pada halaman promosi"
                         checked={form.data.recommended}
                         onChange={(checked) =>
                             form.setData('recommended', checked)
+                        }
+                    />
+                    <ToggleField
+                        label="Buka Pendaftaran Umum"
+                        description="Izinkan peserta umum mendaftar cabang olimpiade ini melalui web publik"
+                        checked={form.data.is_open_public}
+                        onChange={(checked) =>
+                            form.setData('is_open_public', checked)
+                        }
+                    />
+                    <ToggleField
+                        label="Buka Pendaftaran Binaan"
+                        description="Izinkan guru sanggar mendaftarkan santri binaan ke cabang olimpiade ini"
+                        checked={form.data.is_open_binaan}
+                        onChange={(checked) =>
+                            form.setData('is_open_binaan', checked)
                         }
                     />
                 </div>
@@ -443,15 +467,22 @@ const Field = ({
 
 const ToggleField = ({
     label,
+    description,
     checked,
     onChange,
 }: {
     label: string;
+    description?: string;
     checked: boolean;
     onChange: (checked: boolean) => void;
 }) => (
-    <div className="flex items-center justify-between rounded-md border p-4">
-        <Label>{label}</Label>
+    <div className="flex items-center justify-between gap-3 rounded-md border p-4">
+        <div className="space-y-0.5">
+            <Label className="text-sm font-medium">{label}</Label>
+            {description && (
+                <p className="text-xs text-muted-foreground">{description}</p>
+            )}
+        </div>
         <Switch checked={checked} onCheckedChange={onChange} />
     </div>
 );

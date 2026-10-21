@@ -106,12 +106,51 @@ export default function ListPage() {
                 <Badge
                     variant={info.getValue() ? 'default' : 'secondary'}
                     className="cursor-pointer"
+                    title="Klik untuk ubah status tampil web"
                     onClick={() =>
                         toggle(olimpiades.status(info.row.original.id).url)
                     }
                 >
                     {info.getValue() ? <CheckCircle2 /> : <XCircle />}
                     {info.getValue() ? 'Aktif' : 'Nonaktif'}
+                </Badge>
+            ),
+        },
+        {
+            header: (info: any) => renderRowHeader(info, 'Buka Umum'),
+            accessorKey: 'is_open_public',
+            cell: (info: any) => (
+                <Badge
+                    variant={info.getValue() ? 'default' : 'outline'}
+                    className="cursor-pointer"
+                    title="Klik untuk buka/tutup pendaftaran umum"
+                    onClick={() =>
+                        toggle(
+                            olimpiades.togglePublic(info.row.original.id).url,
+                        )
+                    }
+                >
+                    {info.getValue() ? <CheckCircle2 /> : <XCircle />}
+                    {info.getValue() ? 'Buka' : 'Tutup'}
+                </Badge>
+            ),
+        },
+        {
+            header: (info: any) => renderRowHeader(info, 'Buka Binaan'),
+            accessorKey: 'is_open_binaan',
+            cell: (info: any) => (
+                <Badge
+                    variant={info.getValue() ? 'default' : 'outline'}
+                    className="cursor-pointer"
+                    title="Klik untuk buka/tutup pendaftaran binaan guru"
+                    onClick={() =>
+                        toggle(
+                            olimpiades.toggleBinaan(info.row.original.id).url,
+                        )
+                    }
+                >
+                    {info.getValue() ? <CheckCircle2 /> : <XCircle />}
+                    {info.getValue() ? 'Buka' : 'Tutup'}
                 </Badge>
             ),
         },
@@ -148,6 +187,8 @@ export default function ListPage() {
             Nama: item.name,
             Kategori: item.category,
             Status: item.status ? 'Aktif' : 'Nonaktif',
+            'Buka Umum': item.is_open_public ? 'Buka' : 'Tutup',
+            'Buka Binaan': item.is_open_binaan ? 'Buka' : 'Tutup',
             Rekomendasi: item.recommended ? 'Ya' : 'Tidak',
             Dibuat: formatDate(item.created_at),
         }));
