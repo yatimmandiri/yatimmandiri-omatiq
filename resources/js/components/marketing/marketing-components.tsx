@@ -837,17 +837,19 @@ export const ContactInfoGrid = () => {
             {
                 icon: MapPin,
                 label: 'Address',
-                value: settings.address || 'Jakarta, Indonesia',
+                value:
+                    settings.address ||
+                    'Jalan Raya Jambangan 135-137, Surabaya, Jawa Timur',
             },
             {
                 icon: Phone,
-                label: 'Phone',
-                value: settings.phone || '+62 812 0000 2026',
+                label: 'Phone / WhatsApp',
+                value: settings.phone || '(031) 8283 488',
             },
             {
                 icon: Mail,
                 label: 'Email',
-                value: settings.email || 'hello@omatiq.id',
+                value: settings.email || 'info@yatimmandiri.org',
             },
             {
                 icon: MessageCircle,

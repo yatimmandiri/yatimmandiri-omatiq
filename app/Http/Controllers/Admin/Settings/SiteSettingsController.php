@@ -50,6 +50,12 @@ class SiteSettingsController extends Controller
                 continue;
             }
 
+            if ($key === 'whatsapp' && is_array($value)) {
+                $settings->$key = json_encode(array_values($value));
+
+                continue;
+            }
+
             $settings->$key = $value;
         }
 

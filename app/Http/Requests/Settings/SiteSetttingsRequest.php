@@ -34,7 +34,7 @@ class SiteSetttingsRequest extends FormRequest
             'instagram' => ['nullable', 'string', 'max:255'],
             'twitter' => ['nullable', 'string', 'max:255'],
             'youtube' => ['nullable', 'string', 'max:255'],
-            'whatsapp' => ['nullable', 'string', 'max:255'],
+            'whatsapp' => ['nullable'],
             'tiktok' => ['nullable', 'string', 'max:255'],
             'registration_public_open' => ['sometimes', 'boolean'],
             'registration_binaan_open' => ['sometimes', 'boolean'],
