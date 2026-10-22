@@ -810,10 +810,10 @@
                     </td>
                 </tr>
                 <tr class="meta-row">
-                    <td class="meta-lbl">Guru Pendamping</td>
+                    <td class="meta-lbl">{{ ($student->is_binaan ?? false) ? 'Guru Pendamping' : 'Orang Tua / Wali' }}</td>
                     <td class="meta-cln">:</td>
                     <td class="meta-val">
-                        {{ $participant->mentor?->name ?? $student->mentor_name ?? '-' }}
+                        {{ $participant->mentor?->name ?? $student->mentor_name ?? $participant->guardian_signature_name ?? '-' }}
                     </td>
                 </tr>
             </table>

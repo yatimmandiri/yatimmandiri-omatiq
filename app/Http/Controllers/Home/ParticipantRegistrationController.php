@@ -70,7 +70,7 @@ class ParticipantRegistrationController extends Controller
 
         return Inertia::render('home/registration/index', [
             'pageTitle' => 'Pendaftaran OMATIQ',
-            'olimpiades' => Olimpiade::query()->active()->forCurrentPeriod()->ordered()->get(['id', 'name', 'category', 'slug']),
+            'olimpiades' => Olimpiade::query()->active()->openForPublic()->forCurrentPeriod()->ordered()->get(['id', 'name', 'category', 'slug']),
             'provinces' => Province::query()->orderBy('name')->get(['id', 'name']),
             'branches' => $branches,
             'meta' => [
@@ -318,6 +318,7 @@ class ParticipantRegistrationController extends Controller
                 'event_year' => $participant->event_year ?? 2026,
                 'branch' => $participant->branch,
                 'penyaluran_sanggar_name' => $participant->penyaluran_sanggar_name,
+                'guardian_name' => $participant->guardian_signature_name,
                 'olimpiade' => [
                     'id' => $participant->olimpiade?->id,
                     'name' => $participant->olimpiade?->name,
@@ -332,6 +333,7 @@ class ParticipantRegistrationController extends Controller
                     'grade' => $participant->student->grade,
                     'regency_name' => $participant->student->regency?->name,
                     'mentor_name' => $participant->mentor?->name ?? $participant->student->mentor_name,
+                    'guardian_name' => $participant->guardian_signature_name,
                     'is_binaan' => (bool) $participant->student->is_binaan,
                     'photo_url' => $participant->student->photo_url,
                 ] : null,

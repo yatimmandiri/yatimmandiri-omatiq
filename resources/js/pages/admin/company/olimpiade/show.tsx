@@ -56,6 +56,28 @@ export default function ShowPage() {
                         >
                             {olimpiade.status ? 'Aktif' : 'Nonaktif'}
                         </Badge>
+                        <Badge
+                            variant={
+                                olimpiade.is_open_public
+                                    ? 'default'
+                                    : 'secondary'
+                            }
+                        >
+                            {olimpiade.is_open_public
+                                ? 'Buka Umum'
+                                : 'Tutup Umum'}
+                        </Badge>
+                        <Badge
+                            variant={
+                                olimpiade.is_open_binaan
+                                    ? 'default'
+                                    : 'secondary'
+                            }
+                        >
+                            {olimpiade.is_open_binaan
+                                ? 'Buka Binaan'
+                                : 'Tutup Binaan'}
+                        </Badge>
                         {olimpiade.recommended && (
                             <Badge variant="outline">Direkomendasikan</Badge>
                         )}
