@@ -17,4 +17,5 @@ Route::prefix('student')->as('student.')->middleware(['auth', 'verified'])->grou
     Route::redirect('/', '/student/dashboard')->name('index');
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('payment-proof', [ParticipantPaymentController::class, 'uploadProof'])->name('payment-proof');
+    Route::post('document', [ParticipantPaymentController::class, 'uploadDocument'])->name('document');
 });

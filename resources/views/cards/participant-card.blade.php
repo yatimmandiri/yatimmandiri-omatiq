@@ -781,16 +781,6 @@
             <!-- Credentials / Metadata Grid -->
             <table class="badge-meta-table">
                 <tr class="meta-row">
-                    <td class="meta-lbl">NIK / NIS</td>
-                    <td class="meta-cln">:</td>
-                    <td class="meta-val">
-                        <span>{{ $student->nik ?? '-' }}</span>
-                        @if(!empty($student->nis))
-                            <span style="color: #64748b; font-weight: normal;"> / NIS: {{ $student->nis }}</span>
-                        @endif
-                    </td>
-                </tr>
-                <tr class="meta-row">
                     <td class="meta-lbl">Asal Sekolah</td>
                     <td class="meta-cln">:</td>
                     <td class="meta-val">{{ $student->school_name ?? '-' }}</td>

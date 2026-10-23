@@ -13,9 +13,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ProofModal } from '@/components/ui/proof-modal';
 import { dashboard } from '@/routes/admin';
-import { paymentProof } from '@/routes/student';
+import { document as studentDocument, paymentProof } from '@/routes/student';
 import { Head, useForm, usePage } from '@inertiajs/react';
-import { AlertCircle, ExternalLink, Eye, Loader2, Printer, Upload } from 'lucide-react';
+import { AlertCircle, ExternalLink, Eye, FileText, Loader2, Printer, Upload } from 'lucide-react';
 import { useState } from 'react';
 
 const labels: Record<string, string> = {
@@ -38,14 +38,25 @@ export default function Dashboard() {
         .props;
     const [openProof, setOpenProof] = useState(false);
     const [openUploadModal, setOpenUploadModal] = useState(false);
+    const [openDocumentModal, setOpenDocumentModal] = useState(false);
+
+    // Kunci unggah ulang jika status sudah terverifikasi atau pembayaran sudah lunas
+    const isPaymentLocked =
+        participant?.payment_status === 'paid' ||
+        participant?.status === 'verified';
+    const isDocumentLocked = participant?.status === 'verified';
 
     const uploadForm = useForm<{ payment_proof: File | null }>({
         payment_proof: null,
     });
 
+    const documentForm = useForm<{ student_card: File | null }>({
+        student_card: null,
+    });
+
     const handleUploadSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!uploadForm.data.payment_proof) return;
+        if (!uploadForm.data.payment_proof || isPaymentLocked) return;
 
         uploadForm.post(paymentProof.url(), {
             forceFormData: true,
@@ -53,6 +64,20 @@ export default function Dashboard() {
             onSuccess: () => {
                 setOpenUploadModal(false);
                 uploadForm.reset();
+            },
+        });
+    };
+
+    const handleDocumentSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!documentForm.data.student_card || isDocumentLocked) return;
+
+        documentForm.post(studentDocument.url(), {
+            forceFormData: true,
+            preserveScroll: true,
+            onSuccess: () => {
+                setOpenDocumentModal(false);
+                documentForm.reset();
             },
         });
     };
@@ -131,19 +156,34 @@ export default function Dashboard() {
                                     </p>
                                     <p className="text-xs leading-relaxed text-destructive/90">
                                         {participant.notes ||
-                                            'Bukti transfer atau berkas yang diunggah belum sesuai. Silakan unggah bukti transfer terbaru yang valid agar dapat diverifikasi ulang oleh tim panitia/keuangan.'}
+                                            'Bukti transfer atau berkas yang diunggah belum sesuai. Silakan unggah bukti transfer atau dokumen terbaru yang valid agar dapat diverifikasi ulang oleh tim panitia/keuangan.'}
                                     </p>
                                 </div>
                             </div>
-                            <Button
-                                size="sm"
-                                variant="destructive"
-                                className="shrink-0 gap-1.5 self-start sm:self-auto"
-                                onClick={() => setOpenUploadModal(true)}
-                            >
-                                <Upload className="size-4" />
-                                Unggah Bukti Baru
-                            </Button>
+                            <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+                                {!isPaymentLocked && (
+                                    <Button
+                                        size="sm"
+                                        variant="destructive"
+                                        className="shrink-0 gap-1.5"
+                                        onClick={() => setOpenUploadModal(true)}
+                                    >
+                                        <Upload className="size-4" />
+                                        Unggah Bukti Baru
+                                    </Button>
+                                )}
+                                {!isDocumentLocked && (
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="shrink-0 gap-1.5 border-destructive/40 text-destructive hover:bg-destructive/10"
+                                        onClick={() => setOpenDocumentModal(true)}
+                                    >
+                                        <FileText className="size-4" />
+                                        Perbarui Dokumen
+                                    </Button>
+                                )}
+                            </div>
                         </div>
                     </div>
                 )}
@@ -236,10 +276,25 @@ export default function Dashboard() {
                 </div>
 
                 <Card className="space-y-5 p-5">
-                    <h2 className="text-lg font-bold">Dokumen</h2>
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <h2 className="text-lg font-bold">Dokumen</h2>
+                        {!isDocumentLocked && (
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                className="gap-2 border-[#17524A] text-[#17524A] hover:bg-[#17524A]/10"
+                                onClick={() => setOpenDocumentModal(true)}
+                            >
+                                <Upload className="size-4" />
+                                {participant.student?.student_card_url
+                                    ? 'Unggah Ulang Dokumen'
+                                    : 'Unggah Dokumen'}
+                            </Button>
+                        )}
+                    </div>
                     <div className="grid gap-4 sm:grid-cols-2">
                         <FileLink
-                            label="Kartu Pelajar"
+                            label="Kartu Pelajar / Dokumen Identitas"
                             href={participant.student?.student_card_url}
                         />
                     </div>
@@ -248,7 +303,7 @@ export default function Dashboard() {
                 <Card className="space-y-5 p-5">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <h2 className="text-lg font-bold">Pembayaran</h2>
-                        {participant.payment_status !== 'paid' && (
+                        {!isPaymentLocked && (
                             <Button
                                 size="sm"
                                 className="gap-2 bg-[#17524A] font-semibold text-white hover:bg-[#17524A]/90"
@@ -397,10 +452,91 @@ export default function Dashboard() {
                                     className="bg-[#17524A] text-white hover:bg-[#17524A]/90"
                                     disabled={
                                         uploadForm.processing ||
-                                        !uploadForm.data.payment_proof
+                                        !uploadForm.data.payment_proof ||
+                                        isPaymentLocked
                                     }
                                 >
                                     {uploadForm.processing && (
+                                        <Loader2 className="mr-2 size-4 animate-spin" />
+                                    )}
+                                    Simpan & Unggah
+                                </Button>
+                            </DialogFooter>
+                        </form>
+                    </DialogContent>
+                </Dialog>
+
+                <Dialog
+                    open={openDocumentModal}
+                    onOpenChange={setOpenDocumentModal}
+                >
+                    <DialogContent className="sm:max-w-md">
+                        <form onSubmit={handleDocumentSubmit}>
+                            <DialogHeader>
+                                <DialogTitle>
+                                    {participant.student?.student_card_url
+                                        ? 'Unggah Ulang Kartu Pelajar / Dokumen'
+                                        : 'Unggah Kartu Pelajar / Dokumen'}
+                                </DialogTitle>
+                                <DialogDescription>
+                                    Unggah foto atau scan Kartu Pelajar, KIA, Kartu Keluarga, atau surat keterangan sekolah. Format: JPG, PNG, atau PDF (maksimal 4MB).
+                                </DialogDescription>
+                            </DialogHeader>
+
+                            <div className="space-y-4 py-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="student_card">
+                                        File Kartu Pelajar / Dokumen Identitas
+                                    </Label>
+                                    <Input
+                                        id="student_card"
+                                        type="file"
+                                        accept="image/jpeg,image/png,image/jpg,application/pdf"
+                                        onChange={(e) =>
+                                            documentForm.setData(
+                                                'student_card',
+                                                e.target.files?.[0] ?? null,
+                                            )
+                                        }
+                                        required
+                                    />
+                                    {documentForm.errors.student_card && (
+                                        <p className="text-xs font-medium text-destructive">
+                                            {documentForm.errors.student_card}
+                                        </p>
+                                    )}
+                                </div>
+
+                                {participant.status === 'rejected' && (
+                                    <p className="rounded-md bg-muted p-2.5 text-xs text-muted-foreground">
+                                        Setelah dokumen baru diunggah, status
+                                        pendaftaran Anda akan otomatis kembali
+                                        menjadi{' '}
+                                        <strong>Menunggu Verifikasi</strong>{' '}
+                                        oleh panitia.
+                                    </p>
+                                )}
+                            </div>
+
+                            <DialogFooter className="gap-2 sm:gap-0">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setOpenDocumentModal(false)}
+                                    disabled={documentForm.processing}
+                                >
+                                    Batal
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    className="bg-[#17524A] text-white hover:bg-[#17524A]/90"
+                                    disabled={
+                                        documentForm.processing ||
+                                        !documentForm.data.student_card ||
+                                        isDocumentLocked
+                                    }
+                                >
+                                    {documentForm.processing && (
                                         <Loader2 className="mr-2 size-4 animate-spin" />
                                     )}
                                     Simpan & Unggah

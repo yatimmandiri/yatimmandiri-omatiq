@@ -64,6 +64,115 @@ test('participant can upload/re-upload payment proof from student dashboard', fu
     Storage::disk('public')->assertExists($participant->payment_proof_path);
 });
 
+test('participant cannot upload/re-upload payment proof if already paid or verified', function () {
+    $studentUser = User::factory()->create([
+        'name' => 'Santri Terverifikasi',
+        'email_verified_at' => now(),
+    ]);
+    $studentUser->assignRole('Participant');
+
+    $olimpiade = Olimpiade::factory()->create(['event_year' => 2026]);
+    $student = Student::factory()->create([
+        'user_id' => $studentUser->id,
+        'full_name' => 'Santri Terverifikasi',
+    ]);
+
+    $existingProof = UploadedFile::fake()->image('lunas.jpg')->store('participants/payment_proofs', 'public');
+
+    $participant = Participant::factory()->create([
+        'user_id' => $studentUser->id,
+        'student_id' => $student->id,
+        'olimpiade_id' => $olimpiade->id,
+        'status' => 'verified',
+        'payment_status' => 'paid',
+        'payment_proof_path' => $existingProof,
+    ]);
+
+    $newFile = UploadedFile::fake()->image('bukti_baru_lagi.jpg');
+
+    $response = $this->actingAs($studentUser)->post(route('student.payment-proof'), [
+        'payment_proof' => $newFile,
+    ]);
+
+    $response->assertSessionHasErrors('payment_proof');
+
+    $participant->refresh();
+    expect($participant->payment_proof_path)->toBe($existingProof);
+});
+
+test('participant can upload and update student document when not verified', function () {
+    $studentUser = User::factory()->create([
+        'name' => 'Santri Dokumen',
+        'email_verified_at' => now(),
+    ]);
+    $studentUser->assignRole('Participant');
+
+    $olimpiade = Olimpiade::factory()->create(['event_year' => 2026]);
+    $student = Student::factory()->create([
+        'user_id' => $studentUser->id,
+        'full_name' => 'Santri Dokumen',
+    ]);
+
+    $participant = Participant::factory()->create([
+        'user_id' => $studentUser->id,
+        'student_id' => $student->id,
+        'olimpiade_id' => $olimpiade->id,
+        'status' => 'rejected',
+        'payment_status' => 'unpaid',
+    ]);
+
+    $doc = UploadedFile::fake()->image('kartu_pelajar.jpg');
+
+    $response = $this->actingAs($studentUser)->post(route('student.document'), [
+        'student_card' => $doc,
+    ]);
+
+    $response->assertSessionHasNoErrors();
+    $response->assertSessionHas('success');
+
+    $student->refresh();
+    $participant->refresh();
+
+    expect($student->student_card_path)->not->toBeNull()
+        ->and($participant->status)->toBe('submitted');
+
+    Storage::disk('public')->assertExists($student->student_card_path);
+});
+
+test('participant cannot upload student document when verified', function () {
+    $studentUser = User::factory()->create([
+        'name' => 'Santri Dokumen Terverifikasi',
+        'email_verified_at' => now(),
+    ]);
+    $studentUser->assignRole('Participant');
+
+    $olimpiade = Olimpiade::factory()->create(['event_year' => 2026]);
+    $student = Student::factory()->create([
+        'user_id' => $studentUser->id,
+        'full_name' => 'Santri Dokumen Terverifikasi',
+        'student_card_path' => 'students/student_cards/valid.jpg',
+    ]);
+
+    $participant = Participant::factory()->create([
+        'user_id' => $studentUser->id,
+        'student_id' => $student->id,
+        'olimpiade_id' => $olimpiade->id,
+        'status' => 'verified',
+        'payment_status' => 'paid',
+    ]);
+
+    $doc = UploadedFile::fake()->image('kartu_pelajar_baru.jpg');
+
+    $response = $this->actingAs($studentUser)->post(route('student.document'), [
+        'student_card' => $doc,
+    ]);
+
+    $response->assertSessionHasErrors('student_card');
+
+    $student->refresh();
+    expect($student->student_card_path)->toBe('students/student_cards/valid.jpg');
+});
+
 test('admin can update participant with new payment proof without argument type error', function () {
     $admin = User::factory()->create([
         'name' => 'Admin Omatiq',
