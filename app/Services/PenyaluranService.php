@@ -372,18 +372,41 @@ class PenyaluranService
                 $nestedSanggarId = $s['sanggar']['id'] ?? $s['sanggar']['sanggar_id'] ?? null;
             }
 
-            $studentSanggarId = $s['sanggar_id'] ?? $s['sanggarId'] ?? $nestedSanggarId ?? $sanggarId;
+            // Extract multi-sanggar relation from Penyaluran API (students_sanggars / sanggars)
+            $multiSanggarIds = [];
+            $multiSanggarNames = [];
+            $rawStudentsSanggars = $s['students_sanggars'] ?? $s['student_sanggars'] ?? $s['sanggars'] ?? [];
+            if (is_array($rawStudentsSanggars) && ! empty($rawStudentsSanggars)) {
+                foreach ($rawStudentsSanggars as $item) {
+                    if (! is_array($item)) {
+                        continue;
+                    }
+                    $sid = $item['sanggar_id'] ?? $item['id'] ?? ($item['sanggar']['id'] ?? null);
+                    if ($sid) {
+                        $multiSanggarIds[] = (int) $sid;
+                    }
+                    $sname = $item['sanggar_name'] ?? $item['name'] ?? ($item['sanggar']['name'] ?? null);
+                    if ($sname && ! in_array(trim($sname), $multiSanggarNames, true)) {
+                        $multiSanggarNames[] = trim($sname);
+                    }
+                }
+                $multiSanggarIds = array_values(array_unique($multiSanggarIds));
+            }
+
+            $studentSanggarId = $s['sanggar_id'] ?? $s['sanggarId'] ?? $nestedSanggarId ?? ($multiSanggarIds[0] ?? null) ?? $sanggarId;
             if (! $studentSanggarId && count($guruSanggars) === 1) {
                 $studentSanggarId = $guruSanggars[0]['id'] ?? null;
             }
 
-            $sanggarIds = $s['sanggar_ids'] ?? ($studentSanggarId ? [$studentSanggarId] : collect($guruSanggars)->pluck('id')->filter()->values()->all());
+            $sanggarIds = $s['sanggar_ids'] ?? (! empty($multiSanggarIds) ? $multiSanggarIds : ($studentSanggarId ? [$studentSanggarId] : collect($guruSanggars)->pluck('id')->filter()->values()->all()));
 
-            $sanggarName = $s['sanggar_name'] ?? ($s['sanggar']['name'] ?? $s['sanggar']['nama'] ?? null);
+            $sanggarName = $s['sanggar_name'] ?? ($s['sanggar']['name'] ?? $s['sanggar']['nama'] ?? ($multiSanggarNames[0] ?? null));
             if (! $sanggarName && $studentSanggarId) {
                 $foundSanggar = collect($guruSanggars)->firstWhere('id', $studentSanggarId);
                 $sanggarName = $foundSanggar['name'] ?? null;
             }
+
+            $sanggarNames = ! empty($multiSanggarNames) ? $multiSanggarNames : ($sanggarName ? [$sanggarName] : []);
 
             $schoolName = $s['school_name'] ?? $s['sekolah_name'] ?? $s['nama_sekolah'] ?? ($s['school']['name'] ?? $s['sekolah']['nama'] ?? null);
             $schoolLevel = $s['school_level'] ?? $s['jenjang'] ?? $s['level'] ?? $s['tingkat'] ?? ($s['school']['level'] ?? $s['sekolah']['jenjang'] ?? null);
@@ -412,6 +435,7 @@ class PenyaluranService
                 'guardian_phone' => $guardianPhone,
                 'sanggar_id' => $studentSanggarId,
                 'sanggar_ids' => $sanggarIds,
+                'sanggar_names' => $sanggarNames,
                 'sanggar_name' => $sanggarName,
                 'kantor_name' => $s['kantor_name'] ?? $s['branch'] ?? $defaultKantorName ?? ($guruSanggars[0]['kantor_name'] ?? null),
                 'type' => $s['type'] ?? null,

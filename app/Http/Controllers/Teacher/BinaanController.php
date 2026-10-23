@@ -217,7 +217,11 @@ class BinaanController extends Controller
                 }
 
                 $sanggarIds = $s['sanggar_ids'] ?? (isset($s['sanggar_id']) ? [$s['sanggar_id']] : []);
-                $sanggarNames = collect($sanggarIds)->map(fn ($sid) => $sanggarMap->get($sid) ?? $sid)->filter()->values()->all();
+                // Prioritize explicit sanggar names if provided by API / students_sanggars, fallback to mapping through guru's sanggars
+                $sanggarNames = ! empty($s['sanggar_names']) && is_array($s['sanggar_names'])
+                    ? $s['sanggar_names']
+                    : collect($sanggarIds)->map(fn ($sid) => $sanggarMap->get($sid) ?? $sid)->filter()->values()->all();
+
                 if (empty($sanggarNames) && isset($s['sanggar_id']) && $s['sanggar_id']) {
                     $sanggarNames = [$sanggarMap->get($s['sanggar_id']) ?? $s['sanggar_id']];
                 }
@@ -916,7 +920,13 @@ class BinaanController extends Controller
 
         $sanggarMap = collect($sanggars)->keyBy('id');
         $sanggarIds = $found['sanggar_ids'] ?? (isset($found['sanggar_id']) ? [$found['sanggar_id']] : []);
-        $sanggarNames = collect($sanggarIds)->map(fn ($sid) => $sanggarMap[$sid]['name'] ?? $sid)->filter()->values()->all();
+        $sanggarNames = ! empty($found['sanggar_names']) && is_array($found['sanggar_names'])
+            ? $found['sanggar_names']
+            : collect($sanggarIds)->map(fn ($sid) => $sanggarMap[$sid]['name'] ?? $sid)->filter()->values()->all();
+
+        if (empty($sanggarNames) && isset($found['sanggar_name']) && $found['sanggar_name']) {
+            $sanggarNames = [$found['sanggar_name']];
+        }
 
         $binaanNik = trim((string) ($found['nik'] ?? ''));
         $isValidBinaanNik = $binaanNik !== '' && $binaanNik !== '-' && $binaanNik !== '0' && strlen($binaanNik) >= 10;
