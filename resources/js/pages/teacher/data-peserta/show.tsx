@@ -467,22 +467,36 @@ const Detail = ({
     </div>
 );
 
-const DetailFile = ({ label, url }: { label: string; url?: string | null }) => (
-    <div className="rounded-xl border bg-card p-3">
-        <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-            {label}
-        </p>
-        {url ? (
-            <a
-                href={url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-[#17524A] underline underline-offset-4 hover:text-[#12423b]"
-            >
-                Lihat file <ExternalLink className="size-3.5" />
-            </a>
-        ) : (
-            <p className="mt-1 text-sm text-muted-foreground">Tidak tersedia</p>
-        )}
-    </div>
-);
+const DetailFile = ({ label, url }: { label: string; url?: string | null }) => {
+    const [open, setOpen] = useState(false);
+
+    return (
+        <div className="rounded-xl border bg-card p-3">
+            <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                {label}
+            </p>
+            {url ? (
+                <>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="mt-2 w-full justify-center gap-1.5 font-semibold text-[#17524A] hover:bg-[#17524A]/10 hover:text-[#17524A]"
+                        onClick={() => setOpen(true)}
+                    >
+                        <ExternalLink className="size-3.5" />
+                        Lihat {label}
+                    </Button>
+                    <ProofModal
+                        href={url}
+                        open={open}
+                        onOpenChange={setOpen}
+                        title={label}
+                    />
+                </>
+            ) : (
+                <p className="mt-1 text-sm text-muted-foreground">Tidak tersedia</p>
+            )}
+        </div>
+    );
+};

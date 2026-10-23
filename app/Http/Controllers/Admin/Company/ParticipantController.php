@@ -110,7 +110,14 @@ class ParticipantController extends Controller
     {
         $this->authorize('view', $participant);
 
-        $participant->loadMissing(['student', 'olimpiade']);
+        $participant->loadMissing([
+            'student.province',
+            'student.regency',
+            'student.district',
+            'student.village',
+            'olimpiade',
+            'mentor',
+        ]);
 
         return Inertia::render('admin/company/participant/show', [
             'participant' => $this->participantPayload($participant),
