@@ -389,7 +389,7 @@ class ParticipantRegistrationController extends Controller
                 $path = $this->uploadFile(
                     $student->{$column},
                     $request->file($input),
-                    'uploads/students/'.$input,
+                    'students/student_cards',
                 );
                 $student->update([$column => $path]);
             }
@@ -402,7 +402,7 @@ class ParticipantRegistrationController extends Controller
             return null;
         }
 
-        return $this->uploadFile(null, $request->file('payment_proof'), 'uploads/participants/payment_proof');
+        return $this->uploadFile(null, $request->file('payment_proof'), 'participants/payment_proofs');
     }
 
     private function fileMap(): array
