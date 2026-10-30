@@ -38,6 +38,8 @@ class SiteSettings extends Settings
 
     public bool $registration_binaan_open = true;
 
+    public bool $registration_national_open = true;
+
     public bool $sheets_sync_enabled = false;
 
     public ?string $sheets_spreadsheet_id = null;

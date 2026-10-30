@@ -15,7 +15,7 @@ class TeacherService
     public function getStudentById(User $teacher, int $id): Participant
     {
         return Participant::query()
-            ->with(['olimpiade:id,name,category,slug', 'student', 'student.province:id,name', 'student.regency:id,name', 'student.village:id,name'])
+            ->with(['olimpiade:id,name,category,slug', 'student', 'student.province:id,name', 'student.regency:id,name', 'student.village:id,name', 'national'])
             ->where('mentor_id', $teacher->id)
             ->findOrFail($id);
     }

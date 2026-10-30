@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
@@ -115,6 +116,25 @@ class Participant extends Model
     public function mentor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'mentor_id');
+    }
+
+    public function national(): HasOne
+    {
+        return $this->hasOne(NationalParticipant::class);
+    }
+
+    public function getIsNationalQualifiedAttribute(): bool
+    {
+        return $this->relationLoaded('national')
+            ? $this->national !== null
+            : $this->national()->exists();
+    }
+
+    public function getIsNationalVerifiedAttribute(): bool
+    {
+        return $this->relationLoaded('national')
+            ? $this->national?->status === 'verified'
+            : $this->national()->where('status', 'verified')->exists();
     }
 
     public function scopeSearch(Builder $query, ?string $search): Builder

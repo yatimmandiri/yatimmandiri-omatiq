@@ -97,6 +97,10 @@ Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'auth.admi
             ->parameters(['olimpiade-schedules' => 'olimpiadeSchedule']);
 
         Route::get('participants/{participant}/card', [ParticipantCardController::class, 'print'])->name('participants.card');
+        Route::post('participants/bulk-national-qualify', [ParticipantController::class, 'bulkNationalQualify'])->name('participants.bulk-national-qualify');
+        Route::post('participants/{participant}/national-re-register-binaan', [ParticipantController::class, 'nationalReRegisterBinaan'])->name('participants.national-re-register-binaan');
+        Route::post('participants/{participant}/national-qualify', [ParticipantController::class, 'nationalQualify'])->name('participants.national-qualify');
+        Route::post('participants/{participant}/national-verify', [ParticipantController::class, 'nationalVerify'])->name('participants.national-verify');
         Route::put('participants/{participant}/status', [ParticipantController::class, 'status'])->name('participants.status');
         Route::put('participants/{participant}/payment-status', [ParticipantController::class, 'paymentStatus'])->name('participants.payment-status');
         Route::get('participants/data', [ParticipantController::class, 'getData'])->name('participants.data');

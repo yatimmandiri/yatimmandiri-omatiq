@@ -27,6 +27,7 @@ import {
     MoreHorizontal,
     Printer,
     Trash2,
+    Trophy,
     XCircle,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -59,7 +60,21 @@ export default function ListPage() {
                             {initial}
                         </span>
                         <div className="space-y-0.5">
-                            <p className="font-semibold leading-none">{name}</p>
+                            <div className="flex flex-wrap items-center gap-1.5">
+                                <p className="font-semibold leading-none">{name}</p>
+                                {row.national && (
+                                    <Badge
+                                        variant="outline"
+                                        className={
+                                            row.national.status === 'verified'
+                                                ? 'border-amber-500 bg-amber-500 px-1.5 py-0 text-[10px] font-bold text-white shadow-xs'
+                                                : 'border-amber-500/80 bg-amber-50 px-1.5 py-0 text-[10px] font-bold text-amber-800 dark:bg-amber-950/40 dark:text-amber-300'
+                                        }
+                                    >
+                                        🏆 Finalis Nasional
+                                    </Badge>
+                                )}
+                            </div>
                             <div className="flex flex-wrap items-center gap-1.5 font-mono text-xs text-muted-foreground">
                                 <span>{regNo}</span>
                                 {nik && (
@@ -370,14 +385,34 @@ const RowAction = ({ row, onDeleted }: { row: any; onDeleted: () => void }) => {
                             </a>
                         </DropdownMenuItem>
                     )}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                        onClick={handleDelete}
-                        className="text-destructive focus:text-destructive"
-                    >
-                        <Trash2 className="mr-2 size-4 text-destructive" />
-                        <span>Batalkan Pendaftaran</span>
-                    </DropdownMenuItem>
+                    {row.national?.status === 'verified' && (
+                        <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem asChild>
+                                <a
+                                    href={`/pendaftaran/kartu/${row.registration_number}?stage=national`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex cursor-pointer items-center text-amber-600 focus:text-amber-700"
+                                >
+                                    <Printer className="mr-2 size-4 text-amber-600" />
+                                    <span>Cetak Kartu Nasional</span>
+                                </a>
+                            </DropdownMenuItem>
+                        </>
+                    )}
+                    {!row.national && row.status !== 'verified' && (
+                        <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                                onClick={handleDelete}
+                                className="text-destructive focus:text-destructive"
+                            >
+                                <Trash2 className="mr-2 size-4 text-destructive" />
+                                <span>Batalkan Pendaftaran</span>
+                            </DropdownMenuItem>
+                        </>
+                    )}
                 </DropdownMenuContent>
             </DropdownMenu>
         </div>

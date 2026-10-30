@@ -6,6 +6,7 @@ use App\Concerns\Traits\LogActivity;
 use App\Concerns\Traits\UploadFiles;
 use App\Http\Controllers\Controller;
 use App\Models\Company\Participant;
+use App\Settings\SiteSettings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -125,5 +126,101 @@ class ParticipantPaymentController extends Controller
         ]);
 
         return back()->with('success', 'Kartu Pelajar / Dokumen berhasil diperbarui! Panitia akan segera memverifikasi berkas Anda.');
+    }
+
+    /**
+     * Submit or re-submit national stage re-registration documents.
+     */
+    public function uploadNationalReRegistration(Request $request): RedirectResponse
+    {
+        $user = Auth::user();
+
+        $participant = $user->participant
+            ?? Participant::where('user_id', $user->id)->first()
+            ?? Participant::whereHas('student', fn ($q) => $q->where('user_id', $user->id))->first();
+
+        if (! $participant) {
+            return back()->withErrors(['availability_letter' => 'Data pendaftaran peserta tidak ditemukan.']);
+        }
+
+        $national = $participant->national;
+        if (! $national) {
+            return back()->withErrors(['availability_letter' => 'Anda belum terdaftar sebagai peserta yang lolos ke Babak Nasional.']);
+        }
+
+        if (! app(SiteSettings::class)->registration_national_open) {
+            return back()->withErrors(['availability_letter' => 'Pendaftaran ulang babak nasional saat ini belum dibuka atau telah ditutup oleh panitia pusat.']);
+        }
+
+        if ($national->status === 'verified') {
+            return back()->withErrors(['availability_letter' => 'Pendaftaran ulang babak nasional Anda sudah diverifikasi oleh panitia.']);
+        }
+
+        $isBinaan = (bool) $participant->student?->is_binaan;
+
+        $rules = [
+            'availability_letter' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:4096'],
+        ];
+        $messages = [
+            'availability_letter.required' => 'Surat kesediaan hadir wajib diunggah.',
+            'availability_letter.file' => 'Surat kesediaan harus berupa file dokumen atau gambar.',
+            'availability_letter.mimes' => 'Format surat kesediaan harus berupa JPG, PNG, atau PDF.',
+            'availability_letter.max' => 'Ukuran file surat kesediaan maksimal 4MB.',
+        ];
+
+        if (! $isBinaan) {
+            $rules['national_payment_proof'] = ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:4096'];
+            $messages['national_payment_proof.required'] = 'Bukti transfer biaya babak nasional wajib diunggah untuk peserta umum.';
+            $messages['national_payment_proof.file'] = 'Bukti transfer harus berupa file dokumen atau gambar.';
+            $messages['national_payment_proof.mimes'] = 'Format bukti transfer harus berupa JPG, PNG, atau PDF.';
+            $messages['national_payment_proof.max'] = 'Ukuran file bukti transfer maksimal 4MB.';
+        }
+
+        $request->validate($rules, $messages);
+
+        // Upload Surat Kesediaan
+        $letterPath = $this->uploadFile(
+            $national->availability_letter_path,
+            $request->file('availability_letter'),
+            'national/availability_letters'
+        );
+
+        $updates = [
+            'availability_letter_path' => $letterPath,
+            'registered_at' => now(),
+        ];
+
+        if ($isBinaan) {
+            // Santri Binaan: 100% Gratis & Auto-Verified
+            $updates['status'] = 'verified';
+            $updates['payment_status'] = 'paid';
+            $updates['payment_amount'] = 0;
+        } else {
+            // Peserta Umum: Upload Bukti Transfer & Status Menunggu Konfirmasi
+            $proofPath = $this->uploadFile(
+                $national->payment_proof_path,
+                $request->file('national_payment_proof'),
+                'national/payment_proofs'
+            );
+            $updates['payment_proof_path'] = $proofPath;
+            $updates['status'] = 'waiting_confirmation';
+            $updates['payment_status'] = 'waiting_confirmation';
+        }
+
+        $national->update($updates);
+
+        $this->logActivity('info', 'PARTICIPANT_NATIONAL_RE_REGISTRATION', 'Partisipan mengunggah berkas daftar ulang babak nasional', [
+            'participant_id' => $participant->id,
+            'national_participant_id' => $national->id,
+            'registration_number' => $participant->registration_number,
+            'is_binaan' => $isBinaan,
+            'status' => $updates['status'],
+        ]);
+
+        $successMsg = $isBinaan
+            ? 'Selamat! Pendaftaran ulang babak nasional Anda berhasil diselesaikan. Kartu peserta nasional Anda sudah aktif.'
+            : 'Berkas daftar ulang dan bukti transfer berhasil diunggah! Panitia/keuangan akan segera memverifikasi pembayaran Anda.';
+
+        return back()->with('success', $successMsg);
     }
 }

@@ -80,19 +80,24 @@ class ParticipantPolicy
 
     public function update(User $user, Participant $participant): bool
     {
-        if (! $user->hasPermissionTo('update-participant')) {
-            return false;
-        }
-
         if ($user->hasRole('Administrators') || $user->hasRole('Keuangan')) {
             return true;
+        }
+
+        if ($user->hasRole('Cabang')) {
+            $userBranch = $user->getBranchName();
+            if (empty($userBranch)) {
+                return true;
+            }
+
+            return stripos($participant->branch ?? '', $userBranch) !== false;
         }
 
         if ($user->hasRole('Teacher')) {
             return $participant->mentor_id === $user->id;
         }
 
-        return false;
+        return $user->hasPermissionTo('update-participant');
     }
 
     public function delete(User $user, Participant $participant): bool
@@ -108,6 +113,16 @@ class ParticipantPolicy
         if ($user->hasRole('Teacher')) {
             // Guru HANYA boleh menghapus pendaftaran binaan miliknya sendiri, TIDAK BISA menghapus pendaftaran umum
             if ($participant->registration_type !== 'teacher') {
+                return false;
+            }
+
+            // Peserta yang sudah lolos babak nasional TIDAK DAPAT dihapus/dibatalkan oleh Guru
+            if ($participant->national()->exists()) {
+                return false;
+            }
+
+            // Peserta yang sudah berstatus diverifikasi (verified) di tingkat regional tidak dapat dihapus guru
+            if ($participant->status === 'verified') {
                 return false;
             }
 

@@ -19,6 +19,7 @@ class CreateUserCabangSeeder extends Seeder
         $cabangRole->givePermissionTo([
             'view-participant',
             'data-participant',
+            'update-participant',
             'view-user',
             'data-user',
             'view-student',

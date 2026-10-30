@@ -91,6 +91,30 @@ Order for full check (matches `ci:check`): `npm run lint:check` → `npm run for
     - Keduanya diformat menggunakan `formatExportString(...)` dengan inisial `'` agar angka awalan `08...` tidak hilang atau terkonversi oleh Microsoft Excel.
   - **UI Table Scoping**: Kolom nomor kontak ("No. HP Pendamping" & "No. HP Ortu/Wali") **hanya** diikutsertakan pada data ekspor (`formatDataExport`), dan **tidak ditampilkan** pada tabel UI antarmuka (`columns` di `list.tsx`) agar tampilan tabel tetap rapi dan fokus.
   - **CSV Encoding & Excel Compatibility**: Helper `downloadCSV` menyertakan UTF-8 BOM (`\uFEFF`) sebelum konten CSV agar Microsoft Excel pada Windows mengenali encoding file secara otomatis tanpa merusak karakter khusus.
+- **National Stage Qualification & Re-Registration Architecture (`Babak Final OMATIQ Nasional`)**:
+  - **Tabel Terpisah `national_participants`**: Seluruh data babak final diisolasi di tabel `national_participants` (relasi One-to-One dengan `participants.id`, zero modification pada tabel utama `participants`). Kolom meliputi `participant_id`, `qualified_by`, `qualified_at`, `status` (`unconfirmed`, `waiting_confirmation`, `verified`, `rejected`), `availability_letter_path`, `payment_proof_path`, `payment_status` (`unpaid`, `waiting_confirmation`, `paid`), `payment_amount`, `registered_at`, `notes`.
+  - **Penetapan Kelolosan Khusus Panitia Pusat**:
+    - Seleksi regional dan penentuan nominasi di cabang dilakukan secara **manual/offline** di luar sistem.
+    - Tombol/Aksi **"Loloskan ke Babak Nasional"** (baik perorangan via dropdown `...` maupun masal via Floating Bulk Action Bar) **HANYA DAPAT DIAKSES OLEH ROLE `Administrators`**. Role `Cabang` dilarang keras meloloskan atau membatalkan kelolosan peserta ke babak nasional.
+    - Endpoint [`ParticipantController@nationalQualify`](file:///c:/laragon/www/github/yatimmandiri-omatiq/app/Http/Controllers/Admin/Company/ParticipantController.php) dan `bulkNationalQualify` dilindungi dengan *server-side guard* `if (! Auth::user()->hasRole('Administrators')) abort(403);`.
+  - **Pendaftaran Ulang Santri Binaan oleh Kantor Cabang**:
+    - Santri binaan yang telah diloloskan oleh Pusat **didaftarkan ulang oleh Kantor Cabang masing-masing** melalui endpoint `POST /admin/companies/participants/{participant}/national-re-register-binaan` (`ParticipantController@nationalReRegisterBinaan`).
+    - Form modal `NationalReRegisterModal` (`resources/js/components/partials/national-re-register-modal.tsx`) memungkinkan Cabang mengunduh template resmi Surat Kesediaan Hadir ([https://link.yatimmandiri.org/SuratKesediaanOMATIQ](https://link.yatimmandiri.org/SuratKesediaanOMATIQ)) dan mengunggah berkas bertanda tangan.
+    - Santri binaan **100% Gratis** tanpa biaya dan otomatis berstatus `verified` serta `payment_status = 'paid'`.
+  - **Pendaftaran Ulang Peserta Umum Secara Mandiri**:
+    - Peserta umum melakukan pendaftaran ulang mandiri melalui Dashboard Siswa (`/student/dashboard`, `ParticipantPaymentController@uploadNationalReRegistration`).
+    - Peserta umum wajib mengunggah Surat Kesediaan Hadir + Bukti Transfer Biaya Nasional, menghasilkan status `waiting_confirmation` sampai diverifikasi oleh Admin/Keuangan Pusat via `ProofModal`.
+  - **Peran Guru Pembimbing (Read-Only Status & Anti-Deletion Lock)**:
+    - Guru pembimbing di portal guru (`/teacher/data-peserta`) hanya menerima status notifikasi kebanggaan bahwa santrinya lolos ke Babak Final Nasional dan dapat mencetak Kartu Pass Finalis Nasional.
+    - **Proteksi Hapus/Batal**: Guru **dilarang/dikunci total** dari membatalkan pendaftaran santri binaan yang sudah berstatus `verified` di regional atau sudah memiliki tiket Babak Nasional (`national()->exists()`). Tombol/menu *"Batalkan Pendaftaran"* otomatis disembunyikan dari antarmuka guru (`list.tsx` & `show.tsx`) dan ditolak oleh `ParticipantPolicy@delete`.
+  - **Proteksi Pembatalan Nasional (Point of No Return)**:
+    - Selama status masih `unconfirmed` (belum daftar ulang), Admin Pusat dapat membatalkan nominasi.
+    - Begitu peserta telah melakukan pendaftaran ulang (`status !== 'unconfirmed'`), Cabang dikunci dan **HANYA Admin Pusat (`Administrators`)** yang berhak membatalkan kepesertaan nasional peserta tersebut.
+  - **Jadwal & Periode Operasional**:
+    - Periode pendaftaran ulang nasional dijadwalkan **7 s/d 11 November 2026** dan dikontrol fleksibel via `SiteSettings.registration_national_open` di menu Pengaturan Situs Admin.
+  - **Kartu Finalis Nasional & Checkpoint PDP**:
+    - Peserta yang berstatus `verified` di babak nasional dapat mencetak **Kartu Lanyard Pass Finalis OMATIQ Nasional** (`/pendaftaran/kartu/{regNo}?stage=national`) beraksen gradien zamrud-emas (`#134e45` / `#FFE600`).
+    - Sesuai standar PDP, nomor NIK dan NIS tidak ditampilkan sama sekali pada kartu cetak. Verifikasi check-in di venue nasional dilakukan via scan barcode/QR code resmi.
 
 ## Domain
 

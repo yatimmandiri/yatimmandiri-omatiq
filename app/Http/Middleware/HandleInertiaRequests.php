@@ -116,6 +116,7 @@ class HandleInertiaRequests extends Middleware
                 'maintenance_mode' => $settings->maintenance_mode,
                 'registration_public_open' => $settings->registration_public_open,
                 'registration_binaan_open' => $settings->registration_binaan_open,
+                'registration_national_open' => $settings->registration_national_open,
             ],
             'breadcrumbs' => $request->isMethod('get') && $request->route() && $request->route()->getName()
                 ? (function () use ($request) {

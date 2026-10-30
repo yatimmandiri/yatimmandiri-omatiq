@@ -13,9 +13,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ProofModal } from '@/components/ui/proof-modal';
 import { dashboard } from '@/routes/admin';
-import { document as studentDocument, paymentProof } from '@/routes/student';
+import { document as studentDocument, nationalReRegistration, paymentProof } from '@/routes/student';
 import { Head, useForm, usePage } from '@inertiajs/react';
-import { AlertCircle, ExternalLink, Eye, FileText, Loader2, Printer, Upload } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Download, ExternalLink, Eye, FileText, Loader2, Printer, Trophy, Upload } from 'lucide-react';
 import { useState } from 'react';
 
 const labels: Record<string, string> = {
@@ -34,11 +34,17 @@ const statusVariant = (status: string) =>
           : 'secondary';
 
 export default function Dashboard() {
-    const { participant } = usePage<{ participant: Record<string, any> }>()
-        .props;
+    const { participant, settings } = usePage<{
+        participant: Record<string, any>;
+        settings?: Record<string, any>;
+    }>().props;
     const [openProof, setOpenProof] = useState(false);
     const [openUploadModal, setOpenUploadModal] = useState(false);
     const [openDocumentModal, setOpenDocumentModal] = useState(false);
+    const [openNationalModal, setOpenNationalModal] = useState(false);
+
+    const isBinaan = Boolean(participant?.student?.is_binaan);
+    const isNationalOpen = settings?.registration_national_open ?? true;
 
     // Kunci unggah ulang jika status sudah terverifikasi atau pembayaran sudah lunas
     const isPaymentLocked =
@@ -53,6 +59,29 @@ export default function Dashboard() {
     const documentForm = useForm<{ student_card: File | null }>({
         student_card: null,
     });
+
+    const nationalForm = useForm<{
+        availability_letter: File | null;
+        national_payment_proof: File | null;
+    }>({
+        availability_letter: null,
+        national_payment_proof: null,
+    });
+
+    const handleNationalSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!nationalForm.data.availability_letter) return;
+        if (!isBinaan && !nationalForm.data.national_payment_proof) return;
+
+        nationalForm.post(nationalReRegistration.url(), {
+            forceFormData: true,
+            preserveScroll: true,
+            onSuccess: () => {
+                setOpenNationalModal(false);
+                nationalForm.reset();
+            },
+        });
+    };
 
     const handleUploadSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -185,6 +214,100 @@ export default function Dashboard() {
                                 )}
                             </div>
                         </div>
+                    </div>
+                )}
+
+                {participant.national && (
+                    <div className="relative overflow-hidden rounded-2xl border-2 border-amber-400 bg-gradient-to-br from-amber-500/15 via-yellow-500/10 to-amber-500/20 p-5 shadow-sm md:p-6 dark:border-amber-500/60 dark:from-amber-950/40 dark:via-yellow-950/20 dark:to-amber-900/30">
+                        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                            <div className="space-y-1.5">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500 px-3 py-0.5 text-xs font-bold text-white shadow-sm dark:bg-amber-600">
+                                        <Trophy className="size-3.5" />
+                                        BABAK NASIONAL OMATIQ 2026
+                                    </span>
+                                    {participant.national.status === 'verified' ? (
+                                        <Badge className="bg-emerald-600 text-white hover:bg-emerald-700">
+                                            Terverifikasi Finalis Resmi
+                                        </Badge>
+                                    ) : participant.national.status === 'waiting_confirmation' ? (
+                                        <Badge variant="outline" className="border-amber-500 bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
+                                            Menunggu Verifikasi Pusat
+                                        </Badge>
+                                    ) : (
+                                        <Badge variant="outline" className="border-amber-500 text-amber-800 dark:text-amber-300">
+                                            Belum Daftar Ulang
+                                        </Badge>
+                                    )}
+                                </div>
+                                <h2 className="text-xl font-extrabold tracking-tight text-amber-950 dark:text-amber-100 sm:text-2xl">
+                                    Selamat! Anda Lolos ke Babak Nasional OMATIQ 2026!
+                                </h2>
+                                <p className="max-w-2xl text-xs leading-relaxed text-amber-900/90 dark:text-amber-200/80 sm:text-sm">
+                                    {participant.national.status === 'verified'
+                                        ? 'Pendaftaran ulang babak nasional Anda telah terverifikasi resmi oleh panitia pusat. Silakan unduh dan cetak Kartu Finalis Nasional untuk dibawa saat acara.'
+                                        : participant.national.status === 'waiting_confirmation'
+                                          ? 'Berkas pendaftaran ulang Babak Nasional Anda telah terkirim dan sedang dalam tahap verifikasi panitia pusat. Mohon pantau status secara berkala.'
+                                          : isBinaan
+                                            ? 'Selamat! Anda terpilih sebagai delegasi santri binaan yang melaju ke Babak Final OMATIQ Nasional 2026. Pendaftaran ulang dan administrasi kehadiran dikoordinasikan langsung oleh Kantor Cabang Anda.'
+                                            : 'Anda terpilih sebagai salah satu peserta terbaik yang melaju ke babak final nasional. Silakan lakukan pendaftaran ulang sekarang.'}
+                                </p>
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-2.5 self-start md:self-center">
+                                {participant.national.status === 'verified' ? (
+                                    <Button
+                                        asChild
+                                        className="gap-2 bg-gradient-to-r from-amber-600 to-yellow-600 font-bold text-white shadow hover:from-amber-700 hover:to-yellow-700"
+                                    >
+                                        <a
+                                            href={`/pendaftaran/kartu/${participant.registration_number}?stage=national`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                        >
+                                            <Printer className="size-4" />
+                                            Cetak Kartu Nasional
+                                        </a>
+                                    </Button>
+                                ) : isBinaan ? (
+                                    <div className="rounded-xl border border-emerald-300 bg-emerald-50 px-3.5 py-2 text-xs font-semibold text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300">
+                                        ✨ Pendaftaran Ulang Dikelola Kantor Cabang
+                                    </div>
+                                ) : isNationalOpen ? (
+                                    <Button
+                                        onClick={() => setOpenNationalModal(true)}
+                                        className="gap-2 bg-[#17524A] font-bold text-white shadow hover:bg-[#17524A]/90"
+                                    >
+                                        <Upload className="size-4" />
+                                        {participant.national.status === 'waiting_confirmation'
+                                            ? 'Perbarui Berkas Nasional'
+                                            : 'Daftar Ulang Nasional'}
+                                    </Button>
+                                ) : (
+                                    <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900 dark:border-amber-700 dark:bg-amber-950/50 dark:text-amber-300">
+                                        Pendaftaran ulang: 7 - 11 November 2026
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* File preview jika sudah diunggah */}
+                        {(participant.national.availability_letter_url || participant.national.payment_proof_url) && (
+                            <div className="mt-4 flex flex-wrap items-center gap-6 border-t border-amber-300/60 pt-3 dark:border-amber-700/50">
+                                {participant.national.availability_letter_url && (
+                                    <FileLink
+                                        label="Surat Kesediaan Hadir"
+                                        href={participant.national.availability_letter_url}
+                                    />
+                                )}
+                                {participant.national.payment_proof_url && (
+                                    <FileLink
+                                        label="Bukti Transfer Biaya Nasional"
+                                        href={participant.national.payment_proof_url}
+                                    />
+                                )}
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -540,6 +663,150 @@ export default function Dashboard() {
                                         <Loader2 className="mr-2 size-4 animate-spin" />
                                     )}
                                     Simpan & Unggah
+                                </Button>
+                            </DialogFooter>
+                        </form>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Dialog Daftar Ulang Babak Nasional */}
+                <Dialog
+                    open={openNationalModal}
+                    onOpenChange={setOpenNationalModal}
+                >
+                    <DialogContent className="sm:max-w-lg">
+                        <form onSubmit={handleNationalSubmit}>
+                            <DialogHeader>
+                                <DialogTitle className="flex items-center gap-2">
+                                    <Trophy className="size-5 text-amber-500" />
+                                    Daftar Ulang Babak Nasional 2026
+                                </DialogTitle>
+                                <DialogDescription>
+                                    Lengkapi berkas konfirmasi kehadiran babak final OMATIQ Nasional 2026.
+                                </DialogDescription>
+                            </DialogHeader>
+
+                            <div className="space-y-4 py-4">
+                                {/* Download Template Surat Kesediaan */}
+                                <div className="rounded-lg border border-amber-300 bg-amber-50/70 p-3.5 dark:border-amber-700/60 dark:bg-amber-950/30">
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div className="space-y-1">
+                                            <p className="text-xs font-bold text-amber-950 dark:text-amber-100">
+                                                Template Resmi Surat Kesediaan Hadir
+                                            </p>
+                                            <p className="text-xs text-amber-800 dark:text-amber-300/90">
+                                                Unduh, cetak, isi, tanda tangani, lalu unggah kembali scan/fotonya di bawah ini.
+                                            </p>
+                                        </div>
+                                        <Button
+                                            asChild
+                                            size="sm"
+                                            variant="outline"
+                                            className="shrink-0 gap-1.5 border-amber-400 bg-white text-xs font-semibold text-amber-900 hover:bg-amber-100 dark:bg-amber-900/60 dark:text-amber-100"
+                                        >
+                                            <a
+                                                href="https://link.yatimmandiri.org/SuratKesediaanOMATIQ"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                            >
+                                                <Download className="size-3.5" />
+                                                Unduh Format
+                                            </a>
+                                        </Button>
+                                    </div>
+                                </div>
+
+                                {/* Upload Surat Kesediaan */}
+                                <div className="space-y-2">
+                                    <Label htmlFor="availability_letter" className="font-semibold">
+                                        Upload Surat Kesediaan Hadir <span className="text-destructive">*</span>
+                                    </Label>
+                                    <Input
+                                        id="availability_letter"
+                                        type="file"
+                                        accept="image/jpeg,image/png,image/jpg,application/pdf"
+                                        onChange={(e) =>
+                                            nationalForm.setData(
+                                                'availability_letter',
+                                                e.target.files?.[0] ?? null,
+                                            )
+                                        }
+                                        required
+                                    />
+                                    {nationalForm.errors.availability_letter && (
+                                        <p className="text-xs font-medium text-destructive">
+                                            {nationalForm.errors.availability_letter}
+                                        </p>
+                                    )}
+                                    <p className="text-xs text-muted-foreground">
+                                        Format: PDF, JPG, atau PNG (maksimal 4MB).
+                                    </p>
+                                </div>
+
+                                {/* Bagian Biaya / Bukti Transfer */}
+                                {isBinaan ? (
+                                    <div className="flex items-center gap-2.5 rounded-lg border border-emerald-300 bg-emerald-50/70 p-3 text-xs text-emerald-900 dark:border-emerald-700/60 dark:bg-emerald-950/30 dark:text-emerald-200">
+                                        <CheckCircle2 className="size-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                                        <span>
+                                            Peserta <strong>Santri Binaan</strong> mendapatkan fasilitas pendaftaran babak nasional secara <strong>GRATIS (100% didukung Yatim Mandiri)</strong>.
+                                        </span>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-3 rounded-lg border border-border bg-muted/40 p-3.5">
+                                        <div className="space-y-1">
+                                            <Label htmlFor="national_payment_proof" className="font-semibold">
+                                                Bukti Transfer Biaya Babak Nasional <span className="text-destructive">*</span>
+                                            </Label>
+                                            <p className="text-xs text-muted-foreground">
+                                                Khusus peserta umum, biaya registrasi babak nasional ditransfer ke rekening resmi panitia Yatim Mandiri.
+                                            </p>
+                                        </div>
+                                        <Input
+                                            id="national_payment_proof"
+                                            type="file"
+                                            accept="image/jpeg,image/png,image/jpg,application/pdf"
+                                            onChange={(e) =>
+                                                nationalForm.setData(
+                                                    'national_payment_proof',
+                                                    e.target.files?.[0] ?? null,
+                                                )
+                                            }
+                                            required={!isBinaan}
+                                        />
+                                        {nationalForm.errors.national_payment_proof && (
+                                            <p className="text-xs font-medium text-destructive">
+                                                {nationalForm.errors.national_payment_proof}
+                                            </p>
+                                        )}
+                                        <p className="text-xs text-muted-foreground">
+                                            Format: PDF, JPG, atau PNG (maksimal 4MB).
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+
+                            <DialogFooter className="gap-2 sm:gap-0">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setOpenNationalModal(false)}
+                                    disabled={nationalForm.processing}
+                                >
+                                    Batal
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    className="bg-[#17524A] text-white hover:bg-[#17524A]/90"
+                                    disabled={
+                                        nationalForm.processing ||
+                                        !nationalForm.data.availability_letter ||
+                                        (!isBinaan && !nationalForm.data.national_payment_proof)
+                                    }
+                                >
+                                    {nationalForm.processing && (
+                                        <Loader2 className="mr-2 size-4 animate-spin" />
+                                    )}
+                                    Kirim Berkas Daftar Ulang
                                 </Button>
                             </DialogFooter>
                         </form>

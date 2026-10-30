@@ -6,6 +6,7 @@ use App\Concerns\Traits\LogActivity;
 use App\Concerns\Traits\UploadFiles;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Company\StoreTeacherParticipantRequest;
+use App\Models\Company\NationalParticipant;
 use App\Models\Company\Olimpiade;
 use App\Models\Company\Participant;
 use App\Models\Company\Student;
@@ -319,6 +320,7 @@ class DataPesertaController extends Controller
                 'student:id,full_name,nik,nis,school_name,school_level,grade,gender,regency_id,penyaluran_id,parent_phone,mentor_name,mentor_phone,is_binaan',
                 'student.regency:id,name',
                 'mentor:id,name,phone',
+                'national',
             ])
             ->search($request->string('globalSearch')->toString());
 
@@ -374,6 +376,91 @@ class DataPesertaController extends Controller
         $payload['companion_phone'] = $participant->companion_phone;
         $payload['parent_phone'] = $participant->parent_phone;
 
+        if ($participant->relationLoaded('national') && $participant->national) {
+            $payload['national'] = [
+                ...$participant->national->toArray(),
+                'availability_letter_url' => $participant->national->availability_letter_url,
+                'payment_proof_url' => $participant->national->payment_proof_url,
+            ];
+        }
+
         return $payload;
+    }
+
+    public function nationalQualify(Request $request, Participant $participant)
+    {
+        $this->authorize('view', $participant);
+
+        $national = $participant->national;
+        $name = $participant->student?->full_name ?? $participant->user?->name ?? 'Peserta';
+
+        if ($national) {
+            $national->delete();
+            $this->logSuccess('national-disqualify', "Guru membatalkan status lolos nasional untuk {$name}", [
+                'participant_id' => $participant->id,
+            ]);
+
+            return back()->with('success', "Status lolos babak nasional untuk {$name} berhasil dibatalkan.");
+        }
+
+        NationalParticipant::create([
+            'participant_id' => $participant->id,
+            'qualified_by' => Auth::id(),
+            'qualified_at' => now(),
+            'status' => 'unconfirmed',
+            'payment_status' => 'unpaid',
+            'payment_amount' => 0,
+        ]);
+
+        $this->logSuccess('national-qualify', "Guru meloloskan {$name} ke babak nasional", [
+            'participant_id' => $participant->id,
+        ]);
+
+        return back()->with('success', "Selamat! {$name} berhasil diajukan lolos ke Babak Nasional OMATIQ 2026.");
+    }
+
+    public function nationalConfirm(Request $request, Participant $participant)
+    {
+        $this->authorize('view', $participant);
+
+        $national = $participant->national;
+        if (! $national) {
+            return back()->withErrors(['availability_letter' => 'Peserta belum diloloskan ke Babak Nasional.']);
+        }
+
+        if (! app(SiteSettings::class)->registration_national_open) {
+            return back()->withErrors(['availability_letter' => 'Pendaftaran ulang babak nasional belum dibuka atau telah ditutup.']);
+        }
+
+        $request->validate([
+            'availability_letter' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:4096'],
+        ], [
+            'availability_letter.required' => 'Surat kesediaan hadir wajib diunggah.',
+            'availability_letter.file' => 'Surat kesediaan harus berupa file dokumen atau gambar.',
+            'availability_letter.mimes' => 'Format surat kesediaan harus berupa JPG, PNG, atau PDF.',
+            'availability_letter.max' => 'Ukuran file surat kesediaan maksimal 4MB.',
+        ]);
+
+        $letterPath = $this->uploadFile(
+            $national->availability_letter_path,
+            $request->file('availability_letter'),
+            'national/availability_letters'
+        );
+
+        $national->update([
+            'availability_letter_path' => $letterPath,
+            'status' => 'verified',
+            'payment_status' => 'paid',
+            'payment_amount' => 0,
+            'registered_at' => now(),
+        ]);
+
+        $name = $participant->student?->full_name ?? 'Peserta';
+        $this->logSuccess('national-confirm', "Guru mengunggah surat kesediaan dan mengonfirmasi daftar ulang nasional {$name}", [
+            'participant_id' => $participant->id,
+            'national_participant_id' => $national->id,
+        ]);
+
+        return back()->with('success', "Surat kesediaan untuk {$name} berhasil diunggah. Pendaftaran Babak Nasional telah terverifikasi!");
     }
 }

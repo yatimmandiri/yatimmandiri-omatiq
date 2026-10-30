@@ -6,6 +6,7 @@ use App\Concerns\Traits\LogActivity;
 use App\Concerns\Traits\UploadFiles;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Company\UpdateParticipantRequest;
+use App\Models\Company\NationalParticipant;
 use App\Models\Company\Olimpiade;
 use App\Models\Company\Participant;
 use App\Models\Company\Period;
@@ -18,6 +19,7 @@ use App\Models\Core\User;
 use App\Services\PenyaluranService;
 use App\Services\StudentService;
 use App\Settings\SiteSettings;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
@@ -117,6 +119,7 @@ class ParticipantController extends Controller
             'student.village',
             'olimpiade',
             'mentor',
+            'national',
         ]);
 
         return Inertia::render('admin/company/participant/show', [
@@ -549,6 +552,7 @@ class ParticipantController extends Controller
                 'student:id,full_name,nik,school_name,gender,province_id,regency_id,parent_phone,mentor_name,mentor_phone,is_binaan',
                 'student.regency:id,name',
                 'mentor:id,name,phone',
+                'national',
             ])
             ->search($request->string('globalSearch')->toString());
 
@@ -574,6 +578,7 @@ class ParticipantController extends Controller
         $eventYear = data_get($filterValue, 'event_year');
         $payStatus = data_get($filterValue, 'payment_status');
         $branchFilter = data_get($filterValue, 'branch');
+        $nationalStatus = data_get($filterValue, 'national_status');
 
         $query
             ->when(filled($status) && $status !== 'all', fn ($q) => $q->where('status', $status))
@@ -582,6 +587,15 @@ class ParticipantController extends Controller
             ->when(filled($eventYear) && $eventYear !== 'all', fn ($q) => $q->where('event_year', $eventYear))
             ->when(filled($payStatus) && $payStatus !== 'all', fn ($q) => $q->where('payment_status', $payStatus))
             ->when(filled($branchFilter) && $branchFilter !== 'all', fn ($q) => $q->where('branch', $branchFilter))
+            ->when(filled($nationalStatus) && $nationalStatus !== 'all', function ($q) use ($nationalStatus) {
+                if ($nationalStatus === 'not_qualified') {
+                    $q->doesntHave('national');
+                } elseif ($nationalStatus === 'qualified') {
+                    $q->has('national');
+                } else {
+                    $q->whereHas('national', fn ($nq) => $nq->where('status', $nationalStatus));
+                }
+            })
             ->orderBy($orderBy, $direction)
             ->orderBy('id', 'desc');
 
@@ -690,7 +704,229 @@ class ParticipantController extends Controller
         $payload['parent_phone'] = $participant->parent_phone;
         $payload['payment_proof_url'] = $participant->payment_proof_url;
 
+        if ($participant->relationLoaded('national') && $participant->national) {
+            $payload['national'] = [
+                ...$participant->national->toArray(),
+                'availability_letter_url' => $participant->national->availability_letter_url,
+                'payment_proof_url' => $participant->national->payment_proof_url,
+            ];
+        }
+
         return $payload;
+    }
+
+    public function nationalQualify(Request $request, Participant $participant)
+    {
+        $this->authorize('update', $participant);
+
+        if (! Auth::user()->hasRole('Administrators')) {
+            abort(403, 'Penetapan kelolosan ke Babak Nasional hanya dapat dilakukan oleh Panitia Pusat (Administrator).');
+        }
+
+        $national = $participant->national;
+        $name = $participant->student?->full_name ?? $participant->user?->name ?? 'Peserta';
+
+        if ($national) {
+            // Proteksi: Peserta yang sudah terlanjur daftar ulang nasional hanya bisa dibatalkan oleh Admin
+            if (! Auth::user()->hasRole('Administrators') && $national->status !== 'unconfirmed') {
+                return back()->withErrors([
+                    'national' => "Peserta {$name} sudah melakukan pendaftaran ulang Babak Nasional. Pembatalan peserta nasional yang telah mendaftar ulang hanya dapat dilakukan oleh Panitia Pusat (Administrator).",
+                ]);
+            }
+
+            $national->delete();
+            $this->logSuccess('national-disqualify', "Admin/Cabang membatalkan kelolosan nasional {$name}", [
+                'participant_id' => $participant->id,
+            ]);
+
+            return back()->with('success', "Status lolos babak nasional untuk {$name} berhasil dibatalkan.");
+        }
+
+        NationalParticipant::create([
+            'participant_id' => $participant->id,
+            'qualified_by' => Auth::id(),
+            'qualified_at' => now(),
+            'status' => 'unconfirmed',
+            'payment_status' => 'unpaid',
+            'payment_amount' => 0,
+        ]);
+
+        $this->logSuccess('national-qualify', "Admin/Cabang meloloskan {$name} ke babak nasional", [
+            'participant_id' => $participant->id,
+        ]);
+
+        return back()->with('success', "{$name} berhasil diloloskan ke Babak Nasional OMATIQ 2026!");
+    }
+
+    public function nationalVerify(Request $request, Participant $participant)
+    {
+        $this->authorize('update', $participant);
+
+        $national = $participant->national;
+        if (! $national) {
+            return back()->withErrors(['national' => 'Peserta belum diloloskan ke Babak Nasional.']);
+        }
+
+        $request->validate([
+            'status' => ['required', 'in:unconfirmed,waiting_confirmation,verified,rejected'],
+            'payment_status' => ['nullable', 'in:unpaid,waiting_confirmation,paid'],
+            'notes' => ['nullable', 'string'],
+        ]);
+
+        $updates = [
+            'status' => $request->status,
+        ];
+
+        if ($request->filled('payment_status')) {
+            $updates['payment_status'] = $request->payment_status;
+        } elseif ($request->status === 'verified') {
+            $updates['payment_status'] = 'paid';
+        }
+
+        if ($request->has('notes')) {
+            $updates['notes'] = $request->notes;
+        }
+
+        $national->update($updates);
+
+        $name = $participant->student?->full_name ?? $participant->user?->name ?? 'Peserta';
+        $this->logSuccess('national-verify', "Verifikasi babak nasional peserta {$name} menjadi {$request->status}", [
+            'participant_id' => $participant->id,
+            'national_participant_id' => $national->id,
+            'status' => $request->status,
+        ]);
+
+        return back()->with('success', "Status daftar ulang babak nasional {$name} berhasil diperbarui.");
+    }
+
+    public function nationalReRegisterBinaan(Request $request, Participant $participant): RedirectResponse
+    {
+        $this->authorize('update', $participant);
+
+        $national = $participant->national;
+        if (! $national) {
+            return back()->withErrors(['availability_letter' => 'Peserta belum diloloskan ke Babak Nasional.']);
+        }
+
+        $isBinaan = (bool) $participant->student?->is_binaan;
+        if (! $isBinaan) {
+            return back()->withErrors(['availability_letter' => 'Fitur ini khusus untuk pendaftaran ulang santri binaan oleh Cabang.']);
+        }
+
+        $request->validate([
+            'availability_letter' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:4096'],
+        ], [
+            'availability_letter.required' => 'Surat kesediaan hadir wajib diunggah.',
+            'availability_letter.file' => 'Surat kesediaan harus berupa file dokumen atau gambar.',
+            'availability_letter.mimes' => 'Format file surat kesediaan harus JPG, PNG, atau PDF.',
+            'availability_letter.max' => 'Ukuran file surat kesediaan maksimal 4MB.',
+        ]);
+
+        $letterPath = $this->uploadFile(
+            $national->availability_letter_path,
+            $request->file('availability_letter'),
+            'national/availability_letters'
+        );
+
+        $national->update([
+            'availability_letter_path' => $letterPath,
+            'registered_at' => now(),
+            'status' => 'verified',
+            'payment_status' => 'paid',
+            'payment_amount' => 0,
+        ]);
+
+        $name = $participant->student?->full_name ?? $participant->user?->name ?? 'Santri Binaan';
+        $this->logSuccess('national-reregister-binaan', "Cabang mendaftarkan ulang santri binaan {$name} untuk Babak Nasional", [
+            'participant_id' => $participant->id,
+            'national_participant_id' => $national->id,
+            'registered_by' => Auth::id(),
+        ]);
+
+        return back()->with('success', "Pendaftaran ulang Babak Nasional untuk santri binaan {$name} berhasil disimpan!");
+    }
+
+    public function bulkNationalQualify(Request $request)
+    {
+        $this->authorize('data-participant', Participant::class);
+
+        if (! Auth::user()->hasRole('Administrators')) {
+            abort(403, 'Penetapan kelolosan masal ke Babak Nasional hanya dapat dilakukan oleh Panitia Pusat (Administrator).');
+        }
+
+        $request->validate([
+            'participant_ids' => ['required', 'array', 'min:1'],
+            'participant_ids.*' => ['integer', 'exists:participants,id'],
+            'action' => ['required', 'in:qualify,disqualify'],
+        ]);
+
+        $user = Auth::user();
+        $action = $request->input('action');
+        $ids = $request->input('participant_ids');
+
+        $query = Participant::whereIn('id', $ids);
+
+        // Cabang role strict scoping
+        if ($user && $user->hasRole('Cabang')) {
+            $branch = $user->getBranchName();
+            if (filled($branch)) {
+                $query->where(function ($q) use ($branch) {
+                    $q->where('branch', $branch)
+                        ->orWhere('branch', 'like', "%{$branch}%");
+                });
+            }
+        }
+
+        $participants = $query->with('national')->get();
+        $count = 0;
+        $skipped = 0;
+
+        DB::transaction(function () use ($participants, $action, $user, &$count, &$skipped) {
+            foreach ($participants as $participant) {
+                if ($action === 'qualify') {
+                    if (! $participant->national) {
+                        NationalParticipant::create([
+                            'participant_id' => $participant->id,
+                            'qualified_by' => $user->id,
+                            'qualified_at' => now(),
+                            'status' => 'unconfirmed',
+                            'payment_status' => 'unpaid',
+                            'payment_amount' => 0,
+                        ]);
+                        $count++;
+                    }
+                } elseif ($action === 'disqualify') {
+                    if ($participant->national) {
+                        // Cabang tidak berhak membatalkan peserta yang sudah melakukan daftar ulang nasional
+                        if (! $user->hasRole('Administrators') && $participant->national->status !== 'unconfirmed') {
+                            $skipped++;
+
+                            continue;
+                        }
+
+                        $participant->national->delete();
+                        $count++;
+                    }
+                }
+            }
+        });
+
+        if ($action === 'qualify') {
+            $msg = "Berhasil meloloskan {$count} peserta ke Babak Nasional OMATIQ 2026!";
+        } else {
+            $msg = "Berhasil membatalkan kelolosan {$count} peserta dari Babak Nasional.";
+            if ($skipped > 0) {
+                $msg .= " ({$skipped} peserta dilewati karena sudah daftar ulang nasional dan hanya dapat dibatalkan oleh Admin Pusat)";
+            }
+        }
+
+        $this->logSuccess('bulk-national-qualify', $msg, [
+            'action' => $action,
+            'count' => $count,
+            'ids' => $ids,
+        ]);
+
+        return back()->with('success', $msg);
     }
 
     private function fileMap(): array

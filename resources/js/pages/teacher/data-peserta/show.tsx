@@ -19,6 +19,7 @@ import {
     Printer,
     School,
     Trash2,
+    Trophy,
     User,
     XCircle,
 } from 'lucide-react';
@@ -39,6 +40,7 @@ export default function ShowPage() {
         !!participant.student?.is_binaan ||
         !!participant.student?.penyaluran_id;
     const [openProof, setOpenProof] = useState(false);
+    const [openLetterProof, setOpenLetterProof] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
 
     const handleDelete = async () => {
@@ -98,6 +100,21 @@ export default function ShowPage() {
                     </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
+                    {participant.national?.status === 'verified' && (
+                        <Button
+                            asChild
+                            className="gap-2 bg-gradient-to-r from-amber-600 to-yellow-600 font-bold text-white shadow hover:from-amber-700 hover:to-yellow-700"
+                        >
+                            <a
+                                href={`/pendaftaran/kartu/${participant.registration_number}?stage=national`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                <Printer className="size-4" />
+                                Cetak Kartu Nasional
+                            </a>
+                        </Button>
+                    )}
                     {participant.status !== 'rejected' && (
                         <Button
                             variant="outline"
@@ -116,15 +133,20 @@ export default function ShowPage() {
                             </a>
                         </Button>
                     )}
-                    <Button
-                        variant="destructive"
-                        onClick={handleDelete}
-                        disabled={isDeleting}
-                        className="gap-2"
-                    >
-                        <Trash2 className="size-4" />
-                        {isDeleting ? 'Membatalkan...' : 'Batalkan Pendaftaran'}
-                    </Button>
+                    {!participant.national &&
+                        participant.status !== 'verified' && (
+                            <Button
+                                variant="destructive"
+                                onClick={handleDelete}
+                                disabled={isDeleting}
+                                className="gap-2"
+                            >
+                                <Trash2 className="size-4" />
+                                {isDeleting
+                                    ? 'Membatalkan...'
+                                    : 'Batalkan Pendaftaran'}
+                            </Button>
+                        )}
                 </div>
             </div>
 
@@ -183,6 +205,84 @@ export default function ShowPage() {
                     </div>
                 </div>
             </div>
+
+            {/* National Finalist Banner if Qualified */}
+            {participant.national && (
+                <div className="relative overflow-hidden rounded-2xl border-2 border-amber-400 bg-gradient-to-br from-amber-500/15 via-yellow-500/10 to-amber-500/20 p-5 shadow-sm md:p-6 dark:border-amber-500/60 dark:from-amber-950/40 dark:via-yellow-950/20 dark:to-amber-900/30">
+                    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                        <div className="space-y-1.5">
+                            <div className="flex flex-wrap items-center gap-2">
+                                <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500 px-3 py-0.5 text-xs font-bold text-white shadow-sm dark:bg-amber-600">
+                                    <Trophy className="size-3.5" />
+                                    BABAK NASIONAL OMATIQ 2026
+                                </span>
+                                {participant.national.status === 'verified' ? (
+                                    <Badge className="bg-emerald-600 text-white hover:bg-emerald-700">
+                                        Terverifikasi Finalis Resmi
+                                    </Badge>
+                                ) : (
+                                    <Badge
+                                        variant="outline"
+                                        className="border-amber-500 bg-amber-100 text-amber-900 dark:bg-amber-950/60 dark:text-amber-300"
+                                    >
+                                        Menunggu Pendaftaran Ulang oleh Cabang
+                                    </Badge>
+                                )}
+                            </div>
+                            <h3 className="text-lg font-extrabold text-amber-950 dark:text-amber-100 sm:text-xl">
+                                Santri Berhasil Lolos ke Babak Nasional OMATIQ 2026!
+                            </h3>
+                            <p className="max-w-2xl text-xs leading-relaxed text-amber-900/90 dark:text-amber-200/80 sm:text-sm">
+                                {participant.national.status === 'verified'
+                                    ? 'Surat kesediaan hadir santri telah diunggah oleh Kantor Cabang dan terverifikasi resmi oleh panitia. Kartu Peserta Finalis Nasional sudah dapat dicetak.'
+                                    : 'Selamat! Santri binaan ini telah ditetapkan oleh Panitia Pusat untuk melaju ke Babak Final OMATIQ Nasional 2026. Seluruh pendaftaran ulang (pengunggahan surat kesediaan) dan logistik keberangkatan santri dikoordinasikan langsung oleh Kantor Cabang.'}
+                            </p>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2.5 self-start md:self-center">
+                            {participant.national.status === 'verified' && (
+                                <Button
+                                    asChild
+                                    className="gap-2 bg-gradient-to-r from-amber-600 to-yellow-600 font-bold text-white shadow hover:from-amber-700 hover:to-yellow-700"
+                                >
+                                    <a
+                                        href={`/pendaftaran/kartu/${participant.registration_number}?stage=national`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        <Printer className="size-4" />
+                                        Cetak Kartu Nasional
+                                    </a>
+                                </Button>
+                            )}
+                        </div>
+                    </div>
+
+                    {participant.national.availability_letter_url && (
+                        <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-amber-300/60 pt-3 dark:border-amber-700/50">
+                            <span className="text-xs font-semibold text-amber-900 dark:text-amber-200">
+                                Berkas Terunggah:
+                            </span>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="gap-1.5 border-amber-400 bg-white text-xs font-semibold text-amber-900 hover:bg-amber-50 dark:bg-amber-950 dark:text-amber-200"
+                                onClick={() => setOpenLetterProof(true)}
+                            >
+                                <ExternalLink className="size-3.5" />
+                                Lihat Surat Kesediaan Hadir
+                            </Button>
+                            <ProofModal
+                                href={participant.national.availability_letter_url}
+                                open={openLetterProof}
+                                onOpenChange={setOpenLetterProof}
+                                title="Surat Kesediaan Hadir Babak Nasional"
+                            />
+                        </div>
+                    )}
+                </div>
+            )}
 
             <div className="grid gap-6 lg:grid-cols-[1.35fr_0.85fr]">
                 <Card className="rounded-2xl shadow-sm">
