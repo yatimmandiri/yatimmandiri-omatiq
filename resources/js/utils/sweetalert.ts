@@ -4,7 +4,8 @@ import 'sweetalert2/dist/sweetalert2.min.css';
 
 // Default custom class styles matching OMATIQ brand
 const defaultCustomClass = {
-    popup: 'rounded-2xl border border-border shadow-2xl p-6 bg-card text-card-foreground dark:bg-zinc-900 dark:border-zinc-800',
+    container: 'z-[99999] pointer-events-auto',
+    popup: 'rounded-2xl border border-border shadow-2xl p-6 bg-card text-card-foreground dark:bg-zinc-900 dark:border-zinc-800 pointer-events-auto',
     title: 'text-lg font-bold text-foreground tracking-tight dark:text-zinc-100',
     htmlContainer: 'text-sm text-muted-foreground mt-2 dark:text-zinc-400',
     confirmButton:
@@ -57,6 +58,15 @@ export const confirmAction = async ({
         cancelButtonText,
         reverseButtons,
         focusCancel: isDanger,
+        heightAuto: false,
+        didOpen: (popup) => {
+            const container = popup.closest('.swal2-container') as HTMLElement | null;
+            if (container) {
+                container.style.zIndex = '99999';
+                container.style.pointerEvents = 'auto';
+            }
+            popup.style.pointerEvents = 'auto';
+        },
     };
 
     if (html) {

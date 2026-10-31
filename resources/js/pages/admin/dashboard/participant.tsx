@@ -14,9 +14,19 @@ import { Label } from '@/components/ui/label';
 import { ProofModal } from '@/components/ui/proof-modal';
 import { dashboard } from '@/routes/admin';
 import { document as studentDocument, nationalReRegistration, paymentProof } from '@/routes/student';
-import { Head, useForm, usePage } from '@inertiajs/react';
-import { AlertCircle, CheckCircle2, Download, ExternalLink, Eye, FileText, Loader2, Printer, Trophy, Upload } from 'lucide-react';
+import { confirmAction } from '@/utils/sweetalert';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
+import { AlertCircle, CheckCircle2, Download, ExternalLink, Eye, FileText, Loader2, Printer, Trophy, Upload, UserX, XCircle } from 'lucide-react';
 import { useState } from 'react';
+
+const NATIONAL_DECLINE_CATEGORIES = [
+    { value: 'Sakit / Kondisi Medis', label: 'Sakit / Kondisi Medis' },
+    { value: 'Jadwal Sekolah / Ujian Bentrok', label: 'Jadwal Sekolah / Ujian Bentrok' },
+    { value: 'Kendala Jarak / Transportasi / Perjalanan', label: 'Kendala Jarak / Transportasi / Perjalanan' },
+    { value: 'Urgensi / Musibah Keluarga', label: 'Urgensi / Musibah Keluarga' },
+    { value: 'Kendala Finansial / Biaya Perjalanan', label: 'Kendala Finansial / Biaya Perjalanan' },
+    { value: 'Lainnya', label: 'Alasan Lainnya' },
+];
 
 const labels: Record<string, string> = {
     male: 'Laki-laki',
@@ -42,6 +52,11 @@ export default function Dashboard() {
     const [openUploadModal, setOpenUploadModal] = useState(false);
     const [openDocumentModal, setOpenDocumentModal] = useState(false);
     const [openNationalModal, setOpenNationalModal] = useState(false);
+    const [openDeclineModal, setOpenDeclineModal] = useState(false);
+    const [declineCategory, setDeclineCategory] = useState('Sakit / Kondisi Medis');
+    const [declineReason, setDeclineReason] = useState('');
+    const [declineProcessing, setDeclineProcessing] = useState(false);
+    const [declineError, setDeclineError] = useState<string | null>(null);
 
     const isBinaan = Boolean(participant?.student?.is_binaan);
     const isNationalOpen = settings?.registration_national_open ?? true;
@@ -81,6 +96,47 @@ export default function Dashboard() {
                 nationalForm.reset();
             },
         });
+    };
+
+    const handleDeclineSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!declineReason.trim()) {
+            setDeclineError('Silakan isi alasan pengunduran diri Anda.');
+            return;
+        }
+
+        if (declineReason.trim().length < 5) {
+            setDeclineError('Alasan pengunduran diri minimal 5 karakter.');
+            return;
+        }
+
+        setDeclineProcessing(true);
+        setDeclineError(null);
+
+        router.post(
+            '/student/national-decline',
+            {
+                decline_category: declineCategory,
+                decline_reason: declineReason,
+            },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setDeclineProcessing(false);
+                    setOpenDeclineModal(false);
+                    setDeclineReason('');
+                },
+                onError: (errs) => {
+                    setDeclineProcessing(false);
+                    const msg =
+                        errs.decline_reason ||
+                        errs.decline_category ||
+                        Object.values(errs)[0] ||
+                        'Terjadi kesalahan saat mencatat pengunduran diri.';
+                    setDeclineError(String(msg));
+                },
+            },
+        );
     };
 
     const handleUploadSubmit = (e: React.FormEvent) => {
@@ -234,6 +290,10 @@ export default function Dashboard() {
                                         <Badge variant="outline" className="border-amber-500 bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
                                             Menunggu Verifikasi Pusat
                                         </Badge>
+                                    ) : participant.national.status === 'declined' ? (
+                                        <Badge variant="outline" className="border-rose-400 bg-rose-50 text-rose-800 dark:border-rose-800 dark:bg-rose-950/50 dark:text-rose-300">
+                                            Mengundurkan Diri
+                                        </Badge>
                                     ) : (
                                         <Badge variant="outline" className="border-amber-500 text-amber-800 dark:text-amber-300">
                                             Belum Daftar Ulang
@@ -241,16 +301,20 @@ export default function Dashboard() {
                                     )}
                                 </div>
                                 <h2 className="text-xl font-extrabold tracking-tight text-amber-950 dark:text-amber-100 sm:text-2xl">
-                                    Selamat! Anda Lolos ke Babak Nasional OMATIQ 2026!
+                                    {participant.national.status === 'declined'
+                                        ? 'Pernyataan Pengunduran Diri Babak Nasional'
+                                        : 'Selamat! Anda Lolos ke Babak Nasional OMATIQ 2026!'}
                                 </h2>
                                 <p className="max-w-2xl text-xs leading-relaxed text-amber-900/90 dark:text-amber-200/80 sm:text-sm">
                                     {participant.national.status === 'verified'
                                         ? 'Pendaftaran ulang babak nasional Anda telah terverifikasi resmi oleh panitia pusat. Silakan unduh dan cetak Kartu Finalis Nasional untuk dibawa saat acara.'
                                         : participant.national.status === 'waiting_confirmation'
                                           ? 'Berkas pendaftaran ulang Babak Nasional Anda telah terkirim dan sedang dalam tahap verifikasi panitia pusat. Mohon pantau status secara berkala.'
-                                          : isBinaan
-                                            ? 'Selamat! Anda terpilih sebagai delegasi santri binaan yang melaju ke Babak Final OMATIQ Nasional 2026. Pendaftaran ulang dan administrasi kehadiran dikoordinasikan langsung oleh Kantor Cabang Anda.'
-                                            : 'Anda terpilih sebagai salah satu peserta terbaik yang melaju ke babak final nasional. Silakan lakukan pendaftaran ulang sekarang.'}
+                                          : participant.national.status === 'declined'
+                                            ? `Anda telah menyatakan mengundurkan diri dari Babak Final Nasional OMATIQ 2026 (${participant.national.decline_category || 'Alasan khusus'}: "${participant.national.decline_reason || participant.national.notes || '-'}"). Terima kasih atas perjuangan dan partisipasi luar biasa Anda hingga babak semifinal/regional!`
+                                            : isBinaan
+                                              ? 'Selamat! Anda terpilih sebagai delegasi santri binaan yang melaju ke Babak Final OMATIQ Nasional 2026. Pendaftaran ulang dan administrasi kehadiran dikoordinasikan langsung oleh Kantor Cabang Anda.'
+                                              : 'Anda terpilih sebagai salah satu peserta terbaik yang melaju ke babak final nasional. Silakan lakukan pendaftaran ulang sekarang.'}
                                 </p>
                             </div>
 
@@ -269,20 +333,39 @@ export default function Dashboard() {
                                             Cetak Kartu Nasional
                                         </a>
                                     </Button>
+                                ) : participant.national.status === 'declined' ? (
+                                    <div className="flex items-center gap-2 rounded-xl border border-rose-300 bg-rose-50/80 px-3.5 py-2 text-xs font-semibold text-rose-900 dark:border-rose-800 dark:bg-rose-950/60 dark:text-rose-200">
+                                        <UserX className="size-4 text-rose-600" />
+                                        <span>Status: Mengundurkan Diri</span>
+                                    </div>
                                 ) : isBinaan ? (
                                     <div className="rounded-xl border border-emerald-300 bg-emerald-50 px-3.5 py-2 text-xs font-semibold text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300">
                                         ✨ Pendaftaran Ulang Dikelola Kantor Cabang
                                     </div>
                                 ) : isNationalOpen ? (
-                                    <Button
-                                        onClick={() => setOpenNationalModal(true)}
-                                        className="gap-2 bg-[#17524A] font-bold text-white shadow hover:bg-[#17524A]/90"
-                                    >
-                                        <Upload className="size-4" />
-                                        {participant.national.status === 'waiting_confirmation'
-                                            ? 'Perbarui Berkas Nasional'
-                                            : 'Daftar Ulang Nasional'}
-                                    </Button>
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <Button
+                                            onClick={() => setOpenNationalModal(true)}
+                                            className="gap-2 bg-[#17524A] font-bold text-white shadow hover:bg-[#17524A]/90"
+                                        >
+                                            <Upload className="size-4" />
+                                            {participant.national.status === 'waiting_confirmation'
+                                                ? 'Perbarui Berkas Nasional'
+                                                : 'Daftar Ulang Nasional'}
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            onClick={() => {
+                                                setDeclineError(null);
+                                                setOpenDeclineModal(true);
+                                            }}
+                                            className="gap-1.5 border-rose-300 text-xs font-medium text-rose-700 hover:bg-rose-50 dark:border-rose-800 dark:text-rose-300 dark:hover:bg-rose-950/50"
+                                        >
+                                            <UserX className="size-3.5 text-rose-600" />
+                                            Tidak Dapat Hadir
+                                        </Button>
+                                    </div>
                                 ) : (
                                     <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900 dark:border-amber-700 dark:bg-amber-950/50 dark:text-amber-300">
                                         Pendaftaran ulang: 7 - 11 November 2026
@@ -807,6 +890,112 @@ export default function Dashboard() {
                                         <Loader2 className="mr-2 size-4 animate-spin" />
                                     )}
                                     Kirim Berkas Daftar Ulang
+                                </Button>
+                            </DialogFooter>
+                        </form>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Modal Konfirmasi Pengunduran Diri Babak Nasional */}
+                <Dialog open={openDeclineModal} onOpenChange={setOpenDeclineModal}>
+                    <DialogContent className="max-w-md rounded-2xl">
+                        <DialogHeader>
+                            <div className="flex items-center gap-2 text-rose-800 dark:text-rose-400">
+                                <span className="flex size-9 items-center justify-center rounded-xl bg-rose-100 dark:bg-rose-950">
+                                    <UserX className="size-5 text-rose-700 dark:text-rose-300" />
+                                </span>
+                                <div>
+                                    <DialogTitle className="text-lg font-bold">
+                                        Konfirmasi Pengunduran Diri
+                                    </DialogTitle>
+                                    <DialogDescription className="text-xs">
+                                        Babak Final Nasional OMATIQ 2026
+                                    </DialogDescription>
+                                </div>
+                            </div>
+                        </DialogHeader>
+
+                        <form onSubmit={handleDeclineSubmit} className="space-y-4 pt-2">
+                            <div className="rounded-lg border border-rose-300 bg-rose-50/80 p-3 text-xs text-rose-900 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-200">
+                                <p className="font-semibold text-rose-950 dark:text-rose-100">
+                                    Pernyataan Berhalangan Hadir
+                                </p>
+                                <p className="mt-1 text-[11px] leading-relaxed text-rose-800 dark:text-rose-300">
+                                    Selamat atas pencapaian ananda yang berhasil lolos hingga tahap ini. Jika ananda berhalangan hadir ke babak final nasional, mohon sampaikan alasan agar kuota finalis dapat dialihkan oleh panitia pusat kepada peserta peringkat berikutnya.
+                                </p>
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <Label htmlFor="student_decline_category" className="text-xs font-semibold">
+                                    Kategori Alasan <span className="text-destructive">*</span>
+                                </Label>
+                                <select
+                                    id="student_decline_category"
+                                    value={declineCategory}
+                                    onChange={(e) => setDeclineCategory(e.target.value)}
+                                    disabled={declineProcessing}
+                                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-xs shadow-xs focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
+                                >
+                                    {NATIONAL_DECLINE_CATEGORIES.map((cat) => (
+                                        <option key={cat.value} value={cat.value}>
+                                            {cat.label}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <Label htmlFor="student_decline_reason" className="text-xs font-semibold">
+                                    Alasan / Keterangan Penjelasan <span className="text-destructive">*</span>
+                                </Label>
+                                <textarea
+                                    id="student_decline_reason"
+                                    rows={3}
+                                    placeholder="Jelaskan alasan ananda berhalangan hadir (misal: jadwal ujian sekolah bentrok / kondisi kesehatan / kendala bepergian luar kota)..."
+                                    value={declineReason}
+                                    onChange={(e) => setDeclineReason(e.target.value)}
+                                    disabled={declineProcessing}
+                                    className="w-full rounded-lg border border-input bg-background p-2.5 text-xs shadow-xs focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
+                                    required
+                                />
+                                <p className="text-[11px] text-muted-foreground">
+                                    Minimal 5 karakter.
+                                </p>
+                            </div>
+
+                            {declineError && (
+                                <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-2.5 text-xs text-destructive">
+                                    <AlertCircle className="size-4 shrink-0" />
+                                    <span>{declineError}</span>
+                                </div>
+                            )}
+
+                            <DialogFooter className="gap-2 sm:gap-0">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setOpenDeclineModal(false)}
+                                    disabled={declineProcessing}
+                                >
+                                    Batal
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    variant="destructive"
+                                    disabled={declineProcessing || !declineReason.trim()}
+                                    className="gap-2"
+                                >
+                                    {declineProcessing ? (
+                                        <>
+                                            <Loader2 className="size-4 animate-spin" />
+                                            Mengirim...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <UserX className="size-4" />
+                                            Konfirmasi Pengunduran Diri
+                                        </>
+                                    )}
                                 </Button>
                             </DialogFooter>
                         </form>

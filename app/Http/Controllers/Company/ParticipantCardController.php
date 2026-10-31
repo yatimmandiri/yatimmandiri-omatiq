@@ -58,6 +58,10 @@ class ParticipantCardController extends Controller
             && $participant->national
             && $participant->national->status === 'verified';
 
+        if (($request->query('stage') === 'national' || $request->boolean('national')) && ! $isNational) {
+            abort(403, 'Kartu tanda peserta Babak Final Nasional hanya dapat dicetak oleh finalis yang telah terverifikasi resmi.');
+        }
+
         $verifyUrl = url('/verifikasi/'.$regNo);
         $qrCodeSvg = $this->barcodeService->generateQrCodeSvg($verifyUrl, size: 92, color: $isNational ? '#b45309' : '#17524A');
         $barcodeSvg = $this->barcodeService->generateCode128Svg($regNo, height: 28, barWidth: 1.1, color: $isNational ? '#b45309' : '#17524A');

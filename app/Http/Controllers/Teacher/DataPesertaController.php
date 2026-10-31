@@ -391,10 +391,10 @@ class DataPesertaController extends Controller
     {
         $this->authorize('view', $participant);
 
-        $national = $participant->national;
+        $national = NationalParticipant::withTrashed()->where('participant_id', $participant->id)->first();
         $name = $participant->student?->full_name ?? $participant->user?->name ?? 'Peserta';
 
-        if ($national) {
+        if ($national && ! $national->trashed()) {
             $national->delete();
             $this->logSuccess('national-disqualify', "Guru membatalkan status lolos nasional untuk {$name}", [
                 'participant_id' => $participant->id,
@@ -403,14 +403,32 @@ class DataPesertaController extends Controller
             return back()->with('success', "Status lolos babak nasional untuk {$name} berhasil dibatalkan.");
         }
 
-        NationalParticipant::create([
-            'participant_id' => $participant->id,
-            'qualified_by' => Auth::id(),
-            'qualified_at' => now(),
-            'status' => 'unconfirmed',
-            'payment_status' => 'unpaid',
-            'payment_amount' => 0,
-        ]);
+        if ($national && $national->trashed()) {
+            $national->restore();
+            $national->update([
+                'qualified_by' => Auth::id(),
+                'qualified_at' => now(),
+                'status' => 'unconfirmed',
+                'availability_letter_path' => null,
+                'payment_proof_path' => null,
+                'payment_status' => 'unpaid',
+                'payment_amount' => 0,
+                'registered_at' => null,
+                'decline_category' => null,
+                'decline_reason' => null,
+                'declined_at' => null,
+                'notes' => null,
+            ]);
+        } else {
+            NationalParticipant::create([
+                'participant_id' => $participant->id,
+                'qualified_by' => Auth::id(),
+                'qualified_at' => now(),
+                'status' => 'unconfirmed',
+                'payment_status' => 'unpaid',
+                'payment_amount' => 0,
+            ]);
+        }
 
         $this->logSuccess('national-qualify', "Guru meloloskan {$name} ke babak nasional", [
             'participant_id' => $participant->id,

@@ -99,6 +99,7 @@ Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'auth.admi
         Route::get('participants/{participant}/card', [ParticipantCardController::class, 'print'])->name('participants.card');
         Route::post('participants/bulk-national-qualify', [ParticipantController::class, 'bulkNationalQualify'])->name('participants.bulk-national-qualify');
         Route::post('participants/{participant}/national-re-register-binaan', [ParticipantController::class, 'nationalReRegisterBinaan'])->name('participants.national-re-register-binaan');
+        Route::post('participants/{participant}/national-decline-binaan', [ParticipantController::class, 'nationalDeclineBinaan'])->name('participants.national-decline-binaan');
         Route::post('participants/{participant}/national-qualify', [ParticipantController::class, 'nationalQualify'])->name('participants.national-qualify');
         Route::post('participants/{participant}/national-verify', [ParticipantController::class, 'nationalVerify'])->name('participants.national-verify');
         Route::put('participants/{participant}/status', [ParticipantController::class, 'status'])->name('participants.status');

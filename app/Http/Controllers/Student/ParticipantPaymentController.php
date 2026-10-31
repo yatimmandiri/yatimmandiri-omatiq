@@ -223,4 +223,57 @@ class ParticipantPaymentController extends Controller
 
         return back()->with('success', $successMsg);
     }
+
+    /**
+     * Submit decline / withdrawal from national stage.
+     */
+    public function declineNational(Request $request): RedirectResponse
+    {
+        $user = Auth::user();
+
+        $participant = $user->participant
+            ?? Participant::where('user_id', $user->id)->first()
+            ?? Participant::whereHas('student', fn ($q) => $q->where('user_id', $user->id))->first();
+
+        if (! $participant) {
+            return back()->withErrors(['decline_reason' => 'Data pendaftaran peserta tidak ditemukan.']);
+        }
+
+        $national = $participant->national;
+        if (! $national) {
+            return back()->withErrors(['decline_reason' => 'Anda belum terdaftar sebagai peserta yang lolos ke Babak Nasional.']);
+        }
+
+        if ($national->status === 'verified') {
+            return back()->withErrors(['decline_reason' => 'Pendaftaran ulang babak nasional Anda sudah terverifikasi resmi oleh panitia. Mohon hubungi panitia jika ada kendala mendesak.']);
+        }
+
+        $request->validate([
+            'decline_category' => ['required', 'string', 'max:50'],
+            'decline_reason' => ['required', 'string', 'min:5', 'max:1000'],
+        ], [
+            'decline_category.required' => 'Kategori alasan pengunduran diri wajib dipilih.',
+            'decline_reason.required' => 'Alasan pengunduran diri wajib diisi.',
+            'decline_reason.min' => 'Alasan pengunduran diri minimal 5 karakter.',
+            'decline_reason.max' => 'Alasan pengunduran diri maksimal 1000 karakter.',
+        ]);
+
+        $national->update([
+            'status' => 'declined',
+            'decline_category' => $request->decline_category,
+            'decline_reason' => $request->decline_reason,
+            'declined_at' => now(),
+            'notes' => "[MENGUNDURKAN DIRI MANDIRI - {$request->decline_category}] {$request->decline_reason}",
+        ]);
+
+        $this->logActivity('info', 'PARTICIPANT_DECLINE_NATIONAL', 'Partisipan mengonfirmasi pengunduran diri dari babak nasional', [
+            'participant_id' => $participant->id,
+            'national_participant_id' => $national->id,
+            'registration_number' => $participant->registration_number,
+            'decline_category' => $request->decline_category,
+            'decline_reason' => $request->decline_reason,
+        ]);
+
+        return back()->with('success', 'Konfirmasi pengunduran diri dari Babak Final Nasional berhasil dicatat. Terima kasih atas partisipasi Anda di OMATIQ 2026.');
+    }
 }

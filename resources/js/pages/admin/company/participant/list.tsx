@@ -635,6 +635,19 @@ export default function ListPage() {
                     );
                 }
 
+                if (national.status === 'declined') {
+                    return (
+                        <Badge
+                            variant="outline"
+                            className="gap-1 border-rose-300 bg-rose-50 px-2 py-0.5 text-xs font-semibold text-rose-800 dark:border-rose-800 dark:bg-rose-950/50 dark:text-rose-300"
+                            title={national.decline_reason ? `${national.decline_category || 'Alasan'}: ${national.decline_reason}` : national.notes}
+                        >
+                            <XCircle className="size-3 text-rose-600 dark:text-rose-400" />
+                            Mengundurkan Diri
+                        </Badge>
+                    );
+                }
+
                 return (
                     <Badge
                         variant="outline"
@@ -714,6 +727,14 @@ export default function ListPage() {
                         >
                             <XCircle className="size-4" />
                             Batalkan Lolos ({selectedRows.length})
+                        </Button>
+                        <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setSelectedRows([])}
+                            className="text-xs font-semibold text-amber-900 hover:bg-amber-200/50 dark:text-amber-200 dark:hover:bg-amber-900/50"
+                        >
+                            Batal Pilih Semua
                         </Button>
                     </div>
                 </div>
@@ -968,6 +989,7 @@ export default function ListPage() {
                                     { value: 'verified', label: 'Finalis Terverifikasi' },
                                     { value: 'waiting_confirmation', label: 'Menunggu Verifikasi' },
                                     { value: 'unconfirmed', label: 'Belum Daftar Ulang' },
+                                    { value: 'declined', label: 'Mengundurkan Diri' },
                                     { value: 'not_qualified', label: 'Belum Lolos' },
                                 ]}
                                 dataSelected={filterValue.national_status}

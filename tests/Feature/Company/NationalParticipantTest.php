@@ -62,6 +62,40 @@ test('teacher can qualify and disqualify binaan student to national stage', func
     $response->assertSessionHasNoErrors();
     $participant->refresh();
     expect($participant->national)->toBeNull();
+
+    // 3. Re-qualify (should restore soft-deleted row without error 1062)
+    $response = $this->actingAs($teacherUser)
+        ->post(route('teacher.data-peserta.national-qualify', $participant->id));
+
+    $response->assertSessionHasNoErrors();
+    $participant->refresh();
+    expect($participant->national)->not->toBeNull()
+        ->and($participant->national->status)->toBe('unconfirmed');
+});
+
+test('admin can qualify, cancel qualification, and re-qualify participant without constraint violation', function () {
+    $adminUser = User::factory()->create(['email_verified_at' => now()]);
+    $adminUser->assignRole('Administrators');
+
+    $student = Student::factory()->create(['full_name' => 'Peserta Uji']);
+    $participant = Participant::factory()->create(['student_id' => $student->id, 'status' => 'verified']);
+
+    // 1. Qualify
+    $this->actingAs($adminUser)->post(route('admin.companies.participants.national-qualify', $participant->id));
+    $participant->refresh();
+    expect($participant->national)->not->toBeNull();
+
+    // 2. Cancel qualification (soft-deleted)
+    $this->actingAs($adminUser)->post(route('admin.companies.participants.national-qualify', $participant->id));
+    $participant->refresh();
+    expect($participant->national)->toBeNull();
+
+    // 3. Re-qualify (should restore without error 1062)
+    $response = $this->actingAs($adminUser)->post(route('admin.companies.participants.national-qualify', $participant->id));
+    $response->assertSessionHasNoErrors();
+    $participant->refresh();
+    expect($participant->national)->not->toBeNull()
+        ->and($participant->national->status)->toBe('unconfirmed');
 });
 
 test('santri binaan uploads availability letter and is auto-verified with free fee', function () {
@@ -240,4 +274,132 @@ test('national re-registration is blocked when setting registration_national_ope
     // Restore setting
     $settings->registration_national_open = true;
     $settings->save();
+});
+
+test('branch admin can decline national participation for santri binaan with category and reason', function () {
+    $cabangUser = User::factory()->create([
+        'name' => 'Admin Cabang Surabaya',
+        'email_verified_at' => now(),
+        'branch' => 'Surabaya',
+    ]);
+    $cabangUser->assignRole('Cabang');
+
+    $student = Student::factory()->create([
+        'full_name' => 'Santri Binaan Cabang',
+        'is_binaan' => true,
+    ]);
+
+    $participant = Participant::factory()->create([
+        'student_id' => $student->id,
+        'branch' => 'Surabaya',
+        'status' => 'verified',
+    ]);
+
+    NationalParticipant::create([
+        'participant_id' => $participant->id,
+        'qualified_by' => 1,
+        'status' => 'unconfirmed',
+    ]);
+
+    $response = $this->actingAs($cabangUser)->post(
+        route('admin.companies.participants.national-decline-binaan', $participant->id),
+        [
+            'decline_category' => 'Urgensi / Musibah Keluarga',
+            'decline_reason' => 'Santri ada keperluan keluarga mendadak di luar kota.',
+        ]
+    );
+
+    $response->assertSessionHasNoErrors();
+    $response->assertSessionHas('success');
+
+    $participant->refresh();
+    expect($participant->national->status)->toBe('declined')
+        ->and($participant->national->decline_category)->toBe('Urgensi / Musibah Keluarga')
+        ->and($participant->national->decline_reason)->toBe('Santri ada keperluan keluarga mendadak di luar kota.')
+        ->and($participant->national->declined_at)->not->toBeNull();
+});
+
+test('student can decline national stage with category and reason', function () {
+    $studentUser = User::factory()->create([
+        'name' => 'Peserta Umum',
+        'email_verified_at' => now(),
+    ]);
+    $studentUser->assignRole('Participant');
+
+    $student = Student::factory()->create([
+        'user_id' => $studentUser->id,
+        'full_name' => 'Peserta Mundur',
+        'is_binaan' => false,
+    ]);
+
+    $participant = Participant::factory()->create([
+        'user_id' => $studentUser->id,
+        'student_id' => $student->id,
+        'status' => 'verified',
+    ]);
+
+    NationalParticipant::create([
+        'participant_id' => $participant->id,
+        'qualified_by' => 1,
+        'status' => 'unconfirmed',
+    ]);
+
+    $response = $this->actingAs($studentUser)->post(
+        route('student.national-decline'),
+        [
+            'decline_category' => 'Jadwal Sekolah / Ujian Bentrok',
+            'decline_reason' => 'Bersamaan dengan ujian akhir semester di sekolah.',
+        ]
+    );
+
+    $response->assertSessionHasNoErrors();
+    $response->assertSessionHas('success');
+
+    $participant->refresh();
+    expect($participant->national->status)->toBe('declined')
+        ->and($participant->national->decline_category)->toBe('Jadwal Sekolah / Ujian Bentrok')
+        ->and($participant->national->decline_reason)->toBe('Bersamaan dengan ujian akhir semester di sekolah.')
+        ->and($participant->national->declined_at)->not->toBeNull();
+});
+
+test('admin can reset declined national status back to unconfirmed', function () {
+    $adminUser = User::factory()->create([
+        'name' => 'Super Admin',
+        'email_verified_at' => now(),
+    ]);
+    $adminUser->assignRole('Administrators');
+
+    $student = Student::factory()->create([
+        'full_name' => 'Peserta Batal Mundur',
+        'is_binaan' => false,
+    ]);
+
+    $participant = Participant::factory()->create([
+        'student_id' => $student->id,
+        'status' => 'verified',
+    ]);
+
+    $national = NationalParticipant::create([
+        'participant_id' => $participant->id,
+        'qualified_by' => $adminUser->id,
+        'status' => 'declined',
+        'decline_category' => 'Lainnya',
+        'decline_reason' => 'Salah klik informasi.',
+        'declined_at' => now(),
+    ]);
+
+    $response = $this->actingAs($adminUser)->post(
+        route('admin.companies.participants.national-verify', $participant->id),
+        [
+            'status' => 'unconfirmed',
+        ]
+    );
+
+    $response->assertSessionHasNoErrors();
+
+    $participant->refresh();
+    expect($participant->national->status)->toBe('unconfirmed')
+        ->and($participant->national->decline_category)->toBeNull()
+        ->and($participant->national->decline_reason)->toBeNull()
+        ->and($participant->national->declined_at)->toBeNull();
 });

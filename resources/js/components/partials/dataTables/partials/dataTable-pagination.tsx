@@ -4,17 +4,12 @@ import {
     ChevronLeftIcon,
     ChevronRightIcon,
 } from 'lucide-react';
-import { useEffect } from 'react';
 import { UseDataTable } from '../hooks/useDataTables';
 
 export const DataTablePagination = () => {
     const { pagination, isLoading, table }: any = UseDataTable();
 
     const totalPages = Math.ceil(pagination.total / pagination.perPage);
-
-    useEffect(() => {
-        table.resetRowSelection();
-    }, [pagination.page]);
 
     return (
         <div className="flex flex-row items-center space-x-2">

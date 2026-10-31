@@ -7,6 +7,7 @@ import {
     useContext,
     useEffect,
     useMemo,
+    useRef,
     useState,
 } from 'react';
 
@@ -54,7 +55,7 @@ export const DataTableProvider = ({
     withActions = true,
     formatDataExport,
     customButtons,
-    setRowSelection,
+    setRowSelection: setRowSelectionProp,
     initialSorting,
     children,
 }: DataTableProps) => {
@@ -277,6 +278,21 @@ export const DataTableProvider = ({
         return mergedColumns;
     }, [columns]);
 
+    const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
+    const rowDataMapRef = useRef<Map<string, any>>(new Map());
+
+    // Cache semua item yang pernah dimuat agar data baris tetap utuh lintas pencarian & paginasi
+    useEffect(() => {
+        if (Array.isArray(data)) {
+            data.forEach((item: any) => {
+                const id = String(
+                    item?.id ?? item?.uuid ?? item?.registration_number,
+                );
+                rowDataMapRef.current.set(id, item);
+            });
+        }
+    }, [data]);
+
     const table = useReactTable({
         data: data ?? [],
         columns: initialColumns ?? [],
@@ -287,7 +303,13 @@ export const DataTableProvider = ({
             },
             globalFilter,
             sorting,
+            rowSelection,
         },
+        enableRowSelection: true,
+        getRowId: (row: any, relativeIndex: number) =>
+            String(row?.id ?? row?.uuid ?? row?.registration_number ?? relativeIndex),
+        onRowSelectionChange: setRowSelection,
+        autoResetPageIndex: false,
         pageCount: pagination.total
             ? Math.ceil(pagination.total / pagination.perPage)
             : 0,
@@ -312,10 +334,18 @@ export const DataTableProvider = ({
         },
     });
 
-    const selectedRows = useMemo(
-        () => table.getSelectedRowModel().rows.map((row: any) => row.original),
-        [table.getSelectedRowModel()], // dependency
-    );
+    const selectedRows = useMemo(() => {
+        const rows: any[] = [];
+        for (const [id, isSelected] of Object.entries(rowSelection)) {
+            if (isSelected) {
+                const item = rowDataMapRef.current.get(id);
+                if (item) {
+                    rows.push(item);
+                }
+            }
+        }
+        return rows;
+    }, [rowSelection]);
 
     useEffect(() => {
         if (refreshData) {
@@ -324,11 +354,11 @@ export const DataTableProvider = ({
                 table.resetRowSelection();
             });
         }
-    }, [refreshData]);
+    }, [refreshData, fetchData, setRefreshData]);
 
     useEffect(() => {
-        setRowSelection?.(selectedRows);
-    }, [selectedRows]);
+        setRowSelectionProp?.(selectedRows);
+    }, [selectedRows, setRowSelectionProp]);
 
     const contextValue = {
         data,
@@ -343,6 +373,7 @@ export const DataTableProvider = ({
         pagination,
         setPagination,
         selectedRows,
+        resetRowSelection: () => table.resetRowSelection(),
         refreshData,
         setRefreshData,
         formatDataExport,

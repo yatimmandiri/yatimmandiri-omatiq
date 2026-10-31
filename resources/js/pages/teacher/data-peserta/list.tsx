@@ -68,10 +68,14 @@ export default function ListPage() {
                                         className={
                                             row.national.status === 'verified'
                                                 ? 'border-amber-500 bg-amber-500 px-1.5 py-0 text-[10px] font-bold text-white shadow-xs'
-                                                : 'border-amber-500/80 bg-amber-50 px-1.5 py-0 text-[10px] font-bold text-amber-800 dark:bg-amber-950/40 dark:text-amber-300'
+                                                : row.national.status === 'declined'
+                                                  ? 'border-rose-400 bg-rose-50 px-1.5 py-0 text-[10px] font-bold text-rose-700 dark:bg-rose-950/40 dark:text-rose-300'
+                                                  : 'border-amber-500/80 bg-amber-50 px-1.5 py-0 text-[10px] font-bold text-amber-800 dark:bg-amber-950/40 dark:text-amber-300'
                                         }
                                     >
-                                        🏆 Finalis Nasional
+                                        {row.national.status === 'declined'
+                                            ? 'Mundur Nasional'
+                                            : '🏆 Finalis Nasional'}
                                     </Badge>
                                 )}
                             </div>

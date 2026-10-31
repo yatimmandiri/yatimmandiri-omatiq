@@ -1,9 +1,10 @@
 import { UseDataTable } from '../hooks/useDataTables';
 
 export const DataTableInfo = () => {
-    const { pagination, table }: any = UseDataTable();
+    const { pagination, table, selectedRows }: any = UseDataTable();
 
-    const selectedCount = table.getSelectedRowModel().rows.length;
+    const selectedCount =
+        selectedRows?.length ?? table.getSelectedRowModel().rows.length;
     const total = pagination?.total ?? 0;
     const from =
         pagination?.from ??

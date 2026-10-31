@@ -23,6 +23,9 @@ use Spatie\Activitylog\Support\LogOptions;
     'payment_status',
     'payment_amount',
     'registered_at',
+    'decline_category',
+    'decline_reason',
+    'declined_at',
     'notes',
 ])]
 class NationalParticipant extends Model
@@ -39,6 +42,7 @@ class NationalParticipant extends Model
         return [
             'qualified_at' => 'datetime',
             'registered_at' => 'datetime',
+            'declined_at' => 'datetime',
             'payment_amount' => 'decimal:2',
         ];
     }
@@ -79,6 +83,11 @@ class NationalParticipant extends Model
     public function scopeWaitingConfirmation(Builder $query): Builder
     {
         return $query->where('status', 'waiting_confirmation');
+    }
+
+    public function scopeDeclined(Builder $query): Builder
+    {
+        return $query->where('status', 'declined');
     }
 
     private function storageUrl(?string $path): ?string

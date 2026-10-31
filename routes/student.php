@@ -19,4 +19,5 @@ Route::prefix('student')->as('student.')->middleware(['auth', 'verified'])->grou
     Route::post('payment-proof', [ParticipantPaymentController::class, 'uploadProof'])->name('payment-proof');
     Route::post('document', [ParticipantPaymentController::class, 'uploadDocument'])->name('document');
     Route::post('national-re-registration', [ParticipantPaymentController::class, 'uploadNationalReRegistration'])->name('national-re-registration');
+    Route::post('national-decline', [ParticipantPaymentController::class, 'declineNational'])->name('national-decline');
 });

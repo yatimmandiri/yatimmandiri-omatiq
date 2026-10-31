@@ -723,10 +723,10 @@ class ParticipantController extends Controller
             abort(403, 'Penetapan kelolosan ke Babak Nasional hanya dapat dilakukan oleh Panitia Pusat (Administrator).');
         }
 
-        $national = $participant->national;
+        $national = NationalParticipant::withTrashed()->where('participant_id', $participant->id)->first();
         $name = $participant->student?->full_name ?? $participant->user?->name ?? 'Peserta';
 
-        if ($national) {
+        if ($national && ! $national->trashed()) {
             // Proteksi: Peserta yang sudah terlanjur daftar ulang nasional hanya bisa dibatalkan oleh Admin
             if (! Auth::user()->hasRole('Administrators') && $national->status !== 'unconfirmed') {
                 return back()->withErrors([
@@ -742,14 +742,32 @@ class ParticipantController extends Controller
             return back()->with('success', "Status lolos babak nasional untuk {$name} berhasil dibatalkan.");
         }
 
-        NationalParticipant::create([
-            'participant_id' => $participant->id,
-            'qualified_by' => Auth::id(),
-            'qualified_at' => now(),
-            'status' => 'unconfirmed',
-            'payment_status' => 'unpaid',
-            'payment_amount' => 0,
-        ]);
+        if ($national && $national->trashed()) {
+            $national->restore();
+            $national->update([
+                'qualified_by' => Auth::id(),
+                'qualified_at' => now(),
+                'status' => 'unconfirmed',
+                'availability_letter_path' => null,
+                'payment_proof_path' => null,
+                'payment_status' => 'unpaid',
+                'payment_amount' => 0,
+                'registered_at' => null,
+                'decline_category' => null,
+                'decline_reason' => null,
+                'declined_at' => null,
+                'notes' => null,
+            ]);
+        } else {
+            NationalParticipant::create([
+                'participant_id' => $participant->id,
+                'qualified_by' => Auth::id(),
+                'qualified_at' => now(),
+                'status' => 'unconfirmed',
+                'payment_status' => 'unpaid',
+                'payment_amount' => 0,
+            ]);
+        }
 
         $this->logSuccess('national-qualify', "Admin/Cabang meloloskan {$name} ke babak nasional", [
             'participant_id' => $participant->id,
@@ -768,14 +786,31 @@ class ParticipantController extends Controller
         }
 
         $request->validate([
-            'status' => ['required', 'in:unconfirmed,waiting_confirmation,verified,rejected'],
+            'status' => ['required', 'in:unconfirmed,waiting_confirmation,verified,rejected,declined'],
             'payment_status' => ['nullable', 'in:unpaid,waiting_confirmation,paid'],
             'notes' => ['nullable', 'string'],
+            'decline_category' => ['nullable', 'string', 'max:50'],
+            'decline_reason' => ['nullable', 'string'],
         ]);
 
         $updates = [
             'status' => $request->status,
         ];
+
+        if ($request->status === 'declined') {
+            $updates['declined_at'] = now();
+            if ($request->filled('decline_category')) {
+                $updates['decline_category'] = $request->decline_category;
+            }
+            if ($request->filled('decline_reason')) {
+                $updates['decline_reason'] = $request->decline_reason;
+            }
+        } elseif ($request->status === 'unconfirmed') {
+            // Reset pengunduran diri jika dikembalikan ke unconfirmed
+            $updates['declined_at'] = null;
+            $updates['decline_category'] = null;
+            $updates['decline_reason'] = null;
+        }
 
         if ($request->filled('payment_status')) {
             $updates['payment_status'] = $request->payment_status;
@@ -806,6 +841,10 @@ class ParticipantController extends Controller
         $national = $participant->national;
         if (! $national) {
             return back()->withErrors(['availability_letter' => 'Peserta belum diloloskan ke Babak Nasional.']);
+        }
+
+        if (! app(SiteSettings::class)->registration_national_open && ! Auth::user()->hasRole('Administrators')) {
+            return back()->withErrors(['availability_letter' => 'Pendaftaran ulang Babak Nasional saat ini belum dibuka atau telah ditutup oleh panitia pusat.']);
         }
 
         $isBinaan = (bool) $participant->student?->is_binaan;
@@ -846,6 +885,50 @@ class ParticipantController extends Controller
         return back()->with('success', "Pendaftaran ulang Babak Nasional untuk santri binaan {$name} berhasil disimpan!");
     }
 
+    public function nationalDeclineBinaan(Request $request, Participant $participant): RedirectResponse
+    {
+        $this->authorize('update', $participant);
+
+        $national = $participant->national;
+        if (! $national) {
+            return back()->withErrors(['decline_reason' => 'Peserta belum diloloskan ke Babak Nasional.']);
+        }
+
+        $isBinaan = (bool) $participant->student?->is_binaan;
+        if (! $isBinaan) {
+            return back()->withErrors(['decline_reason' => 'Fitur ini khusus untuk pelaporan pengunduran diri santri binaan oleh Cabang.']);
+        }
+
+        $request->validate([
+            'decline_category' => ['required', 'string', 'max:50'],
+            'decline_reason' => ['required', 'string', 'min:5', 'max:1000'],
+        ], [
+            'decline_category.required' => 'Kategori alasan pengunduran diri wajib dipilih.',
+            'decline_reason.required' => 'Penjelasan / alasan pengunduran diri wajib diisi.',
+            'decline_reason.min' => 'Penjelasan alasan minimal 5 karakter.',
+            'decline_reason.max' => 'Penjelasan alasan maksimal 1000 karakter.',
+        ]);
+
+        $national->update([
+            'status' => 'declined',
+            'decline_category' => $request->decline_category,
+            'decline_reason' => $request->decline_reason,
+            'declined_at' => now(),
+            'notes' => "[MENGUNDURKAN DIRI - {$request->decline_category}] {$request->decline_reason}",
+        ]);
+
+        $name = $participant->student?->full_name ?? $participant->user?->name ?? 'Santri Binaan';
+        $this->logSuccess('national-decline-binaan', "Cabang melaporkan pengunduran diri santri binaan {$name} dari Babak Nasional", [
+            'participant_id' => $participant->id,
+            'national_participant_id' => $national->id,
+            'decline_category' => $request->decline_category,
+            'decline_reason' => $request->decline_reason,
+            'declined_by' => Auth::id(),
+        ]);
+
+        return back()->with('success', "Status pengunduran diri santri binaan {$name} dari Babak Nasional berhasil dicatat.");
+    }
+
     public function bulkNationalQualify(Request $request)
     {
         $this->authorize('data-participant', Participant::class);
@@ -855,7 +938,7 @@ class ParticipantController extends Controller
         }
 
         $request->validate([
-            'participant_ids' => ['required', 'array', 'min:1'],
+            'participant_ids' => ['required', 'array', 'min:1', 'max:500'],
             'participant_ids.*' => ['integer', 'exists:participants,id'],
             'action' => ['required', 'in:qualify,disqualify'],
         ]);
@@ -877,7 +960,7 @@ class ParticipantController extends Controller
             }
         }
 
-        $participants = $query->with('national')->get();
+        $participants = $query->with(['national' => fn ($q) => $q->withTrashed()])->get();
         $count = 0;
         $skipped = 0;
 
@@ -894,9 +977,26 @@ class ParticipantController extends Controller
                             'payment_amount' => 0,
                         ]);
                         $count++;
+                    } elseif ($participant->national->trashed()) {
+                        $participant->national->restore();
+                        $participant->national->update([
+                            'qualified_by' => $user->id,
+                            'qualified_at' => now(),
+                            'status' => 'unconfirmed',
+                            'availability_letter_path' => null,
+                            'payment_proof_path' => null,
+                            'payment_status' => 'unpaid',
+                            'payment_amount' => 0,
+                            'registered_at' => null,
+                            'decline_category' => null,
+                            'decline_reason' => null,
+                            'declined_at' => null,
+                            'notes' => null,
+                        ]);
+                        $count++;
                     }
                 } elseif ($action === 'disqualify') {
-                    if ($participant->national) {
+                    if ($participant->national && ! $participant->national->trashed()) {
                         // Cabang tidak berhak membatalkan peserta yang sudah melakukan daftar ulang nasional
                         if (! $user->hasRole('Administrators') && $participant->national->status !== 'unconfirmed') {
                             $skipped++;

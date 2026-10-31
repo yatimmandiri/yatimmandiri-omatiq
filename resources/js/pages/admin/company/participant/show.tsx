@@ -24,6 +24,7 @@ import {
     Pencil,
     Phone,
     Printer,
+    RotateCcw,
     School,
     Trophy,
     User,
@@ -100,19 +101,30 @@ export default function ShowPage() {
         }
     };
 
-    const handleVerifyNational = async (newStatus: 'verified' | 'rejected') => {
+    const handleVerifyNational = async (
+        newStatus: 'verified' | 'rejected' | 'unconfirmed',
+    ) => {
         const isApprove = newStatus === 'verified';
+        const isReset = newStatus === 'unconfirmed';
         const isConfirmed = await confirmAction({
             title: isApprove
                 ? 'Verifikasi Finalis Nasional?'
-                : 'Tolak Berkas Nasional?',
+                : isReset
+                  ? 'Batalkan Status Mengundurkan Diri?'
+                  : 'Tolak Berkas Nasional?',
             html: isApprove
                 ? `Setujui berkas pendaftaran ulang babak nasional untuk <strong>${fullName}</strong>? Status akan menjadi <strong>Terverifikasi</strong> dan pembayaran Lunas.`
-                : `Apakah Anda yakin ingin menolak berkas daftar ulang babak nasional untuk <strong>${fullName}</strong>?`,
-            icon: isApprove ? 'question' : 'warning',
-            confirmButtonText: isApprove ? 'Ya, Verifikasi' : 'Ya, Tolak Berkas',
+                : isReset
+                  ? `Batalkan status mundur dan buka kembali akses daftar ulang babak nasional untuk <strong>${fullName}</strong>?`
+                  : `Apakah Anda yakin ingin menolak berkas daftar ulang babak nasional untuk <strong>${fullName}</strong>?`,
+            icon: isApprove ? 'question' : isReset ? 'warning' : 'warning',
+            confirmButtonText: isApprove
+                ? 'Ya, Verifikasi'
+                : isReset
+                  ? 'Ya, Buka Akses Kembali'
+                  : 'Ya, Tolak Berkas',
             cancelButtonText: 'Kembali',
-            isDanger: !isApprove,
+            isDanger: newStatus === 'rejected',
         });
 
         if (isConfirmed) {
@@ -356,6 +368,10 @@ export default function ShowPage() {
                                     <Badge variant="outline" className="border-amber-500 bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
                                         Menunggu Verifikasi Pusat
                                     </Badge>
+                                ) : participant.national.status === 'declined' ? (
+                                    <Badge variant="destructive" className="bg-rose-600 text-white hover:bg-rose-700">
+                                        Mengundurkan Diri
+                                    </Badge>
                                 ) : (
                                     <Badge variant="outline" className="border-amber-500 text-amber-800 dark:text-amber-300">
                                         Belum Daftar Ulang
@@ -368,11 +384,13 @@ export default function ShowPage() {
                             <p className="max-w-2xl text-xs leading-relaxed text-amber-900/90 dark:text-amber-200/80 sm:text-sm">
                                 {participant.national.status === 'verified'
                                     ? 'Peserta telah terverifikasi resmi sebagai finalis Babak Nasional OMATIQ 2026. Lanyard pass nasional resmi aktif.'
-                                    : participant.national.status === 'waiting_confirmation'
-                                      ? 'Peserta telah mengunggah berkas daftar ulang dan menunggu verifikasi panitia pusat / keuangan.'
-                                      : isBinaan
-                                        ? 'Santri binaan telah diloloskan ke Babak Nasional. Kantor Cabang dapat mendaftarkan ulang dengan mengunggah Surat Kesediaan Hadir.'
-                                        : 'Peserta umum telah diloloskan ke Babak Nasional, menunggu peserta melakukan daftar ulang mandiri di dashboard.'}
+                                    : participant.national.status === 'declined'
+                                      ? 'Peserta telah tercatat mengundurkan diri dari Babak Nasional OMATIQ 2026.'
+                                      : participant.national.status === 'waiting_confirmation'
+                                        ? 'Peserta telah mengunggah berkas daftar ulang dan menunggu verifikasi panitia pusat / keuangan.'
+                                        : isBinaan
+                                          ? 'Santri binaan telah diloloskan ke Babak Nasional. Kantor Cabang dapat mendaftarkan ulang dengan mengunggah Surat Kesediaan Hadir.'
+                                          : 'Peserta umum telah diloloskan ke Babak Nasional, menunggu peserta melakukan daftar ulang mandiri di dashboard.'}
                             </p>
                         </div>
 
@@ -390,7 +408,18 @@ export default function ShowPage() {
                                         Daftarkan Ulang Binaan
                                     </Button>
                                 )}
-                            {canUpdate && participant.national.status !== 'verified' && (
+                            {canUpdate && participant.national.status === 'declined' && (
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleVerifyNational('unconfirmed')}
+                                    className="gap-1.5 border-rose-300 bg-white text-rose-800 hover:bg-rose-100 dark:border-rose-800 dark:bg-zinc-900 dark:text-rose-300"
+                                >
+                                    <RotateCcw className="size-4" />
+                                    Buka Akses / Batalkan Mundur
+                                </Button>
+                            )}
+                            {canUpdate && participant.national.status !== 'verified' && participant.national.status !== 'declined' && (
                                 <>
                                     <Button
                                         size="sm"
@@ -415,6 +444,42 @@ export default function ShowPage() {
                             )}
                         </div>
                     </div>
+
+                    {/* Informasi Pengunduran Diri */}
+                    {participant.national.status === 'declined' && (
+                        <div className="mt-4 rounded-xl border border-rose-300 bg-rose-50/90 p-4 text-xs text-rose-950 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-200">
+                            <div className="flex items-start gap-3">
+                                <div className="rounded-lg bg-rose-200/80 p-2 text-rose-800 dark:bg-rose-900/60 dark:text-rose-300">
+                                    <XCircle className="size-5 shrink-0" />
+                                </div>
+                                <div className="space-y-1">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <span className="font-bold text-rose-900 dark:text-rose-100">
+                                            Kategori Pengunduran Diri:
+                                        </span>
+                                        <Badge variant="outline" className="border-rose-300 bg-white font-semibold text-rose-800 dark:border-rose-800 dark:bg-rose-950 dark:text-rose-300">
+                                            {participant.national.decline_category || 'Tidak ditentukan'}
+                                        </Badge>
+                                        {participant.national.declined_at && (
+                                            <span className="text-[11px] text-rose-700 dark:text-rose-400">
+                                                (Dicatat:{' '}
+                                                {new Date(participant.national.declined_at).toLocaleDateString('id-ID', {
+                                                    day: 'numeric',
+                                                    month: 'long',
+                                                    year: 'numeric',
+                                                    hour: '2-digit',
+                                                    minute: '2-digit',
+                                                })})
+                                            </span>
+                                        )}
+                                    </div>
+                                    <p className="whitespace-pre-line text-xs leading-relaxed text-rose-800 dark:text-rose-300">
+                                        {participant.national.decline_reason || 'Tidak ada keterangan tambahan.'}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Dokumen Babak Nasional */}
                     {(participant.national.availability_letter_url || participant.national.payment_proof_url) && (

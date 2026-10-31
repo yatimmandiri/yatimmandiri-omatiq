@@ -220,6 +220,10 @@ export default function ShowPage() {
                                     <Badge className="bg-emerald-600 text-white hover:bg-emerald-700">
                                         Terverifikasi Finalis Resmi
                                     </Badge>
+                                ) : participant.national.status === 'declined' ? (
+                                    <Badge variant="destructive" className="bg-rose-600 text-white hover:bg-rose-700">
+                                        Mengundurkan Diri
+                                    </Badge>
                                 ) : (
                                     <Badge
                                         variant="outline"
@@ -230,12 +234,16 @@ export default function ShowPage() {
                                 )}
                             </div>
                             <h3 className="text-lg font-extrabold text-amber-950 dark:text-amber-100 sm:text-xl">
-                                Santri Berhasil Lolos ke Babak Nasional OMATIQ 2026!
+                                {participant.national.status === 'declined'
+                                    ? 'Santri Mengundurkan Diri dari Babak Nasional'
+                                    : 'Santri Berhasil Lolos ke Babak Nasional OMATIQ 2026!'}
                             </h3>
                             <p className="max-w-2xl text-xs leading-relaxed text-amber-900/90 dark:text-amber-200/80 sm:text-sm">
                                 {participant.national.status === 'verified'
                                     ? 'Surat kesediaan hadir santri telah diunggah oleh Kantor Cabang dan terverifikasi resmi oleh panitia. Kartu Peserta Finalis Nasional sudah dapat dicetak.'
-                                    : 'Selamat! Santri binaan ini telah ditetapkan oleh Panitia Pusat untuk melaju ke Babak Final OMATIQ Nasional 2026. Seluruh pendaftaran ulang (pengunggahan surat kesediaan) dan logistik keberangkatan santri dikoordinasikan langsung oleh Kantor Cabang.'}
+                                    : participant.national.status === 'declined'
+                                      ? 'Santri tercatat mengundurkan diri dan tidak dapat mengikuti Babak Final OMATIQ Nasional 2026.'
+                                      : 'Selamat! Santri binaan ini telah ditetapkan oleh Panitia Pusat untuk melaju ke Babak Final OMATIQ Nasional 2026. Seluruh pendaftaran ulang (pengunggahan surat kesediaan) dan logistik keberangkatan santri dikoordinasikan langsung oleh Kantor Cabang.'}
                             </p>
                         </div>
 
@@ -257,6 +265,42 @@ export default function ShowPage() {
                             )}
                         </div>
                     </div>
+
+                    {/* Informasi Pengunduran Diri */}
+                    {participant.national.status === 'declined' && (
+                        <div className="mt-4 rounded-xl border border-rose-300 bg-rose-50/90 p-4 text-xs text-rose-950 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-200">
+                            <div className="flex items-start gap-3">
+                                <div className="rounded-lg bg-rose-200/80 p-2 text-rose-800 dark:bg-rose-900/60 dark:text-rose-300">
+                                    <XCircle className="size-5 shrink-0" />
+                                </div>
+                                <div className="space-y-1">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <span className="font-bold text-rose-900 dark:text-rose-100">
+                                            Kategori Pengunduran Diri:
+                                        </span>
+                                        <Badge variant="outline" className="border-rose-300 bg-white font-semibold text-rose-800 dark:border-rose-800 dark:bg-rose-950 dark:text-rose-300">
+                                            {participant.national.decline_category || 'Tidak ditentukan'}
+                                        </Badge>
+                                        {participant.national.declined_at && (
+                                            <span className="text-[11px] text-rose-700 dark:text-rose-400">
+                                                (Dicatat:{' '}
+                                                {new Date(participant.national.declined_at).toLocaleDateString('id-ID', {
+                                                    day: 'numeric',
+                                                    month: 'long',
+                                                    year: 'numeric',
+                                                    hour: '2-digit',
+                                                    minute: '2-digit',
+                                                })})
+                                            </span>
+                                        )}
+                                    </div>
+                                    <p className="whitespace-pre-line text-xs leading-relaxed text-rose-800 dark:text-rose-300">
+                                        {participant.national.decline_reason || 'Tidak ada keterangan tambahan.'}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {participant.national.availability_letter_url && (
                         <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-amber-300/60 pt-3 dark:border-amber-700/50">
