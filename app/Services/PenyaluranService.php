@@ -850,7 +850,7 @@ class PenyaluranService
             return $cached;
         }
 
-        $endpoints = ['api/v1/all-sanggars', 'api/v1/guru/all-sanggars', 'api/v1/sanggars', 'api/v1/guru/sanggars'];
+        $endpoints = ['api/v1/sanggars', 'api/v1/guru/sanggars', 'api/v1/all-sanggars', 'api/v1/guru/all-sanggars'];
         $endpoint = $endpoints[0];
         $allData = [];
         $page = 1;
@@ -1049,7 +1049,7 @@ class PenyaluranService
             return $cached;
         }
 
-        $endpoints = ['api/v1/all-teachers', 'api/v1/guru/all-teachers', 'api/v1/teachers', 'api/v1/guru/teachers'];
+        $endpoints = ['api/v1/teachers', 'api/v1/guru/teachers', 'api/v1/all-teachers', 'api/v1/guru/all-teachers'];
         $endpoint = $endpoints[0];
         $allData = [];
         $page = 1;
@@ -1260,7 +1260,7 @@ class PenyaluranService
             return $cached;
         }
 
-        $endpoints = ['api/v1/all-students', 'api/v1/guru/all-students', 'api/v1/students', 'api/v1/guru/students'];
+        $endpoints = ['api/v1/students', 'api/v1/guru/students', 'api/v1/all-students', 'api/v1/guru/all-students'];
         $endpoint = $endpoints[0];
         $allData = [];
         $page = 1;

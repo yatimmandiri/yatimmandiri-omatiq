@@ -19,8 +19,6 @@ export const DataTablePageSize = () => {
             page: 1,
             perPage: parseInt(value),
         });
-
-        table.resetRowSelection();
     };
 
     return (

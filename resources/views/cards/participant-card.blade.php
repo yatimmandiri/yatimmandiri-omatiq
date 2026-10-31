@@ -238,6 +238,13 @@
             border-bottom: 1.5px solid rgba(254, 215, 170, 0.7) !important;
         }
 
+        .access-tier-national {
+            background: linear-gradient(90deg, #b45309 0%, #d97706 50%, #b45309 100%) !important;
+            color: #ffffff !important;
+            border-bottom: 2px solid #FFE600 !important;
+            box-shadow: 0 2px 6px rgba(217, 119, 6, 0.3) !important;
+        }
+
         /* Hero Section (Avatar + Big Name + Big BIB) */
         .badge-hero {
             padding: 14px 16px 10px;
@@ -696,7 +703,7 @@
     <div class="toolbar">
         <div class="toolbar-title">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E5BE1E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-            <span>OMATIQ {{ $participant->event_year ?? 2026 }} {{ $participant->status === 'submitted' ? 'Proof' : 'Pass' }}</span>
+            <span>OMATIQ {{ $participant->event_year ?? 2026 }} {{ !empty($isNational) ? 'Finalis Nasional' : ($participant->status === 'submitted' ? 'Proof' : 'Pass') }}</span>
         </div>
         <div>
             <button class="btn-print" onclick="window.print()" title="Cetak langsung atau Simpan sebagai PDF">
@@ -720,18 +727,24 @@
                 <div class="header-logo-wrap">
                     <img src="{{ asset('assets/images/LOGO OMATIQ-Fav.png') }}" alt="OMATIQ" class="header-logo-img">
                 </div>
-                <div class="event-tagline">&bull; {{ $participant->status === 'submitted' ? 'REGISTRATION PROOF' : 'OFFICIAL PARTICIPANT CREDENTIAL' }} &bull;</div>
+                <div class="event-tagline">&bull; {{ $participant->status === 'submitted' ? 'REGISTRATION PROOF' : (!empty($isNational) ? 'OFFICIAL NATIONAL FINALIST CREDENTIAL' : 'OFFICIAL PARTICIPANT CREDENTIAL') }} &bull;</div>
                 <div class="event-title">OMATIQ {{ $participant->event_year ?? 2026 }}</div>
                 <div>
-                    <span class="event-edition-pill">&#9889; AI &amp; Future Talent Edition</span>
+                    @if(!empty($isNational))
+                        <span class="event-edition-pill" style="background: linear-gradient(135deg, #FFE600 0%, #E5BE1E 100%); color: #081d1a; font-weight: 900; border: 1.5px solid #ffffff;">&#127942; BABAK FINAL NASIONAL</span>
+                    @else
+                        <span class="event-edition-pill">&#9889; AI &amp; Future Talent Edition</span>
+                    @endif
                 </div>
                 <div class="event-org">Olimpiade Matematika &amp; Al-Qur'an &bull; Laznas Yatim Mandiri</div>
             </div>
 
             <!-- Access Category Ribbon -->
-            <div class="access-tier-ribbon {{ $participant->status === 'submitted' ? 'access-tier-pending' : '' }}">
+            <div class="access-tier-ribbon {{ $participant->status === 'submitted' ? 'access-tier-pending' : (!empty($isNational) ? 'access-tier-national' : '') }}">
                 @if($participant->status === 'submitted')
                     BUKTI PENDAFTARAN &bull; <span>MENUNGGU VERIFIKASI ADMIN</span>
+                @elseif(!empty($isNational))
+                    &#127942; FINALIS NASIONAL &bull; <span>{{ $student?->is_binaan ? 'BINAAN SANGGAR' : 'PESERTA UMUM' }}</span>
                 @else
                     OFFICIAL PASS &bull; <span>{{ $student?->is_binaan ? 'BINAAN SANGGAR' : 'PESERTA UMUM' }}</span>
                 @endif

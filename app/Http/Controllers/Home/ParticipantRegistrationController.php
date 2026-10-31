@@ -297,6 +297,7 @@ class ParticipantRegistrationController extends Controller
                     'student.regency:id,name',
                     'mentor:id,name,phone',
                     'user:id,name,email',
+                    'national',
                 ])
                 ->where('registration_number', $regNo)
                 ->first();
@@ -338,6 +339,11 @@ class ParticipantRegistrationController extends Controller
                     'photo_url' => $participant->student->photo_url,
                 ] : null,
                 'verified_at' => now()->translatedFormat('d F Y, H:i').' WIB',
+                'national' => $participant->national ? [
+                    'status' => $participant->national->status,
+                    'payment_status' => $participant->national->payment_status,
+                    'is_verified' => $participant->national->status === 'verified',
+                ] : null,
             ] : null,
             'meta' => [
                 'title' => 'Verifikasi Keaslian Peserta OMATIQ',
@@ -389,7 +395,7 @@ class ParticipantRegistrationController extends Controller
                 $path = $this->uploadFile(
                     $student->{$column},
                     $request->file($input),
-                    'uploads/students/'.$input,
+                    'students/student_cards',
                 );
                 $student->update([$column => $path]);
             }
@@ -402,7 +408,7 @@ class ParticipantRegistrationController extends Controller
             return null;
         }
 
-        return $this->uploadFile(null, $request->file('payment_proof'), 'uploads/participants/payment_proof');
+        return $this->uploadFile(null, $request->file('payment_proof'), 'participants/payment_proofs');
     }
 
     private function fileMap(): array

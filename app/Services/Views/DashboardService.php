@@ -494,6 +494,7 @@ class DashboardService
             'student:id,full_name,nickname,gender,birth_place,birth_date,school_name,school_level,nis,grade,address,province_id,regency_id,parent_phone,mentor_name,mentor_phone,photo_path,student_card_path',
             'student.province:id,name',
             'student.regency:id,name',
+            'national',
         ]);
 
         if ($participant) {

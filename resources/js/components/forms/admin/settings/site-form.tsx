@@ -46,6 +46,7 @@ export const SiteForm = () => {
         tiktok: settings?.tiktok || '',
         registration_public_open: settings?.registration_public_open ?? true,
         registration_binaan_open: settings?.registration_binaan_open ?? true,
+        registration_national_open: settings?.registration_national_open ?? true,
         maintenance_mode: settings?.maintenance_mode ?? false,
         sheets_sync_enabled: settings?.sheets_sync_enabled ?? false,
         sheets_spreadsheet_id: settings?.sheets_spreadsheet_id ?? '',
@@ -402,6 +403,20 @@ export const SiteForm = () => {
                                 checked={data.registration_binaan_open}
                                 onCheckedChange={(checked) =>
                                     setData('registration_binaan_open', checked)
+                                }
+                            />
+                        </div>
+                        <div className="flex items-center justify-between rounded-md border p-4">
+                            <div className="space-y-0.5">
+                                <Label>Buka Pendaftaran Ulang Babak Nasional</Label>
+                                <p className="text-xs text-muted-foreground">
+                                    Periode daftar ulang finalis nasional (7 - 11 November 2026).
+                                </p>
+                            </div>
+                            <Switch
+                                checked={data.registration_national_open}
+                                onCheckedChange={(checked) =>
+                                    setData('registration_national_open', checked)
                                 }
                             />
                         </div>

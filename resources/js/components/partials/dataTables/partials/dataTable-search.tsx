@@ -13,7 +13,6 @@ export const DataTableGlobalSearch = () => {
             debounce((value: string) => {
                 setGlobalFilter(value);
                 setPagination((prev: any) => ({ ...prev, page: 1 }));
-                table.resetRowSelection();
             }, 500),
         [],
     );

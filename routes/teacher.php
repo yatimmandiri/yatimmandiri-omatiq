@@ -28,6 +28,8 @@ Route::prefix('teacher')->as('teacher.')->middleware(['auth', 'verified', 'teach
 
     // Data Peserta (Pendaftaran Binaan ke Olimpiade oleh Guru)
     Route::get('data-peserta/{participant}/card', [ParticipantCardController::class, 'print'])->name('data-peserta.card');
+    Route::post('data-peserta/{participant}/national-qualify', [DataPesertaController::class, 'nationalQualify'])->name('data-peserta.national-qualify');
+    Route::post('data-peserta/{participant}/national-confirm', [DataPesertaController::class, 'nationalConfirm'])->name('data-peserta.national-confirm');
     Route::get('data-peserta/data', [DataPesertaController::class, 'getData'])->name('data-peserta.data');
     Route::resource('data-peserta', DataPesertaController::class)
         ->parameters(['data-peserta' => 'participant'])

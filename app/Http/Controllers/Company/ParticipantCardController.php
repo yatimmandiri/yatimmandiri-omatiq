@@ -20,10 +20,11 @@ class ParticipantCardController extends Controller
         $participant = Participant::query()
             ->with([
                 'olimpiade:id,name,category,event_year',
-                'student:id,full_name,nik,nis,school_name,school_level,grade,photo_path,regency_id,parent_phone,mentor_name',
+                'student:id,full_name,nik,nis,school_name,school_level,grade,photo_path,regency_id,parent_phone,mentor_name,is_binaan',
                 'student.regency:id,name',
                 'mentor:id,name',
                 'user:id,name,email',
+                'national',
             ])
             ->where(function ($q) use ($identifier) {
                 $q->where('registration_number', $identifier);
@@ -53,9 +54,17 @@ class ParticipantCardController extends Controller
         }
 
         $regNo = $participant->registration_number;
+        $isNational = ($request->query('stage') === 'national' || $request->boolean('national'))
+            && $participant->national
+            && $participant->national->status === 'verified';
+
+        if (($request->query('stage') === 'national' || $request->boolean('national')) && ! $isNational) {
+            abort(403, 'Kartu tanda peserta Babak Final Nasional hanya dapat dicetak oleh finalis yang telah terverifikasi resmi.');
+        }
+
         $verifyUrl = url('/verifikasi/'.$regNo);
-        $qrCodeSvg = $this->barcodeService->generateQrCodeSvg($verifyUrl, size: 92, color: '#17524A');
-        $barcodeSvg = $this->barcodeService->generateCode128Svg($regNo, height: 28, barWidth: 1.1, color: '#17524A');
+        $qrCodeSvg = $this->barcodeService->generateQrCodeSvg($verifyUrl, size: 92, color: $isNational ? '#b45309' : '#17524A');
+        $barcodeSvg = $this->barcodeService->generateCode128Svg($regNo, height: 28, barWidth: 1.1, color: $isNational ? '#b45309' : '#17524A');
 
         $isPdf = $request->query('format') === 'pdf';
 
@@ -66,6 +75,7 @@ class ParticipantCardController extends Controller
             'barcodeSvg' => $barcodeSvg,
             'verifyUrl' => $verifyUrl,
             'isPdf' => $isPdf,
+            'isNational' => $isNational,
         ];
 
         if ($request->query('format') === 'pdf') {

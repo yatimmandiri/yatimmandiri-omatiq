@@ -1,6 +1,7 @@
 import { DataTableComponent } from '@/components/partials/dataTables';
 import { DataTableProvider } from '@/components/partials/dataTables/hooks/useDataTables';
 import { renderRowHeader } from '@/components/partials/dataTables/utils/dataTable-utils';
+import { NationalReRegisterModal } from '@/components/partials/national-re-register-modal';
 import { SelectComponent } from '@/components/partials/select-component';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -8,11 +9,18 @@ import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ProofModal } from '@/components/ui/proof-modal';
 import participants from '@/routes/admin/companies/participants';
 import { formatExportString } from '@/utils/formatCsv';
+import {
+    confirmAction,
+    confirmDelete,
+    showWarningAlert,
+} from '@/utils/sweetalert';
 import { router, usePage } from '@inertiajs/react';
 import {
     CheckCircle2,
@@ -20,10 +28,16 @@ import {
     CreditCard,
     ExternalLink,
     Eye,
+    FileCheck2,
     Filter,
     MapPin,
+    MoreHorizontal,
+    Pencil,
+    Printer,
     RefreshCw,
     RotateCcw,
+    Trash2,
+    Trophy,
     XCircle,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -88,6 +102,11 @@ export default function ListPage() {
     const [proofUrl, setProofUrl] = useState<string | null>(null);
     const [isProofModalOpen, setIsProofModalOpen] = useState(false);
 
+    const [selectedRows, setSelectedRows] = useState<any[]>([]);
+    const [isReRegisterModalOpen, setIsReRegisterModalOpen] = useState(false);
+    const [selectedParticipantForReRegister, setSelectedParticipantForReRegister] =
+        useState<any>(null);
+
     const hasActiveFilter = Object.entries(filterValue).some(([k, v]) => {
         if (isKeuangan && k === 'registration_type' && v === 'public') {
             return false;
@@ -97,9 +116,241 @@ export default function ListPage() {
 
     const canUpdate =
         (auth?.user?.permissions ?? []).includes('update-participant') ||
-        userRoles.includes('Administrators');
+        isAdmin ||
+        isCabang;
+
+    const handleBulkNational = async (action: 'qualify' | 'disqualify') => {
+        if (selectedRows.length === 0) return;
+
+        const isQualify = action === 'qualify';
+        const registeredCount = selectedRows.filter(
+            (r: any) => r.national && r.national.status !== 'unconfirmed',
+        ).length;
+
+        let htmlText = isQualify
+            ? `Apakah Anda yakin ingin meloloskan <strong>${selectedRows.length} peserta terpilih</strong> ke Babak Final OMATIQ Nasional 2026? Peserta akan langsung dapat melakukan pendaftaran ulang.`
+            : `Apakah Anda yakin ingin membatalkan status lolos Babak Nasional untuk <strong>${selectedRows.length} peserta terpilih</strong>?`;
+
+        if (!isQualify && !isAdmin && registeredCount > 0) {
+            htmlText += `<br><br><span class="text-xs text-amber-600 dark:text-amber-400"><strong>Catatan:</strong> Terdapat ${registeredCount} peserta yang sudah melakukan daftar ulang nasional. Peserta tersebut hanya dapat dibatalkan oleh Admin Pusat dan akan otomatis dilewati.</span>`;
+        }
+
+        const isConfirmed = await confirmAction({
+            title: isQualify
+                ? `Loloskan ${selectedRows.length} Peserta ke Babak Nasional?`
+                : `Batalkan Kelolosan ${selectedRows.length} Peserta?`,
+            html: htmlText,
+            icon: isQualify ? 'question' : 'warning',
+            confirmButtonText: isQualify
+                ? `Ya, Loloskan (${selectedRows.length})`
+                : `Ya, Batalkan (${selectedRows.length})`,
+            cancelButtonText: 'Kembali',
+            isDanger: !isQualify,
+        });
+
+        if (isConfirmed) {
+            router.post(
+                participants.bulkNationalQualify().url,
+                {
+                    participant_ids: selectedRows.map((r: any) => r.id),
+                    action,
+                },
+                {
+                    preserveScroll: true,
+                    onSuccess: () => {
+                        setSelectedRows([]);
+                        setRefreshData((v) => !v);
+                    },
+                },
+            );
+        }
+    };
 
     const columns = [
+        {
+            id: 'actions',
+            header: () => <span>Aksi</span>,
+            cell: (info: any) => {
+                const row = info.row.original;
+                const name = row.student?.full_name ?? row.full_name ?? 'Peserta';
+
+                const handleToggleNational = async () => {
+                    const isCurrentlyQualified = !!row.national;
+
+                    // Proteksi: Cabang tidak boleh membatalkan peserta yang sudah daftar ulang nasional
+                    if (
+                        isCurrentlyQualified &&
+                        !isAdmin &&
+                        row.national?.status !== 'unconfirmed'
+                    ) {
+                        await showWarningAlert(
+                            'Akses Dibatasi',
+                            'Peserta ini sudah melakukan pendaftaran ulang Babak Nasional. Pembatalan peserta nasional hanya dapat dilakukan oleh Panitia Pusat (Administrator).',
+                        );
+                        return;
+                    }
+
+                    const isConfirmed = await confirmAction({
+                        title: isCurrentlyQualified
+                            ? 'Batalkan Kelolosan Nasional?'
+                            : 'Loloskan ke Babak Nasional?',
+                        html: isCurrentlyQualified
+                            ? `Apakah Anda yakin ingin membatalkan status lolos nasional untuk <strong>${name}</strong> (${row.registration_number})?`
+                            : `Apakah Anda yakin ingin meloloskan <strong>${name}</strong> (${row.registration_number}) ke Babak Final OMATIQ Nasional 2026?`,
+                        icon: isCurrentlyQualified ? 'warning' : 'question',
+                        confirmButtonText: isCurrentlyQualified
+                            ? 'Ya, Batalkan Lolos'
+                            : 'Ya, Loloskan ke Nasional',
+                        cancelButtonText: 'Kembali',
+                        isDanger: isCurrentlyQualified,
+                    });
+
+                    if (isConfirmed) {
+                        router.post(
+                            participants.nationalQualify(row.id).url,
+                            {},
+                            {
+                                preserveScroll: true,
+                                onSuccess: () => setRefreshData((v) => !v),
+                            },
+                        );
+                    }
+                };
+
+                const handleDelete = async () => {
+                    const isConfirmed = await confirmDelete({
+                        title: 'Konfirmasi Hapus Data',
+                        text: `Apakah Anda yakin ingin menghapus data peserta ${name}? Tindakan ini tidak dapat dibatalkan.`,
+                        confirmButtonText: 'Ya, Hapus',
+                    });
+
+                    if (isConfirmed) {
+                        router.delete(`/admin/companies/participants/${row.id}`, {
+                            preserveScroll: true,
+                            onSuccess: () => setRefreshData((v) => !v),
+                        });
+                    }
+                };
+
+                return (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                                <span className="sr-only">Open menu</span>
+                                <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start">
+                            <DropdownMenuLabel>Aksi Peserta</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                                onClick={() =>
+                                    router.visit(`/admin/companies/participants/${row.id}`)
+                                }
+                            >
+                                <Eye className="mr-2 size-4" /> Detail
+                            </DropdownMenuItem>
+                            {isAdmin && (
+                                <DropdownMenuItem
+                                    onClick={() =>
+                                        router.visit(
+                                            participants.edit(row.id).url,
+                                        )
+                                    }
+                                >
+                                    <Pencil className="mr-2 size-4" /> Edit
+                                </DropdownMenuItem>
+                            )}
+                            {row.status !== 'rejected' && (
+                                <DropdownMenuItem asChild>
+                                    <a
+                                        href={`/admin/companies/participants/${row.id}/card`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex cursor-pointer items-center"
+                                    >
+                                        <Printer className="mr-2 size-4 text-[#17524A]" />
+                                        <span>
+                                            {row.status === 'verified'
+                                                ? 'Cetak Kartu'
+                                                : 'Cetak Bukti'}
+                                        </span>
+                                    </a>
+                                </DropdownMenuItem>
+                            )}
+                            {canUpdate && (
+                                <>
+                                    <DropdownMenuSeparator />
+                                    {isAdmin && (
+                                        <DropdownMenuItem
+                                            onClick={handleToggleNational}
+                                        >
+                                            <Trophy className="mr-2 size-4 text-amber-500" />
+                                            <span>
+                                                {row.national
+                                                    ? 'Batalkan Lolos Nasional'
+                                                    : 'Loloskan ke Nasional'}
+                                            </span>
+                                        </DropdownMenuItem>
+                                    )}
+                                    {row.national?.status === 'verified' && (
+                                        <DropdownMenuItem asChild>
+                                            <a
+                                                href={`/pendaftaran/kartu/${row.registration_number}?stage=national`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex cursor-pointer items-center text-amber-700 focus:text-amber-800"
+                                            >
+                                                <Printer className="mr-2 size-4 text-amber-600" />
+                                                <span>Cetak Kartu Nasional</span>
+                                            </a>
+                                        </DropdownMenuItem>
+                                    )}
+                                    {row.national &&
+                                        (row.student?.is_binaan ||
+                                            row.registration_type ===
+                                                'teacher') &&
+                                        row.national.status ===
+                                            'unconfirmed' && (
+                                            <DropdownMenuItem
+                                                onClick={() => {
+                                                    setSelectedParticipantForReRegister(
+                                                        row,
+                                                    );
+                                                    setIsReRegisterModalOpen(
+                                                        true,
+                                                    );
+                                                }}
+                                                className="font-medium text-emerald-700 focus:text-emerald-800 dark:text-emerald-400"
+                                            >
+                                                <FileCheck2 className="mr-2 size-4 text-emerald-600" />
+                                                <span>
+                                                    Daftarkan Ulang Binaan
+                                                </span>
+                                            </DropdownMenuItem>
+                                        )}
+                                </>
+                            )}
+                            {isAdmin && (
+                                <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                        onClick={handleDelete}
+                                        className="text-destructive focus:text-destructive"
+                                    >
+                                        <Trash2 className="mr-2 size-4 text-destructive" />
+                                        <span>Hapus</span>
+                                    </DropdownMenuItem>
+                                </>
+                            )}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                );
+            },
+            enableSorting: false,
+            enableHiding: false,
+            meta: { sticky: 'left' },
+        },
         {
             header: (info: any) => renderRowHeader(info, 'Peserta'),
             accessorKey: 'student.full_name',
@@ -110,7 +361,21 @@ export default function ListPage() {
 
                 return (
                     <div className="space-y-1">
-                        <p className="font-semibold">{name}</p>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                            <p className="font-semibold">{name}</p>
+                            {row.national && (
+                                <Badge
+                                    variant="outline"
+                                    className={
+                                        row.national.status === 'verified'
+                                            ? 'border-amber-500 bg-amber-500 px-1.5 py-0 text-[10px] font-bold text-white shadow-xs'
+                                            : 'border-amber-500/80 bg-amber-50 px-1.5 py-0 text-[10px] font-bold text-amber-800 dark:bg-amber-950/40 dark:text-amber-300'
+                                    }
+                                >
+                                    🏆 Finalis Nasional
+                                </Badge>
+                            )}
+                        </div>
                         <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
                             <span>{row.registration_number}</span>
                             {nik && (
@@ -339,6 +604,63 @@ export default function ListPage() {
             },
         },
         {
+            header: 'Babak Nasional',
+            accessorKey: 'national.status',
+            cell: (info: any) => {
+                const row = info.row.original;
+                const national = row.national;
+
+                if (!national) {
+                    return <span className="text-xs text-muted-foreground">-</span>;
+                }
+
+                if (national.status === 'verified') {
+                    return (
+                        <Badge className="gap-1 border-amber-500 bg-amber-500 px-2 py-0.5 text-xs font-bold text-white shadow-xs hover:bg-amber-600">
+                            <Trophy className="size-3" />
+                            Finalis Resmi
+                        </Badge>
+                    );
+                }
+
+                if (national.status === 'waiting_confirmation') {
+                    return (
+                        <Badge
+                            variant="secondary"
+                            className="gap-1 border-amber-400 bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900 dark:bg-amber-950/50 dark:text-amber-300"
+                        >
+                            <Clock3 className="size-3 text-amber-700" />
+                            Menunggu Verifikasi
+                        </Badge>
+                    );
+                }
+
+                if (national.status === 'declined') {
+                    return (
+                        <Badge
+                            variant="outline"
+                            className="gap-1 border-rose-300 bg-rose-50 px-2 py-0.5 text-xs font-semibold text-rose-800 dark:border-rose-800 dark:bg-rose-950/50 dark:text-rose-300"
+                            title={national.decline_reason ? `${national.decline_category || 'Alasan'}: ${national.decline_reason}` : national.notes}
+                        >
+                            <XCircle className="size-3 text-rose-600 dark:text-rose-400" />
+                            Mengundurkan Diri
+                        </Badge>
+                    );
+                }
+
+                return (
+                    <Badge
+                        variant="outline"
+                        className="gap-1 border-amber-500/80 bg-amber-50/60 px-2 py-0.5 text-xs text-amber-800 dark:bg-amber-950/30 dark:text-amber-300"
+                    >
+                        <Trophy className="size-3 text-amber-600" />
+                        Lolos (Belum Daftar Ulang)
+                    </Badge>
+                );
+            },
+            enableSorting: false,
+        },
+        {
             header: 'Bukti Transfer',
             accessorKey: 'payment_proof_url',
             cell: (info: any) => {
@@ -371,12 +693,60 @@ export default function ListPage() {
 
     return (
         <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
+            {/* Floating Bulk Action Bar - Khusus Admin Pusat */}
+            {selectedRows.length > 0 && isAdmin && (
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 border-amber-400 bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-50 p-4 shadow-md dark:border-amber-600 dark:from-amber-950/80 dark:via-yellow-950/60 dark:to-amber-950/80">
+                    <div className="flex items-center gap-3">
+                        <span className="flex size-9 items-center justify-center rounded-xl bg-amber-500 font-extrabold text-white shadow-xs">
+                            {selectedRows.length}
+                        </span>
+                        <div>
+                            <p className="text-sm font-extrabold tracking-wide text-amber-950 uppercase dark:text-amber-100">
+                                {selectedRows.length} Peserta Terpilih
+                            </p>
+                            <p className="text-xs text-amber-800 dark:text-amber-300">
+                                Pilih aksi masal gelondongan untuk peserta yang dicentang
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                        <Button
+                            size="sm"
+                            onClick={() => handleBulkNational('qualify')}
+                            className="gap-1.5 bg-[#17524A] font-bold text-white shadow hover:bg-[#13433c]"
+                        >
+                            <Trophy className="size-4 text-amber-400" />
+                            Loloskan ke Babak Nasional ({selectedRows.length})
+                        </Button>
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleBulkNational('disqualify')}
+                            className="gap-1.5 border-destructive/40 text-destructive hover:bg-destructive/10"
+                        >
+                            <XCircle className="size-4" />
+                            Batalkan Lolos ({selectedRows.length})
+                        </Button>
+                        <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setSelectedRows([])}
+                            className="text-xs font-semibold text-amber-900 hover:bg-amber-200/50 dark:text-amber-200 dark:hover:bg-amber-900/50"
+                        >
+                            Batal Pilih Semua
+                        </Button>
+                    </div>
+                </div>
+            )}
+
             <div className="relative min-h-screen flex-1 overflow-hidden rounded-xl border border-sidebar-border/70 md:min-h-min dark:border-sidebar-border">
                 <DataTableProvider
                     columns={columns}
                     filterValue={filterValue}
                     refreshData={refreshData}
                     setRefreshData={setRefreshData}
+                    setRowSelection={setSelectedRows}
                     urlFetchData={participants.data().url}
                     formatDataExport={(items: any[]) =>
                         items.map((item, index) => {
@@ -610,6 +980,26 @@ export default function ListPage() {
                                     }))
                                 }
                             />
+                            <SelectComponent
+                                label="Babak Nasional"
+                                placeholder="Semua status nasional..."
+                                data={[
+                                    { value: 'all', label: 'Semua Peserta' },
+                                    { value: 'qualified', label: 'Semua Lolos Nasional' },
+                                    { value: 'verified', label: 'Finalis Terverifikasi' },
+                                    { value: 'waiting_confirmation', label: 'Menunggu Verifikasi' },
+                                    { value: 'unconfirmed', label: 'Belum Daftar Ulang' },
+                                    { value: 'declined', label: 'Mengundurkan Diri' },
+                                    { value: 'not_qualified', label: 'Belum Lolos' },
+                                ]}
+                                dataSelected={filterValue.national_status}
+                                handleOnChange={(value: string) =>
+                                    setFilterValue((prev) => ({
+                                        ...prev,
+                                        national_status: value,
+                                    }))
+                                }
+                            />
                             {!isCabang && !userBranch && (
                                 <SelectComponent
                                     label="Cabang / Kantor"
@@ -634,6 +1024,13 @@ export default function ListPage() {
                 open={isProofModalOpen}
                 onOpenChange={setIsProofModalOpen}
                 href={proofUrl ?? ''}
+            />
+
+            <NationalReRegisterModal
+                open={isReRegisterModalOpen}
+                onOpenChange={setIsReRegisterModalOpen}
+                participant={selectedParticipantForReRegister}
+                onSuccess={() => setRefreshData((v) => !v)}
             />
         </div>
     );

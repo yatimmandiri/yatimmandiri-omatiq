@@ -53,6 +53,11 @@ type VerifyProps = {
             photo_url?: string | null;
         } | null;
         verified_at?: string;
+        national?: {
+            status: string;
+            payment_status?: string;
+            is_verified?: boolean;
+        } | null;
     } | null;
 };
 
@@ -233,6 +238,27 @@ export default function RegistrationVerifyPage({
                                         </div>
                                     </div>
                                 </div>
+
+                                {participant.national?.is_verified && (
+                                    <div className="mt-6 flex flex-col items-center justify-between gap-3 rounded-2xl border-2 border-amber-400 bg-gradient-to-r from-amber-500/15 via-yellow-500/10 to-amber-500/20 p-4 sm:flex-row">
+                                        <div className="flex items-center gap-3 text-center sm:text-left">
+                                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500 text-white shadow-sm">
+                                                <Trophy className="h-5 w-5" />
+                                            </span>
+                                            <div>
+                                                <p className="text-xs font-black tracking-wider text-amber-900 uppercase">
+                                                    FINALIS RESMI BABAK NASIONAL 2026
+                                                </p>
+                                                <p className="text-xs text-amber-800">
+                                                    Peserta ini telah terverifikasi resmi untuk bertanding di Babak Final OMATIQ Nasional 2026.
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <span className="shrink-0 rounded-full bg-emerald-600 px-3 py-1 text-xs font-bold text-white shadow-xs">
+                                            Terverifikasi Nasional
+                                        </span>
+                                    </div>
+                                )}
 
                                 {/* Detailed Verification Info Grid */}
                                 <div className="mt-6 grid gap-4 sm:grid-cols-2">
