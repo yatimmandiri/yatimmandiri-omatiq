@@ -15,12 +15,14 @@ import roles from '@/routes/admin/core/roles';
 import users from '@/routes/admin/core/users';
 import activities from '@/routes/admin/logs/activities';
 import site from '@/routes/admin/settings/site';
+import chaperones from '@/routes/admin/companies/chaperones';
 import {
     Building2,
     CalendarClock,
     CalendarDays,
     ClipboardCheck,
     CogIcon,
+    Contact,
     CpuIcon,
     Database,
     GraduationCap,
@@ -132,6 +134,12 @@ export const NavigationList = [
                 permission: 'view-participant',
                 roles: ['Administrators', 'Cabang'],
                 icon: Building2,
+            },
+            {
+                title: 'Data Pendamping',
+                href: chaperones.index().url,
+                roles: ['Administrators', 'Cabang'],
+                icon: Contact,
             },
         ],
     },

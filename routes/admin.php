@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\Company\FaqCompanyController;
+use App\Http\Controllers\Admin\Company\NationalChaperoneController;
 use App\Http\Controllers\Admin\Company\OlimpiadeController;
 use App\Http\Controllers\Admin\Company\OlimpiadeGalleryController;
 use App\Http\Controllers\Admin\Company\OlimpiadeObjectiveController;
@@ -107,6 +108,12 @@ Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'auth.admi
         Route::get('participants/data', [ParticipantController::class, 'getData'])->name('participants.data');
         Route::post('participants/sync-sheet', [ParticipantController::class, 'syncSheet'])->name('participants.sync-sheet');
         Route::resource('participants', ParticipantController::class)->except(['create', 'store']);
+
+        Route::get('chaperones/{chaperone}/card', [NationalChaperoneController::class, 'printCard'])->name('chaperones.card');
+        Route::put('chaperones/{chaperone}/verify', [NationalChaperoneController::class, 'verify'])->name('chaperones.verify');
+        Route::get('chaperones/teacher-detail/{id}', [NationalChaperoneController::class, 'teacherDetail'])->name('chaperones.teacher-detail');
+        Route::get('chaperones/data', [NationalChaperoneController::class, 'getData'])->name('chaperones.data');
+        Route::resource('chaperones', NationalChaperoneController::class);
 
         Route::get('students/data', [StudentController::class, 'getData'])->name('students.data');
         Route::put('students/{student}/status', [StudentController::class, 'status'])->name('students.status');
