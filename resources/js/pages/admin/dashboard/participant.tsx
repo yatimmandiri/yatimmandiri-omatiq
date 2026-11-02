@@ -16,7 +16,7 @@ import { dashboard } from '@/routes/admin';
 import { document as studentDocument, nationalReRegistration, paymentProof } from '@/routes/student';
 import { confirmAction } from '@/utils/sweetalert';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
-import { AlertCircle, CheckCircle2, Download, ExternalLink, Eye, FileText, Loader2, Printer, Trophy, Upload, UserX, XCircle } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Download, ExternalLink, Eye, FileText, Loader2, Printer, Trophy, Upload, UserCheck, UserX, XCircle } from 'lucide-react';
 import { useState } from 'react';
 
 const NATIONAL_DECLINE_CATEGORIES = [
@@ -44,9 +44,10 @@ const statusVariant = (status: string) =>
           : 'secondary';
 
 export default function Dashboard() {
-    const { participant, settings } = usePage<{
+    const { participant, settings, chaperone } = usePage<{
         participant: Record<string, any>;
         settings?: Record<string, any>;
+        chaperone?: Record<string, any> | null;
     }>().props;
     const [openProof, setOpenProof] = useState(false);
     const [openUploadModal, setOpenUploadModal] = useState(false);
@@ -316,6 +317,35 @@ export default function Dashboard() {
                                               ? 'Selamat! Anda terpilih sebagai delegasi santri binaan yang melaju ke Babak Final OMATIQ Nasional 2026. Pendaftaran ulang dan administrasi kehadiran dikoordinasikan langsung oleh Kantor Cabang Anda.'
                                               : 'Anda terpilih sebagai salah satu peserta terbaik yang melaju ke babak final nasional. Silakan lakukan pendaftaran ulang sekarang.'}
                                 </p>
+
+                                {participant.national.status === 'verified' && chaperone && (
+                                    <div className="mt-3 flex items-center gap-3 rounded-xl border border-emerald-300/80 bg-white/80 p-3 shadow-xs dark:border-emerald-800 dark:bg-emerald-950/40">
+                                        <div className="rounded-lg bg-emerald-100 p-2 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300">
+                                            <UserCheck className="size-4" />
+                                        </div>
+                                        <div className="text-xs">
+                                            <span className="font-semibold text-emerald-950 dark:text-emerald-100">
+                                                Official Pendamping Cabang:
+                                            </span>{' '}
+                                            <span className="font-medium text-emerald-900 dark:text-emerald-200">
+                                                {chaperone.name} ({chaperone.branch})
+                                            </span>
+                                            {chaperone.phone && (
+                                                <div className="mt-0.5 text-[11px] text-muted-foreground">
+                                                    Kontak / WhatsApp:{' '}
+                                                    <a
+                                                        href={`https://wa.me/${String(chaperone.phone).replace(/\D/g, '')}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="font-mono font-semibold text-emerald-700 underline hover:text-emerald-800 dark:text-emerald-300"
+                                                    >
+                                                        {chaperone.phone}
+                                                    </a>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="flex flex-wrap items-center gap-2.5 self-start md:self-center">

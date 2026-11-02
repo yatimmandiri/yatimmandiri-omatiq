@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
@@ -121,6 +122,16 @@ class Participant extends Model
     public function national(): HasOne
     {
         return $this->hasOne(NationalParticipant::class);
+    }
+
+    public function nationalChaperones(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            NationalChaperone::class,
+            'national_chaperone_participants',
+            'participant_id',
+            'national_chaperone_id'
+        )->withTimestamps();
     }
 
     public function getIsNationalQualifiedAttribute(): bool

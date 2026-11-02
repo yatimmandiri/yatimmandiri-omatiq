@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Home;
 use App\Concerns\Traits\UploadFiles;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Company\StoreParticipantRequest;
+use App\Models\Company\NationalChaperone;
 use App\Models\Company\Olimpiade;
 use App\Models\Company\Participant;
 use App\Models\Company\Student;
@@ -15,6 +16,7 @@ use App\Services\PenyaluranService;
 use App\Settings\SiteSettings;
 use Illuminate\Database\QueryException;
 use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -282,7 +284,7 @@ class ParticipantRegistrationController extends Controller
         ]);
     }
 
-    public function verify(Request $request, ?string $registrationNumber = null): Response
+    public function verify(Request $request, ?string $registrationNumber = null): Response|RedirectResponse
     {
         $regNo = $registrationNumber ?? $request->query('q') ?? $request->query('reg');
         $participant = null;
@@ -290,6 +292,11 @@ class ParticipantRegistrationController extends Controller
 
         if (! empty($regNo)) {
             $regNo = trim((string) $regNo);
+
+            if (preg_match('/^off-?\d+/i', $regNo)) {
+                return redirect()->route('home.chaperone.verify', ['code' => $regNo]);
+            }
+
             $participant = Participant::query()
                 ->with([
                     'olimpiade:id,name,category,event_year',
@@ -349,6 +356,99 @@ class ParticipantRegistrationController extends Controller
                 'title' => 'Verifikasi Keaslian Peserta OMATIQ',
                 'description' => 'Halaman resmi verifikasi keaslian dan status kepesertaan OMATIQ.',
                 'keywords' => 'verifikasi peserta OMATIQ, cek kartu pendaftaran OMATIQ, keaslian peserta',
+            ],
+        ]);
+    }
+
+    public function verifyChaperone(Request $request, ?string $code = null): Response|RedirectResponse
+    {
+        $inputCode = $code ?? $request->query('q') ?? $request->query('code');
+        $chaperone = null;
+        $isValid = false;
+
+        if (! empty($inputCode)) {
+            $inputCode = trim((string) $inputCode);
+
+            // Jika memasukkan nomor registrasi peserta (OMQ-...), arahkan ke verifikasi peserta
+            if (preg_match('/^omq-?/i', $inputCode)) {
+                return redirect()->route('home.registration.verify', ['registrationNumber' => $inputCode]);
+            }
+
+            // Normalisasi ID dari format 'OFF-00001'
+            $id = $inputCode;
+            if (preg_match('/^off-?0*(\d+)/i', $inputCode, $matches)) {
+                $id = (int) $matches[1];
+            }
+
+            $chaperone = NationalChaperone::query()
+                ->with([
+                    'province:id,name',
+                    'regency:id,name',
+                    'verifier:id,name',
+                    'participants' => function ($q) {
+                        $q->with([
+                            'student:id,full_name,school_name,school_level,grade,is_binaan,photo_path',
+                            'olimpiade:id,name,category',
+                            'national:id,participant_id,status',
+                        ]);
+                    },
+                ])
+                ->where(function ($q) use ($id, $inputCode) {
+                    if (is_numeric($id)) {
+                        $q->where('id', (int) $id);
+                    }
+                    $q->orWhere('phone', $inputCode)
+                        ->orWhere('nik', $inputCode);
+                })
+                ->first();
+
+            if ($chaperone && $chaperone->status !== 'rejected') {
+                $isValid = true;
+            }
+        }
+
+        $formattedId = $chaperone ? 'OFF-'.str_pad((string) $chaperone->id, 5, '0', STR_PAD_LEFT) : $inputCode;
+
+        return Inertia::render('home/chaperone/verify', [
+            'pageTitle' => 'Verifikasi Resmi Pendamping Babak Final Nasional OMATIQ',
+            'queryCode' => $inputCode,
+            'isValid' => $isValid,
+            'chaperone' => $chaperone ? [
+                'id' => $chaperone->id,
+                'formatted_id' => $formattedId,
+                'name' => $chaperone->name,
+                'nik' => $chaperone->nik ? (strlen($chaperone->nik) === 16 ? substr($chaperone->nik, 0, 6).'******'.substr($chaperone->nik, -4) : $chaperone->nik) : null,
+                'gender' => $chaperone->gender,
+                'phone' => $chaperone->phone,
+                'email' => $chaperone->email,
+                'branch' => $chaperone->branch,
+                'position' => $chaperone->position ?: ($chaperone->source_type === 'guru' ? 'Guru Pembimbing Cabang' : 'Staf Kantor Cabang'),
+                'source_type' => $chaperone->source_type,
+                'status' => $chaperone->status,
+                'notes' => $chaperone->notes,
+                'verified_at' => $chaperone->verified_at ? $chaperone->verified_at->translatedFormat('d F Y, H:i').' WIB' : null,
+                'verifier_name' => $chaperone->verifier?->name ?? 'Panitia Pusat OMATIQ',
+                'province_name' => $chaperone->province?->name,
+                'regency_name' => $chaperone->regency?->name,
+                'participants_count' => $chaperone->participants->count(),
+                'participants' => $chaperone->participants->map(fn (Participant $p) => [
+                    'id' => $p->id,
+                    'registration_number' => $p->registration_number,
+                    'name' => $p->student?->full_name ?? '-',
+                    'school_name' => $p->student?->school_name ?? '-',
+                    'school_level' => $p->student?->school_level ?? 'SD/MI',
+                    'grade' => $p->student?->grade ?? '-',
+                    'olimpiade_name' => $p->olimpiade?->name ?? 'OMATIQ',
+                    'category' => $p->olimpiade?->category ?? '-',
+                    'is_binaan' => (bool) $p->student?->is_binaan,
+                    'photo_url' => $p->student?->photo_url,
+                    'national_status' => $p->national?->status ?? 'unconfirmed',
+                    'is_national_verified' => $p->national?->status === 'verified',
+                ])->all(),
+            ] : null,
+            'meta' => [
+                'title' => 'Verifikasi Resmi Pendamping Babak Final Nasional OMATIQ',
+                'description' => 'Halaman resmi otentikasi identitas dan rombongan peserta pendamping babak final nasional OMATIQ.',
             ],
         ]);
     }

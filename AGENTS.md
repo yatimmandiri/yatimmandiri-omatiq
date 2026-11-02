@@ -110,6 +110,20 @@ Order for full check (matches `ci:check`): `npm run lint:check` → `npm run for
     - Form modal `NationalReRegisterModal` (`resources/js/components/partials/national-re-register-modal.tsx`) memungkinkan Cabang mengunduh template resmi Surat Kesediaan Hadir ([https://link.yatimmandiri.org/SuratKesediaanOMATIQ](https://link.yatimmandiri.org/SuratKesediaanOMATIQ)) dan mengunggah berkas bertanda tangan.
   - **Keamanan Cetak Kartu Babak Nasional (`ParticipantCardController@print`)**:
     - Request parameter `?stage=national` dilindungi guard ketat: jika peserta belum berstatus `verified` pada tabel `national_participants`, sistem langsung mengembalikan respon `403 Forbidden` (*"Kartu tanda peserta Babak Final Nasional hanya dapat dicetak oleh finalis yang telah terverifikasi resmi"*). Kartu babak penyisihan regional tetap dapat dicetak sesuai aturan verifikasi regional.
+  - **National Stage Chaperone Management (`Pendaftaran & Verifikasi Pendamping Babak Nasional`)**:
+    - **Tabel & Relasi**: `national_chaperones` (data identitas pendamping) dan pivot `national_chaperone_participants` (relasi many-to-many antara pendamping dan peserta babak final nasional).
+    - **Dual Source Data**:
+      - Mode 1: Guru Cabang (otomatis mengisi biodata dari `PenyaluranService::allTeachers` / Teacher users pada cabang yang bersangkutan; dilengkapi endpoint `chaperones.teacher-detail` untuk auto-sync NIK, jenis kelamin, dan domisili lengkap dari Penyaluran API saat nama guru dipilih pada form).
+      - Mode 2: Input Manual (untuk staf/karyawan kantor cabang atau tokoh pendamping).
+    - **Branch Scoping & Hak Akses**:
+      - Role `Cabang` hanya dapat mendaftarkan, melihat, dan mengedit data pendamping dari cabangnya sendiri (`branch` & `kantor_id`). Jika status sudah `verified` oleh pusat, Cabang dikunci dari tindakan edit/delete.
+      - Role `Administrators` memiliki akses global untuk melihat seluruh cabang, menyetujui (`verified`), menolak (`rejected`), atau mengembalikan status ke `submitted` dengan catatan verifikasi (`NationalChaperoneController@verify`).
+    - **Cetak Lanyard Pass Official & Verifikasi Publik**:
+      - Kartu Pass Pendamping (`admin.companies.chaperones.card`, `resources/views/cards/chaperone-card.blade.php`) menggunakan styling resmi OMATIQ Emerald-Gold, bingkai foto tempel 3x4 cm (foto ditempel fisik oleh pendamping), QR & barcode SVG validasi (`BarcodeService`), identitas cabang, serta daftar rombongan peserta dampingan di bagian belakang.
+      - **Public Verification Gateway (`/verifikasi/pendamping/{code}`)**: QR Code pada kartu mengarah ke URL verifikasi terbuka mobile-friendly (`home.chaperone.verify`, `resources/js/pages/home/chaperone/verify.tsx`) yang dapat di-scan oleh kamera smartphone umum/panitia venue tanpa perlu login. Menampilkan status keaslian kartu, profil pendamping (NIK disensor untuk perlindungan data pribadi), kontak WhatsApp resmi, surat pernyataan tanggung jawab kontingen cabang, serta roster lengkap peserta lolos babak nasional yang didampingi beserta link ke kartu peserta masing-masing. Input scan barcode 1D (`OFF-00001`) pada endpoint verifikasi maupun pencarian tabel admin otomatis dinormalisasi dan terhubung langsung.
+      - Proteksi keamanan: pendamping yang belum berstatus `verified` dilarang mencetak kartu pass (403).
+    - **Dashboard Peserta**:
+      - Peserta finalis nasional yang terverifikasi dapat melihat kontak WhatsApp official pendamping cabangnya di kartu info Babak Final Nasional pada dashboard siswa (`DashboardService::participant`).
   - **DataTable Multi-Page Row Selection & Radix Focus Trapping**:
     - State seleksi baris (`rowSelection`) dikelola murni oleh TanStack `useReactTable` dan diselaraskan via `rowDataMapRef` agar checkbox peserta yang dicentang tetap tersimpan utuh saat berpindah halaman atau menggunakan filter pencarian (search query).
     - Hindari memicu popup SweetAlert di dalam Radix UI `Dialog` karena `FocusScope` bawaan Radix memblokir pointerdown event luar. Gunakan modal dialog mandiri langsung dengan tombol aksi native untuk konfirmasi yang stabil.

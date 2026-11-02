@@ -1242,6 +1242,41 @@ class PenyaluranService
     }
 
     /**
+     * Get teacher profile by their Penyaluran bearer token without polluting session (safe for admin usage).
+     */
+    public function teacherByToken(string $token, bool $force = false): ?array
+    {
+        $cacheKey = 'penyaluran:teacher_token:'.sha1($token);
+
+        if ($force) {
+            Cache::forget($cacheKey);
+        }
+
+        try {
+            return Cache::remember($cacheKey, 300, function () use ($token) {
+                $endpoint = 'api/v1/guru/me';
+                $response = $this->client($token)->get($endpoint);
+                if (! $response->successful() && $response->status() === 404) {
+                    $endpoint = 'api/v1/me';
+                    $response = $this->client($token)->get($endpoint);
+                }
+
+                if (! $response->successful()) {
+                    return null;
+                }
+
+                return $response->json('data') ?? $response->json();
+            });
+        } catch (\Throwable $e) {
+            Log::warning('PenyaluranService::teacherByToken failed', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
+    /**
      * Get all students from Penyaluran API (GET api/v1/all-students or api/v1/students).
      * Handles all Laravel pagination shapes and aggregates all available pages.
      *

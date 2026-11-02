@@ -3,6 +3,7 @@
 namespace App\Services\Views;
 
 use App\Http\Controllers\Teacher\BiodataController;
+use App\Models\Company\NationalChaperone;
 use App\Models\Company\Olimpiade;
 use App\Models\Company\Participant;
 use App\Models\Company\Student;
@@ -497,7 +498,30 @@ class DashboardService
             'national',
         ]);
 
+        $chaperone = null;
         if ($participant) {
+            // Only query chaperone if participant is qualified & verified for national stage
+            if ($participant->national && $participant->national->status === 'verified') {
+                $assignedChaperone = $participant->nationalChaperones()
+                    ->where('national_chaperones.status', 'verified')
+                    ->first([
+                        'national_chaperones.id',
+                        'national_chaperones.name',
+                        'national_chaperones.phone',
+                        'national_chaperones.position',
+                        'national_chaperones.branch',
+                    ]);
+
+                if ($assignedChaperone) {
+                    $chaperone = $assignedChaperone;
+                } elseif ($participant->branch) {
+                    $chaperone = NationalChaperone::query()
+                        ->where('status', 'verified')
+                        ->whereRaw('UPPER(branch) = ?', [strtoupper(trim($participant->branch))])
+                        ->first(['id', 'name', 'phone', 'position', 'branch']);
+                }
+            }
+
             $arr = $participant->toArray();
             $arr['payment_proof_url'] = $participant->payment_proof_url;
             $arr['student']['photo_url'] = $participant->student?->photo_url;
@@ -510,6 +534,7 @@ class DashboardService
             'data' => [
                 'pageTitle' => 'Dashboard Partisipan',
                 'participant' => $participant,
+                'chaperone' => $chaperone,
             ],
         ];
     }
