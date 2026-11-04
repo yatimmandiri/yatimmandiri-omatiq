@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Admin\Company\EventCommitteeController;
+use App\Http\Controllers\Admin\Company\EventGuestController;
 use App\Http\Controllers\Admin\Company\FaqCompanyController;
 use App\Http\Controllers\Admin\Company\NationalChaperoneController;
 use App\Http\Controllers\Admin\Company\OlimpiadeController;
@@ -114,6 +116,18 @@ Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'auth.admi
         Route::get('chaperones/teacher-detail/{id}', [NationalChaperoneController::class, 'teacherDetail'])->name('chaperones.teacher-detail');
         Route::get('chaperones/data', [NationalChaperoneController::class, 'getData'])->name('chaperones.data');
         Route::resource('chaperones', NationalChaperoneController::class);
+
+        Route::get('committees/{committee}/card', [EventCommitteeController::class, 'printCard'])->name('committees.card');
+        Route::post('committees/bulk-check-in', [EventCommitteeController::class, 'bulkCheckIn'])->name('committees.bulk-check-in');
+        Route::put('committees/{committee}/status', [EventCommitteeController::class, 'status'])->name('committees.status');
+        Route::get('committees/data', [EventCommitteeController::class, 'getData'])->name('committees.data');
+        Route::resource('committees', EventCommitteeController::class);
+
+        Route::get('guests/{guest}/card', [EventGuestController::class, 'printCard'])->name('guests.card');
+        Route::post('guests/bulk-check-in', [EventGuestController::class, 'bulkCheckIn'])->name('guests.bulk-check-in');
+        Route::put('guests/{guest}/status', [EventGuestController::class, 'status'])->name('guests.status');
+        Route::get('guests/data', [EventGuestController::class, 'getData'])->name('guests.data');
+        Route::resource('guests', EventGuestController::class);
 
         Route::get('students/data', [StudentController::class, 'getData'])->name('students.data');
         Route::put('students/{student}/status', [StudentController::class, 'status'])->name('students.status');

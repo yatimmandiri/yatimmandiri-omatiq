@@ -8,6 +8,13 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import participants from '@/routes/admin/companies/participants';
 import { confirmAction } from '@/utils/sweetalert';
@@ -18,10 +25,21 @@ import {
     FileCheck2,
     FileText,
     Loader2,
+    Shirt,
     UploadCloud,
     UserX,
 } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+
+export const SHIRT_SIZES = [
+    { value: 'XS', label: 'XS (Extra Small / Anak)' },
+    { value: 'S', label: 'S (Small)' },
+    { value: 'M', label: 'M (Medium)' },
+    { value: 'L', label: 'L (Large)' },
+    { value: 'XL', label: 'XL (Extra Large)' },
+    { value: 'XXL', label: 'XXL (Double Extra Large)' },
+    { value: 'XXXL', label: 'XXXL (3XL)' },
+];
 
 export const NATIONAL_DECLINE_CATEGORIES = [
     { value: 'Sakit / Kondisi Medis', label: 'Sakit / Kondisi Medis' },
@@ -51,6 +69,7 @@ interface NationalReRegisterModalProps {
         };
         national?: {
             status?: string;
+            shirt_size?: string;
             decline_category?: string;
             decline_reason?: string;
         };
@@ -66,10 +85,19 @@ export function NationalReRegisterModal({
 }: NationalReRegisterModalProps) {
     const [actionType, setActionType] = useState<'register' | 'decline'>('register');
     const [file, setFile] = useState<File | null>(null);
+    const [shirtSize, setShirtSize] = useState<string>('');
     const [declineCategory, setDeclineCategory] = useState<string>('Sakit / Kondisi Medis');
     const [declineReason, setDeclineReason] = useState<string>('');
     const [error, setError] = useState<string | null>(null);
     const [processing, setProcessing] = useState(false);
+
+    useEffect(() => {
+        if (participant?.national?.shirt_size) {
+            setShirtSize(participant.national.shirt_size);
+        } else {
+            setShirtSize('');
+        }
+    }, [participant]);
 
     if (!participant) return null;
 
@@ -104,6 +132,10 @@ export function NationalReRegisterModal({
 
     const handleRegisterSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        if (!shirtSize) {
+            setError('Silakan pilih ukuran kaos / baju santri terlebih dahulu.');
+            return;
+        }
         if (!file) {
             setError('Silakan pilih file Surat Kesediaan Hadir terlebih dahulu.');
             return;
@@ -116,6 +148,7 @@ export function NationalReRegisterModal({
             participants.nationalReRegisterBinaan(participant.id).url,
             {
                 availability_letter: file,
+                shirt_size: shirtSize,
             },
             {
                 forceFormData: true,
@@ -301,6 +334,32 @@ export function NationalReRegisterModal({
                             </Button>
                         </div>
 
+                        {/* Ukuran Kaos / Baju */}
+                        <div className="space-y-1.5">
+                            <Label
+                                htmlFor="shirt_size"
+                                className="flex items-center gap-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200"
+                            >
+                                <Shirt className="size-3.5 text-emerald-600 dark:text-emerald-400" />
+                                Ukuran Kaos / Baju Santri <span className="text-destructive">*</span>
+                            </Label>
+                            <Select value={shirtSize} onValueChange={setShirtSize}>
+                                <SelectTrigger id="shirt_size" className="h-9 w-full text-xs">
+                                    <SelectValue placeholder="Pilih ukuran baju santri" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {SHIRT_SIZES.map((size) => (
+                                        <SelectItem key={size.value} value={size.value} className="text-xs">
+                                            {size.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <p className="text-[11px] text-muted-foreground">
+                                Ukuran ini akan digunakan panitia pusat untuk seragam kontingen finalis Babak Nasional.
+                            </p>
+                        </div>
+
                         {/* Upload File Input */}
                         <div className="space-y-2">
                             <Label
@@ -363,7 +422,7 @@ export function NationalReRegisterModal({
                             </Button>
                             <Button
                                 type="submit"
-                                disabled={processing || !file}
+                                disabled={processing || !file || !shirtSize}
                                 className="gap-2 bg-[#17524A] text-white hover:bg-[#17524A]/90"
                             >
                                 {processing ? (

@@ -18,6 +18,7 @@ use Spatie\Activitylog\Support\LogOptions;
     'qualified_by',
     'qualified_at',
     'status',
+    'shirt_size',
     'availability_letter_path',
     'payment_proof_path',
     'payment_status',
@@ -31,6 +32,16 @@ use Spatie\Activitylog\Support\LogOptions;
 class NationalParticipant extends Model
 {
     use HasFactory, LogsActivity, SoftDeletes;
+
+    public const SHIRT_SIZES = [
+        'XS' => 'XS (Extra Small / Anak)',
+        'S' => 'S (Small)',
+        'M' => 'M (Medium)',
+        'L' => 'L (Large)',
+        'XL' => 'XL (Extra Large)',
+        'XXL' => 'XXL (Double Extra Large)',
+        'XXXL' => 'XXXL (3XL)',
+    ];
 
     protected $appends = [
         'availability_letter_url',

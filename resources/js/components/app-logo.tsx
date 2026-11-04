@@ -7,7 +7,7 @@ export default function AppLogo() {
 
     const logoUrl = (() => {
         if (!settings?.logo) {
-            return null;
+            return '/assets/images/LOGO OMATIQ-new.png';
         }
 
         if (settings.logo.startsWith('http') || settings.logo.startsWith('/')) {

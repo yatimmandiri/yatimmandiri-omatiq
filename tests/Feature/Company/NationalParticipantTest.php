@@ -132,6 +132,7 @@ test('santri binaan uploads availability letter and is auto-verified with free f
 
     $response = $this->actingAs($studentUser)->post(route('student.national-re-registration'), [
         'availability_letter' => $letter,
+        'shirt_size' => 'M',
     ]);
 
     $response->assertSessionHasNoErrors();
@@ -140,6 +141,7 @@ test('santri binaan uploads availability letter and is auto-verified with free f
     $participant->refresh();
     expect($participant->national->status)->toBe('verified')
         ->and($participant->national->payment_status)->toBe('paid')
+        ->and($participant->national->shirt_size)->toBe('M')
         ->and($participant->national->availability_letter_path)->not->toBeNull();
 
     Storage::disk('public')->assertExists($participant->national->availability_letter_path);
@@ -179,6 +181,7 @@ test('public participant requires payment proof and availability letter, set to 
     $letter = UploadedFile::fake()->create('surat_kesediaan.pdf', 500, 'application/pdf');
     $response = $this->actingAs($studentUser)->post(route('student.national-re-registration'), [
         'availability_letter' => $letter,
+        'shirt_size' => 'L',
     ]);
     $response->assertSessionHasErrors(['national_payment_proof']);
 
@@ -186,6 +189,7 @@ test('public participant requires payment proof and availability letter, set to 
     $proof = UploadedFile::fake()->image('transfer_nasional.jpg');
     $response = $this->actingAs($studentUser)->post(route('student.national-re-registration'), [
         'availability_letter' => $letter,
+        'shirt_size' => 'L',
         'national_payment_proof' => $proof,
     ]);
 
@@ -195,6 +199,7 @@ test('public participant requires payment proof and availability letter, set to 
     $participant->refresh();
     expect($participant->national->status)->toBe('waiting_confirmation')
         ->and($participant->national->payment_status)->toBe('waiting_confirmation')
+        ->and($participant->national->shirt_size)->toBe('L')
         ->and($participant->national->payment_proof_path)->not->toBeNull();
 
     Storage::disk('public')->assertExists($participant->national->payment_proof_path);
@@ -402,4 +407,51 @@ test('admin can reset declined national status back to unconfirmed', function ()
         ->and($participant->national->decline_category)->toBeNull()
         ->and($participant->national->decline_reason)->toBeNull()
         ->and($participant->national->declined_at)->toBeNull();
+});
+
+test('cabang can re-register binaan student with availability letter and shirt size', function () {
+    $cabangUser = User::factory()->create([
+        'name' => 'Admin Cabang Surabaya',
+        'branch' => 'Surabaya',
+        'email_verified_at' => now(),
+    ]);
+    $cabangUser->assignRole('Cabang');
+
+    $student = Student::factory()->create([
+        'full_name' => 'Santri Binaan Surabaya',
+        'is_binaan' => true,
+    ]);
+
+    $participant = Participant::factory()->create([
+        'student_id' => $student->id,
+        'branch' => 'Surabaya',
+        'status' => 'verified',
+    ]);
+
+    $national = NationalParticipant::create([
+        'participant_id' => $participant->id,
+        'qualified_by' => 1,
+        'qualified_at' => now(),
+        'status' => 'unconfirmed',
+        'payment_status' => 'unpaid',
+    ]);
+
+    $letter = UploadedFile::fake()->create('surat_kesediaan_binaan.pdf', 500, 'application/pdf');
+
+    $response = $this->actingAs($cabangUser)->post(
+        route('admin.companies.participants.national-re-register-binaan', $participant->id),
+        [
+            'availability_letter' => $letter,
+            'shirt_size' => 'XL',
+        ]
+    );
+
+    $response->assertSessionHasNoErrors();
+    $response->assertSessionHas('success');
+
+    $participant->refresh();
+    expect($participant->national->status)->toBe('verified')
+        ->and($participant->national->payment_status)->toBe('paid')
+        ->and($participant->national->shirt_size)->toBe('XL')
+        ->and($participant->national->availability_letter_path)->not->toBeNull();
 });

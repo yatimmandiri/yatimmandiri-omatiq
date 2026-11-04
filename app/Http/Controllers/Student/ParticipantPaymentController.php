@@ -160,12 +160,15 @@ class ParticipantPaymentController extends Controller
 
         $rules = [
             'availability_letter' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:4096'],
+            'shirt_size' => ['required', 'string', 'in:XS,S,M,L,XL,XXL,XXXL'],
         ];
         $messages = [
             'availability_letter.required' => 'Surat kesediaan hadir wajib diunggah.',
             'availability_letter.file' => 'Surat kesediaan harus berupa file dokumen atau gambar.',
             'availability_letter.mimes' => 'Format surat kesediaan harus berupa JPG, PNG, atau PDF.',
             'availability_letter.max' => 'Ukuran file surat kesediaan maksimal 4MB.',
+            'shirt_size.required' => 'Ukuran baju peserta wajib dipilih.',
+            'shirt_size.in' => 'Pilihan ukuran baju tidak valid.',
         ];
 
         if (! $isBinaan) {
@@ -187,6 +190,7 @@ class ParticipantPaymentController extends Controller
 
         $updates = [
             'availability_letter_path' => $letterPath,
+            'shirt_size' => strtoupper($request->shirt_size),
             'registered_at' => now(),
         ];
 

@@ -800,6 +800,10 @@ export default function ListPage() {
                                     item.payment_status ??
                                     '-',
                                 Kantor: item.branch ?? '-',
+                                'Status Babak Nasional':
+                                    item.national?.status ?? '-',
+                                'Ukuran Baju Nasional':
+                                    item.national?.shirt_size ?? '-',
                                 Tahun: item.event_year ?? '-',
                             };
                         })

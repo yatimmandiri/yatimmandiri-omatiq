@@ -822,6 +822,10 @@ class ParticipantController extends Controller
             $updates['notes'] = $request->notes;
         }
 
+        if ($request->filled('shirt_size')) {
+            $updates['shirt_size'] = strtoupper($request->shirt_size);
+        }
+
         $national->update($updates);
 
         $name = $participant->student?->full_name ?? $participant->user?->name ?? 'Peserta';
@@ -854,11 +858,14 @@ class ParticipantController extends Controller
 
         $request->validate([
             'availability_letter' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:4096'],
+            'shirt_size' => ['required', 'string', 'in:XS,S,M,L,XL,XXL,XXXL'],
         ], [
             'availability_letter.required' => 'Surat kesediaan hadir wajib diunggah.',
             'availability_letter.file' => 'Surat kesediaan harus berupa file dokumen atau gambar.',
             'availability_letter.mimes' => 'Format file surat kesediaan harus JPG, PNG, atau PDF.',
             'availability_letter.max' => 'Ukuran file surat kesediaan maksimal 4MB.',
+            'shirt_size.required' => 'Ukuran baju peserta wajib dipilih.',
+            'shirt_size.in' => 'Pilihan ukuran baju tidak valid.',
         ]);
 
         $letterPath = $this->uploadFile(
@@ -869,6 +876,7 @@ class ParticipantController extends Controller
 
         $national->update([
             'availability_letter_path' => $letterPath,
+            'shirt_size' => strtoupper($request->shirt_size),
             'registered_at' => now(),
             'status' => 'verified',
             'payment_status' => 'paid',

@@ -17,6 +17,7 @@ import activities from '@/routes/admin/logs/activities';
 import site from '@/routes/admin/settings/site';
 import chaperones from '@/routes/admin/companies/chaperones';
 import {
+    BadgeCheck,
     Building2,
     CalendarClock,
     CalendarDays,
@@ -24,6 +25,7 @@ import {
     CogIcon,
     Contact,
     CpuIcon,
+    Crown,
     Database,
     GraduationCap,
     Handshake,
@@ -140,6 +142,18 @@ export const NavigationList = [
                 href: chaperones.index().url,
                 roles: ['Administrators', 'Cabang'],
                 icon: Contact,
+            },
+            {
+                title: 'Data Panitia',
+                href: '/admin/companies/committees',
+                roles: ['Administrators'],
+                icon: BadgeCheck,
+            },
+            {
+                title: 'Tamu Undangan',
+                href: '/admin/companies/guests',
+                roles: ['Administrators'],
+                icon: Crown,
             },
         ],
     },

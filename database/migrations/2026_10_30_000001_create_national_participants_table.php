@@ -18,6 +18,7 @@ return new class extends Migration
                 $table->foreignId('qualified_by')->nullable()->constrained('users')->nullOnDelete();
                 $table->timestamp('qualified_at')->nullable();
                 $table->string('status', 30)->default('unconfirmed'); // unconfirmed, waiting_confirmation, verified, rejected, declined
+                $table->string('shirt_size', 20)->nullable(); // XS, S, M, L, XL, XXL, XXXL
                 $table->string('availability_letter_path')->nullable();
                 $table->string('payment_proof_path')->nullable();
                 $table->string('payment_status', 30)->default('unpaid'); // unpaid, waiting_confirmation, paid

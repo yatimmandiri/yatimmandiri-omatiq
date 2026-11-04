@@ -86,12 +86,18 @@ export const SiteForm = () => {
 
     // PREVIEW
     const [logoPreview, setLogoPreview] = useState(
-        (settings?.logo && `/storage/${settings?.logo}`) ||
-            'https://picsum.photos/300/300',
+        (settings?.logo &&
+            (settings.logo.startsWith('http') || settings.logo.startsWith('/')
+                ? settings.logo
+                : `/storage/${settings.logo}`)) ||
+            '/assets/images/LOGO OMATIQ-new.png',
     );
     const [faviconPreview, setFaviconPreview] = useState(
-        (settings?.favicon && `/storage/${settings?.favicon}`) ||
-            'https://picsum.photos/300/300',
+        (settings?.favicon &&
+            (settings.favicon.startsWith('http') || settings.favicon.startsWith('/')
+                ? settings.favicon
+                : `/storage/${settings.favicon}`)) ||
+            '/assets/images/LOGO OMATIQ-Fav.png',
     );
 
     /** FILE HANDLER WITH PREVIEW **/
