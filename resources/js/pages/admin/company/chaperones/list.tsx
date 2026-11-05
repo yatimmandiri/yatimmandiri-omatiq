@@ -239,6 +239,11 @@ export default function ListChaperonesPage() {
                             >
                                 {row.source_type === 'guru' ? 'Guru Pembimbing' : 'Karyawan Cabang'}
                             </span>
+                            {row.shirt_size && (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300">
+                                    Kaos: {row.shirt_size}
+                                </span>
+                            )}
                         </div>
                         {row.position && (
                             <p className="text-[11px] text-muted-foreground">{row.position}</p>

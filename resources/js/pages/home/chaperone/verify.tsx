@@ -1,12 +1,14 @@
 import { Head, Link, router } from '@inertiajs/react';
 import {
     AlertTriangle,
+    BadgeCheck,
     Building2,
     Calendar,
     Check,
     CheckCircle2,
     Clock,
     Copy,
+    Crown,
     ExternalLink,
     GraduationCap,
     Home,
@@ -22,7 +24,7 @@ import {
     UserCheck,
     Users,
 } from 'lucide-react';
-import { FormEvent, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 
 type EscortedParticipant = {
     id: number;
@@ -76,6 +78,44 @@ export default function ChaperoneVerifyPage({
     const [searchQuery, setSearchQuery] = useState(queryCode || '');
     const [participantFilter, setParticipantFilter] = useState('');
     const [copied, setCopied] = useState(false);
+    const searchInputRef = useRef<HTMLInputElement>(null);
+
+    const playChime = (success: boolean) => {
+        try {
+            const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            
+            if (success) {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+                osc.frequency.setValueAtTime(880, ctx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.15, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.35);
+            } else {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(220, ctx.currentTime);
+                osc.frequency.setValueAtTime(160, ctx.currentTime + 0.15);
+                gain.gain.setValueAtTime(0.2, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.4);
+            }
+        } catch {
+            // Audio context unsupported
+        }
+    };
+
+    useEffect(() => {
+        if (queryCode) {
+            playChime(isValid);
+        }
+        searchInputRef.current?.focus();
+    }, [queryCode, isValid]);
 
     const handleSearch = (e: FormEvent) => {
         e.preventDefault();
@@ -151,12 +191,53 @@ export default function ChaperoneVerifyPage({
                         </p>
                     </div>
 
+                    {/* Persona Selector Tabs */}
+                    <div className="mb-6 flex flex-wrap items-center justify-center gap-2 rounded-2xl bg-white/90 p-1.5 border border-slate-200/80 shadow-sm backdrop-blur-md">
+                        <Link
+                            href="/verifikasi"
+                            className="flex-1 rounded-xl px-3 py-2 text-center text-xs font-semibold text-slate-600 transition-all hover:bg-slate-100 hover:text-slate-900"
+                        >
+                            <GraduationCap className="inline-block h-3.5 w-3.5 mr-1" />
+                            Peserta
+                        </Link>
+                        <Link
+                            href="/verifikasi/pendamping"
+                            className="flex-1 rounded-xl bg-gradient-to-r from-[#17524A] to-[#207267] px-3 py-2 text-center text-xs font-bold text-white shadow-md shadow-[#17524A]/20"
+                        >
+                            <Users className="inline-block h-3.5 w-3.5 mr-1" />
+                            Pendamping
+                        </Link>
+                        <Link
+                            href="/verifikasi/panitia"
+                            className="flex-1 rounded-xl px-3 py-2 text-center text-xs font-semibold text-slate-600 transition-all hover:bg-slate-100 hover:text-slate-900"
+                        >
+                            <BadgeCheck className="inline-block h-3.5 w-3.5 mr-1" />
+                            Panitia
+                        </Link>
+                        <Link
+                            href="/verifikasi/tamu"
+                            className="flex-1 rounded-xl px-3 py-2 text-center text-xs font-semibold text-slate-600 transition-all hover:bg-slate-100 hover:text-slate-900"
+                        >
+                            <Crown className="inline-block h-3.5 w-3.5 mr-1" />
+                            Tamu Undangan
+                        </Link>
+                    </div>
+
                     {/* Quick Search Bar */}
                     <div className="mb-8 rounded-2xl bg-white p-3 shadow-lg shadow-slate-200/50 ring-1 ring-slate-200/80">
+                        <div className="mb-2 flex items-center justify-between px-1">
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-[#17524A]">
+                                Pemindai Barcode / QR / Kode Pendamping
+                            </span>
+                            <span className="rounded bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+                                Support Scanner USB Kasir
+                            </span>
+                        </div>
                         <form onSubmit={handleSearch} className="flex flex-col gap-2 sm:flex-row sm:items-center">
                             <div className="relative flex-1">
                                 <Search className="absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-slate-400" />
                                 <input
+                                    ref={searchInputRef}
                                     type="text"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}

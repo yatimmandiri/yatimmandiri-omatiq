@@ -33,6 +33,8 @@ Route::post('/pendaftaran/check-nik', [ParticipantRegistrationController::class,
 Route::get('/pendaftaran/sukses/{registrationNumber}', [ParticipantRegistrationController::class, 'success'])->name('home.registration.success');
 Route::get('/pendaftaran/kartu/{registrationNumber}', [ParticipantCardController::class, 'print'])->name('home.registration.card');
 Route::get('/verifikasi/pendamping/{code?}', [ParticipantRegistrationController::class, 'verifyChaperone'])->name('home.chaperone.verify');
+Route::get('/verifikasi/panitia/{code?}', [ParticipantRegistrationController::class, 'verifyCommittee'])->name('home.committee.verify');
+Route::get('/verifikasi/tamu/{code?}', [ParticipantRegistrationController::class, 'verifyGuest'])->name('home.guest.verify');
 Route::get('/verifikasi/{registrationNumber?}', [ParticipantRegistrationController::class, 'verify'])->name('home.registration.verify');
 Route::get('/pendaftaran/verifikasi/{registrationNumber?}', [ParticipantRegistrationController::class, 'verify'])->name('home.registration.verify.alias');
 

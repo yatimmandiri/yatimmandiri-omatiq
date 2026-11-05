@@ -132,6 +132,7 @@ test('santri binaan uploads availability letter and is auto-verified with free f
 
     $response = $this->actingAs($studentUser)->post(route('student.national-re-registration'), [
         'availability_letter' => $letter,
+        'shirt_size' => 'M',
     ]);
 
     $response->assertSessionHasNoErrors();
@@ -140,6 +141,7 @@ test('santri binaan uploads availability letter and is auto-verified with free f
     $participant->refresh();
     expect($participant->national->status)->toBe('verified')
         ->and($participant->national->payment_status)->toBe('paid')
+        ->and($participant->national->shirt_size)->toBe('M')
         ->and($participant->national->availability_letter_path)->not->toBeNull();
 
     Storage::disk('public')->assertExists($participant->national->availability_letter_path);
@@ -179,6 +181,7 @@ test('public participant requires payment proof and availability letter, set to 
     $letter = UploadedFile::fake()->create('surat_kesediaan.pdf', 500, 'application/pdf');
     $response = $this->actingAs($studentUser)->post(route('student.national-re-registration'), [
         'availability_letter' => $letter,
+        'shirt_size' => 'L',
     ]);
     $response->assertSessionHasErrors(['national_payment_proof']);
 
@@ -186,6 +189,7 @@ test('public participant requires payment proof and availability letter, set to 
     $proof = UploadedFile::fake()->image('transfer_nasional.jpg');
     $response = $this->actingAs($studentUser)->post(route('student.national-re-registration'), [
         'availability_letter' => $letter,
+        'shirt_size' => 'L',
         'national_payment_proof' => $proof,
     ]);
 
@@ -195,6 +199,7 @@ test('public participant requires payment proof and availability letter, set to 
     $participant->refresh();
     expect($participant->national->status)->toBe('waiting_confirmation')
         ->and($participant->national->payment_status)->toBe('waiting_confirmation')
+        ->and($participant->national->shirt_size)->toBe('L')
         ->and($participant->national->payment_proof_path)->not->toBeNull();
 
     Storage::disk('public')->assertExists($participant->national->payment_proof_path);
@@ -402,4 +407,144 @@ test('admin can reset declined national status back to unconfirmed', function ()
         ->and($participant->national->decline_category)->toBeNull()
         ->and($participant->national->decline_reason)->toBeNull()
         ->and($participant->national->declined_at)->toBeNull();
+});
+
+test('cabang can re-register binaan student with availability letter and shirt size', function () {
+    $cabangUser = User::factory()->create([
+        'name' => 'Admin Cabang Surabaya',
+        'branch' => 'Surabaya',
+        'email_verified_at' => now(),
+    ]);
+    $cabangUser->assignRole('Cabang');
+
+    $student = Student::factory()->create([
+        'full_name' => 'Santri Binaan Surabaya',
+        'is_binaan' => true,
+    ]);
+
+    $participant = Participant::factory()->create([
+        'student_id' => $student->id,
+        'branch' => 'Surabaya',
+        'status' => 'verified',
+    ]);
+
+    $national = NationalParticipant::create([
+        'participant_id' => $participant->id,
+        'qualified_by' => 1,
+        'qualified_at' => now(),
+        'status' => 'unconfirmed',
+        'payment_status' => 'unpaid',
+    ]);
+
+    $letter = UploadedFile::fake()->create('surat_kesediaan_binaan.pdf', 500, 'application/pdf');
+
+    $response = $this->actingAs($cabangUser)->post(
+        route('admin.companies.participants.national-re-register-binaan', $participant->id),
+        [
+            'availability_letter' => $letter,
+            'shirt_size' => 'XL',
+        ]
+    );
+
+    $response->assertSessionHasNoErrors();
+    $response->assertSessionHas('success');
+
+    $participant->refresh();
+    expect($participant->national->status)->toBe('verified')
+        ->and($participant->national->payment_status)->toBe('paid')
+        ->and($participant->national->shirt_size)->toBe('XL')
+        ->and($participant->national->availability_letter_path)->not->toBeNull();
+});
+
+test('cabang can re-register general participant with letter, shirt size, and payment proof', function () {
+    $cabangUser = User::factory()->create([
+        'name' => 'Admin Cabang Malang',
+        'branch' => 'Malang',
+        'email_verified_at' => now(),
+    ]);
+    $cabangUser->assignRole('Cabang');
+
+    $student = Student::factory()->create([
+        'full_name' => 'Peserta Umum Malang',
+        'is_binaan' => false,
+    ]);
+
+    $participant = Participant::factory()->create([
+        'student_id' => $student->id,
+        'branch' => 'Malang',
+        'status' => 'verified',
+    ]);
+
+    $national = NationalParticipant::create([
+        'participant_id' => $participant->id,
+        'qualified_by' => 1,
+        'qualified_at' => now(),
+        'status' => 'unconfirmed',
+        'payment_status' => 'unpaid',
+    ]);
+
+    $letter = UploadedFile::fake()->create('surat_kesediaan_umum.pdf', 500, 'application/pdf');
+    $proof = UploadedFile::fake()->image('bukti_transfer_umum.jpg');
+
+    $response = $this->actingAs($cabangUser)->post(
+        route('admin.companies.participants.national-re-register-binaan', $participant->id),
+        [
+            'availability_letter' => $letter,
+            'shirt_size' => 'M',
+            'national_payment_proof' => $proof,
+        ]
+    );
+
+    $response->assertSessionHasNoErrors();
+    $response->assertSessionHas('success');
+
+    $participant->refresh();
+    expect($participant->national->status)->toBe('waiting_confirmation')
+        ->and($participant->national->payment_status)->toBe('waiting_confirmation')
+        ->and($participant->national->shirt_size)->toBe('M')
+        ->and($participant->national->availability_letter_path)->not->toBeNull()
+        ->and($participant->national->payment_proof_path)->not->toBeNull();
+});
+
+test('cabang can decline national participation for general participant with category and reason', function () {
+    $cabangUser = User::factory()->create([
+        'name' => 'Admin Cabang Malang',
+        'branch' => 'Malang',
+        'email_verified_at' => now(),
+    ]);
+    $cabangUser->assignRole('Cabang');
+
+    $student = Student::factory()->create([
+        'full_name' => 'Peserta Umum Mundur',
+        'is_binaan' => false,
+    ]);
+
+    $participant = Participant::factory()->create([
+        'student_id' => $student->id,
+        'branch' => 'Malang',
+        'status' => 'verified',
+    ]);
+
+    NationalParticipant::create([
+        'participant_id' => $participant->id,
+        'qualified_by' => 1,
+        'status' => 'unconfirmed',
+    ]);
+
+    $response = $this->actingAs($cabangUser)->post(
+        route('admin.companies.participants.national-decline-binaan', $participant->id),
+        [
+            'decline_category' => 'Tidak Diizinkan Orang Tua / Wali',
+            'decline_reason' => 'Orang tua berhalangan mendampingi ke babak final.',
+        ]
+    );
+
+    $response->assertSessionHasNoErrors();
+    $response->assertSessionHas('success');
+
+    $participant->refresh();
+    expect($participant->national->status)->toBe('declined')
+        ->and($participant->national->decline_category)->toBe('Tidak Diizinkan Orang Tua / Wali')
+        ->and($participant->national->decline_reason)->toBe('Orang tua berhalangan mendampingi ke babak final.')
+        ->and($participant->national->declined_at)->not->toBeNull();
 });

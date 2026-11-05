@@ -339,7 +339,7 @@ class NationalChaperoneController extends Controller
         ]);
 
         $chaperoneIdFormatted = 'OFF-'.str_pad((string) $chaperone->id, 5, '0', STR_PAD_LEFT);
-        $verifyUrl = route('home.chaperone.verify', $chaperoneIdFormatted);
+        $verifyUrl = route('home.registration.verify', ['registrationNumber' => $chaperoneIdFormatted]);
         $qrCodeSvg = $this->barcodeService->generateQrCodeSvg($verifyUrl, size: 90, color: '#17524A');
         $barcodeSvg = $this->barcodeService->generateCode128Svg($chaperoneIdFormatted, height: 26, barWidth: 1.1, color: '#17524A');
 

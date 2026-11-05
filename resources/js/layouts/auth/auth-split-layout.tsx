@@ -29,8 +29,7 @@ export default function AuthSplitLayout({
         }
     }, [flash?.success, flash?.error]);
 
-    const logoWhite = '/assets/images/LOGO OMATIQ WHITE.png';
-    const logoColor = settings?.logo
+    const logoUrl = settings?.logo
         ? settings.logo.startsWith('http') || settings.logo.startsWith('/')
             ? settings.logo
             : `/storage/${settings.logo}`
@@ -71,16 +70,21 @@ export default function AuthSplitLayout({
                 {/* Center Content: Logo, Title, and Value Highlights */}
                 <div className="relative z-10 my-auto py-12">
                     <div className="mb-6 flex items-center gap-4">
-                        <img
-                            src={logoWhite}
-                            alt={name || 'OMATIQ Logo'}
-                            className="h-14 w-auto object-contain drop-shadow-md"
-                            onError={(e) => {
-                                // Fallback to text if image not found
-                                (e.currentTarget as HTMLElement).style.display =
-                                    'none';
-                            }}
-                        />
+                        <Link
+                            href={home.index().url}
+                            className="inline-block transition-transform hover:opacity-90"
+                        >
+                            <img
+                                src={logoUrl}
+                                alt={name || 'OMATIQ Logo'}
+                                className="h-14 w-auto object-contain drop-shadow-md"
+                                onError={(e) => {
+                                    // Fallback to text if image not found
+                                    (e.currentTarget as HTMLElement).style.display =
+                                        'none';
+                                }}
+                            />
+                        </Link>
                     </div>
 
                     <h1 className="text-3xl font-extrabold tracking-tight text-white xl:text-4xl">
@@ -174,9 +178,12 @@ export default function AuthSplitLayout({
                 <div className="mx-auto w-full max-w-md py-8">
                     {/* Mobile Brand Logo */}
                     <div className="mb-6 flex flex-col items-center text-center lg:hidden">
-                        <Link href={home.index().url}>
+                        <Link
+                            href={home.index().url}
+                            className="inline-block transition-transform hover:opacity-90"
+                        >
                             <img
-                                src={logoColor}
+                                src={logoUrl}
                                 alt="OMATIQ Logo"
                                 className="h-12 w-auto object-contain"
                             />

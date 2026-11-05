@@ -26,6 +26,7 @@ import {
     Printer,
     RotateCcw,
     School,
+    Shirt,
     Trophy,
     User,
     XCircle,
@@ -220,14 +221,17 @@ export default function ShowPage() {
                     )}
                     {canUpdate &&
                         participant.national &&
-                        isBinaan &&
-                        participant.national.status === 'unconfirmed' && (
+                        (participant.national.status === 'unconfirmed' ||
+                            participant.national.status ===
+                                'waiting_confirmation') && (
                             <Button
                                 onClick={() => setOpenReRegisterModal(true)}
                                 className="gap-2 bg-gradient-to-r from-emerald-700 to-teal-700 font-bold text-white shadow hover:from-emerald-800 hover:to-teal-800"
                             >
                                 <FileCheck2 className="size-4" />
-                                Daftarkan Ulang Binaan
+                                {isBinaan
+                                    ? 'Daftarkan Ulang Binaan'
+                                    : 'Bantu Daftar Ulang Umum'}
                             </Button>
                         )}
                     {isAdmin && (
@@ -390,22 +394,24 @@ export default function ShowPage() {
                                         ? 'Peserta telah mengunggah berkas daftar ulang dan menunggu verifikasi panitia pusat / keuangan.'
                                         : isBinaan
                                           ? 'Santri binaan telah diloloskan ke Babak Nasional. Kantor Cabang dapat mendaftarkan ulang dengan mengunggah Surat Kesediaan Hadir.'
-                                          : 'Peserta umum telah diloloskan ke Babak Nasional, menunggu peserta melakukan daftar ulang mandiri di dashboard.'}
+                                          : 'Peserta umum telah diloloskan ke Babak Nasional. Peserta dapat daftar ulang mandiri atau dibantu oleh Kantor Cabang.'}
                             </p>
                         </div>
 
                         {/* Admin / Cabang Action Buttons */}
                         <div className="flex flex-wrap items-center gap-2">
                             {canUpdate &&
-                                participant.national.status === 'unconfirmed' &&
-                                isBinaan && (
+                                (participant.national.status === 'unconfirmed' ||
+                                    participant.national.status === 'waiting_confirmation') && (
                                     <Button
                                         size="sm"
                                         onClick={() => setOpenReRegisterModal(true)}
                                         className="gap-1.5 bg-gradient-to-r from-emerald-700 to-teal-700 text-white shadow hover:from-emerald-800 hover:to-teal-800"
                                     >
                                         <FileCheck2 className="size-4" />
-                                        Daftarkan Ulang Binaan
+                                        {isBinaan
+                                            ? 'Daftarkan Ulang Binaan'
+                                            : 'Bantu Daftar Ulang Umum'}
                                     </Button>
                                 )}
                             {canUpdate && participant.national.status === 'declined' && (
@@ -481,9 +487,15 @@ export default function ShowPage() {
                         </div>
                     )}
 
-                    {/* Dokumen Babak Nasional */}
-                    {(participant.national.availability_letter_url || participant.national.payment_proof_url) && (
+                    {/* Dokumen & Informasi Babak Nasional */}
+                    {(participant.national.availability_letter_url || participant.national.payment_proof_url || participant.national.shirt_size) && (
                         <div className="mt-4 flex flex-wrap items-center gap-4 border-t border-amber-300/60 pt-3 dark:border-amber-700/50">
+                            {participant.national.shirt_size && (
+                                <div className="flex items-center gap-2 rounded-lg bg-amber-100/70 px-3 py-1.5 text-xs font-semibold text-amber-950 dark:bg-amber-900/50 dark:text-amber-100">
+                                    <Shirt className="size-4 text-amber-700 dark:text-amber-300" />
+                                    <span>Ukuran Baju Finalis: <strong>Ukuran {participant.national.shirt_size}</strong></span>
+                                </div>
+                            )}
                             {participant.national.availability_letter_url && (
                                 <div>
                                     <Button

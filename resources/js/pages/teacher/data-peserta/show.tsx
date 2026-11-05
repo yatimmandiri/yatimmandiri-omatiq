@@ -18,6 +18,7 @@ import {
     Phone,
     Printer,
     School,
+    Shirt,
     Trash2,
     Trophy,
     User,
@@ -302,27 +303,37 @@ export default function ShowPage() {
                         </div>
                     )}
 
-                    {participant.national.availability_letter_url && (
+                    {(participant.national.availability_letter_url || participant.national.shirt_size) && (
                         <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-amber-300/60 pt-3 dark:border-amber-700/50">
-                            <span className="text-xs font-semibold text-amber-900 dark:text-amber-200">
-                                Berkas Terunggah:
-                            </span>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                className="gap-1.5 border-amber-400 bg-white text-xs font-semibold text-amber-900 hover:bg-amber-50 dark:bg-amber-950 dark:text-amber-200"
-                                onClick={() => setOpenLetterProof(true)}
-                            >
-                                <ExternalLink className="size-3.5" />
-                                Lihat Surat Kesediaan Hadir
-                            </Button>
-                            <ProofModal
-                                href={participant.national.availability_letter_url}
-                                open={openLetterProof}
-                                onOpenChange={setOpenLetterProof}
-                                title="Surat Kesediaan Hadir Babak Nasional"
-                            />
+                            {participant.national.shirt_size && (
+                                <div className="flex items-center gap-2 rounded-lg bg-amber-100/70 px-3 py-1.5 text-xs font-semibold text-amber-950 dark:bg-amber-900/50 dark:text-amber-100">
+                                    <Shirt className="size-4 text-amber-700 dark:text-amber-300" />
+                                    <span>Ukuran Baju Finalis: <strong>Ukuran {participant.national.shirt_size}</strong></span>
+                                </div>
+                            )}
+                            {participant.national.availability_letter_url && (
+                                <>
+                                    <span className="text-xs font-semibold text-amber-900 dark:text-amber-200">
+                                        Berkas Terunggah:
+                                    </span>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        className="gap-1.5 border-amber-400 bg-white text-xs font-semibold text-amber-900 hover:bg-amber-50 dark:bg-amber-950 dark:text-amber-200"
+                                        onClick={() => setOpenLetterProof(true)}
+                                    >
+                                        <ExternalLink className="size-3.5" />
+                                        Lihat Surat Kesediaan Hadir
+                                    </Button>
+                                    <ProofModal
+                                        href={participant.national.availability_letter_url}
+                                        open={openLetterProof}
+                                        onOpenChange={setOpenLetterProof}
+                                        title="Surat Kesediaan Hadir Babak Nasional"
+                                    />
+                                </>
+                            )}
                         </div>
                     )}
                 </div>

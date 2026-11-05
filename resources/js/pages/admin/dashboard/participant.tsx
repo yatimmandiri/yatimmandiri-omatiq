@@ -12,11 +12,18 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ProofModal } from '@/components/ui/proof-modal';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { dashboard } from '@/routes/admin';
 import { document as studentDocument, nationalReRegistration, paymentProof } from '@/routes/student';
 import { confirmAction } from '@/utils/sweetalert';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
-import { AlertCircle, CheckCircle2, Download, ExternalLink, Eye, FileText, Loader2, Printer, Trophy, Upload, UserCheck, UserX, XCircle } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Download, ExternalLink, Eye, FileText, Loader2, Printer, Shirt, Trophy, Upload, UserCheck, UserX, XCircle } from 'lucide-react';
 import { useState } from 'react';
 
 const NATIONAL_DECLINE_CATEGORIES = [
@@ -79,15 +86,27 @@ export default function Dashboard() {
     const nationalForm = useForm<{
         availability_letter: File | null;
         national_payment_proof: File | null;
+        shirt_size: string;
     }>({
         availability_letter: null,
         national_payment_proof: null,
+        shirt_size: participant?.national?.shirt_size ?? '',
     });
 
     const handleNationalSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!nationalForm.data.availability_letter) return;
-        if (!isBinaan && !nationalForm.data.national_payment_proof) return;
+        if (!nationalForm.data.shirt_size) {
+            nationalForm.setError('shirt_size', 'Silakan pilih ukuran baju terlebih dahulu.');
+            return;
+        }
+        if (!nationalForm.data.availability_letter) {
+            nationalForm.setError('availability_letter', 'Silakan unggah Surat Kesediaan Hadir.');
+            return;
+        }
+        if (!isBinaan && !nationalForm.data.national_payment_proof) {
+            nationalForm.setError('national_payment_proof', 'Silakan unggah Bukti Transfer Babak Nasional.');
+            return;
+        }
 
         nationalForm.post(nationalReRegistration.url(), {
             forceFormData: true,
@@ -404,9 +423,15 @@ export default function Dashboard() {
                             </div>
                         </div>
 
-                        {/* File preview jika sudah diunggah */}
-                        {(participant.national.availability_letter_url || participant.national.payment_proof_url) && (
+                        {/* File preview & data ukuran jika sudah diunggah */}
+                        {(participant.national.availability_letter_url || participant.national.payment_proof_url || participant.national.shirt_size) && (
                             <div className="mt-4 flex flex-wrap items-center gap-6 border-t border-amber-300/60 pt-3 dark:border-amber-700/50">
+                                {participant.national.shirt_size && (
+                                    <div className="flex items-center gap-2 rounded-lg bg-amber-100/70 px-3 py-1.5 text-xs font-semibold text-amber-950 dark:bg-amber-900/50 dark:text-amber-100">
+                                        <Shirt className="size-4 text-amber-700 dark:text-amber-300" />
+                                        <span>Ukuran Kaos / Baju Finalis: <strong>Ukuran {participant.national.shirt_size}</strong></span>
+                                    </div>
+                                )}
                                 {participant.national.availability_letter_url && (
                                     <FileLink
                                         label="Surat Kesediaan Hadir"
@@ -829,6 +854,39 @@ export default function Dashboard() {
                                     </div>
                                 </div>
 
+                                {/* Pilihan Ukuran Baju / Kaos Finalis */}
+                                <div className="space-y-2">
+                                    <Label htmlFor="national_shirt_size" className="flex items-center gap-1.5 font-semibold">
+                                        <Shirt className="size-4 text-amber-600 dark:text-amber-400" />
+                                        Ukuran Baju / Kaos Finalis <span className="text-destructive">*</span>
+                                    </Label>
+                                    <Select
+                                        value={nationalForm.data.shirt_size}
+                                        onValueChange={(val) => nationalForm.setData('shirt_size', val)}
+                                    >
+                                        <SelectTrigger id="national_shirt_size" className="w-full">
+                                            <SelectValue placeholder="Pilih ukuran baju" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="XS">XS (Extra Small / Anak)</SelectItem>
+                                            <SelectItem value="S">S (Small)</SelectItem>
+                                            <SelectItem value="M">M (Medium)</SelectItem>
+                                            <SelectItem value="L">L (Large)</SelectItem>
+                                            <SelectItem value="XL">XL (Extra Large)</SelectItem>
+                                            <SelectItem value="XXL">XXL (Double Extra Large)</SelectItem>
+                                            <SelectItem value="XXXL">XXXL (3XL)</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    {nationalForm.errors.shirt_size && (
+                                        <p className="text-xs font-medium text-destructive">
+                                            {nationalForm.errors.shirt_size}
+                                        </p>
+                                    )}
+                                    <p className="text-xs text-muted-foreground">
+                                        Ukuran ini akan digunakan panitia untuk seragam resmi Babak Final Nasional OMATIQ.
+                                    </p>
+                                </div>
+
                                 {/* Upload Surat Kesediaan */}
                                 <div className="space-y-2">
                                     <Label htmlFor="availability_letter" className="font-semibold">
@@ -912,6 +970,7 @@ export default function Dashboard() {
                                     className="bg-[#17524A] text-white hover:bg-[#17524A]/90"
                                     disabled={
                                         nationalForm.processing ||
+                                        !nationalForm.data.shirt_size ||
                                         !nationalForm.data.availability_letter ||
                                         (!isBinaan && !nationalForm.data.national_payment_proof)
                                     }

@@ -21,8 +21,14 @@ import {
 import { Fragment } from 'react/jsx-runtime';
 
 export const renderRowHeader = (info: any, title: string) => {
-    const isSorted = info.column.getIsSorted();
-    const columnId = info.column.id;
+    const col = info?.column ?? info;
+
+    if (!col || typeof col.getIsSorted !== 'function') {
+        return <div className="px-3 font-semibold">{title}</div>;
+    }
+
+    const isSorted = col.getIsSorted();
+    const columnId = col.id;
 
     const renderSortIcon = () => {
         if (isSorted === 'asc') {
@@ -45,7 +51,7 @@ export const renderRowHeader = (info: any, title: string) => {
     return (
         <div
             className="flex cursor-pointer flex-row items-center justify-between space-x-4 px-3"
-            onClick={info.column.getToggleSortingHandler()}
+            onClick={typeof col.getToggleSortingHandler === 'function' ? col.getToggleSortingHandler() : undefined}
         >
             <span>{title}</span>
             {renderSortIcon()}

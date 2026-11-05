@@ -1,74 +1,240 @@
 import { Head, Link, router } from '@inertiajs/react';
 import {
     AlertTriangle,
+    Award,
+    BadgeCheck,
     Building2,
     Calendar,
     Check,
     CheckCircle2,
     Clock,
     Copy,
+    Crown,
+    ExternalLink,
     GraduationCap,
     Home,
     MapPin,
+    Phone,
     Printer,
     QrCode,
     Search,
     ShieldAlert,
     ShieldCheck,
+    Sparkles,
     Trophy,
     User,
     UserCheck,
+    Users,
 } from 'lucide-react';
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useRef, useState } from 'react';
 
-type VerifyProps = {
-    pageTitle: string;
-    queryRegistrationNumber?: string | null;
-    isValid: boolean;
-    participant?: {
-        id: number;
-        registration_number: string;
-        status: 'submitted' | 'verified' | 'rejected' | string;
-        registration_type?: string;
-        event_year: number;
-        branch?: string | null;
-        penyaluran_sanggar_name?: string | null;
+type ParticipantEntity = {
+    id: number;
+    registration_number: string;
+    status: 'submitted' | 'verified' | 'rejected' | string;
+    registration_type?: string;
+    event_year: number;
+    branch?: string | null;
+    penyaluran_sanggar_name?: string | null;
+    guardian_name?: string | null;
+    olimpiade?: {
+        id?: number;
+        name?: string;
+        category?: string | null;
+    } | null;
+    student?: {
+        full_name?: string | null;
+        nik?: string | null;
+        nis?: string | null;
+        school_name?: string | null;
+        school_level?: string | null;
+        grade?: string | null;
+        regency_name?: string | null;
+        mentor_name?: string | null;
         guardian_name?: string | null;
-        olimpiade?: {
-            id?: number;
-            name?: string;
-            category?: string | null;
-        } | null;
-        student?: {
-            full_name?: string | null;
-            nik?: string | null;
-            nis?: string | null;
-            school_name?: string | null;
-            school_level?: string | null;
-            grade?: string | null;
-            regency_name?: string | null;
-            mentor_name?: string | null;
-            guardian_name?: string | null;
-            is_binaan?: boolean;
-            photo_url?: string | null;
-        } | null;
-        verified_at?: string;
-        national?: {
-            status: string;
-            payment_status?: string;
-            is_verified?: boolean;
-        } | null;
+        is_binaan?: boolean;
+        photo_url?: string | null;
+    } | null;
+    verified_at?: string;
+    national?: {
+        status: string;
+        shirt_size?: string | null;
+        payment_status?: string;
+        is_verified?: boolean;
     } | null;
 };
 
-export default function RegistrationVerifyPage({
+type ChaperoneEntity = {
+    id: number;
+    formatted_id: string;
+    name: string;
+    nik?: string | null;
+    gender: 'male' | 'female';
+    phone?: string | null;
+    email?: string | null;
+    branch?: string | null;
+    position?: string | null;
+    source_type?: string;
+    status: string;
+    notes?: string | null;
+    verified_at?: string | null;
+    verifier_name?: string;
+    province_name?: string | null;
+    regency_name?: string | null;
+    participants_count: number;
+    participants: Array<{
+        id: number;
+        registration_number: string;
+        name: string;
+        school_name: string;
+        school_level: string;
+        grade: string;
+        olimpiade_name: string;
+        category: string;
+        is_binaan: boolean;
+        photo_url?: string | null;
+        national_status: string;
+        is_national_verified: boolean;
+    }>;
+};
+
+type CommitteeEntity = {
+    id: number;
+    code: string;
+    name: string;
+    nik?: string | null;
+    gender: 'male' | 'female';
+    phone?: string | null;
+    email?: string | null;
+    division: string;
+    position: string;
+    access_zone: string;
+    duty_description?: string | null;
+    photo_url?: string | null;
+    status: 'active' | 'inactive' | string;
+    notes?: string | null;
+    event_year: number;
+    checked_in_at?: string | null;
+    has_user_account?: boolean;
+};
+
+type GuestEntity = {
+    id: number;
+    code: string;
+    name: string;
+    institution: string;
+    position: string;
+    category: string;
+    phone?: string | null;
+    email?: string | null;
+    table_number?: string | null;
+    seat_count: number;
+    photo_url?: string | null;
+    status: string;
+    notes?: string | null;
+    event_year: number;
+    checked_in_at?: string | null;
+};
+
+type VerifyProps = {
+    pageTitle: string;
+    queryCode?: string | null;
+    persona?: 'participant' | 'chaperone' | 'committee' | 'guest' | 'not_found' | null;
+    isValid: boolean;
+    isFirstCheckIn?: boolean;
+    entity?: any;
+    // Backward-compat props
+    queryRegistrationNumber?: string | null;
+    participant?: ParticipantEntity | null;
+    chaperone?: ChaperoneEntity | null;
+    committee?: CommitteeEntity | null;
+    guest?: GuestEntity | null;
+};
+
+export default function UniversalVerifyPage({
     pageTitle,
-    queryRegistrationNumber,
+    queryCode,
+    persona,
     isValid,
-    participant,
+    isFirstCheckIn,
+    entity,
+    queryRegistrationNumber,
+    participant: propParticipant,
+    chaperone: propChaperone,
+    committee: propCommittee,
+    guest: propGuest,
 }: VerifyProps) {
-    const [searchQuery, setSearchQuery] = useState(queryRegistrationNumber || '');
+    const activeCode = queryCode ?? queryRegistrationNumber ?? '';
+    const [searchQuery, setSearchQuery] = useState(activeCode);
     const [copied, setCopied] = useState(false);
+    const searchInputRef = useRef<HTMLInputElement>(null);
+
+    // Resolve active persona & data
+    const resolvedPersona = persona ?? (
+        propCommittee ? 'committee' :
+        propGuest ? 'guest' :
+        propChaperone ? 'chaperone' :
+        propParticipant ? 'participant' :
+        activeCode ? 'not_found' : null
+    );
+
+    const activeEntity = entity ?? (
+        resolvedPersona === 'committee' ? propCommittee :
+        resolvedPersona === 'guest' ? propGuest :
+        resolvedPersona === 'chaperone' ? propChaperone :
+        resolvedPersona === 'participant' ? propParticipant : null
+    );
+
+    // Audio chime on scan
+    const playChime = (valid: boolean, firstTime: boolean) => {
+        try {
+            const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+
+            if (valid) {
+                osc.type = 'sine';
+                if (firstTime) {
+                    // Double high chime (First check-in / Valid)
+                    osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+                    osc.frequency.setValueAtTime(880, ctx.currentTime + 0.1); // A5
+                    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.35);
+                } else {
+                    // Repeated scan
+                    osc.frequency.setValueAtTime(659.25, ctx.currentTime); // E5
+                    gain.gain.setValueAtTime(0.12, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.25);
+                }
+            } else {
+                // Low sawtooth warning (Not found / Invalid)
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(220, ctx.currentTime);
+                osc.frequency.setValueAtTime(160, ctx.currentTime + 0.15);
+                gain.gain.setValueAtTime(0.2, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.4);
+            }
+        } catch {
+            // Audio context unsupported / blocked
+        }
+    };
+
+    useEffect(() => {
+        if (activeCode) {
+            playChime(isValid, Boolean(isFirstCheckIn));
+        }
+        // Always refocus input for USB barcode cashier gun scanner continuous flow
+        searchInputRef.current?.focus();
+        searchInputRef.current?.select();
+    }, [activeCode, isValid, isFirstCheckIn]);
 
     const handleSearch = (e: FormEvent) => {
         e.preventDefault();
@@ -78,22 +244,19 @@ export default function RegistrationVerifyPage({
         }
     };
 
-    const handleCopy = () => {
-        if (participant?.registration_number) {
-            navigator.clipboard.writeText(participant.registration_number);
+    const handleCopy = (text: string) => {
+        if (text) {
+            navigator.clipboard.writeText(text);
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
         }
     };
 
-    const isVerified = participant?.status === 'verified';
-    const isSubmitted = participant?.status === 'submitted';
-
     return (
         <>
-            <Head title={pageTitle} />
+            <Head title={pageTitle || 'Universal Gate Terminal OMATIQ'} />
 
-            <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-[#f0fdf4] via-[#f8fafc] to-[#ffffff] px-4 pt-32 pb-24 sm:px-6 lg:px-8">
+            <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-[#f0fdf4] via-[#f8fafc] to-[#ffffff] px-4 pt-28 pb-24 sm:px-6 lg:px-8">
                 {/* Background ambient lighting */}
                 <div className="pointer-events-none absolute -top-20 left-1/2 h-[500px] w-[500px] -translate-x-1/2 rounded-full bg-[#17524A]/10 blur-3xl sm:w-[800px]" />
                 <div className="pointer-events-none absolute top-1/3 -right-20 h-72 w-72 rounded-full bg-[#FFE600]/15 blur-3xl" />
@@ -101,29 +264,39 @@ export default function RegistrationVerifyPage({
 
                 <div className="relative mx-auto max-w-3xl">
                     {/* Header Seal / Logo */}
-                    <div className="mb-8 text-center">
+                    <div className="mb-6 text-center">
                         <div className="inline-flex items-center gap-2 rounded-full border border-[#17524A]/20 bg-white/80 px-4 py-1.5 text-xs font-black tracking-wider text-[#17524A] uppercase shadow-sm backdrop-blur-md">
                             <ShieldCheck className="h-4 w-4 text-[#17524A]" />
-                            Official Verification Gateway &bull; OMATIQ {participant?.event_year ?? 2026}
+                            Official Venue Gate Terminal &bull; OMATIQ 2026
                         </div>
                         <h1 className="mt-3 text-2xl font-black text-[#0f172a] sm:text-4xl">
-                            Verifikasi Keaslian Peserta
+                            Pintu Masuk & Verifikasi Akses Venue
                         </h1>
                         <p className="mx-auto mt-2 max-w-lg text-sm text-[#64748b]">
-                            Sistem otentikasi resmi untuk memvalidasi keabsahan kartu pendaftaran dan status kepesertaan OMATIQ.
+                            Satu terminal terpadu untuk pemindaian lanyard pass seluruh entitas: <strong>Peserta, Pendamping, Panitia, dan Tamu Undangan</strong>.
                         </p>
                     </div>
 
-                    {/* Quick Search Bar */}
-                    <div className="mb-8 rounded-2xl bg-white p-3 shadow-lg shadow-slate-200/50 ring-1 ring-slate-200/80">
+                    {/* Scanner Input Terminal (Optimized for USB Cashier Barcode Guns) */}
+                    <div className="mb-6 rounded-2xl bg-white p-3.5 shadow-xl shadow-slate-200/50 ring-2 ring-[#17524A]/20">
+                        <div className="mb-2 flex items-center justify-between px-1">
+                            <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[#17524A]">
+                                <QrCode className="size-4" />
+                                Kotak Scan Barcode / QR / Kode Akses
+                            </span>
+                            <span className="rounded bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
+                                Continuous USB Scanner Mode
+                            </span>
+                        </div>
                         <form onSubmit={handleSearch} className="flex flex-col gap-2 sm:flex-row sm:items-center">
                             <div className="relative flex-1">
                                 <Search className="absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-slate-400" />
                                 <input
+                                    ref={searchInputRef}
                                     type="text"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    placeholder="Masukkan Nomor Registrasi (Contoh: OMQ-...)"
+                                    placeholder="Arahkan barcode scanner kasir / ketik kode (OMQ-..., OFF-..., CREW-..., INV-...)"
                                     className="w-full rounded-xl border-slate-200 bg-slate-50 py-3 pr-4 pl-10 text-sm font-bold text-slate-800 placeholder-slate-400 transition focus:border-[#17524A] focus:bg-white focus:ring-[#17524A]"
                                 />
                             </div>
@@ -132,306 +305,339 @@ export default function RegistrationVerifyPage({
                                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#17524A] px-6 py-3 text-sm font-black text-white shadow-md shadow-[#17524A]/20 transition hover:bg-[#13443d] active:scale-95"
                             >
                                 <Search className="h-4 w-4" />
-                                Cek Keaslian
+                                Scan / Cek
                             </button>
                         </form>
+
+                        {/* Supported Persona Badges Indicator */}
+                        <div className="mt-3 flex flex-wrap items-center justify-center gap-2 border-t border-slate-100 pt-3 text-[11px] text-slate-600">
+                            <span className="font-semibold text-slate-400">Auto-Detect:</span>
+                            <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 font-bold text-emerald-800">
+                                🟢 Peserta (OMQ)
+                            </span>
+                            <span className="inline-flex items-center gap-1 rounded-md bg-teal-50 px-2 py-0.5 font-bold text-teal-800">
+                                🔵 Pendamping (OFF)
+                            </span>
+                            <span className="inline-flex items-center gap-1 rounded-md bg-indigo-50 px-2 py-0.5 font-bold text-indigo-800">
+                                🟣 Panitia (CREW)
+                            </span>
+                            <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-0.5 font-bold text-amber-800">
+                                🟡 Tamu VIP (INV)
+                            </span>
+                        </div>
                     </div>
 
-                    {/* Main Verification Card */}
-                    {isValid && participant ? (
+                    {/* Result Container: Check Persona */}
+                    {isValid && activeEntity ? (
                         <div className="overflow-hidden rounded-[28px] bg-white shadow-2xl shadow-slate-200/60 ring-1 ring-slate-200/80">
-                            {/* Security Result Banner */}
-                            <div
-                                className={`px-6 py-6 text-center text-white sm:px-8 ${
-                                    isVerified
-                                        ? 'bg-gradient-to-r from-[#134e45] via-[#17524A] to-[#258a7c]'
-                                        : 'bg-gradient-to-r from-[#ea580c] via-[#c2410c] to-[#9a3412]'
-                                }`}
-                            >
-                                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white/15 backdrop-blur-md ring-2 ring-white/30">
-                                    {isVerified ? (
-                                        <CheckCircle2 className="h-10 w-10 text-[#FFE600]" />
-                                    ) : (
-                                        <Clock className="h-10 w-10 text-[#fed7aa]" />
-                                    )}
-                                </div>
-                                <h2 className="mt-4 text-xl font-black tracking-wide uppercase sm:text-2xl">
-                                    {isVerified
-                                        ? 'KARTU PESERTA ASLI & TERVERIFIKASI'
-                                        : 'PENDAFTARAN TERCATAT (MENUNGGU VERIFIKASI)'}
-                                </h2>
-                                <p className="mx-auto mt-1 max-w-lg text-xs leading-relaxed text-emerald-100 sm:text-sm">
-                                    {isVerified
-                                        ? 'Peserta ini telah terdaftar sah dalam basis data resmi OMATIQ Yatim Mandiri dan berhak mengikuti perlombaan.'
-                                        : 'Data pendaftaran peserta telah terdaftar di sistem dan saat ini sedang menunggu verifikasi akhir oleh panitia.'}
-                                </p>
-                                <div className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-black/20 px-3.5 py-1 text-[11px] font-bold text-white/90">
-                                    <span>Diperiksa pada:</span>
-                                    <span className="text-[#FFE600]">{participant.verified_at}</span>
-                                </div>
-                            </div>
+                            {/* 1. PARTICIPANT PERSONA */}
+                            {resolvedPersona === 'participant' && (
+                                <>
+                                    <div className="bg-gradient-to-r from-[#134e45] via-[#17524A] to-[#258a7c] px-6 py-6 text-center text-white sm:px-8">
+                                        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white/15 backdrop-blur-md ring-2 ring-white/30">
+                                            <CheckCircle2 className="h-10 w-10 text-[#FFE600]" />
+                                        </div>
+                                        <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-0.5 text-xs font-black tracking-wide text-[#FFE600] uppercase">
+                                            <GraduationCap className="size-3.5" />
+                                            KARTU PESERTA ASLI &bull; FINALIS OMATIQ
+                                        </div>
+                                        <h2 className="mt-2 text-xl font-black tracking-wide uppercase sm:text-2xl">
+                                            {activeEntity.student?.full_name ?? '-'}
+                                        </h2>
+                                        <p className="mx-auto mt-1 max-w-lg text-xs leading-relaxed text-emerald-100 sm:text-sm">
+                                            Peserta terdaftar sah dalam basis data OMATIQ dan diverifikasi untuk akses arena lomba.
+                                        </p>
+                                    </div>
 
-                            {/* Participant Profile Section */}
-                            <div className="p-6 sm:p-8">
-                                <div className="flex flex-col items-center gap-6 border-b border-slate-100 pb-6 text-center sm:flex-row sm:text-left">
-                                    {/* Avatar */}
-                                    <div className="relative">
-                                        <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-2xl border-2 border-[#17524A] bg-slate-100 shadow-md">
-                                            {participant.student?.photo_url ? (
-                                                <img
-                                                    src={participant.student.photo_url}
-                                                    alt="Foto Peserta"
-                                                    className="h-full w-full object-cover"
-                                                />
-                                            ) : (
-                                                <div className="flex flex-col items-center text-slate-400">
-                                                    <User className="h-10 w-10" />
-                                                    <span className="text-[10px] font-bold">FOTO</span>
+                                    <div className="p-6 sm:p-8">
+                                        <div className="flex flex-col items-center gap-6 border-b border-slate-100 pb-6 text-center sm:flex-row sm:text-left">
+                                            <div className="relative">
+                                                <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-2xl border-2 border-[#17524A] bg-slate-100 shadow-md">
+                                                    {activeEntity.student?.photo_url ? (
+                                                        <img src={activeEntity.student.photo_url} alt="Foto" className="h-full w-full object-cover" />
+                                                    ) : (
+                                                        <div className="flex flex-col items-center text-slate-400">
+                                                            <User className="h-10 w-10" />
+                                                            <span className="text-[10px] font-bold">FOTO</span>
+                                                        </div>
+                                                    )}
                                                 </div>
-                                            )}
-                                        </div>
-                                        <span className="absolute -right-2 -bottom-2 flex h-7 w-7 items-center justify-center rounded-full bg-[#17524A] text-white shadow">
-                                            <Check className="h-4 w-4 text-[#FFE600]" />
-                                        </span>
-                                    </div>
-
-                                    {/* Name & BIB Header */}
-                                    <div className="flex-1">
-                                        <div className="inline-flex items-center gap-2 rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-black text-[#17524A]">
-                                            <Trophy className="h-3.5 w-3.5 text-[#E5BE1E]" />
-                                            {participant.olimpiade?.name ?? 'OMATIQ'}
-                                            {participant.olimpiade?.category ? ` (${participant.olimpiade.category})` : ''}
-                                        </div>
-                                        <h3 className="mt-2 text-2xl font-black text-slate-900">
-                                            {participant.student?.full_name ?? '-'}
-                                        </h3>
-                                        <div className="mt-2 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
-                                            <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2.5 py-1 font-mono text-xs font-extrabold text-slate-700">
-                                                BIB: {participant.registration_number}
-                                            </span>
-                                            <button
-                                                type="button"
-                                                onClick={handleCopy}
-                                                className="inline-flex items-center gap-1 rounded-md border border-slate-200 px-2 py-1 text-xs font-bold text-slate-600 transition hover:bg-slate-100"
-                                            >
-                                                {copied ? (
-                                                    <>
-                                                        <Check className="h-3 w-3 text-emerald-600" />
-                                                        <span className="text-emerald-600">Tersalin</span>
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <Copy className="h-3 w-3" />
-                                                        <span>Salin</span>
-                                                    </>
-                                                )}
-                                            </button>
-                                            <span
-                                                className={`rounded-md px-2.5 py-1 text-xs font-black uppercase ${
-                                                    participant.student?.is_binaan
-                                                        ? 'bg-purple-100 text-purple-800'
-                                                        : 'bg-blue-100 text-blue-800'
-                                                }`}
-                                            >
-                                                {participant.student?.is_binaan ? 'Peserta Binaan' : 'Peserta Umum'}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {participant.national?.is_verified && (
-                                    <div className="mt-6 flex flex-col items-center justify-between gap-3 rounded-2xl border-2 border-amber-400 bg-gradient-to-r from-amber-500/15 via-yellow-500/10 to-amber-500/20 p-4 sm:flex-row">
-                                        <div className="flex items-center gap-3 text-center sm:text-left">
-                                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500 text-white shadow-sm">
-                                                <Trophy className="h-5 w-5" />
-                                            </span>
-                                            <div>
-                                                <p className="text-xs font-black tracking-wider text-amber-900 uppercase">
-                                                    FINALIS RESMI BABAK NASIONAL 2026
-                                                </p>
-                                                <p className="text-xs text-amber-800">
-                                                    Peserta ini telah terverifikasi resmi untuk bertanding di Babak Final OMATIQ Nasional 2026.
-                                                </p>
                                             </div>
-                                        </div>
-                                        <span className="shrink-0 rounded-full bg-emerald-600 px-3 py-1 text-xs font-bold text-white shadow-xs">
-                                            Terverifikasi Nasional
-                                        </span>
-                                    </div>
-                                )}
-
-                                {/* Detailed Verification Info Grid */}
-                                <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                                    <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200/70">
-                                        <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
-                                            <GraduationCap className="h-4 w-4 text-[#17524A]" />
-                                            Asal Sekolah &amp; Kelas
-                                        </div>
-                                        <p className="mt-1 text-sm font-black text-slate-800">
-                                            {participant.student?.school_name ?? '-'}
-                                        </p>
-                                        <p className="text-xs font-semibold text-slate-500">
-                                            {participant.student?.school_level ?? 'SD/MI'} &bull; Kelas{' '}
-                                            {participant.student?.grade ?? '-'}
-                                        </p>
-                                    </div>
-
-                                    <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200/70">
-                                        <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
-                                            <MapPin className="h-4 w-4 text-[#17524A]" />
-                                            Cabang / Wilayah
-                                        </div>
-                                        <p className="mt-1 text-sm font-black text-slate-800">
-                                            {participant.branch ?? participant.student?.regency_name ?? '-'}
-                                        </p>
-                                        <p className="text-xs font-semibold text-slate-500">
-                                            {participant.student?.regency_name ?? 'Wilayah Terdaftar'}
-                                        </p>
-                                    </div>
-
-                                    {(() => {
-                                        const isBinaan = Boolean(
-                                            participant.student?.is_binaan,
-                                        );
-                                        const mentorName =
-                                            participant.student?.mentor_name?.trim();
-                                        const guardianName = (
-                                            participant.guardian_name ??
-                                            participant.student?.guardian_name
-                                        )?.trim();
-
-                                        const displayName = isBinaan
-                                            ? mentorName || '-'
-                                            : mentorName || guardianName || '-';
-
-                                        const label = isBinaan
-                                            ? 'Guru Pembina Sanggar'
-                                            : 'Orang Tua / Wali';
-
-                                        const subtitle = isBinaan
-                                            ? 'Guru Binaan Sanggar'
-                                            : mentorName &&
-                                                guardianName &&
-                                                mentorName !== guardianName
-                                              ? `Wali: ${guardianName}`
-                                              : 'Orang Tua / Wali Santri';
-
-                                        return (
-                                            <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200/70">
-                                                <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
-                                                    <UserCheck className="h-4 w-4 text-[#17524A]" />
-                                                    {label}
+                                            <div className="flex-1">
+                                                <div className="inline-flex items-center gap-2 rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-black text-[#17524A]">
+                                                    <Trophy className="h-3.5 w-3.5 text-[#E5BE1E]" />
+                                                    {activeEntity.olimpiade?.name ?? 'OMATIQ'} ({activeEntity.olimpiade?.category ?? '-'})
                                                 </div>
-                                                <p className="mt-1 text-sm font-black text-slate-800">
-                                                    {displayName}
-                                                </p>
-                                                <p className="text-xs font-semibold text-slate-500">
-                                                    {subtitle}
-                                                </p>
+                                                <h3 className="mt-2 text-2xl font-black text-slate-900">
+                                                    {activeEntity.student?.full_name}
+                                                </h3>
+                                                <div className="mt-2 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+                                                    <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2.5 py-1 font-mono text-xs font-extrabold text-slate-700">
+                                                        BIB: {activeEntity.registration_number}
+                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleCopy(activeEntity.registration_number)}
+                                                        className="inline-flex items-center gap-1 rounded-md border border-slate-200 px-2 py-1 text-xs font-bold text-slate-600 transition hover:bg-slate-100"
+                                                    >
+                                                        {copied ? <Check className="size-3 text-emerald-600" /> : <Copy className="size-3" />}
+                                                        {copied ? 'Tersalin' : 'Salin'}
+                                                    </button>
+                                                </div>
                                             </div>
-                                        );
-                                    })()}
-
-                                    {participant.penyaluran_sanggar_name ? (
-                                        <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200/70">
-                                            <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
-                                                <Building2 className="h-4 w-4 text-[#17524A]" />
-                                                Sanggar Binaan
-                                            </div>
-                                            <p className="mt-1 text-sm font-black text-slate-800">
-                                                {participant.penyaluran_sanggar_name}
-                                            </p>
-                                            <p className="text-xs font-semibold text-slate-500">
-                                                Sanggar Genius Yatim Mandiri
-                                            </p>
                                         </div>
-                                    ) : (
-                                        <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200/70">
-                                            <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
-                                                <Calendar className="h-4 w-4 text-[#17524A]" />
-                                                Tahun Event
-                                            </div>
-                                            <p className="mt-1 text-sm font-black text-slate-800">
-                                                OMATIQ {participant.event_year ?? 2026}
-                                            </p>
-                                            <p className="text-xs font-semibold text-slate-500">
-                                                Olimpiade Matematika &amp; Al-Qur'an
-                                            </p>
-                                        </div>
-                                    )}
-                                </div>
 
-                                {participant.student?.nik && (
-                                    <div className="mt-4 flex items-center justify-between rounded-xl bg-slate-100/80 px-4 py-2.5 text-xs text-slate-600">
-                                        <span className="font-semibold">ID Kependudukan (NIK):</span>
-                                        <span className="font-mono font-bold text-slate-800">
-                                            {participant.student.nik}
-                                        </span>
+                                        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                            <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
+                                                <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase">
+                                                    <Building2 className="size-4 text-[#17524A]" />
+                                                    Asal Sekolah & Kelas
+                                                </div>
+                                                <p className="mt-1 text-sm font-bold text-slate-800">
+                                                    {activeEntity.student?.school_name ?? '-'} (Kelas {activeEntity.student?.grade ?? '-'})
+                                                </p>
+                                            </div>
+                                            <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
+                                                <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase">
+                                                    <MapPin className="size-4 text-[#17524A]" />
+                                                    Wilayah / Cabang
+                                                </div>
+                                                <p className="mt-1 text-sm font-bold text-slate-800">
+                                                    {activeEntity.branch ?? activeEntity.student?.regency_name ?? '-'}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="mt-6 flex justify-center gap-3">
+                                            <a
+                                                href={`/pendaftaran/kartu/${activeEntity.registration_number}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="inline-flex items-center gap-2 rounded-xl bg-[#17524A] px-5 py-2.5 text-xs font-black text-white shadow hover:bg-[#13443d]"
+                                            >
+                                                <Printer className="size-4 text-[#FFE600]" />
+                                                Buka Lanyard Pass Peserta
+                                            </a>
+                                        </div>
                                     </div>
-                                )}
+                                </>
+                            )}
 
-                                {/* Action Buttons */}
-                                <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
-                                    <a
-                                        href={`/pendaftaran/kartu/${participant.registration_number}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#17524A] to-[#207267] px-6 py-3.5 text-sm font-black text-white shadow-lg shadow-[#17524A]/25 transition hover:-translate-y-0.5 hover:from-[#13443d] hover:to-[#1a5f56]"
-                                    >
-                                        <Printer className="h-4 w-4 text-[#FFE600]" />
-                                        {isVerified ? 'Buka Kartu Peserta' : 'Buka Bukti Registrasi'}
-                                    </a>
-                                    <Link
-                                        href="/"
-                                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-6 py-3.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
-                                    >
-                                        <Home className="h-4 w-4" />
-                                        Beranda
-                                    </Link>
-                                </div>
-                            </div>
+                            {/* 2. CHAPERONE PERSONA */}
+                            {resolvedPersona === 'chaperone' && (
+                                <>
+                                    <div className="bg-gradient-to-r from-[#0f766e] via-[#115e59] to-[#134e4a] px-6 py-6 text-center text-white sm:px-8">
+                                        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white/15 backdrop-blur-md ring-2 ring-white/30">
+                                            <Users className="h-10 w-10 text-[#FFE600]" />
+                                        </div>
+                                        <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-0.5 text-xs font-black tracking-wide text-[#FFE600] uppercase">
+                                            <UserCheck className="size-3.5" />
+                                            OFFICIAL PENDAMPING KONTINGEN NASIONAL
+                                        </div>
+                                        <h2 className="mt-2 text-xl font-black tracking-wide uppercase sm:text-2xl">
+                                            {activeEntity.name}
+                                        </h2>
+                                        <p className="mx-auto mt-1 max-w-lg text-xs leading-relaxed text-teal-100 sm:text-sm">
+                                            Official pendamping terverifikasi sah mewakili kontingen cabang {activeEntity.branch}.
+                                        </p>
+                                    </div>
 
-                            {/* Trust & Security Guarantee Footer */}
+                                    <div className="p-6 sm:p-8">
+                                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                                            <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
+                                                <span className="text-xs font-bold text-slate-500 uppercase">ID Pendamping</span>
+                                                <p className="mt-1 font-mono text-base font-extrabold text-teal-900">{activeEntity.formatted_id}</p>
+                                            </div>
+                                            <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
+                                                <span className="text-xs font-bold text-slate-500 uppercase">Kontingen Cabang</span>
+                                                <p className="mt-1 text-sm font-bold text-slate-800">{activeEntity.branch}</p>
+                                            </div>
+                                            <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
+                                                <span className="text-xs font-bold text-slate-500 uppercase">Total Santri Dampingan</span>
+                                                <p className="mt-1 text-base font-extrabold text-[#17524A]">{activeEntity.participants_count} Finalis</p>
+                                            </div>
+                                        </div>
+
+                                        {/* Accompanied Participants */}
+                                        {activeEntity.participants?.length > 0 && (
+                                            <div className="mt-6">
+                                                <h4 className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                                                    Rombongan Peserta yang Didampingi:
+                                                </h4>
+                                                <div className="mt-3 divide-y divide-slate-100 rounded-2xl border border-slate-200">
+                                                    {activeEntity.participants.map((p: any) => (
+                                                        <div key={p.id} className="flex items-center justify-between p-3.5 text-xs">
+                                                            <div>
+                                                                <p className="font-bold text-slate-900">{p.name}</p>
+                                                                <p className="text-slate-500">{p.olimpiade_name} &bull; {p.school_name}</p>
+                                                            </div>
+                                                            <a
+                                                                href={`/verifikasi/${p.registration_number}`}
+                                                                className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-1 font-mono text-[11px] font-bold text-slate-700 hover:bg-slate-200"
+                                                            >
+                                                                {p.registration_number}
+                                                                <ExternalLink className="size-3" />
+                                                            </a>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </>
+                            )}
+
+                            {/* 3. COMMITTEE PERSONA */}
+                            {resolvedPersona === 'committee' && (
+                                <>
+                                    <div className="bg-gradient-to-r from-[#0f172a] via-[#1e293b] to-[#1e3a8a] px-6 py-6 text-center text-white sm:px-8">
+                                        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white/15 backdrop-blur-md ring-2 ring-white/30">
+                                            <BadgeCheck className="h-10 w-10 text-[#FFE600]" />
+                                        </div>
+                                        <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-0.5 text-xs font-black tracking-wide text-[#FFE600] uppercase">
+                                            <ShieldCheck className="size-3.5" />
+                                            CREW ACCESS &bull; PANITIA PELAKSANA OMATIQ
+                                        </div>
+                                        <h2 className="mt-2 text-xl font-black tracking-wide uppercase sm:text-2xl">
+                                            {activeEntity.name}
+                                        </h2>
+                                        <p className="mx-auto mt-1 max-w-lg text-xs leading-relaxed text-indigo-100 sm:text-sm">
+                                            Divisi <strong>{activeEntity.division}</strong> &bull; Zona Akses: <strong>{activeEntity.access_zone}</strong>
+                                        </p>
+                                        {activeEntity.checked_in_at && (
+                                            <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/30 px-3 py-1 text-[11px] font-bold text-emerald-200">
+                                                <Clock className="size-3.5" />
+                                                Check-in Pertama: {activeEntity.checked_in_at}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="p-6 sm:p-8">
+                                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                                            <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
+                                                <span className="text-xs font-bold text-slate-500 uppercase">Kode Panitia</span>
+                                                <p className="mt-1 font-mono text-base font-extrabold text-indigo-900">{activeEntity.code}</p>
+                                            </div>
+                                            <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
+                                                <span className="text-xs font-bold text-slate-500 uppercase">Jabatan / Role</span>
+                                                <p className="mt-1 text-sm font-bold text-slate-800">{activeEntity.position}</p>
+                                            </div>
+                                            <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
+                                                <span className="text-xs font-bold text-slate-500 uppercase">Status Keaktifan</span>
+                                                <p className="mt-1 text-sm font-bold text-emerald-700">Aktif & Terdaftar</p>
+                                            </div>
+                                        </div>
+                                        {activeEntity.duty_description && (
+                                            <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3.5 text-xs text-slate-700">
+                                                <span className="font-bold text-slate-900">Uraian Tugas: </span>
+                                                {activeEntity.duty_description}
+                                            </div>
+                                        )}
+                                    </div>
+                                </>
+                            )}
+
+                            {/* 4. GUEST PERSONA */}
+                            {resolvedPersona === 'guest' && (
+                                <>
+                                    <div className="bg-gradient-to-r from-[#18181b] via-[#27272a] to-[#3f3f46] px-6 py-6 text-center text-white sm:px-8">
+                                        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white/15 backdrop-blur-md ring-2 ring-white/30">
+                                            <Crown className="h-10 w-10 text-[#FFE600]" />
+                                        </div>
+                                        <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-0.5 text-xs font-black tracking-wide text-[#FFE600] uppercase">
+                                            <Sparkles className="size-3.5" />
+                                            VIP GUEST &bull; {activeEntity.category}
+                                        </div>
+                                        <h2 className="mt-2 text-xl font-black tracking-wide uppercase sm:text-2xl">
+                                            {activeEntity.name}
+                                        </h2>
+                                        <p className="mx-auto mt-1 max-w-lg text-xs leading-relaxed text-amber-100 sm:text-sm">
+                                            {activeEntity.institution} &bull; {activeEntity.position}
+                                        </p>
+                                        {activeEntity.checked_in_at && (
+                                            <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-amber-500/30 px-3 py-1 text-[11px] font-bold text-amber-200">
+                                                <Clock className="size-3.5" />
+                                                Hadir Check-in: {activeEntity.checked_in_at}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="p-6 sm:p-8">
+                                        <div className="mb-6 rounded-2xl border-2 border-amber-300 bg-amber-50/70 p-4 text-center">
+                                            <span className="text-xs font-bold uppercase tracking-wider text-amber-900">
+                                                Alokasi Kursi / Meja Kehormatan
+                                            </span>
+                                            <p className="mt-1 text-2xl font-black text-amber-950 sm:text-3xl">
+                                                {activeEntity.table_number}
+                                            </p>
+                                            <p className="mt-1 text-xs text-amber-800">
+                                                Kapasitas Pendamping: <strong>{activeEntity.seat_count} Orang</strong>
+                                            </p>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                            <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
+                                                <span className="text-xs font-bold text-slate-500 uppercase">Kode Undangan</span>
+                                                <p className="mt-1 font-mono text-base font-extrabold text-slate-900">{activeEntity.code}</p>
+                                            </div>
+                                            <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
+                                                <span className="text-xs font-bold text-slate-500 uppercase">Kategori Tamu</span>
+                                                <p className="mt-1 text-sm font-bold text-amber-700">{activeEntity.category}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+
+                            {/* Trust Footer */}
                             <div className="border-t border-slate-100 bg-slate-50/80 px-6 py-4 text-center text-xs text-slate-500">
-                                <span className="font-bold text-[#17524A]">🔒 Verifikasi Kriptografis Resmi</span> &bull; Data diverifikasi langsung secara real-time dari database pusat OMATIQ Yatim Mandiri.
+                                <span className="font-bold text-[#17524A]">🔒 Verifikasi Terpadu Venue OMATIQ</span> &bull; Terhubung secara live ke basis data event.
                             </div>
                         </div>
                     ) : (
-                        /* Not Found / Invalid State */
+                        /* Not Found / Standby State */
                         <div className="overflow-hidden rounded-[28px] bg-white p-8 text-center shadow-xl ring-1 ring-slate-200/80 sm:p-12">
-                            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-rose-100 text-rose-600 ring-8 ring-rose-50">
-                                <ShieldAlert className="h-10 w-10" />
-                            </div>
-                            <h2 className="mt-6 text-2xl font-black text-slate-900 sm:text-3xl">
-                                {queryRegistrationNumber
-                                    ? 'Data Peserta Tidak Ditemukan'
-                                    : 'Masukkan Nomor Registrasi'}
-                            </h2>
-                            <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-slate-600">
-                                {queryRegistrationNumber ? (
-                                    <>
-                                        Nomor registrasi <span className="font-mono font-bold text-rose-600">"{queryRegistrationNumber}"</span> tidak terdaftar dalam sistem database OMATIQ. Harap berhati-hati terhadap pemalsuan kartu atau periksa kembali nomor registrasi Anda.
-                                    </>
-                                ) : (
-                                    'Silakan scan QR code pada kartu peserta atau masukkan nomor registrasi resmi pada kolom pencarian di atas.'
-                                )}
-                            </p>
-
-                            <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-                                <Link
-                                    href="/"
-                                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50"
-                                >
-                                    <Home className="h-4 w-4" />
-                                    Kembali ke Beranda
-                                </Link>
-                                <Link
-                                    href="/pendaftaran"
-                                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#17524A] px-6 py-3 text-sm font-black text-white shadow-md shadow-[#17524A]/20 transition hover:bg-[#13443d]"
-                                >
-                                    Daftar OMATIQ Sekarang
-                                </Link>
-                            </div>
+                            {activeCode ? (
+                                <>
+                                    <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-rose-100 text-rose-600 ring-8 ring-rose-50">
+                                        <ShieldAlert className="h-10 w-10" />
+                                    </div>
+                                    <h2 className="mt-6 text-2xl font-black text-slate-900 sm:text-3xl">
+                                        Data Barcode Tidak Ditemukan
+                                    </h2>
+                                    <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-slate-600">
+                                        Kode <span className="font-mono font-bold text-rose-600">"{activeCode}"</span> tidak terdaftar sebagai Peserta, Pendamping, Panitia, maupun Tamu Undangan di sistem OMATIQ.
+                                    </p>
+                                    <div className="mt-6 flex justify-center">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setSearchQuery('');
+                                                searchInputRef.current?.focus();
+                                            }}
+                                            className="rounded-xl bg-slate-100 px-5 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-200"
+                                        >
+                                            Bersihkan & Scan Ulang
+                                        </button>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-emerald-100 text-emerald-800 ring-8 ring-emerald-50">
+                                        <QrCode className="h-10 w-10 text-[#17524A]" />
+                                    </div>
+                                    <h2 className="mt-6 text-2xl font-black text-slate-900 sm:text-3xl">
+                                        Terminal Siap Pindai Lanyard Pass
+                                    </h2>
+                                    <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-slate-600">
+                                        Arahkan alat scanner USB ke barcode 1D atau QR Code pada lanyard pass pengunjung gate untuk verifikasi instan.
+                                    </p>
+                                    <div className="mt-6 inline-flex items-center gap-2 rounded-xl bg-slate-50 px-4 py-2 text-xs font-semibold text-slate-500 border border-slate-200">
+                                        <span className="flex size-2 rounded-full bg-emerald-500 animate-pulse" />
+                                        Input auto-focus siap menerima input terus menerus
+                                    </div>
+                                </>
+                            )}
                         </div>
                     )}
                 </div>
