@@ -33,6 +33,7 @@ import {
     Save,
     Search,
     ShieldAlert,
+    Shirt,
     UserCheck,
     Users,
 } from 'lucide-react';
@@ -105,6 +106,7 @@ export function ChaperoneForm({
         name: initialData.name ?? '',
         nik: initialData.nik ?? '',
         gender: (initialData.gender as 'male' | 'female') ?? 'male',
+        shirt_size: initialData.shirt_size ?? '',
         phone: initialData.phone ?? '',
         email: initialData.email ?? '',
         position: initialData.position ?? (initialData.source_type === 'guru' ? 'Guru Pembimbing Cabang' : 'Staf Kantor Cabang'),
@@ -173,7 +175,7 @@ export function ChaperoneForm({
     useEffect(() => {
         const pid = form.data.province_id;
         if (!pid) {
-            setRegencies([]);
+            setRegencies((prev) => (prev.length === 0 ? prev : []));
             return;
         }
 
@@ -191,7 +193,7 @@ export function ChaperoneForm({
     useEffect(() => {
         const rid = form.data.regency_id;
         if (!rid) {
-            setDistricts([]);
+            setDistricts((prev) => (prev.length === 0 ? prev : []));
             return;
         }
 
@@ -209,7 +211,7 @@ export function ChaperoneForm({
     useEffect(() => {
         const did = form.data.district_id;
         if (!did) {
-            setVillages([]);
+            setVillages((prev) => (prev.length === 0 ? prev : []));
             return;
         }
 
@@ -308,28 +310,54 @@ export function ChaperoneForm({
         );
     }, [participants, participantSearch]);
 
-    // Toggle participant selection
-    const toggleParticipant = (id: number) => {
-        const current = form.data.participant_ids;
-        if (current.includes(id)) {
-            form.setData('participant_ids', current.filter((item) => item !== id));
-        } else {
-            form.setData('participant_ids', [...current, id]);
-        }
+    // Toggle participant selection (strictly idempotent, safe against re-render loops & Radix bubble events)
+    const handleToggleParticipant = (id: number, nextChecked?: boolean) => {
+        form.setData((prev: any) => {
+            const current: number[] = Array.isArray(prev?.participant_ids)
+                ? prev.participant_ids
+                : [];
+            const exists = current.includes(id);
+            const shouldBeChecked = nextChecked !== undefined ? nextChecked : !exists;
+
+            if (shouldBeChecked === exists) {
+                return prev;
+            }
+
+            const nextParticipantIds = shouldBeChecked
+                ? [...current, id]
+                : current.filter((item: number) => item !== id);
+
+            return {
+                ...prev,
+                participant_ids: nextParticipantIds,
+            };
+        });
     };
 
     // Select / deselect all
     const selectAllParticipants = () => {
         const allIds = participants.map((p) => p.id);
-        form.setData('participant_ids', allIds);
+        form.setData((prev: any) => ({
+            ...prev,
+            participant_ids: allIds,
+        }));
     };
 
     const deselectAllParticipants = () => {
-        form.setData('participant_ids', []);
+        form.setData((prev: any) => ({
+            ...prev,
+            participant_ids: [],
+        }));
     };
 
     const submit = (e: FormEvent) => {
         e.preventDefault();
+        if (!form.data.shirt_size) {
+            form.setError('shirt_size', 'Silakan pilih ukuran kaos / baju pendamping terlebih dahulu.');
+            return;
+        }
+        form.clearErrors('shirt_size');
+
         if (isEdit && initialData.id) {
             form.put(chaperones.update(initialData.id).url);
         } else {
@@ -634,6 +662,40 @@ export function ChaperoneForm({
                             )}
                         </div>
 
+                        {/* Ukuran Kaos / Baju Pendamping */}
+                        <div className="space-y-1.5">
+                            <Label htmlFor="shirt_size" className="text-xs font-semibold flex items-center gap-1.5">
+                                <Shirt className="h-3.5 w-3.5 text-emerald-600" />
+                                Ukuran Kaos / Baju Pendamping <span className="text-destructive">*</span>
+                            </Label>
+                            <Select
+                                value={form.data.shirt_size}
+                                onValueChange={(val: string) => {
+                                    form.setData('shirt_size', val);
+                                    if (form.errors.shirt_size) form.clearErrors('shirt_size');
+                                }}
+                            >
+                                <SelectTrigger
+                                    id="shirt_size"
+                                    className={`w-full h-9 bg-background ${form.errors.shirt_size ? 'border-destructive' : ''}`}
+                                >
+                                    <SelectValue placeholder="Pilih Ukuran Kaos / Baju" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="XS">XS (Extra Small)</SelectItem>
+                                    <SelectItem value="S">S (Small)</SelectItem>
+                                    <SelectItem value="M">M (Medium)</SelectItem>
+                                    <SelectItem value="L">L (Large)</SelectItem>
+                                    <SelectItem value="XL">XL (Extra Large)</SelectItem>
+                                    <SelectItem value="XXL">XXL (Double Extra Large)</SelectItem>
+                                    <SelectItem value="XXXL">XXXL (3XL)</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            {form.errors.shirt_size && (
+                                <p className="text-xs text-destructive">{form.errors.shirt_size}</p>
+                            )}
+                        </div>
+
                         <div className="space-y-1.5">
                             <Label htmlFor="birth_place" className="text-xs font-semibold">
                                 Tempat Lahir
@@ -889,11 +951,19 @@ export function ChaperoneForm({
                     ) : (
                         <div className="max-h-[380px] overflow-y-auto space-y-2 rounded-lg border p-2">
                             {filteredParticipants.map((p) => {
-                                const isChecked = form.data.participant_ids.includes(p.id);
+                                const isChecked = Array.isArray(form.data.participant_ids) && form.data.participant_ids.includes(p.id);
                                 return (
                                     <div
                                         key={p.id}
-                                        onClick={() => toggleParticipant(p.id)}
+                                        onClick={(e) => {
+                                            // Ignore clicks from buttons/inputs/links to avoid double-dispatch
+                                            // and Radix CheckboxBubbleInput synthetic click loops
+                                            const target = e.target as HTMLElement;
+                                            if (target.closest('button, input, a')) {
+                                                return;
+                                            }
+                                            handleToggleParticipant(p.id, !isChecked);
+                                        }}
                                         className={`flex cursor-pointer items-center justify-between rounded-md border p-3 transition-colors ${
                                             isChecked
                                                 ? 'border-[#17524A] bg-[#17524A]/5'
@@ -902,9 +972,9 @@ export function ChaperoneForm({
                                     >
                                         <div className="flex items-center gap-3">
                                             <Checkbox
+                                                id={`participant-${p.id}`}
                                                 checked={isChecked}
-                                                onCheckedChange={() => toggleParticipant(p.id)}
-                                                onClick={(e) => e.stopPropagation()}
+                                                onCheckedChange={(val) => handleToggleParticipant(p.id, Boolean(val))}
                                             />
                                             <div>
                                                 <div className="flex items-center gap-2">

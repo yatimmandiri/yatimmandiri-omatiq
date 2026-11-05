@@ -67,7 +67,7 @@ export default function ShowCommitteePage({
                             {committee.name}
                         </h1>
                         <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                            {committee.position} &bull; Divisi {committee.division} &bull; OMATIQ {committee.event_year}
+                            {committee.position} &bull; Divisi {committee.division} &bull; {committee.branch ? `Cabang: ${committee.branch}` : 'Pusat'} &bull; OMATIQ {committee.event_year}
                         </p>
                     </div>
 
@@ -188,6 +188,13 @@ export default function ShowCommitteePage({
                                     </div>
 
                                     <div>
+                                        <div className="text-xs text-slate-500">Kantor Cabang / Penugasan</div>
+                                        <div className="font-semibold text-amber-700 dark:text-amber-400">
+                                            {committee.branch || 'Pusat'}
+                                        </div>
+                                    </div>
+
+                                    <div>
                                         <div className="text-xs text-slate-500">Divisi</div>
                                         <div className="font-semibold text-amber-700 dark:text-amber-400">
                                             {committee.division}
@@ -205,6 +212,13 @@ export default function ShowCommitteePage({
                                         <div className="text-xs text-slate-500">Jenis Kelamin</div>
                                         <div className="font-medium">
                                             {committee.gender === 'female' ? 'Perempuan' : 'Laki-laki'}
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <div className="text-xs text-slate-500">Ukuran Kaos / Baju Panitia</div>
+                                        <div className="font-bold text-emerald-700 dark:text-emerald-400">
+                                            {committee.shirt_size || '-'}
                                         </div>
                                     </div>
 

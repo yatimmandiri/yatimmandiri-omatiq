@@ -117,6 +117,8 @@ Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'auth.admi
         Route::get('chaperones/data', [NationalChaperoneController::class, 'getData'])->name('chaperones.data');
         Route::resource('chaperones', NationalChaperoneController::class);
 
+        Route::get('committees/template', [EventCommitteeController::class, 'template'])->name('committees.template');
+        Route::post('committees/import', [EventCommitteeController::class, 'import'])->name('committees.import');
         Route::get('committees/{committee}/card', [EventCommitteeController::class, 'printCard'])->name('committees.card');
         Route::post('committees/bulk-check-in', [EventCommitteeController::class, 'bulkCheckIn'])->name('committees.bulk-check-in');
         Route::put('committees/{committee}/status', [EventCommitteeController::class, 'status'])->name('committees.status');

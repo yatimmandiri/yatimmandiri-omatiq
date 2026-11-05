@@ -18,6 +18,7 @@ use Spatie\Activitylog\Support\LogOptions;
     'user_id',
     'created_by',
     'name',
+    'branch',
     'nik',
     'gender',
     'phone',
@@ -26,6 +27,7 @@ use Spatie\Activitylog\Support\LogOptions;
     'position',
     'access_zone',
     'photo_path',
+    'shirt_size',
     'status',
     'checked_in_at',
     'notes',
@@ -105,6 +107,7 @@ class EventCommittee extends Model
             $q->where(function (Builder $sub) use ($term) {
                 $sub->where('code', 'like', "%{$term}%")
                     ->orWhere('name', 'like', "%{$term}%")
+                    ->orWhere('branch', 'like', "%{$term}%")
                     ->orWhere('phone', 'like', "%{$term}%")
                     ->orWhere('nik', 'like', "%{$term}%")
                     ->orWhere('division', 'like', "%{$term}%")

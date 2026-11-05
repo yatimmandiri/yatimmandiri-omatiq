@@ -183,7 +183,7 @@ export default function ListGuestsPage() {
         {
             id: 'code',
             accessorKey: 'code',
-            header: ({ column }: any) => renderRowHeader(column, 'No. Undangan'),
+            header: (info: any) => renderRowHeader(info, 'No. Undangan'),
             cell: ({ row }: any) => (
                 <span className="font-mono text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700">
                     {row.original.code}
@@ -193,7 +193,7 @@ export default function ListGuestsPage() {
         {
             id: 'name',
             accessorKey: 'name',
-            header: ({ column }: any) => renderRowHeader(column, 'Nama Tamu'),
+            header: (info: any) => renderRowHeader(info, 'Nama Tamu'),
             cell: ({ row }: any) => {
                 const g = row.original;
                 return (
@@ -223,7 +223,7 @@ export default function ListGuestsPage() {
         {
             id: 'category',
             accessorKey: 'category',
-            header: ({ column }: any) => renderRowHeader(column, 'Kategori'),
+            header: (info: any) => renderRowHeader(info, 'Kategori'),
             cell: ({ row }: any) => {
                 const cat = row.original.category?.toLowerCase() || 'umum';
                 const meta = categoryLabels[cat] || categoryLabels.umum;
@@ -237,7 +237,7 @@ export default function ListGuestsPage() {
         {
             id: 'table_number',
             accessorKey: 'table_number',
-            header: ({ column }: any) => renderRowHeader(column, 'Meja & Pax'),
+            header: (info: any) => renderRowHeader(info, 'Meja & Pax'),
             cell: ({ row }: any) => {
                 const g = row.original;
                 return (
@@ -255,7 +255,7 @@ export default function ListGuestsPage() {
         {
             id: 'checked_in_at',
             accessorKey: 'checked_in_at',
-            header: ({ column }: any) => renderRowHeader(column, 'Kedatangan'),
+            header: (info: any) => renderRowHeader(info, 'Kedatangan'),
             cell: ({ row }: any) => {
                 const checked = row.original.checked_in_at;
                 return checked ? (

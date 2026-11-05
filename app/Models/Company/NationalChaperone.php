@@ -26,6 +26,7 @@ use Spatie\Activitylog\Support\LogOptions;
     'name',
     'nik',
     'gender',
+    'shirt_size',
     'phone',
     'email',
     'position',

@@ -48,6 +48,7 @@ test('cabang user can access chaperone index and create a chaperone for their br
         'name' => 'Bambang Sudarsono, S.T.',
         'nik' => '3515081234560001',
         'gender' => 'male',
+        'shirt_size' => 'L',
         'phone' => '081234567890',
         'email' => 'bambang@surabaya.local',
         'position' => 'Staf Program Cabang Surabaya',
@@ -60,6 +61,7 @@ test('cabang user can access chaperone index and create a chaperone for their br
     $chaperone = NationalChaperone::first();
     expect($chaperone)->not->toBeNull()
         ->and($chaperone->name)->toBe('Bambang Sudarsono, S.T.')
+        ->and($chaperone->shirt_size)->toBe('L')
         ->and($chaperone->branch)->toBe('SURABAYA')
         ->and($chaperone->status)->toBe('submitted')
         ->and($chaperone->participants)->toHaveCount(1)
@@ -192,22 +194,23 @@ test('public chaperone verification page displays verified status and escorted p
 
     $formattedId = 'OFF-'.str_pad((string) $chaperone->id, 5, '0', STR_PAD_LEFT);
 
-    // 1. Visit public verification by formatted ID
-    $response = $this->get(route('home.chaperone.verify', $formattedId));
+    // 1. Old legacy route 302-redirects to unified verification gate
+    $redirectResponse = $this->get(route('home.chaperone.verify', $formattedId));
+    $redirectResponse->assertRedirect('/verifikasi/'.$formattedId);
+
+    // 2. Visit unified venue gate terminal
+    $response = $this->get('/verifikasi/'.$formattedId);
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
-        ->component('home/chaperone/verify')
+        ->component('home/registration/verify')
         ->where('isValid', true)
+        ->where('persona', 'chaperone')
         ->where('chaperone.name', 'Ustadz Abdullah, S.Pd.I.')
         ->where('chaperone.branch', 'SURABAYA')
         ->where('chaperone.status', 'verified')
         ->where('chaperone.participants_count', 1)
         ->has('chaperone.participants', 1)
     );
-
-    // 2. Directing from generic verify endpoint with OFF- code redirects smoothly
-    $redirectResponse = $this->get('/verifikasi/'.$formattedId);
-    $redirectResponse->assertRedirect(route('home.chaperone.verify', ['code' => $formattedId]));
 });
 
 test('admin chaperone data api can search and find chaperone by scanned barcode id', function () {

@@ -23,11 +23,13 @@ import { Link, router, useForm } from '@inertiajs/react';
 import {
     ArrowLeft,
     BadgeCheck,
+    Building2,
     Image as ImageIcon,
     Info,
     Loader2,
     Save,
     Shield,
+    Shirt,
     Upload,
     User,
     X,
@@ -69,6 +71,16 @@ const ACCESS_ZONES = [
     'General Access',
 ];
 
+const SHIRT_SIZES = [
+    { value: 'XS', label: 'XS (Extra Small)' },
+    { value: 'S', label: 'S (Small)' },
+    { value: 'M', label: 'M (Medium)' },
+    { value: 'L', label: 'L (Large)' },
+    { value: 'XL', label: 'XL (Extra Large)' },
+    { value: 'XXL', label: 'XXL (Double Extra Large)' },
+    { value: 'XXXL', label: 'XXXL (3XL)' },
+];
+
 export function CommitteeForm({
     committee,
     photoUrl,
@@ -77,12 +89,14 @@ export function CommitteeForm({
 }: CommitteeFormProps) {
     const isEdit = !!committee;
 
-    const { data, setData, post, put, processing, errors, reset } = useForm({
+    const { data, setData, post, put, processing, errors, setError, clearErrors, reset } = useForm({
         name: committee?.name ?? '',
+        branch: committee?.branch ?? '',
         nik: committee?.nik ?? '',
         gender: committee?.gender ?? 'male',
         phone: committee?.phone ?? '',
         email: committee?.email ?? '',
+        shirt_size: committee?.shirt_size ?? '',
         division: committee?.division ?? 'Acara & Lomba',
         position: committee?.position ?? 'Anggota Panitia',
         access_zone: committee?.access_zone ?? 'All Access',
@@ -114,6 +128,12 @@ export function CommitteeForm({
 
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
+
+        if (!data.shirt_size) {
+            setError('shirt_size', 'Silakan pilih ukuran kaos / baju panitia terlebih dahulu.');
+            return;
+        }
+        clearErrors('shirt_size');
 
         if (isEdit) {
             router.post(`/admin/companies/committees/${committee.id}`, {
@@ -191,6 +211,22 @@ export function CommitteeForm({
                             {errors.name && <p className="text-xs text-rose-500">{errors.name}</p>}
                         </div>
 
+                        {/* Branch / Kantor Cabang */}
+                        <div className="space-y-1.5">
+                            <Label htmlFor="branch" className="text-xs font-semibold flex items-center gap-1.5">
+                                <Building2 className="h-3.5 w-3.5 text-amber-600" />
+                                Kantor Cabang / Penugasan <span className="text-slate-400 font-normal">(Opsional)</span>
+                            </Label>
+                            <Input
+                                id="branch"
+                                value={data.branch}
+                                onChange={(e) => setData('branch', e.target.value)}
+                                placeholder="Contoh: Pusat 1 / Regional / SURABAYA"
+                                className={errors.branch ? 'border-rose-500' : ''}
+                            />
+                            {errors.branch && <p className="text-xs text-rose-500">{errors.branch}</p>}
+                        </div>
+
                         {/* NIK */}
                         <div className="space-y-1.5">
                             <Label htmlFor="nik" className="text-xs font-semibold">
@@ -262,6 +298,36 @@ export function CommitteeForm({
                                 className={errors.email ? 'border-rose-500' : ''}
                             />
                             {errors.email && <p className="text-xs text-rose-500">{errors.email}</p>}
+                        </div>
+
+                        {/* Ukuran Kaos / Baju Panitia */}
+                        <div className="space-y-1.5 sm:col-span-2">
+                            <Label htmlFor="shirt_size" className="text-xs font-semibold flex items-center gap-1.5">
+                                <Shirt className="h-3.5 w-3.5 text-emerald-600" />
+                                Ukuran Kaos / Baju Panitia <span className="text-rose-500">*</span>
+                            </Label>
+                            <Select
+                                value={data.shirt_size}
+                                onValueChange={(val) => {
+                                    setData('shirt_size', val);
+                                    if (errors.shirt_size) clearErrors('shirt_size');
+                                }}
+                            >
+                                <SelectTrigger id="shirt_size" className={errors.shirt_size ? 'border-rose-500' : ''}>
+                                    <SelectValue placeholder="Pilih ukuran baju panitia" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {SHIRT_SIZES.map((size) => (
+                                        <SelectItem key={size.value} value={size.value}>
+                                            {size.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <p className="text-[11px] text-muted-foreground">
+                                Digunakan panitia pusat untuk penyediaan seragam resmi Babak Final Nasional OMATIQ 2026.
+                            </p>
+                            {errors.shirt_size && <p className="text-xs text-rose-500">{errors.shirt_size}</p>}
                         </div>
                     </div>
                 </CardContent>

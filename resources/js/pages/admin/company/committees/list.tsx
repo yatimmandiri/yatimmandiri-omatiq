@@ -1,3 +1,4 @@
+import { CommitteeImportModal } from '@/components/forms/admin/company/committee-import-modal';
 import { DataTableComponent } from '@/components/partials/dataTables';
 import { DataTableProvider } from '@/components/partials/dataTables/hooks/useDataTables';
 import {
@@ -22,10 +23,12 @@ import { Head, Link, router, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import {
     BadgeCheck,
+    Building2,
     CheckCircle2,
     ChevronDown,
     Clock,
     Eye,
+    FileSpreadsheet,
     Filter,
     MoreHorizontal,
     Pencil,
@@ -34,6 +37,7 @@ import {
     RotateCcw,
     Shield,
     Trash2,
+    UploadCloud,
     User,
     UserCheck,
     Users,
@@ -42,12 +46,13 @@ import {
 import { useState } from 'react';
 
 export default function ListCommitteesPage() {
-    const { stats, divisions = [] } = usePage<any>().props;
+    const { stats, divisions = [], branches = [] } = usePage<any>().props;
 
     const [filterValue, setFilterValue] = useState<Record<string, string>>({});
     const [refreshData, setRefreshData] = useState(false);
     const [selectedRows, setSelectedRows] = useState<any[]>([]);
     const [isCheckingIn, setIsCheckingIn] = useState(false);
+    const [openImportModal, setOpenImportModal] = useState(false);
 
     const hasActiveFilter = Object.values(filterValue).some(Boolean);
 
@@ -162,7 +167,7 @@ export default function ListCommitteesPage() {
         {
             id: 'code',
             accessorKey: 'code',
-            header: ({ column }: any) => renderRowHeader(column, 'Kode ID'),
+            header: (info: any) => renderRowHeader(info, 'Kode ID'),
             cell: ({ row }: any) => (
                 <span className="font-mono text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700">
                     {row.original.code}
@@ -172,7 +177,7 @@ export default function ListCommitteesPage() {
         {
             id: 'name',
             accessorKey: 'name',
-            header: ({ column }: any) => renderRowHeader(column, 'Nama Panitia'),
+            header: (info: any) => renderRowHeader(info, 'Nama Panitia'),
             cell: ({ row }: any) => {
                 const c = row.original;
                 return (
@@ -200,9 +205,26 @@ export default function ListCommitteesPage() {
             },
         },
         {
+            id: 'branch',
+            accessorKey: 'branch',
+            header: (info: any) => renderRowHeader(info, 'Kantor Cabang'),
+            cell: ({ row }: any) => {
+                const b = row.original.branch;
+                return (
+                    <Badge
+                        variant="outline"
+                        className="text-xs font-semibold bg-amber-50/70 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800/60"
+                    >
+                        <Building2 className="mr-1 h-3 w-3 text-amber-600" />
+                        {b || 'Pusat'}
+                    </Badge>
+                );
+            },
+        },
+        {
             id: 'division',
             accessorKey: 'division',
-            header: ({ column }: any) => renderRowHeader(column, 'Divisi & Jabatan'),
+            header: (info: any) => renderRowHeader(info, 'Divisi & Jabatan'),
             cell: ({ row }: any) => {
                 const c = row.original;
                 return (
@@ -211,7 +233,7 @@ export default function ListCommitteesPage() {
                             {c.division}
                         </div>
                         <div className="text-[11px] text-slate-500">
-                            {c.position || '-'}
+                            {c.position || '-'} {c.shirt_size ? `• Kaos: ${c.shirt_size}` : ''}
                         </div>
                     </div>
                 );
@@ -220,7 +242,7 @@ export default function ListCommitteesPage() {
         {
             id: 'access_zone',
             accessorKey: 'access_zone',
-            header: ({ column }: any) => renderRowHeader(column, 'Hak Akses'),
+            header: (info: any) => renderRowHeader(info, 'Hak Akses'),
             cell: ({ row }: any) => (
                 <Badge variant="outline" className="text-[10px] border-amber-500/40 text-amber-700 dark:text-amber-300 bg-amber-50/50 dark:bg-amber-950/20 font-bold">
                     {row.original.access_zone || 'All Access'}
@@ -230,7 +252,7 @@ export default function ListCommitteesPage() {
         {
             id: 'checked_in_at',
             accessorKey: 'checked_in_at',
-            header: ({ column }: any) => renderRowHeader(column, 'Status Kehadiran'),
+            header: (info: any) => renderRowHeader(info, 'Status Kehadiran'),
             cell: ({ row }: any) => {
                 const checked = row.original.checked_in_at;
                 return checked ? (
@@ -248,7 +270,7 @@ export default function ListCommitteesPage() {
         {
             id: 'status',
             accessorKey: 'status',
-            header: ({ column }: any) => renderRowHeader(column, 'Keaktifan'),
+            header: (info: any) => renderRowHeader(info, 'Keaktifan'),
             cell: ({ row }: any) => {
                 const isActive = row.original.status === 'active';
                 return (
@@ -263,6 +285,11 @@ export default function ListCommitteesPage() {
     const divisionOptions = divisions.map((div: string) => ({
         value: div,
         label: div,
+    }));
+
+    const branchOptions = branches.map((b: string) => ({
+        value: b,
+        label: b,
     }));
 
     return (
@@ -284,8 +311,17 @@ export default function ListCommitteesPage() {
 
                     <div className="flex items-center gap-2">
                         <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setOpenImportModal(true)}
+                            className="border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-200 hover:bg-amber-50 dark:hover:bg-amber-950/30 font-semibold shadow-sm text-xs sm:text-sm"
+                        >
+                            <UploadCloud className="mr-1.5 h-4 w-4 text-amber-600 dark:text-amber-400" />
+                            Import Excel / CSV
+                        </Button>
+                        <Button
                             asChild
-                            className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold shadow-md shadow-amber-500/20"
+                            className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold shadow-md shadow-amber-500/20 text-xs sm:text-sm"
                         >
                             <Link href="/admin/companies/committees/create">
                                 <Plus className="mr-1.5 h-4 w-4" />
@@ -361,6 +397,18 @@ export default function ListCommitteesPage() {
                             />
                         </div>
 
+                        {/* Branch Filter */}
+                        {branchOptions.length > 0 && (
+                            <div className="w-40">
+                                <SelectComponent
+                                    options={branchOptions}
+                                    value={filterValue.branch || ''}
+                                    onValueChange={(val: string) => setFilterValue((prev) => ({ ...prev, branch: val }))}
+                                    placeholder="Semua Cabang"
+                                />
+                            </div>
+                        )}
+
                         {/* Presence Filter */}
                         <div className="w-36">
                             <SelectComponent
@@ -430,7 +478,9 @@ export default function ListCommitteesPage() {
                                 No: i + 1,
                                 'Kode ID': item.code,
                                 Nama: item.name,
+                                'Kantor Cabang': item.branch || 'Pusat',
                                 NIK: item.nik ? `'${item.nik}` : '-',
+                                'Ukuran Kaos': item.shirt_size || '-',
                                 Divisi: item.division,
                                 Jabatan: item.position || '-',
                                 'Hak Akses': item.access_zone,
@@ -444,6 +494,14 @@ export default function ListCommitteesPage() {
                     </DataTableProvider>
                 </div>
             </div>
+
+            {/* Modal Import Excel / CSV */}
+            <CommitteeImportModal
+                open={openImportModal}
+                onOpenChange={setOpenImportModal}
+                divisions={divisions}
+                onSuccess={() => setRefreshData((prev) => !prev)}
+            />
         </>
     );
 }

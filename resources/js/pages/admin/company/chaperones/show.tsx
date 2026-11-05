@@ -247,6 +247,13 @@ export default function ShowChaperonePage() {
                                 </div>
 
                                 <div>
+                                    <span className="text-xs text-muted-foreground block">Ukuran Kaos / Baju</span>
+                                    <span className="font-bold text-emerald-700 dark:text-emerald-400">
+                                        {chaperone.shirt_size || '-'}
+                                    </span>
+                                </div>
+
+                                <div>
                                     <span className="text-xs text-muted-foreground block">Nomor WhatsApp / HP</span>
                                     <div className="flex items-center gap-2 mt-0.5">
                                         <span className="font-mono font-medium text-foreground">{chaperone.phone}</span>

@@ -852,45 +852,81 @@ class ParticipantController extends Controller
         }
 
         $isBinaan = (bool) $participant->student?->is_binaan;
-        if (! $isBinaan) {
-            return back()->withErrors(['availability_letter' => 'Fitur ini khusus untuk pendaftaran ulang santri binaan oleh Cabang.']);
-        }
+        $hasLetter = (bool) $national->availability_letter_path;
 
-        $request->validate([
-            'availability_letter' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:4096'],
+        $rules = [
+            'availability_letter' => $hasLetter
+                ? ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:4096']
+                : ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:4096'],
             'shirt_size' => ['required', 'string', 'in:XS,S,M,L,XL,XXL,XXXL'],
-        ], [
+        ];
+        $messages = [
             'availability_letter.required' => 'Surat kesediaan hadir wajib diunggah.',
             'availability_letter.file' => 'Surat kesediaan harus berupa file dokumen atau gambar.',
             'availability_letter.mimes' => 'Format file surat kesediaan harus JPG, PNG, atau PDF.',
             'availability_letter.max' => 'Ukuran file surat kesediaan maksimal 4MB.',
             'shirt_size.required' => 'Ukuran baju peserta wajib dipilih.',
             'shirt_size.in' => 'Pilihan ukuran baju tidak valid.',
-        ]);
+        ];
 
-        $letterPath = $this->uploadFile(
-            $national->availability_letter_path,
-            $request->file('availability_letter'),
-            'national/availability_letters'
-        );
+        if (! $isBinaan && ! $national->payment_proof_path) {
+            $rules['national_payment_proof'] = ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:4096'];
+            $messages['national_payment_proof.required'] = 'Bukti transfer biaya babak nasional wajib diunggah untuk peserta umum.';
+            $messages['national_payment_proof.file'] = 'Bukti transfer harus berupa file dokumen atau gambar.';
+            $messages['national_payment_proof.mimes'] = 'Format file bukti transfer harus JPG, PNG, atau PDF.';
+            $messages['national_payment_proof.max'] = 'Ukuran file bukti transfer maksimal 4MB.';
+        } elseif (! $isBinaan && $request->hasFile('national_payment_proof')) {
+            $rules['national_payment_proof'] = ['file', 'mimes:jpg,jpeg,png,pdf', 'max:4096'];
+        }
 
-        $national->update([
-            'availability_letter_path' => $letterPath,
+        $request->validate($rules, $messages);
+
+        $updates = [
             'shirt_size' => strtoupper($request->shirt_size),
             'registered_at' => now(),
-            'status' => 'verified',
-            'payment_status' => 'paid',
-            'payment_amount' => 0,
-        ]);
+        ];
 
-        $name = $participant->student?->full_name ?? $participant->user?->name ?? 'Santri Binaan';
-        $this->logSuccess('national-reregister-binaan', "Cabang mendaftarkan ulang santri binaan {$name} untuk Babak Nasional", [
+        if ($request->hasFile('availability_letter')) {
+            $letterPath = $this->uploadFile(
+                $national->availability_letter_path,
+                $request->file('availability_letter'),
+                'national/availability_letters'
+            );
+            $updates['availability_letter_path'] = $letterPath;
+        }
+
+        if ($isBinaan) {
+            $updates['status'] = 'verified';
+            $updates['payment_status'] = 'paid';
+            $updates['payment_amount'] = 0;
+        } else {
+            if ($request->hasFile('national_payment_proof')) {
+                $proofPath = $this->uploadFile(
+                    $national->payment_proof_path,
+                    $request->file('national_payment_proof'),
+                    'national/payment_proofs'
+                );
+                $updates['payment_proof_path'] = $proofPath;
+            }
+
+            $updates['status'] = 'waiting_confirmation';
+            $updates['payment_status'] = 'waiting_confirmation';
+        }
+
+        $national->update($updates);
+
+        $name = $participant->student?->full_name ?? $participant->user?->name ?? 'Peserta';
+        $typeLabel = $isBinaan ? 'santri binaan' : 'peserta umum';
+
+        $this->logSuccess('national-reregister', "Cabang mendaftarkan ulang {$typeLabel} {$name} untuk Babak Nasional", [
             'participant_id' => $participant->id,
             'national_participant_id' => $national->id,
             'registered_by' => Auth::id(),
+            'is_binaan' => $isBinaan,
+            'status' => $updates['status'],
         ]);
 
-        return back()->with('success', "Pendaftaran ulang Babak Nasional untuk santri binaan {$name} berhasil disimpan!");
+        return back()->with('success', "Pendaftaran ulang Babak Nasional untuk {$typeLabel} {$name} berhasil disimpan!");
     }
 
     public function nationalDeclineBinaan(Request $request, Participant $participant): RedirectResponse
@@ -903,9 +939,6 @@ class ParticipantController extends Controller
         }
 
         $isBinaan = (bool) $participant->student?->is_binaan;
-        if (! $isBinaan) {
-            return back()->withErrors(['decline_reason' => 'Fitur ini khusus untuk pelaporan pengunduran diri santri binaan oleh Cabang.']);
-        }
 
         $request->validate([
             'decline_category' => ['required', 'string', 'max:50'],
@@ -925,16 +958,19 @@ class ParticipantController extends Controller
             'notes' => "[MENGUNDURKAN DIRI - {$request->decline_category}] {$request->decline_reason}",
         ]);
 
-        $name = $participant->student?->full_name ?? $participant->user?->name ?? 'Santri Binaan';
-        $this->logSuccess('national-decline-binaan', "Cabang melaporkan pengunduran diri santri binaan {$name} dari Babak Nasional", [
+        $name = $participant->student?->full_name ?? $participant->user?->name ?? 'Peserta';
+        $typeLabel = $isBinaan ? 'santri binaan' : 'peserta umum';
+
+        $this->logSuccess('national-decline', "Cabang mencatat pengunduran diri {$typeLabel} {$name} dari Babak Nasional", [
             'participant_id' => $participant->id,
             'national_participant_id' => $national->id,
             'decline_category' => $request->decline_category,
             'decline_reason' => $request->decline_reason,
             'declined_by' => Auth::id(),
+            'is_binaan' => $isBinaan,
         ]);
 
-        return back()->with('success', "Status pengunduran diri santri binaan {$name} dari Babak Nasional berhasil dicatat.");
+        return back()->with('success', "Status pengunduran diri {$typeLabel} {$name} dari Babak Nasional berhasil dicatat.");
     }
 
     public function bulkNationalQualify(Request $request)

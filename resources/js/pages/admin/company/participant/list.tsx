@@ -307,11 +307,10 @@ export default function ListPage() {
                                         </DropdownMenuItem>
                                     )}
                                     {row.national &&
-                                        (row.student?.is_binaan ||
-                                            row.registration_type ===
-                                                'teacher') &&
-                                        row.national.status ===
-                                            'unconfirmed' && (
+                                        (row.national.status ===
+                                            'unconfirmed' ||
+                                            row.national.status ===
+                                                'waiting_confirmation') && (
                                             <DropdownMenuItem
                                                 onClick={() => {
                                                     setSelectedParticipantForReRegister(
@@ -325,7 +324,11 @@ export default function ListPage() {
                                             >
                                                 <FileCheck2 className="mr-2 size-4 text-emerald-600" />
                                                 <span>
-                                                    Daftarkan Ulang Binaan
+                                                    {row.student?.is_binaan ||
+                                                    row.registration_type ===
+                                                        'teacher'
+                                                        ? 'Daftarkan Ulang Binaan'
+                                                        : 'Bantu Daftar Ulang Umum'}
                                                 </span>
                                             </DropdownMenuItem>
                                         )}

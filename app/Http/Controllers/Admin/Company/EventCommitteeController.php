@@ -9,6 +9,7 @@ use App\Http\Requests\Company\UpdateEventCommitteeRequest;
 use App\Models\Company\EventCommittee;
 use App\Models\Core\User;
 use App\Services\BarcodeService;
+use App\Services\Company\CommitteeImportService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -16,6 +17,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class EventCommitteeController extends Controller
 {
@@ -43,9 +45,19 @@ class EventCommitteeController extends Controller
             ->pluck('division')
             ->values();
 
+        $branches = EventCommittee::query()
+            ->select('branch')
+            ->whereNotNull('branch')
+            ->where('branch', '!=', '')
+            ->distinct()
+            ->orderBy('branch')
+            ->pluck('branch')
+            ->values();
+
         return Inertia::render('admin/company/committees/list', [
             'stats' => $stats,
             'divisions' => $divisions,
+            'branches' => $branches,
         ]);
     }
 
@@ -63,6 +75,10 @@ class EventCommitteeController extends Controller
             $query->where('division', $request->string('division')->toString());
         }
 
+        if ($request->filled('branch')) {
+            $query->where('branch', $request->string('branch')->toString());
+        }
+
         if ($request->filled('checked_in')) {
             if ($request->string('checked_in')->toString() === 'yes') {
                 $query->whereNotNull('checked_in_at');
@@ -76,6 +92,7 @@ class EventCommitteeController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->whereRaw('LOWER(name) LIKE ?', ["%{$search}%"])
                     ->orWhereRaw('LOWER(code) LIKE ?', ["%{$search}%"])
+                    ->orWhereRaw('LOWER(branch) LIKE ?', ["%{$search}%"])
                     ->orWhere('phone', 'like', "%{$search}%")
                     ->orWhere('nik', 'like', "%{$search}%")
                     ->orWhereRaw('LOWER(division) LIKE ?', ["%{$search}%"])
@@ -85,7 +102,7 @@ class EventCommitteeController extends Controller
 
         $sortField = $request->input('sorting.0.id', 'id');
         $sortDesc = $request->boolean('sorting.0.desc', true);
-        $allowedSorts = ['id', 'code', 'name', 'division', 'position', 'status', 'checked_in_at', 'created_at'];
+        $allowedSorts = ['id', 'code', 'name', 'branch', 'division', 'position', 'shirt_size', 'status', 'checked_in_at', 'created_at'];
 
         if (in_array($sortField, $allowedSorts, true)) {
             $query->orderBy($sortField, $sortDesc ? 'desc' : 'asc');
@@ -222,6 +239,68 @@ class EventCommitteeController extends Controller
             'success' => true,
             'message' => "Berhasil mencatat kehadiran ({$updated} panitia ditandai hadir).",
             'count' => $updated,
+        ]);
+    }
+
+    public function template(CommitteeImportService $importService): StreamedResponse
+    {
+        $this->authorize('create', EventCommittee::class);
+
+        $csv = $importService->generateTemplateCsv();
+
+        return response()->streamDownload(function () use ($csv) {
+            echo $csv;
+        }, 'Template-Import-Panitia-OMATIQ.csv', [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
+    }
+
+    public function import(Request $request, CommitteeImportService $importService): JsonResponse
+    {
+        $this->authorize('create', EventCommittee::class);
+
+        $request->validate([
+            'file' => ['required', 'file', 'mimes:csv,txt,xlsx,xls', 'max:5120'],
+            'default_division' => ['nullable', 'string', 'max:100'],
+            'update_existing' => ['nullable', 'boolean'],
+        ], [
+            'file.required' => 'Silakan pilih file spreadsheet (CSV atau Excel) yang akan diimpor.',
+            'file.mimes' => 'Format file harus berupa CSV (.csv) atau Excel (.xlsx).',
+            'file.max' => 'Ukuran file maksimal adalah 5MB.',
+        ]);
+
+        $options = [
+            'default_division' => $request->input('default_division', 'Panitia Pelaksana Babak Final'),
+            'update_existing' => $request->boolean('update_existing', true),
+            'created_by' => Auth::id(),
+            'event_year' => 2026,
+        ];
+
+        $result = $importService->import($request->file('file'), $options);
+
+        if (! empty($result['errors']) && $result['imported'] === 0 && $result['updated'] === 0) {
+            return response()->json([
+                'success' => false,
+                'message' => $result['errors'][0] ?? 'Gagal mengimpor data panitia.',
+                'result' => $result,
+            ], 422);
+        }
+
+        $msg = "Impor selesai! Berhasil menambahkan {$result['imported']} panitia baru";
+        if ($result['updated'] > 0) {
+            $msg .= " dan memperbarui {$result['updated']} data panitia.";
+        } else {
+            $msg .= '.';
+        }
+
+        if ($result['skipped'] > 0) {
+            $msg .= " ({$result['skipped']} data dilewati).";
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => $msg,
+            'result' => $result,
         ]);
     }
 
