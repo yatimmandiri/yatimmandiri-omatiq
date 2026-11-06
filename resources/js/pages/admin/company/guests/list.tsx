@@ -258,14 +258,23 @@ export default function ListGuestsPage() {
             header: (info: any) => renderRowHeader(info, 'Kedatangan'),
             cell: ({ row }: any) => {
                 const checked = row.original.checked_in_at;
-                return checked ? (
+                if (!checked) {
+                    return (
+                        <Badge variant="outline" className="border-slate-200 text-slate-400 text-[10px]">
+                            {row.original.status === 'confirmed' ? 'Terkonfirmasi' : 'Belum Hadir'}
+                        </Badge>
+                    );
+                }
+                const checkedDate = new Date(checked);
+                const isToday = checkedDate.toDateString() === new Date().toDateString();
+                return isToday ? (
                     <Badge variant="outline" className="border-emerald-300 text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/20 text-[10px]">
                         <CheckCircle2 className="mr-1 h-3 w-3 text-emerald-600" />
-                        Hadir ({new Date(checked).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })})
+                        Hadir Hari Ini ({checkedDate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })})
                     </Badge>
                 ) : (
-                    <Badge variant="outline" className="border-slate-200 text-slate-400 text-[10px]">
-                        {row.original.status === 'confirmed' ? 'Terkonfirmasi' : 'Belum Hadir'}
+                    <Badge variant="outline" className="border-slate-200 text-slate-500 bg-slate-50 dark:bg-slate-900/40 text-[10px]">
+                        Hari Lalu ({checkedDate.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })})
                     </Badge>
                 );
             },

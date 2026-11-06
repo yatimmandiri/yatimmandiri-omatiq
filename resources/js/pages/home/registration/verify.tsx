@@ -505,9 +505,19 @@ export default function UniversalVerifyPage({
                                             Divisi <strong>{activeEntity.division}</strong> &bull; Zona Akses: <strong>{activeEntity.access_zone}</strong>
                                         </p>
                                         {activeEntity.checked_in_at && (
-                                            <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/30 px-3 py-1 text-[11px] font-bold text-emerald-200">
+                                            <div
+                                                className={`mt-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold ${
+                                                    activeEntity.is_checked_in_today
+                                                        ? 'bg-emerald-500/30 text-emerald-200'
+                                                        : 'bg-slate-500/30 text-slate-300'
+                                                }`}
+                                            >
                                                 <Clock className="size-3.5" />
-                                                Check-in Pertama: {activeEntity.checked_in_at}
+                                                {isFirstCheckIn
+                                                    ? `Check-in Hari Ini Berhasil (${activeEntity.checked_in_time || activeEntity.checked_in_at})`
+                                                    : activeEntity.is_checked_in_today
+                                                      ? `Telah Hadir Hari Ini (${activeEntity.checked_in_time || activeEntity.checked_in_at})`
+                                                      : `Check-in Terakhir: ${activeEntity.checked_in_at}`}
                                             </div>
                                         )}
                                     </div>
@@ -555,9 +565,19 @@ export default function UniversalVerifyPage({
                                             {activeEntity.institution} &bull; {activeEntity.position}
                                         </p>
                                         {activeEntity.checked_in_at && (
-                                            <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-amber-500/30 px-3 py-1 text-[11px] font-bold text-amber-200">
+                                            <div
+                                                className={`mt-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold ${
+                                                    activeEntity.is_checked_in_today
+                                                        ? 'bg-amber-500/30 text-amber-200'
+                                                        : 'bg-slate-500/30 text-slate-300'
+                                                }`}
+                                            >
                                                 <Clock className="size-3.5" />
-                                                Hadir Check-in: {activeEntity.checked_in_at}
+                                                {isFirstCheckIn
+                                                    ? `Kedatangan Hari Ini Tercatat (${activeEntity.checked_in_time || activeEntity.checked_in_at})`
+                                                    : activeEntity.is_checked_in_today
+                                                      ? `Telah Hadir Hari Ini (${activeEntity.checked_in_time || activeEntity.checked_in_at})`
+                                                      : `Check-in Terakhir: ${activeEntity.checked_in_at}`}
                                             </div>
                                         )}
                                     </div>

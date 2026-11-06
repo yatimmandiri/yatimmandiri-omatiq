@@ -34,7 +34,7 @@ class EventCommitteeController extends Controller
         $stats = [
             'total' => EventCommittee::count(),
             'active' => EventCommittee::where('status', 'active')->count(),
-            'checked_in' => EventCommittee::whereNotNull('checked_in_at')->count(),
+            'checked_in' => EventCommittee::whereDate('checked_in_at', today())->count(),
             'inactive' => EventCommittee::where('status', 'inactive')->count(),
         ];
 
@@ -232,12 +232,15 @@ class EventCommitteeController extends Controller
 
         $ids = $request->input('ids');
         $updated = EventCommittee::whereIn('id', $ids)
-            ->whereNull('checked_in_at')
+            ->where(function ($q) {
+                $q->whereNull('checked_in_at')
+                    ->orWhereDate('checked_in_at', '<', today());
+            })
             ->update(['checked_in_at' => now()]);
 
         return response()->json([
             'success' => true,
-            'message' => "Berhasil mencatat kehadiran ({$updated} panitia ditandai hadir).",
+            'message' => "Berhasil mencatat kehadiran ({$updated} panitia ditandai hadir hari ini).",
             'count' => $updated,
         ]);
     }

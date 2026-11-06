@@ -100,6 +100,7 @@ export default function ListPage() {
         useState<Record<string, string>>(defaultFilter);
     const [refreshData, setRefreshData] = useState(false);
     const [proofUrl, setProofUrl] = useState<string | null>(null);
+    const [proofTitle, setProofTitle] = useState<string>('Bukti Pembayaran');
     const [isProofModalOpen, setIsProofModalOpen] = useState(false);
 
     const [selectedRows, setSelectedRows] = useState<any[]>([]);
@@ -209,6 +210,30 @@ export default function ListPage() {
                         router.post(
                             participants.nationalQualify(row.id).url,
                             {},
+                            {
+                                preserveScroll: true,
+                                onSuccess: () => setRefreshData((v) => !v),
+                            },
+                        );
+                    }
+                };
+
+                const handleVerifyNationalDirect = async () => {
+                    const isConfirmed = await confirmAction({
+                        title: 'Verifikasi Babak Final Nasional?',
+                        html: `Apakah Anda yakin ingin menyetujui dan memverifikasi pendaftaran ulang babak final nasional untuk <strong>${name}</strong> (${row.registration_number})?`,
+                        icon: 'question',
+                        confirmButtonText: 'Ya, Verifikasi Nasional',
+                        cancelButtonText: 'Batal',
+                    });
+
+                    if (isConfirmed) {
+                        router.post(
+                            participants.nationalVerify(row.id).url,
+                            {
+                                status: 'verified',
+                                payment_status: 'paid',
+                            },
                             {
                                 preserveScroll: true,
                                 onSuccess: () => setRefreshData((v) => !v),
@@ -329,6 +354,19 @@ export default function ListPage() {
                                                         'teacher'
                                                         ? 'Daftarkan Ulang Binaan'
                                                         : 'Bantu Daftar Ulang Umum'}
+                                                </span>
+                                            </DropdownMenuItem>
+                                        )}
+                                    {row.national?.status ===
+                                        'waiting_confirmation' &&
+                                        (isAdmin || isKeuangan) && (
+                                            <DropdownMenuItem
+                                                onClick={handleVerifyNationalDirect}
+                                                className="font-semibold text-emerald-700 focus:text-emerald-800 dark:text-emerald-400"
+                                            >
+                                                <CheckCircle2 className="mr-2 size-4 text-emerald-600" />
+                                                <span>
+                                                    Verifikasi Babak Final
                                                 </span>
                                             </DropdownMenuItem>
                                         )}
@@ -668,26 +706,74 @@ export default function ListPage() {
             accessorKey: 'payment_proof_url',
             cell: (info: any) => {
                 const row = info.row.original;
-                const url = row.payment_proof_url;
+                const regionalUrl = row.payment_proof_url;
+                const nationalUrl = row.national?.payment_proof_url;
+                const isBinaan = Boolean(
+                    row.student?.is_binaan ||
+                        row.registration_type === 'teacher',
+                );
+                const hasNational = Boolean(row.national);
 
-                if (!url) {
-                    return <span className="text-xs text-muted-foreground">-</span>;
+                if (!regionalUrl && !nationalUrl) {
+                    if (hasNational && isBinaan) {
+                        return (
+                            <span className="text-[11px] font-medium text-blue-700 dark:text-blue-300">
+                                ✨ Binaan (Gratis)
+                            </span>
+                        );
+                    }
+                    return (
+                        <span className="text-xs text-muted-foreground">-</span>
+                    );
                 }
 
+                const studentName =
+                    row.student?.full_name ?? row.user?.name ?? 'Peserta';
+
                 return (
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="h-7 gap-1.5 px-2.5 text-xs font-medium text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-950/50"
-                        onClick={() => {
-                            setProofUrl(url);
-                            setIsProofModalOpen(true);
-                        }}
-                    >
-                        <Eye className="size-3.5" />
-                        Lihat Bukti
-                    </Button>
+                    <div className="flex flex-col items-start gap-1 py-0.5">
+                        {nationalUrl && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-6 gap-1 px-2 text-[11px] font-bold border-amber-500 bg-amber-50 text-amber-900 hover:bg-amber-100 hover:text-amber-950 dark:border-amber-700 dark:bg-amber-950/50 dark:text-amber-200 shadow-2xs"
+                                onClick={() => {
+                                    setProofUrl(nationalUrl);
+                                    setProofTitle(
+                                        `Bukti Transfer Babak Final Nasional - ${row.registration_number} (${studentName})`,
+                                    );
+                                    setIsProofModalOpen(true);
+                                }}
+                            >
+                                <Trophy className="size-3 text-amber-600 shrink-0" />
+                                <span>Bukti Final</span>
+                            </Button>
+                        )}
+
+                        {regionalUrl && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-6 gap-1 px-2 text-[11px] font-medium text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-950/50"
+                                onClick={() => {
+                                    setProofUrl(regionalUrl);
+                                    setProofTitle(
+                                        `Bukti Transfer Penyisihan - ${row.registration_number} (${studentName})`,
+                                    );
+                                    setIsProofModalOpen(true);
+                                }}
+                            >
+                                <Eye className="size-3 shrink-0" />
+                                <span>
+                                    {nationalUrl
+                                        ? 'Bukti Penyisihan'
+                                        : 'Lihat Bukti'}
+                                </span>
+                            </Button>
+                        )}
+                    </div>
                 );
             },
             enableSorting: false,
@@ -1031,6 +1117,7 @@ export default function ListPage() {
                 open={isProofModalOpen}
                 onOpenChange={setIsProofModalOpen}
                 href={proofUrl ?? ''}
+                title={proofTitle}
             />
 
             <NationalReRegisterModal
