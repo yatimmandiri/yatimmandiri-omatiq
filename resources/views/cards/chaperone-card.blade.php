@@ -406,7 +406,7 @@
 
             <!-- Pass Header -->
             <div class="pass-header">
-                <img src="{{ asset('assets/images/LOGO OMATIQ WHITE.png') }}" alt="Logo OMATIQ" class="logo-img">
+                <img src="{{ asset('assets/images/LOGO OMATIQ-Fav.png') }}" alt="Logo OMATIQ" class="logo-img">
                 <div class="pass-subtitle">Olimpiade Matematika & Al-Qur'an</div>
                 <div class="pass-badge-pill">OFFICIAL PENDAMPING</div>
             </div>

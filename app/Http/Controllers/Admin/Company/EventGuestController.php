@@ -30,7 +30,7 @@ class EventGuestController extends Controller
 
         $stats = [
             'total' => EventGuest::count(),
-            'attended' => EventGuest::whereNotNull('checked_in_at')->count(),
+            'attended' => EventGuest::whereDate('checked_in_at', today())->count(),
             'confirmed' => EventGuest::where('status', 'confirmed')->count(),
             'vvip' => EventGuest::where('category', 'vvip')->count(),
             'vip' => EventGuest::where('category', 'vip')->count(),
@@ -196,7 +196,10 @@ class EventGuestController extends Controller
 
         $ids = $request->input('ids');
         $updated = EventGuest::whereIn('id', $ids)
-            ->whereNull('checked_in_at')
+            ->where(function ($q) {
+                $q->whereNull('checked_in_at')
+                    ->orWhereDate('checked_in_at', '<', today());
+            })
             ->update([
                 'checked_in_at' => now(),
                 'status' => 'attended',
@@ -204,7 +207,7 @@ class EventGuestController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => "Berhasil mencatat kedatangan ({$updated} tamu ditandai hadir).",
+            'message' => "Berhasil mencatat kedatangan ({$updated} tamu ditandai hadir hari ini).",
             'count' => $updated,
         ]);
     }

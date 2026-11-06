@@ -307,9 +307,11 @@ class ParticipantRegistrationController extends Controller
                 if ($committee) {
                     $persona = 'committee';
                     $isValid = $committee->status === 'active';
-                    if ($isValid && is_null($committee->checked_in_at)) {
+                    $isCheckInToday = $committee->checked_in_at && $committee->checked_in_at->isToday();
+                    if ($isValid && ! $isCheckInToday) {
                         $isFirstCheckIn = true;
                         $committee->updateQuietly(['checked_in_at' => now()]);
+                        $committee->refresh();
                     }
                     $entity = $this->formatCommitteePayload($committee);
                 }
@@ -323,9 +325,11 @@ class ParticipantRegistrationController extends Controller
                 if ($guest) {
                     $persona = 'guest';
                     $isValid = $guest->status !== 'declined';
-                    if ($isValid && is_null($guest->checked_in_at)) {
+                    $isCheckInToday = $guest->checked_in_at && $guest->checked_in_at->isToday();
+                    if ($isValid && ! $isCheckInToday) {
                         $isFirstCheckIn = true;
                         $guest->updateQuietly(['checked_in_at' => now(), 'status' => 'attended']);
+                        $guest->refresh();
                     }
                     $entity = $this->formatGuestPayload($guest);
                 }
@@ -383,9 +387,11 @@ class ParticipantRegistrationController extends Controller
                     if ($committee) {
                         $persona = 'committee';
                         $isValid = $committee->status === 'active';
-                        if ($isValid && is_null($committee->checked_in_at)) {
+                        $isCheckInToday = $committee->checked_in_at && $committee->checked_in_at->isToday();
+                        if ($isValid && ! $isCheckInToday) {
                             $isFirstCheckIn = true;
                             $committee->updateQuietly(['checked_in_at' => now()]);
+                            $committee->refresh();
                         }
                         $entity = $this->formatCommitteePayload($committee);
                     } else {
@@ -393,9 +399,11 @@ class ParticipantRegistrationController extends Controller
                         if ($guest) {
                             $persona = 'guest';
                             $isValid = $guest->status !== 'declined';
-                            if ($isValid && is_null($guest->checked_in_at)) {
+                            $isCheckInToday = $guest->checked_in_at && $guest->checked_in_at->isToday();
+                            if ($isValid && ! $isCheckInToday) {
                                 $isFirstCheckIn = true;
                                 $guest->updateQuietly(['checked_in_at' => now(), 'status' => 'attended']);
+                                $guest->refresh();
                             }
                             $entity = $this->formatGuestPayload($guest);
                         } else {
@@ -543,6 +551,9 @@ class ParticipantRegistrationController extends Controller
 
     private function formatCommitteePayload(EventCommittee $committee): array
     {
+        $checkedInAt = $committee->checked_in_at;
+        $isToday = $checkedInAt && $checkedInAt->isToday();
+
         return [
             'id' => $committee->id,
             'code' => $committee->code,
@@ -559,13 +570,18 @@ class ParticipantRegistrationController extends Controller
             'status' => $committee->status,
             'notes' => $committee->notes,
             'event_year' => $committee->event_year,
-            'checked_in_at' => $committee->checked_in_at ? $committee->checked_in_at->translatedFormat('d F Y, H:i').' WIB' : null,
+            'checked_in_at' => $checkedInAt ? $checkedInAt->translatedFormat('d F Y, H:i').' WIB' : null,
+            'checked_in_time' => $checkedInAt ? $checkedInAt->translatedFormat('H:i').' WIB' : null,
+            'is_checked_in_today' => $isToday,
             'has_user_account' => ! is_null($committee->user_id),
         ];
     }
 
     private function formatGuestPayload(EventGuest $guest): array
     {
+        $checkedInAt = $guest->checked_in_at;
+        $isToday = $checkedInAt && $checkedInAt->isToday();
+
         return [
             'id' => $guest->id,
             'code' => $guest->code,
@@ -581,7 +597,9 @@ class ParticipantRegistrationController extends Controller
             'status' => $guest->status,
             'notes' => $guest->notes,
             'event_year' => $guest->event_year,
-            'checked_in_at' => $guest->checked_in_at ? $guest->checked_in_at->translatedFormat('d F Y, H:i').' WIB' : null,
+            'checked_in_at' => $checkedInAt ? $checkedInAt->translatedFormat('d F Y, H:i').' WIB' : null,
+            'checked_in_time' => $checkedInAt ? $checkedInAt->translatedFormat('H:i').' WIB' : null,
+            'is_checked_in_today' => $isToday,
         ];
     }
 
