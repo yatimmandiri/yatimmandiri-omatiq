@@ -54,19 +54,35 @@ class ParticipantCardController extends Controller
         }
 
         $regNo = $participant->registration_number;
-        $isNational = ($request->query('stage') === 'national' || $request->boolean('national'))
-            && $participant->national
-            && $participant->national->status === 'verified';
+        $wantsNational = $request->query('stage') === 'national' || $request->boolean('national');
+        $hasNational = $participant->national !== null;
+        $isNational = $wantsNational || $hasNational;
 
-        if (($request->query('stage') === 'national' || $request->boolean('national')) && ! $isNational) {
-            abort(403, 'Kartu tanda peserta Babak Final Nasional hanya dapat dicetak oleh finalis yang telah terverifikasi resmi.');
+        if ($wantsNational && ! $hasNational) {
+            abort(403, 'Peserta belum terdaftar pada Babak Final Nasional.');
         }
 
+        $isNationalVerified = $hasNational && $participant->national->status === 'verified';
+        $isVerified = $isNational ? $isNationalVerified : ($participant->status === 'verified');
+
         $verifyUrl = url('/verifikasi/'.$regNo);
-        $qrCodeSvg = $this->barcodeService->generateQrCodeSvg($verifyUrl, size: 92, color: $isNational ? '#b45309' : '#17524A');
-        $barcodeSvg = $this->barcodeService->generateCode128Svg($regNo, height: 28, barWidth: 1.1, color: $isNational ? '#b45309' : '#17524A');
+        $qrCodeColor = $isVerified ? '#09767a' : '#94a3b8';
+        $qrCodeSvg = $this->barcodeService->generateQrCodeSvg($verifyUrl, size: 180, color: $qrCodeColor);
+        $barcodeSvg = $this->barcodeService->generateCode128Svg($regNo, height: 28, barWidth: 1.1, color: $qrCodeColor);
 
         $isPdf = $request->query('format') === 'pdf';
+
+        $sponsors = [
+            ['name' => 'Telkomsel', 'file' => 'telkomsel.png'],
+            ['name' => 'Telkom Indonesia', 'file' => 'telkom.png'],
+            ['name' => 'Chickin', 'file' => 'chickin.png'],
+            ['name' => 'Bank Al-Timtara', 'file' => 'bankaltimtara.png'],
+            ['name' => 'Bank BJB', 'file' => 'bankbjb.png'],
+            ['name' => 'YBM PLN', 'file' => 'ybmpln.png'],
+            ['name' => 'Nurul Hidayah', 'file' => 'nurulhidayah.png'],
+            ['name' => 'LinkAja', 'file' => 'linkaja.png'],
+            ['name' => 'LinkAja Syariah', 'file' => 'linkaja-syariah.png'],
+        ];
 
         $data = [
             'participant' => $participant,
@@ -76,6 +92,8 @@ class ParticipantCardController extends Controller
             'verifyUrl' => $verifyUrl,
             'isPdf' => $isPdf,
             'isNational' => $isNational,
+            'isVerified' => $isVerified,
+            'sponsors' => $sponsors,
         ];
 
         if ($request->query('format') === 'pdf') {

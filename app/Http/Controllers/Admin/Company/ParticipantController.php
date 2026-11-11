@@ -723,10 +723,20 @@ class ParticipantController extends Controller
             abort(403, 'Penetapan kelolosan ke Babak Nasional hanya dapat dilakukan oleh Panitia Pusat (Administrator).');
         }
 
+        $request->validate([
+            'action' => ['nullable', 'in:qualify,disqualify'],
+        ]);
+
+        $action = $request->input('action', 'qualify');
         $national = NationalParticipant::withTrashed()->where('participant_id', $participant->id)->first();
         $name = $participant->student?->full_name ?? $participant->user?->name ?? 'Peserta';
 
-        if ($national && ! $national->trashed()) {
+        // Hanya hapus / batalkan jika parameter action secara eksplisit adalah 'disqualify'
+        if ($action === 'disqualify') {
+            if (! $national || $national->trashed()) {
+                return back()->with('info', "Peserta {$name} belum berstatus lolos ke Babak Final Nasional.");
+            }
+
             // Proteksi: Peserta yang sudah terlanjur daftar ulang nasional hanya bisa dibatalkan oleh Admin
             if (! Auth::user()->hasRole('Administrators') && $national->status !== 'unconfirmed') {
                 return back()->withErrors([
@@ -740,6 +750,11 @@ class ParticipantController extends Controller
             ]);
 
             return back()->with('success', "Status lolos babak nasional untuk {$name} berhasil dibatalkan.");
+        }
+
+        // Action 'qualify': Pastikan tidak pernah mendelete data jika peserta sudah lolos
+        if ($national && ! $national->trashed()) {
+            return back()->with('info', "Peserta {$name} sudah berstatus lolos ke Babak Final OMATIQ Nasional 2026.");
         }
 
         if ($national && $national->trashed()) {

@@ -243,6 +243,68 @@ class DashboardService
 
         $title = $branch ? "Dashboard Cabang {$branch}" : 'Dashboard Cabang';
 
+        // National Chaperone monitoring metrics for Cabang
+        $nationalBaseQuery = Participant::query()
+            ->whereHas('national', fn ($q) => $q->whereNull('deleted_at'));
+
+        if (filled($branch)) {
+            $nationalBaseQuery->where(function ($q) use ($branch) {
+                $q->where('branch', $branch)
+                    ->orWhere('branch', 'like', "%{$branch}%");
+            });
+        }
+
+        $totalNationalCount = (clone $nationalBaseQuery)->count();
+        $nationalWithChaperoneCount = (clone $nationalBaseQuery)->whereHas('nationalChaperones')->count();
+        $nationalWithoutChaperoneCount = (clone $nationalBaseQuery)->whereDoesntHave('nationalChaperones')->count();
+
+        $unaccompaniedNationalList = (clone $nationalBaseQuery)
+            ->whereDoesntHave('nationalChaperones')
+            ->with([
+                'student:id,full_name,school_name,grade,is_binaan',
+                'olimpiade:id,name,category',
+                'national:id,participant_id,status,payment_status',
+            ])
+            ->select('id', 'registration_number', 'branch', 'student_id', 'olimpiade_id', 'created_at')
+            ->orderBy('id')
+            ->get()
+            ->map(function (Participant $p) {
+                return [
+                    'id' => $p->id,
+                    'registration_number' => $p->registration_number,
+                    'name' => $p->student?->full_name ?? '-',
+                    'branch' => $p->branch ?? '-',
+                    'school_name' => $p->student?->school_name ?? '-',
+                    'grade' => $p->student?->grade ?? '-',
+                    'olimpiade_name' => $p->olimpiade?->name ?? '-',
+                    'category' => $p->olimpiade?->category ?? '-',
+                    'is_binaan' => (bool) $p->student?->is_binaan,
+                    'national_status' => $p->national?->status ?? 'unconfirmed',
+                ];
+            })
+            ->values()
+            ->all();
+
+        $chaperoneQuery = NationalChaperone::query()->forBranch($branch, $userKantorId);
+        $chaperoneCount = (clone $chaperoneQuery)->count();
+
+        $chaperonesList = $chaperoneQuery
+            ->select('id', 'name', 'branch', 'source_type', 'phone', 'status')
+            ->withCount('participants')
+            ->orderBy('name')
+            ->get()
+            ->map(fn ($c) => [
+                'id' => $c->id,
+                'name' => $c->name,
+                'branch' => $c->branch,
+                'source_type' => $c->source_type,
+                'phone' => $c->phone,
+                'status' => $c->status,
+                'participants_count' => $c->participants_count,
+            ])
+            ->values()
+            ->all();
+
         return [
             'view' => 'admin/dashboard/admin',
             'data' => [
@@ -255,6 +317,12 @@ class DashboardService
                 'teacherCount' => $teacherCount,
                 'studentCount' => $studentCount,
                 'sanggarCount' => $sanggarCount,
+                'chaperoneCount' => $chaperoneCount,
+                'totalNationalCount' => $totalNationalCount,
+                'nationalWithChaperoneCount' => $nationalWithChaperoneCount,
+                'nationalWithoutChaperoneCount' => $nationalWithoutChaperoneCount,
+                'unaccompaniedNationalList' => $unaccompaniedNationalList,
+                'chaperonesList' => $chaperonesList,
             ],
         ];
     }
@@ -334,6 +402,61 @@ class DashboardService
             $studentCount = Student::where('is_binaan', true)->count();
         }
 
+        // National Chaperone monitoring metrics for Admin
+        $nationalBaseQuery = Participant::query()
+            ->whereHas('national', fn ($q) => $q->whereNull('deleted_at'));
+
+        $totalNationalCount = (clone $nationalBaseQuery)->count();
+        $nationalWithChaperoneCount = (clone $nationalBaseQuery)->whereHas('nationalChaperones')->count();
+        $nationalWithoutChaperoneCount = (clone $nationalBaseQuery)->whereDoesntHave('nationalChaperones')->count();
+
+        $unaccompaniedNationalList = (clone $nationalBaseQuery)
+            ->whereDoesntHave('nationalChaperones')
+            ->with([
+                'student:id,full_name,school_name,grade,is_binaan',
+                'olimpiade:id,name,category',
+                'national:id,participant_id,status,payment_status',
+            ])
+            ->select('id', 'registration_number', 'branch', 'student_id', 'olimpiade_id', 'created_at')
+            ->orderBy('branch')
+            ->orderBy('id')
+            ->get()
+            ->map(function (Participant $p) {
+                return [
+                    'id' => $p->id,
+                    'registration_number' => $p->registration_number,
+                    'name' => $p->student?->full_name ?? '-',
+                    'branch' => $p->branch ?? '-',
+                    'school_name' => $p->student?->school_name ?? '-',
+                    'grade' => $p->student?->grade ?? '-',
+                    'olimpiade_name' => $p->olimpiade?->name ?? '-',
+                    'category' => $p->olimpiade?->category ?? '-',
+                    'is_binaan' => (bool) $p->student?->is_binaan,
+                    'national_status' => $p->national?->status ?? 'unconfirmed',
+                ];
+            })
+            ->values()
+            ->all();
+
+        $chaperoneCount = NationalChaperone::count();
+        $chaperonesList = NationalChaperone::query()
+            ->select('id', 'name', 'branch', 'source_type', 'phone', 'status')
+            ->withCount('participants')
+            ->orderBy('branch')
+            ->orderBy('name')
+            ->get()
+            ->map(fn ($c) => [
+                'id' => $c->id,
+                'name' => $c->name,
+                'branch' => $c->branch,
+                'source_type' => $c->source_type,
+                'phone' => $c->phone,
+                'status' => $c->status,
+                'participants_count' => $c->participants_count,
+            ])
+            ->values()
+            ->all();
+
         return [
             'view' => 'admin/dashboard/admin',
             'data' => [
@@ -344,6 +467,12 @@ class DashboardService
                 'teacherCount' => $teacherCount,
                 'studentCount' => $studentCount,
                 'olimpiadeCount' => Olimpiade::count(),
+                'chaperoneCount' => $chaperoneCount,
+                'totalNationalCount' => $totalNationalCount,
+                'nationalWithChaperoneCount' => $nationalWithChaperoneCount,
+                'nationalWithoutChaperoneCount' => $nationalWithoutChaperoneCount,
+                'unaccompaniedNationalList' => $unaccompaniedNationalList,
+                'chaperonesList' => $chaperonesList,
             ],
         ];
     }

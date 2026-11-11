@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ProofModal } from '@/components/ui/proof-modal';
 import { dashboard } from '@/routes/admin';
 import participants from '@/routes/admin/companies/participants';
-import { confirmAction, showWarningAlert } from '@/utils/sweetalert';
+import { confirmAction, confirmTwoStepDelete, showWarningAlert } from '@/utils/sweetalert';
 import { router, usePage } from '@inertiajs/react';
 import {
     AlertCircle,
@@ -76,29 +76,50 @@ export default function ShowPage() {
             return;
         }
 
-        const isConfirmed = await confirmAction({
-            title: isCurrentlyQualified
-                ? 'Batalkan Kelolosan Nasional?'
-                : 'Loloskan ke Babak Nasional?',
-            html: isCurrentlyQualified
-                ? `Apakah Anda yakin ingin membatalkan status lolos nasional untuk <strong>${fullName}</strong> (${participant.registration_number})?`
-                : `Apakah Anda yakin ingin meloloskan <strong>${fullName}</strong> (${participant.registration_number}) ke Babak Final OMATIQ Nasional 2026?`,
-            icon: isCurrentlyQualified ? 'warning' : 'question',
-            confirmButtonText: isCurrentlyQualified
-                ? 'Ya, Batalkan Lolos'
-                : 'Ya, Loloskan ke Nasional',
-            cancelButtonText: 'Kembali',
-            isDanger: isCurrentlyQualified,
-        });
+        if (isCurrentlyQualified) {
+            // Strict Two-Step Confirmation for Disqualification
+            const isConfirmed = await confirmTwoStepDelete({
+                titleStep1: 'Batalkan Kelolosan Nasional?',
+                htmlStep1: `Apakah Anda yakin ingin membatalkan status lolos babak nasional untuk <strong>${fullName}</strong> (${participant.registration_number})?`,
+                confirmTextStep1: 'Lanjut ke Konfirmasi Akhir →',
+                cancelTextStep1: 'Kembali',
+                titleStep2: '⚠️ Konfirmasi Terakhir Batalkan Lolos Nasional',
+                htmlStep2: `<div class="p-3 bg-red-50 text-red-900 border border-red-200 rounded-lg text-xs leading-relaxed text-left mb-3 dark:bg-red-950/40 dark:text-red-200 dark:border-red-800">
+                    <strong>PERINGATAN:</strong> Peserta <strong>${fullName}</strong> (${participant.registration_number}) akan kehilangan status lolos Babak Final Nasional OMATIQ 2026. Anda harus mengonfirmasi kedua kalinya untuk memproses pembatalan ini.
+                </div>
+                Apakah Anda benar-benar yakin ingin membatalkan status finalis ini sekarang?`,
+                confirmTextStep2: 'Ya, Saya Yakin 100% Batalkan',
+                cancelTextStep2: 'Kembali (Tetap Lolos)',
+            });
 
-        if (isConfirmed) {
-            router.post(
-                participants.nationalQualify(participant.id).url,
-                {},
-                {
-                    preserveScroll: true,
-                },
-            );
+            if (isConfirmed) {
+                router.post(
+                    participants.nationalQualify(participant.id).url,
+                    { action: 'disqualify' },
+                    {
+                        preserveScroll: true,
+                    },
+                );
+            }
+        } else {
+            const isConfirmed = await confirmAction({
+                title: 'Loloskan ke Babak Nasional?',
+                html: `Apakah Anda yakin ingin meloloskan <strong>${fullName}</strong> (${participant.registration_number}) ke Babak Final OMATIQ Nasional 2026?`,
+                icon: 'question',
+                confirmButtonText: 'Ya, Loloskan ke Nasional',
+                cancelButtonText: 'Kembali',
+                isDanger: false,
+            });
+
+            if (isConfirmed) {
+                router.post(
+                    participants.nationalQualify(participant.id).url,
+                    { action: 'qualify' },
+                    {
+                        preserveScroll: true,
+                    },
+                );
+            }
         }
     };
 

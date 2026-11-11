@@ -391,16 +391,30 @@ class DataPesertaController extends Controller
     {
         $this->authorize('view', $participant);
 
+        $request->validate([
+            'action' => ['nullable', 'in:qualify,disqualify'],
+        ]);
+
+        $action = $request->input('action', 'qualify');
         $national = NationalParticipant::withTrashed()->where('participant_id', $participant->id)->first();
         $name = $participant->student?->full_name ?? $participant->user?->name ?? 'Peserta';
 
-        if ($national && ! $national->trashed()) {
+        if ($action === 'disqualify') {
+            if (! $national || $national->trashed()) {
+                return back()->with('info', "Peserta {$name} belum berstatus lolos ke Babak Final Nasional.");
+            }
+
             $national->delete();
             $this->logSuccess('national-disqualify', "Guru membatalkan status lolos nasional untuk {$name}", [
                 'participant_id' => $participant->id,
             ]);
 
             return back()->with('success', "Status lolos babak nasional untuk {$name} berhasil dibatalkan.");
+        }
+
+        // Action 'qualify': Pastikan tidak pernah mendelete data jika peserta sudah lolos
+        if ($national && ! $national->trashed()) {
+            return back()->with('info', "Peserta {$name} sudah berstatus lolos ke Babak Final OMATIQ Nasional 2026.");
         }
 
         if ($national && $national->trashed()) {

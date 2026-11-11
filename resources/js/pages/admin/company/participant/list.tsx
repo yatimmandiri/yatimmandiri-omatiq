@@ -19,6 +19,7 @@ import { formatExportString } from '@/utils/formatCsv';
 import {
     confirmAction,
     confirmDelete,
+    confirmTwoStepDelete,
     showWarningAlert,
 } from '@/utils/sweetalert';
 import { router, usePage } from '@inertiajs/react';
@@ -136,18 +137,31 @@ export default function ListPage() {
             htmlText += `<br><br><span class="text-xs text-amber-600 dark:text-amber-400"><strong>Catatan:</strong> Terdapat ${registeredCount} peserta yang sudah melakukan daftar ulang nasional. Peserta tersebut hanya dapat dibatalkan oleh Admin Pusat dan akan otomatis dilewati.</span>`;
         }
 
-        const isConfirmed = await confirmAction({
-            title: isQualify
-                ? `Loloskan ${selectedRows.length} Peserta ke Babak Nasional?`
-                : `Batalkan Kelolosan ${selectedRows.length} Peserta?`,
-            html: htmlText,
-            icon: isQualify ? 'question' : 'warning',
-            confirmButtonText: isQualify
-                ? `Ya, Loloskan (${selectedRows.length})`
-                : `Ya, Batalkan (${selectedRows.length})`,
-            cancelButtonText: 'Kembali',
-            isDanger: !isQualify,
-        });
+        let isConfirmed = false;
+        if (!isQualify) {
+            isConfirmed = await confirmTwoStepDelete({
+                titleStep1: `Batalkan Kelolosan ${selectedRows.length} Peserta?`,
+                htmlStep1: htmlText,
+                confirmTextStep1: 'Lanjut ke Konfirmasi Akhir →',
+                cancelTextStep1: 'Kembali',
+                titleStep2: `⚠️ Konfirmasi Terakhir Pembatalan Masal (${selectedRows.length} Peserta)`,
+                htmlStep2: `<div class="p-3 bg-red-50 text-red-900 border border-red-200 rounded-lg text-xs leading-relaxed text-left mb-3 dark:bg-red-950/40 dark:text-red-200 dark:border-red-800">
+                    <strong>PERINGATAN TINGKAT TINGGI:</strong> Anda akan membatalkan status lolos Babak Final Nasional untuk <strong>${selectedRows.length} peserta</strong> terpilih secara masal.
+                </div>
+                Apakah Anda benar-benar yakin 100% ingin membatalkan status kelolosan peserta-peserta ini?`,
+                confirmTextStep2: `Ya, Batalkan ${selectedRows.length} Peserta Sekarang`,
+                cancelTextStep2: 'Batal (Jangan Proses)',
+            });
+        } else {
+            isConfirmed = await confirmAction({
+                title: `Loloskan ${selectedRows.length} Peserta ke Babak Nasional?`,
+                html: htmlText,
+                icon: 'question',
+                confirmButtonText: `Ya, Loloskan (${selectedRows.length})`,
+                cancelButtonText: 'Kembali',
+                isDanger: false,
+            });
+        }
 
         if (isConfirmed) {
             router.post(
@@ -191,30 +205,52 @@ export default function ListPage() {
                         return;
                     }
 
-                    const isConfirmed = await confirmAction({
-                        title: isCurrentlyQualified
-                            ? 'Batalkan Kelolosan Nasional?'
-                            : 'Loloskan ke Babak Nasional?',
-                        html: isCurrentlyQualified
-                            ? `Apakah Anda yakin ingin membatalkan status lolos nasional untuk <strong>${name}</strong> (${row.registration_number})?`
-                            : `Apakah Anda yakin ingin meloloskan <strong>${name}</strong> (${row.registration_number}) ke Babak Final OMATIQ Nasional 2026?`,
-                        icon: isCurrentlyQualified ? 'warning' : 'question',
-                        confirmButtonText: isCurrentlyQualified
-                            ? 'Ya, Batalkan Lolos'
-                            : 'Ya, Loloskan ke Nasional',
-                        cancelButtonText: 'Kembali',
-                        isDanger: isCurrentlyQualified,
-                    });
+                    if (isCurrentlyQualified) {
+                        // Strict Two-Step Confirmation for Disqualification
+                        const isConfirmed = await confirmTwoStepDelete({
+                            titleStep1: 'Batalkan Kelolosan Nasional?',
+                            htmlStep1: `Apakah Anda yakin ingin membatalkan status lolos babak nasional untuk <strong>${name}</strong> (${row.registration_number})?`,
+                            confirmTextStep1: 'Lanjut ke Konfirmasi Akhir →',
+                            cancelTextStep1: 'Kembali',
+                            titleStep2: '⚠️ Konfirmasi Terakhir Batalkan Lolos Nasional',
+                            htmlStep2: `<div class="p-3 bg-red-50 text-red-900 border border-red-200 rounded-lg text-xs leading-relaxed text-left mb-3 dark:bg-red-950/40 dark:text-red-200 dark:border-red-800">
+                                <strong>PERINGATAN:</strong> Peserta <strong>${name}</strong> (${row.registration_number}) akan kehilangan status finalis Babak Nasional OMATIQ 2026. Anda harus mengonfirmasi kedua kalinya untuk memproses pembatalan ini.
+                            </div>
+                            Apakah Anda benar-benar yakin ingin membatalkan kelolosan peserta ini?`,
+                            confirmTextStep2: 'Ya, Saya Yakin 100% Batalkan',
+                            cancelTextStep2: 'Kembali (Tetap Lolos)',
+                        });
 
-                    if (isConfirmed) {
-                        router.post(
-                            participants.nationalQualify(row.id).url,
-                            {},
-                            {
-                                preserveScroll: true,
-                                onSuccess: () => setRefreshData((v) => !v),
-                            },
-                        );
+                        if (isConfirmed) {
+                            router.post(
+                                participants.nationalQualify(row.id).url,
+                                { action: 'disqualify' },
+                                {
+                                    preserveScroll: true,
+                                    onSuccess: () => setRefreshData((v) => !v),
+                                },
+                            );
+                        }
+                    } else {
+                        const isConfirmed = await confirmAction({
+                            title: 'Loloskan ke Babak Nasional?',
+                            html: `Apakah Anda yakin ingin meloloskan <strong>${name}</strong> (${row.registration_number}) ke Babak Final OMATIQ Nasional 2026?`,
+                            icon: 'question',
+                            confirmButtonText: 'Ya, Loloskan ke Nasional',
+                            cancelButtonText: 'Kembali',
+                            isDanger: false,
+                        });
+
+                        if (isConfirmed) {
+                            router.post(
+                                participants.nationalQualify(row.id).url,
+                                { action: 'qualify' },
+                                {
+                                    preserveScroll: true,
+                                    onSuccess: () => setRefreshData((v) => !v),
+                                },
+                            );
+                        }
                     }
                 };
 
