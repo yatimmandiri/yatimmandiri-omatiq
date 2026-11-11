@@ -6,8 +6,17 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import participants from '@/routes/admin/companies/participants';
 import { useForm, usePage } from '@inertiajs/react';
+import { Badge } from '@/components/ui/badge';
 import { ProofModal } from '@/components/ui/proof-modal';
-import { ArrowLeft, Eye, Save } from 'lucide-react';
+import {
+    ArrowLeft,
+    CheckCircle2,
+    Clock3,
+    Eye,
+    Save,
+    Shirt,
+    Trophy,
+} from 'lucide-react';
 import type { FormEvent, ReactNode } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
@@ -132,6 +141,19 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
         guardian_signature_name: participant?.guardian_signature_name ?? '',
         status: participant?.status ?? 'submitted',
         notes: participant?.notes ?? '',
+        // National Stage Fields
+        is_national_qualified: Boolean(participant?.national),
+        national_shirt_size: participant?.national?.shirt_size ?? '',
+        national_status: participant?.national?.status ?? 'unconfirmed',
+        national_payment_status:
+            participant?.national?.payment_status ??
+            (isBinaan ? 'paid' : 'unpaid'),
+        national_payment_amount:
+            participant?.national?.payment_amount ??
+            (isBinaan ? '0' : ''),
+        national_payment_proof: null,
+        national_availability_letter: null,
+        national_notes: participant?.national?.notes ?? '',
     });
 
     form.transform((data: any) => ({
@@ -141,6 +163,7 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
         data_truth_consent: data.data_truth_consent ? 1 : 0,
         documentation_consent: data.documentation_consent ? 1 : 0,
         rules_consent: data.rules_consent ? 1 : 0,
+        is_national_qualified: data.is_national_qualified ? 1 : 0,
     }));
 
     // Fetch regencies when province_id changes
@@ -594,6 +617,18 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
                         </>
                     )}
                     <Field
+                        label="Nama Orang Tua / Wali"
+                        error={error('guardian_signature_name')}
+                    >
+                        <Input
+                            value={form.data.guardian_signature_name}
+                            onChange={(e) =>
+                                form.setData('guardian_signature_name', e.target.value)
+                            }
+                            placeholder="Nama ayah, ibu, atau wali peserta"
+                        />
+                    </Field>
+                    <Field
                         label="HP Orang Tua/Wali"
                         error={error('parent_phone')}
                     >
@@ -1024,63 +1059,291 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
                 </div>
             </Card>
 
-            <Card className="space-y-5 p-5">
-                <h2 className="text-lg font-bold">Pembayaran</h2>
-                <div className="grid gap-5 md:grid-cols-2">
-                    <Field
-                        label="Status Pembayaran"
-                        error={error('payment_status')}
-                    >
-                        <Select
-                            value={form.data.payment_status}
-                            onChange={(value) => {
-                                form.setData('payment_status', value);
-                                if (value === 'paid' && form.data.status !== 'rejected') {
-                                    form.setData('status', 'verified');
-                                } else if (
-                                    (value === 'unpaid' || value === 'waiting_confirmation') &&
-                                    form.data.status === 'verified' &&
-                                    !isBinaan
-                                ) {
-                                    form.setData('status', 'submitted');
-                                }
-                            }}
-                            options={[
-                                { value: 'unpaid', label: 'Belum Bayar' },
-                                {
-                                    value: 'waiting_confirmation',
-                                    label: 'Menunggu Konfirmasi',
-                                },
-                                { value: 'paid', label: 'Lunas' },
-                            ]}
-                        />
-                    </Field>
-                    <Field label="Jumlah (Rp)" error={error('payment_amount')}>
-                        <Input
-                            type="number"
-                            min={0}
-                            value={form.data.payment_amount}
-                            onChange={(e) =>
-                                form.setData('payment_amount', e.target.value)
-                            }
-                        />
-                    </Field>
-                    <FileField
-                        label="Upload Bukti Bayar"
-                        current={participant.payment_proof_url}
-                        onChange={(file) => setFile('payment_proof', file)}
-                        error={form.errors.payment_proof}
-                    />
+            <Card className="space-y-6 p-6">
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between border-b pb-4">
+                    <div>
+                        <h2 className="text-lg font-extrabold tracking-tight">
+                            Administrasi Pembayaran & Babak Kompetisi
+                        </h2>
+                        <p className="text-xs text-muted-foreground">
+                            Pengelolaan status verifikasi pembayaran pendaftaran awal penyisihan dan pendaftaran ulang babak final nasional
+                        </p>
+                    </div>
+                    {participant?.national && (
+                        <Badge className="bg-amber-500/10 text-amber-900 border-amber-400 font-bold self-start sm:self-auto dark:text-amber-300">
+                            <Trophy className="size-3.5 mr-1 text-amber-600" />
+                            Finalis Babak Nasional
+                        </Badge>
+                    )}
                 </div>
-                <Field label="Catatan Pembayaran" error={error('payment_note')}>
-                    <Textarea
-                        rows={2}
-                        value={form.data.payment_note}
-                        onChange={(e) =>
-                            form.setData('payment_note', e.target.value)
-                        }
-                    />
-                </Field>
+
+                {/* STEP 1: PENDAFTARAN AWAL (BABAK PENYISIHAN) */}
+                <div className="rounded-2xl border bg-card p-5 space-y-4 shadow-2xs">
+                    <div className="flex items-center gap-2.5 border-b pb-3">
+                        <span className="flex size-7 items-center justify-center rounded-lg bg-[#17524A] text-white font-bold text-xs">
+                            1
+                        </span>
+                        <div>
+                            <h3 className="font-bold text-sm text-foreground">
+                                Step 1: Pendaftaran Awal (Babak Penyisihan)
+                            </h3>
+                            <p className="text-[11px] text-muted-foreground">
+                                Status pembayaran biaya registrasi babak regional / penyisihan
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="grid gap-5 md:grid-cols-2">
+                        <Field
+                            label="Status Pembayaran Penyisihan"
+                            error={error('payment_status')}
+                        >
+                            <Select
+                                value={form.data.payment_status}
+                                onChange={(value) => {
+                                    form.setData('payment_status', value);
+                                    if (value === 'paid' && form.data.status !== 'rejected') {
+                                        form.setData('status', 'verified');
+                                    } else if (
+                                        (value === 'unpaid' || value === 'waiting_confirmation') &&
+                                        form.data.status === 'verified' &&
+                                        !isBinaan
+                                    ) {
+                                        form.setData('status', 'submitted');
+                                    }
+                                }}
+                                options={[
+                                    { value: 'unpaid', label: isBinaan ? 'Gratis (Santri Binaan)' : 'Belum Bayar' },
+                                    {
+                                        value: 'waiting_confirmation',
+                                        label: 'Menunggu Konfirmasi',
+                                    },
+                                    { value: 'paid', label: 'Lunas' },
+                                ]}
+                            />
+                        </Field>
+                        <Field label="Nominal Biaya Penyisihan (Rp)" error={error('payment_amount')}>
+                            <Input
+                                type="number"
+                                min={0}
+                                value={form.data.payment_amount}
+                                onChange={(e) =>
+                                    form.setData('payment_amount', e.target.value)
+                                }
+                                placeholder={isBinaan ? '0 (Gratis Binaan)' : 'Biaya pendaftaran penyisihan'}
+                            />
+                        </Field>
+                        <FileField
+                            label="Upload Bukti Transfer Penyisihan"
+                            current={participant.payment_proof_url}
+                            onChange={(file) => setFile('payment_proof', file)}
+                            error={form.errors.payment_proof}
+                        />
+                        <Field label="Catatan Pembayaran Penyisihan" error={error('payment_note')}>
+                            <Textarea
+                                rows={2}
+                                value={form.data.payment_note}
+                                onChange={(e) =>
+                                    form.setData('payment_note', e.target.value)
+                                }
+                                placeholder="Catatan transfer penyisihan atau keterangan panitia"
+                            />
+                        </Field>
+                    </div>
+                </div>
+
+                {/* STEP 2: PENDAFTARAN ULANG (BABAK FINAL NASIONAL) */}
+                <div
+                    className={`rounded-2xl border p-5 space-y-4 shadow-2xs transition-all ${
+                        form.data.is_national_qualified
+                            ? 'border-amber-300 bg-amber-50/30 dark:border-amber-900/50 dark:bg-amber-950/20'
+                            : 'border-muted bg-muted/20'
+                    }`}
+                >
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b pb-3">
+                        <div className="flex items-center gap-2.5">
+                            <span
+                                className={`flex size-7 items-center justify-center rounded-lg font-bold text-xs ${
+                                    form.data.is_national_qualified
+                                        ? 'bg-amber-600 text-white'
+                                        : 'bg-muted text-muted-foreground'
+                                }`}
+                            >
+                                2
+                            </span>
+                            <div>
+                                <h3 className="font-bold text-sm text-foreground">
+                                    Step 2: Pendaftaran Ulang (Babak Final Nasional)
+                                </h3>
+                                <p className="text-[11px] text-muted-foreground">
+                                    Ukuran baju finalis, status kelolosan, surat kesediaan hadir, dan bukti transfer babak final
+                                </p>
+                            </div>
+                        </div>
+
+                        <label className="flex items-center gap-2 text-xs font-semibold cursor-pointer select-none bg-background/80 px-3 py-1.5 rounded-lg border shadow-2xs">
+                            <input
+                                type="checkbox"
+                                checked={form.data.is_national_qualified}
+                                onChange={(e) => {
+                                    form.setData('is_national_qualified', e.target.checked);
+                                    if (e.target.checked && !form.data.national_status) {
+                                        form.setData('national_status', 'unconfirmed');
+                                    }
+                                }}
+                                className="rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+                            />
+                            <span>Lolos ke Babak Final Nasional</span>
+                        </label>
+                    </div>
+
+                    {form.data.is_national_qualified ? (
+                        <div className="grid gap-5 md:grid-cols-2">
+                            <Field
+                                label={
+                                    <div className="flex items-center gap-1.5 font-bold text-amber-950 dark:text-amber-200">
+                                        <Shirt className="size-4 text-amber-600" />
+                                        <span>Ukuran Kaos / Baju Finalis</span>
+                                    </div>
+                                }
+                                error={error('national_shirt_size')}
+                            >
+                                <Select
+                                    value={form.data.national_shirt_size}
+                                    onChange={(value) =>
+                                        form.setData('national_shirt_size', value)
+                                    }
+                                    options={[
+                                        { value: '', label: '-- Pilih Ukuran Kaos Peserta --' },
+                                        { value: 'XS', label: 'XS (Extra Small / Anak)' },
+                                        { value: 'S', label: 'S (Small)' },
+                                        { value: 'M', label: 'M (Medium)' },
+                                        { value: 'L', label: 'L (Large)' },
+                                        { value: 'XL', label: 'XL (Extra Large)' },
+                                        { value: 'XXL', label: 'XXL (Double Extra Large)' },
+                                        { value: 'XXXL', label: 'XXXL (3XL)' },
+                                    ]}
+                                />
+                            </Field>
+
+                            <Field
+                                label="Status Kelolosan Babak Final"
+                                error={error('national_status')}
+                            >
+                                <Select
+                                    value={form.data.national_status}
+                                    onChange={(value) => {
+                                        form.setData('national_status', value);
+                                        if (value === 'verified') {
+                                            form.setData('national_payment_status', 'paid');
+                                        }
+                                    }}
+                                    options={[
+                                        {
+                                            value: 'unconfirmed',
+                                            label: 'Lolos (Belum Daftar Ulang)',
+                                        },
+                                        {
+                                            value: 'waiting_confirmation',
+                                            label: 'Menunggu Verifikasi Pusat / Keuangan',
+                                        },
+                                        {
+                                            value: 'verified',
+                                            label: 'Finalis Resmi Terverifikasi',
+                                        },
+                                        {
+                                            value: 'declined',
+                                            label: 'Mengundurkan Diri',
+                                        },
+                                    ]}
+                                />
+                            </Field>
+
+                            <Field
+                                label="Status Pembayaran Babak Final"
+                                error={error('national_payment_status')}
+                            >
+                                <Select
+                                    value={form.data.national_payment_status}
+                                    onChange={(value) => {
+                                        form.setData('national_payment_status', value);
+                                        if (value === 'paid' && form.data.national_status !== 'declined') {
+                                            form.setData('national_status', 'verified');
+                                        }
+                                    }}
+                                    options={[
+                                        {
+                                            value: 'unpaid',
+                                            label: isBinaan ? 'Gratis (Santri Binaan)' : 'Belum Bayar',
+                                        },
+                                        {
+                                            value: 'waiting_confirmation',
+                                            label: 'Menunggu Konfirmasi',
+                                        },
+                                        { value: 'paid', label: 'Lunas' },
+                                    ]}
+                                />
+                            </Field>
+
+                            <Field
+                                label="Nominal Biaya Final Nasional (Rp)"
+                                error={error('national_payment_amount')}
+                            >
+                                <Input
+                                    type="number"
+                                    min={0}
+                                    value={form.data.national_payment_amount}
+                                    onChange={(e) =>
+                                        form.setData(
+                                            'national_payment_amount',
+                                            e.target.value,
+                                        )
+                                    }
+                                    placeholder={isBinaan ? '0 (Gratis Binaan)' : 'Nominal biaya daftar ulang'}
+                                />
+                            </Field>
+
+                            <FileField
+                                label="Upload Bukti Transfer Babak Final"
+                                current={participant.national?.payment_proof_url}
+                                onChange={(file) => setFile('national_payment_proof', file)}
+                                error={form.errors.national_payment_proof}
+                            />
+
+                            <FileField
+                                label="Upload Surat Kesediaan Hadir Final"
+                                current={participant.national?.availability_letter_url}
+                                onChange={(file) =>
+                                    setFile('national_availability_letter', file)
+                                }
+                                error={form.errors.national_availability_letter}
+                            />
+
+                            <div className="md:col-span-2">
+                                <Field
+                                    label="Catatan / Keterangan Babak Final"
+                                    error={error('national_notes')}
+                                >
+                                    <Textarea
+                                        rows={2}
+                                        value={form.data.national_notes}
+                                        onChange={(e) =>
+                                            form.setData(
+                                                'national_notes',
+                                                e.target.value,
+                                            )
+                                        }
+                                        placeholder="Catatan administrasi pendaftaran ulang babak final nasional"
+                                    />
+                                </Field>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="rounded-xl border border-dashed p-4 text-center text-xs text-muted-foreground">
+                            Peserta ini saat ini berstatus babak penyisihan regional. Centang kotak <strong>"Lolos ke Babak Final Nasional"</strong> di atas jika ingin meloloskan peserta ke babak final dan mengelola ukuran baju serta berkas daftar ulangnya.
+                        </div>
+                    )}
+                </div>
             </Card>
         </form>
     );

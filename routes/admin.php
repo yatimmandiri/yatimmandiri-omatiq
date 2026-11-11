@@ -115,6 +115,8 @@ Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'auth.admi
         Route::put('chaperones/{chaperone}/verify', [NationalChaperoneController::class, 'verify'])->name('chaperones.verify');
         Route::get('chaperones/teacher-detail/{id}', [NationalChaperoneController::class, 'teacherDetail'])->name('chaperones.teacher-detail');
         Route::get('chaperones/data', [NationalChaperoneController::class, 'getData'])->name('chaperones.data');
+        Route::post('chaperones/assign-participant', [NationalChaperoneController::class, 'assignParticipant'])->name('chaperones.assign-participant');
+        Route::post('chaperones/unassign-participant', [NationalChaperoneController::class, 'unassignParticipant'])->name('chaperones.unassign-participant');
         Route::resource('chaperones', NationalChaperoneController::class);
 
         Route::get('committees/template', [EventCommitteeController::class, 'template'])->name('committees.template');

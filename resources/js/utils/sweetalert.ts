@@ -126,17 +126,83 @@ export const confirmDelete = async (options?: {
         ? ` "<strong>${options.itemName}</strong>"`
         : '';
 
-    return confirmAction({
-        title: options?.title ?? 'Konfirmasi Hapus Data',
-        html:
+    return confirmTwoStepDelete({
+        titleStep1: options?.title ?? 'Konfirmasi Hapus Data',
+        htmlStep1:
             options?.html ??
             (options?.text ||
-                `Apakah Anda yakin ingin menghapus data${itemLabel}? Tindakan ini tidak dapat dibatalkan.`),
-        icon: 'warning',
-        confirmButtonText: options?.confirmButtonText ?? 'Ya, Hapus',
-        cancelButtonText: 'Batal',
-        isDanger: true,
+                `Apakah Anda yakin ingin menghapus data${itemLabel}?`),
+        confirmTextStep1: 'Lanjut ke Konfirmasi Akhir →',
+        titleStep2: '⚠️ Konfirmasi Terakhir Hapus Data',
+        htmlStep2: `<div class="p-3 bg-red-50 text-red-900 border border-red-200 rounded-lg text-xs leading-relaxed text-left mb-3 dark:bg-red-950/40 dark:text-red-200 dark:border-red-800">
+            <strong>PERINGATAN:</strong> Anda akan menghapus data${itemLabel}. Pastikan Anda benar-benar yakin sebelum melanjutkan.
+        </div>
+        Apakah Anda yakin 100% ingin menghapus data ini sekarang?`,
+        confirmTextStep2: options?.confirmButtonText ?? 'Ya, Hapus Sekarang',
+        cancelTextStep2: 'Batal (Simpan Data)',
     });
+};
+
+export interface TwoStepDeleteOptions {
+    titleStep1?: string;
+    htmlStep1?: string;
+    confirmTextStep1?: string;
+    cancelTextStep1?: string;
+    titleStep2?: string;
+    htmlStep2?: string;
+    confirmTextStep2?: string;
+    cancelTextStep2?: string;
+    itemName?: string;
+}
+
+/**
+ * Professional Two-Step (Double Confirmation) Dialog for high-impact / destructive actions.
+ * Guarantees that accidental single clicks or Enter keys never delete or disqualify data.
+ * The user MUST explicitly confirm a second time before any action is executed.
+ */
+export const confirmTwoStepDelete = async (
+    options?: TwoStepDeleteOptions,
+): Promise<boolean> => {
+    const itemLabel = options?.itemName
+        ? ` "<strong>${options.itemName}</strong>"`
+        : '';
+
+    // Step 1: Contextual Warning Dialog
+    const step1Confirmed = await confirmAction({
+        title: options?.titleStep1 ?? 'Konfirmasi Tindakan',
+        html:
+            options?.htmlStep1 ??
+            `Apakah Anda yakin ingin memproses penghapusan data${itemLabel}? Silakan konfirmasi untuk melanjutkan ke verifikasi akhir.`,
+        icon: 'warning',
+        confirmButtonText:
+            options?.confirmTextStep1 ?? 'Lanjut ke Konfirmasi Akhir →',
+        cancelButtonText: options?.cancelTextStep1 ?? 'Batal',
+        isDanger: true,
+        reverseButtons: true,
+    });
+
+    if (!step1Confirmed) {
+        return false;
+    }
+
+    // Step 2: Final Verification Dialog (High-Impact Destructive Confirmation)
+    const step2Confirmed = await confirmAction({
+        title: options?.titleStep2 ?? '⚠️ Konfirmasi Terakhir (Langkah 2 dari 2)',
+        html:
+            options?.htmlStep2 ??
+            `<div class="p-3 bg-red-50 text-red-900 border border-red-200 rounded-lg text-xs leading-relaxed text-left mb-3 dark:bg-red-950/40 dark:text-red-200 dark:border-red-800">
+                <strong>PERINGATAN TINGKAT TINGGI:</strong> Tindakan ini bersifat permanen atau merubah status penting data${itemLabel}. Sistem memerlukan konfirmasi kedua untuk mencegah kesalahan klik.
+            </div>
+            Apakah Anda benar-benar yakin 100% ingin melanjutkan proses ini?`,
+        icon: 'error',
+        confirmButtonText:
+            options?.confirmTextStep2 ?? 'Ya, Saya Yakin 100% (Proses Sekarang)',
+        cancelButtonText: options?.cancelTextStep2 ?? 'Batal (Jangan Hapus)',
+        isDanger: true,
+        reverseButtons: true,
+    });
+
+    return step2Confirmed;
 };
 
 /**

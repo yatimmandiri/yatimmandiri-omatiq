@@ -4,7 +4,7 @@ import chaperones from '@/routes/admin/companies/chaperones';
 import { Head, usePage } from '@inertiajs/react';
 
 export default function CreateChaperonePage() {
-    const { isCabang, defaultBranch, teachers, participants, provinces } = usePage<any>().props;
+    const { isCabang, defaultBranch, teachers, participants, provinces, selectedParticipantIds } = usePage<any>().props;
 
     return (
         <>
@@ -16,6 +16,7 @@ export default function CreateChaperonePage() {
                     teachers={teachers ?? []}
                     participants={participants ?? []}
                     provinces={provinces ?? []}
+                    selectedParticipantIds={selectedParticipantIds ?? []}
                 />
             </div>
         </>

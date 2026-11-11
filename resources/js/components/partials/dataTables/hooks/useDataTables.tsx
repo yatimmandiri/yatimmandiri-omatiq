@@ -145,6 +145,14 @@ export const DataTableProvider = ({
         filterValue,
     ]);
 
+    const prevFilterRef = useRef(filterValue);
+    useEffect(() => {
+        if (JSON.stringify(prevFilterRef.current) !== JSON.stringify(filterValue)) {
+            prevFilterRef.current = filterValue;
+            setPagination((prev) => (prev.page === 1 ? prev : { ...prev, page: 1 }));
+        }
+    }, [filterValue]);
+
     useEffect(() => {
         if (typeof window !== 'undefined') {
             localStorage.setItem('pageSize', String(pagination.perPage));

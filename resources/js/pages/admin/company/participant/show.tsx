@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ProofModal } from '@/components/ui/proof-modal';
 import { dashboard } from '@/routes/admin';
 import participants from '@/routes/admin/companies/participants';
-import { confirmAction, showWarningAlert } from '@/utils/sweetalert';
+import { confirmAction, confirmTwoStepDelete, showWarningAlert } from '@/utils/sweetalert';
 import { router, usePage } from '@inertiajs/react';
 import {
     AlertCircle,
@@ -76,29 +76,50 @@ export default function ShowPage() {
             return;
         }
 
-        const isConfirmed = await confirmAction({
-            title: isCurrentlyQualified
-                ? 'Batalkan Kelolosan Nasional?'
-                : 'Loloskan ke Babak Nasional?',
-            html: isCurrentlyQualified
-                ? `Apakah Anda yakin ingin membatalkan status lolos nasional untuk <strong>${fullName}</strong> (${participant.registration_number})?`
-                : `Apakah Anda yakin ingin meloloskan <strong>${fullName}</strong> (${participant.registration_number}) ke Babak Final OMATIQ Nasional 2026?`,
-            icon: isCurrentlyQualified ? 'warning' : 'question',
-            confirmButtonText: isCurrentlyQualified
-                ? 'Ya, Batalkan Lolos'
-                : 'Ya, Loloskan ke Nasional',
-            cancelButtonText: 'Kembali',
-            isDanger: isCurrentlyQualified,
-        });
+        if (isCurrentlyQualified) {
+            // Strict Two-Step Confirmation for Disqualification
+            const isConfirmed = await confirmTwoStepDelete({
+                titleStep1: 'Batalkan Kelolosan Nasional?',
+                htmlStep1: `Apakah Anda yakin ingin membatalkan status lolos babak nasional untuk <strong>${fullName}</strong> (${participant.registration_number})?`,
+                confirmTextStep1: 'Lanjut ke Konfirmasi Akhir →',
+                cancelTextStep1: 'Kembali',
+                titleStep2: '⚠️ Konfirmasi Terakhir Batalkan Lolos Nasional',
+                htmlStep2: `<div class="p-3 bg-red-50 text-red-900 border border-red-200 rounded-lg text-xs leading-relaxed text-left mb-3 dark:bg-red-950/40 dark:text-red-200 dark:border-red-800">
+                    <strong>PERINGATAN:</strong> Peserta <strong>${fullName}</strong> (${participant.registration_number}) akan kehilangan status lolos Babak Final Nasional OMATIQ 2026. Anda harus mengonfirmasi kedua kalinya untuk memproses pembatalan ini.
+                </div>
+                Apakah Anda benar-benar yakin ingin membatalkan status finalis ini sekarang?`,
+                confirmTextStep2: 'Ya, Saya Yakin 100% Batalkan',
+                cancelTextStep2: 'Kembali (Tetap Lolos)',
+            });
 
-        if (isConfirmed) {
-            router.post(
-                participants.nationalQualify(participant.id).url,
-                {},
-                {
-                    preserveScroll: true,
-                },
-            );
+            if (isConfirmed) {
+                router.post(
+                    participants.nationalQualify(participant.id).url,
+                    { action: 'disqualify' },
+                    {
+                        preserveScroll: true,
+                    },
+                );
+            }
+        } else {
+            const isConfirmed = await confirmAction({
+                title: 'Loloskan ke Babak Nasional?',
+                html: `Apakah Anda yakin ingin meloloskan <strong>${fullName}</strong> (${participant.registration_number}) ke Babak Final OMATIQ Nasional 2026?`,
+                icon: 'question',
+                confirmButtonText: 'Ya, Loloskan ke Nasional',
+                cancelButtonText: 'Kembali',
+                isDanger: false,
+            });
+
+            if (isConfirmed) {
+                router.post(
+                    participants.nationalQualify(participant.id).url,
+                    { action: 'qualify' },
+                    {
+                        preserveScroll: true,
+                    },
+                );
+            }
         }
     };
 
@@ -532,7 +553,70 @@ export default function ShowPage() {
                                         href={participant.national.payment_proof_url}
                                         open={openNationalPayProof}
                                         onOpenChange={setOpenNationalPayProof}
-                                        title="Bukti Transfer Babak Nasional"
+                                        title="Bukti Transfer Babak Final Nasional"
+                                        extraContent={
+                                            <div className="flex flex-wrap items-center gap-2 text-xs">
+                                                <span className="font-semibold text-muted-foreground">
+                                                    Status Final:
+                                                </span>
+                                                <Badge
+                                                    variant={
+                                                        participant.national.status === 'verified'
+                                                            ? 'default'
+                                                            : 'secondary'
+                                                    }
+                                                    className={
+                                                        participant.national.status === 'verified'
+                                                            ? 'bg-emerald-600 text-white'
+                                                            : 'border-amber-400 bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200'
+                                                    }
+                                                >
+                                                    {participant.national.status === 'verified'
+                                                        ? '✓ Lunas & Terverifikasi Final'
+                                                        : participant.national.status === 'waiting_confirmation'
+                                                          ? 'Menunggu Verifikasi Keuangan'
+                                                          : 'Belum Selesai'}
+                                                </Badge>
+                                                {participant.national.shirt_size && (
+                                                    <span className="text-muted-foreground">
+                                                        • Ukuran Baju: <strong>{participant.national.shirt_size}</strong>
+                                                    </span>
+                                                )}
+                                            </div>
+                                        }
+                                        actions={
+                                            canUpdate && (isAdmin || isKeuangan) && participant.national.status !== 'verified' ? (
+                                                <div className="flex items-center gap-2">
+                                                    <Button
+                                                        type="button"
+                                                        size="sm"
+                                                        className="gap-1.5 bg-emerald-600 font-bold text-white hover:bg-emerald-700 shadow-sm"
+                                                        onClick={() => {
+                                                            setOpenNationalPayProof(false);
+                                                            handleVerifyNational('verified');
+                                                        }}
+                                                    >
+                                                        <CheckCircle2 className="size-4" />
+                                                        <span>Verifikasi & Set Lunas</span>
+                                                    </Button>
+                                                    {participant.national.status === 'waiting_confirmation' && (
+                                                        <Button
+                                                            type="button"
+                                                            size="sm"
+                                                            variant="outline"
+                                                            className="gap-1.5 border-rose-300 text-rose-700 hover:bg-rose-50 dark:border-rose-800 dark:text-rose-300 dark:hover:bg-rose-950"
+                                                            onClick={() => {
+                                                                setOpenNationalPayProof(false);
+                                                                handleVerifyNational('rejected');
+                                                            }}
+                                                        >
+                                                            <XCircle className="size-4" />
+                                                            <span>Tolak Bukti TF</span>
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                            ) : undefined
+                                        }
                                     />
                                 </div>
                             )}
@@ -789,10 +873,72 @@ export default function ShowPage() {
                     <Card className="rounded-2xl shadow-sm">
                         <CardHeader className="pb-3">
                             <CardTitle className="text-base font-bold">
-                                Pembayaran & Verifikasi
+                                {participant.national
+                                    ? 'Pembayaran & Verifikasi (Babak Penyisihan)'
+                                    : 'Pembayaran & Verifikasi'}
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
+                            {participant.national && (
+                                <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-3.5 text-xs dark:border-amber-900/50 dark:bg-amber-950/30">
+                                    <div className="flex flex-wrap items-center justify-between gap-2">
+                                        <div className="flex items-center gap-1.5 font-semibold text-amber-950 dark:text-amber-200">
+                                            <Trophy className="size-3.5 text-amber-600" />
+                                            <span>Status Pembayaran Babak Final:</span>
+                                        </div>
+                                        {isBinaan ? (
+                                            <Badge
+                                                variant="secondary"
+                                                className="border-emerald-300 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"
+                                            >
+                                                Gratis (Binaan)
+                                            </Badge>
+                                        ) : participant.national.status === 'verified' || participant.national.payment_status === 'paid' ? (
+                                            <Badge className="gap-1 bg-emerald-600 text-white hover:bg-emerald-700">
+                                                <CheckCircle2 className="size-3" /> Lunas Babak Final
+                                            </Badge>
+                                        ) : participant.national.status === 'waiting_confirmation' || participant.national.payment_status === 'waiting_confirmation' ? (
+                                            <Badge
+                                                variant="secondary"
+                                                className="gap-1 border-amber-300 bg-amber-100 text-amber-900 dark:bg-amber-950/50 dark:text-amber-300"
+                                            >
+                                                <Clock3 className="size-3 text-amber-700" /> Menunggu Verifikasi Final
+                                            </Badge>
+                                        ) : participant.national.status === 'declined' ? (
+                                            <Badge
+                                                variant="outline"
+                                                className="gap-1 border-rose-300 text-rose-700 dark:border-rose-800 dark:text-rose-400"
+                                            >
+                                                <XCircle className="size-3 text-rose-600" /> Batal Hadir
+                                            </Badge>
+                                        ) : (
+                                            <Badge
+                                                variant="outline"
+                                                className="border-amber-400 text-amber-800 dark:text-amber-300"
+                                            >
+                                                Belum Daftar Ulang Final
+                                            </Badge>
+                                        )}
+                                    </div>
+                                    {participant.national.payment_proof_url && (
+                                        <div className="mt-2.5 flex items-center justify-between border-t border-amber-200/70 pt-2 dark:border-amber-900/40">
+                                            <span className="text-[11px] text-muted-foreground">
+                                                Bukti transfer final telah diunggah peserta
+                                            </span>
+                                            <Button
+                                                type="button"
+                                                variant="link"
+                                                size="sm"
+                                                className="h-auto p-0 text-xs font-bold text-amber-900 underline hover:text-amber-950 dark:text-amber-300"
+                                                onClick={() => setOpenNationalPayProof(true)}
+                                            >
+                                                Lihat & Verifikasi Bukti Final →
+                                            </Button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
                             <div className="grid gap-3 sm:grid-cols-2">
                                 <div>
                                     <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">

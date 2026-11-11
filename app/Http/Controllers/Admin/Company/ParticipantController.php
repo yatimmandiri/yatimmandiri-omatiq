@@ -136,7 +136,7 @@ class ParticipantController extends Controller
             abort(403, 'Akun keuangan hanya memiliki akses untuk melihat detail dan mengubah status pembayaran.');
         }
 
-        $participant->loadMissing(['student', 'olimpiade']);
+        $participant->loadMissing(['student', 'olimpiade', 'national', 'mentor']);
 
         $data = $this->participantPayload($participant);
 
@@ -395,6 +395,68 @@ class ParticipantController extends Controller
             }
 
             $participant->update($payload);
+
+            // Handle National Participant Updates
+            if ($request->has('is_national_qualified')) {
+                $isQualified = $request->boolean('is_national_qualified');
+                $national = NationalParticipant::withTrashed()->where('participant_id', $participant->id)->first();
+
+                if ($isQualified) {
+                    $natData = [
+                        'status' => $request->input('national_status', 'unconfirmed'),
+                        'payment_status' => $request->input('national_payment_status', 'unpaid'),
+                        'payment_amount' => $request->filled('national_payment_amount') ? $request->input('national_payment_amount') : ($national?->payment_amount ?? 0),
+                        'notes' => $request->input('national_notes'),
+                    ];
+
+                    if ($request->filled('national_shirt_size')) {
+                        $natData['shirt_size'] = strtoupper($request->input('national_shirt_size'));
+                    }
+
+                    if (! $national) {
+                        $national = NationalParticipant::create([
+                            'participant_id' => $participant->id,
+                            'qualified_by' => Auth::id(),
+                            'qualified_at' => now(),
+                            ...$natData,
+                        ]);
+                    } else {
+                        if ($national->trashed()) {
+                            $national->restore();
+                        }
+
+                        if ($request->input('national_status') === 'verified' || $request->input('national_payment_status') === 'paid') {
+                            $natData['payment_status'] = 'paid';
+                            $natData['status'] = 'verified';
+                            if (is_null($national->registered_at)) {
+                                $natData['registered_at'] = now();
+                            }
+                        }
+
+                        $national->update($natData);
+                    }
+
+                    if ($request->hasFile('national_payment_proof')) {
+                        $proofPath = $this->uploadFile(
+                            $national->payment_proof_path,
+                            $request->file('national_payment_proof'),
+                            'national/payment_proofs'
+                        );
+                        $national->update(['payment_proof_path' => $proofPath]);
+                    }
+
+                    if ($request->hasFile('national_availability_letter')) {
+                        $letterPath = $this->uploadFile(
+                            $national->availability_letter_path,
+                            $request->file('national_availability_letter'),
+                            'national/availability_letters'
+                        );
+                        $national->update(['availability_letter_path' => $letterPath]);
+                    }
+                } elseif ($national && ! $national->trashed()) {
+                    $national->delete();
+                }
+            }
         });
 
         $this->logSuccess('update-participant', "Updated participant: {$name}", [
@@ -628,6 +690,14 @@ class ParticipantController extends Controller
             'student_card',
             'mentor_name',
             'mentor_phone',
+            'is_national_qualified',
+            'national_shirt_size',
+            'national_status',
+            'national_payment_status',
+            'national_payment_amount',
+            'national_payment_proof',
+            'national_availability_letter',
+            'national_notes',
         ]);
 
         if (array_key_exists('penyaluran_sanggar_name', $data) && $data['penyaluran_sanggar_name'] === null) {
@@ -723,10 +793,20 @@ class ParticipantController extends Controller
             abort(403, 'Penetapan kelolosan ke Babak Nasional hanya dapat dilakukan oleh Panitia Pusat (Administrator).');
         }
 
+        $request->validate([
+            'action' => ['nullable', 'in:qualify,disqualify'],
+        ]);
+
+        $action = $request->input('action', 'qualify');
         $national = NationalParticipant::withTrashed()->where('participant_id', $participant->id)->first();
         $name = $participant->student?->full_name ?? $participant->user?->name ?? 'Peserta';
 
-        if ($national && ! $national->trashed()) {
+        // Hanya hapus / batalkan jika parameter action secara eksplisit adalah 'disqualify'
+        if ($action === 'disqualify') {
+            if (! $national || $national->trashed()) {
+                return back()->with('info', "Peserta {$name} belum berstatus lolos ke Babak Final Nasional.");
+            }
+
             // Proteksi: Peserta yang sudah terlanjur daftar ulang nasional hanya bisa dibatalkan oleh Admin
             if (! Auth::user()->hasRole('Administrators') && $national->status !== 'unconfirmed') {
                 return back()->withErrors([
@@ -740,6 +820,11 @@ class ParticipantController extends Controller
             ]);
 
             return back()->with('success', "Status lolos babak nasional untuk {$name} berhasil dibatalkan.");
+        }
+
+        // Action 'qualify': Pastikan tidak pernah mendelete data jika peserta sudah lolos
+        if ($national && ! $national->trashed()) {
+            return back()->with('info', "Peserta {$name} sudah berstatus lolos ke Babak Final OMATIQ Nasional 2026.");
         }
 
         if ($national && $national->trashed()) {
@@ -814,8 +899,20 @@ class ParticipantController extends Controller
 
         if ($request->filled('payment_status')) {
             $updates['payment_status'] = $request->payment_status;
+            if ($request->payment_status === 'paid' && ! in_array($request->status, ['rejected', 'declined'], true)) {
+                $updates['status'] = 'verified';
+            }
         } elseif ($request->status === 'verified') {
             $updates['payment_status'] = 'paid';
+        }
+
+        if (($updates['status'] ?? $request->status) === 'verified') {
+            $updates['payment_status'] = 'paid';
+            if (is_null($national->registered_at)) {
+                $updates['registered_at'] = now();
+            }
+        } elseif (($updates['status'] ?? $request->status) === 'rejected') {
+            $updates['payment_status'] = 'unpaid';
         }
 
         if ($request->has('notes')) {

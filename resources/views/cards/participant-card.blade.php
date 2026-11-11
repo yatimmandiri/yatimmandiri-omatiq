@@ -7,691 +7,608 @@
     <link rel="icon" href="{{ asset('assets/images/LOGO OMATIQ-Fav.png') }}" type="image/png">
     <link rel="shortcut icon" href="{{ asset('assets/images/LOGO OMATIQ-Fav.png') }}" type="image/png">
     <link rel="apple-touch-icon" href="{{ asset('assets/images/LOGO OMATIQ-Fav.png') }}">
+    @if(empty($isPdf))
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+    @endif
     <style>
         @page {
-            size: a4 portrait;
-            margin: 10mm;
+            size: A4 portrait;
+            margin: 10mm 12mm;
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
         }
 
-        @if(empty($isPdf))
         body {
-            background-color: #0e221f;
-            background-image: 
-                radial-gradient(circle at 50% 0%, rgba(29, 106, 96, 0.45) 0%, transparent 65%),
-                radial-gradient(#207267 0.8px, transparent 0.8px);
-            background-size: 100% 100%, 20px 20px;
-            color: #1e293b;
-            padding: 24px 15px 40px;
+            background: linear-gradient(135deg, #e6f9f5 0%, #f0fdf9 40%, #e0f6f0 100%);
+            color: #09767a;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            min-height: 100vh;
+            padding: 24px 16px 48px;
         }
 
+        /* Ambient Glass Toolbar */
         .toolbar {
             width: 100%;
-            max-width: 380px;
-            margin-bottom: 16px;
+            max-width: 820px;
+            margin-bottom: 24px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: rgba(18, 58, 52, 0.92);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            padding: 10px 16px;
-            border-radius: 14px;
-            border: 1px solid rgba(229, 190, 30, 0.45);
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            padding: 12px 20px;
+            border-radius: 16px;
+            border: 1px solid rgba(9, 118, 122, 0.2);
+            box-shadow: 0 10px 30px rgba(9, 118, 122, 0.08);
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .toolbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toolbar-brand img {
+            height: 28px;
+            width: auto;
         }
 
         .toolbar-title {
             font-weight: 800;
-            font-size: 13px;
-            color: #ffffff;
+            font-size: 14px;
+            color: #09767a;
+            letter-spacing: -0.2px;
+        }
+
+        .toolbar-subtitle {
+            font-size: 11px;
+            color: #528989;
+            font-weight: 600;
+        }
+
+        .toolbar-actions {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
+        }
+
+        .btn-mode {
+            padding: 7px 13px;
+            border-radius: 9px;
+            font-size: 11.5px;
+            font-weight: 700;
+            cursor: pointer;
+            border: 1px solid rgba(9, 118, 122, 0.25);
+            background: #ffffff;
+            color: #09767a;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-mode.active, .btn-mode:hover {
+            background: #09767a;
+            color: #ffffff;
+            border-color: #09767a;
         }
 
         .btn-print {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 8px 16px;
+            padding: 8px 18px;
             border-radius: 10px;
-            font-size: 12px;
+            font-size: 12.5px;
             font-weight: 800;
-            text-decoration: none;
             cursor: pointer;
             border: none;
-            background: linear-gradient(135deg, #FFE600 0%, #E5BE1E 100%);
-            color: #081d1a;
-            box-shadow: 0 3px 12px rgba(229, 190, 30, 0.4);
+            background: linear-gradient(135deg, #09767a 0%, #0d9488 100%);
+            color: #ffffff;
+            box-shadow: 0 4px 14px rgba(9, 118, 122, 0.3);
             transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
         }
 
         .btn-print:hover {
-            background: linear-gradient(135deg, #fff04b 0%, #eebd1c 100%);
+            background: linear-gradient(135deg, #075e61 0%, #0f766e 100%);
             transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(9, 118, 122, 0.35);
         }
 
-        .badge-container {
+        /* Status Notice Banner */
+        .status-banner {
             width: 100%;
-            max-width: 380px;
+            max-width: 820px;
+            margin-bottom: 20px;
+            padding: 10px 16px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .status-banner.verified {
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #065f46;
+        }
+
+        .status-banner.pending {
+            background: rgba(245, 158, 11, 0.15);
+            border: 1px solid rgba(245, 158, 11, 0.35);
+            color: #92400e;
+        }
+
+        /* Cards Layout Container */
+        .cards-stage {
+            width: 100%;
+            max-width: 820px;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
 
-        .badge-wrapper {
-            width: 100%;
+        .print-sheet {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
             background: #ffffff;
-            border-radius: 24px;
-            border: 2.5px solid #17524A;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(229, 190, 30, 0.35);
-            overflow: hidden;
+            padding: 18px;
+            border-radius: 20px;
+            box-shadow: 0 16px 45px rgba(9, 118, 122, 0.12);
+            border: 1.5px dashed #cbd5e1;
             position: relative;
         }
 
-        .print-guide {
-            display: none;
-        }
-        @else
-        body {
-            background: #ffffff;
-            color: #1e293b;
-            padding: 0;
-            margin: 0;
-        }
-
-        .toolbar {
-            display: none;
-        }
-
-        .badge-container {
-            width: 100%;
-        }
-
-        .badge-wrapper {
-            width: 100%;
-            background: #ffffff;
-            border-radius: 18px;
-            border: 2px solid #17524A;
-            overflow: hidden;
-        }
-
-        .print-guide {
-            display: none;
-        }
-        @endif
-
-        /* Top Lanyard Punch Slot Simulation */
-        .lanyard-bar {
-            background: linear-gradient(180deg, #10423a 0%, #17524A 100%);
-            padding: 10px 0 5px;
-            text-align: center;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-        }
-
-        .lanyard-slot {
-            display: inline-block;
-            width: 42px;
-            height: 5px;
-            background-color: #0b322c;
-            border: 1.5px solid rgba(229, 190, 30, 0.85);
-            border-radius: 5px;
-            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
-        }
-
-        /* Event Header Banner */
-        .badge-header {
-            background: linear-gradient(135deg, #134e45 0%, #17524A 35%, #1d6e63 70%, #258a7c 100%);
-            color: #ffffff;
-            padding: 15px 16px 13px;
-            text-align: center;
+        /* Cut & Fold Line Guides */
+        .fold-divider {
+            width: 2px;
+            height: 590px;
+            border-left: 2px dashed #94a3b8;
             position: relative;
-            border-bottom: 3.5px solid #E5BE1E;
-            box-shadow: inset 0 -4px 12px rgba(0, 0, 0, 0.08);
+            margin: 0 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .header-logo-wrap {
-            margin-bottom: 5px;
-        }
-
-        .header-logo-img {
-            height: 28px;
-            width: auto;
-            max-width: 160px;
-            object-fit: contain;
-            display: inline-block;
-            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
-        }
-
-        .event-tagline {
-            font-size: 8.5px;
-            font-weight: 800;
-            color: #FFE600;
-            letter-spacing: 1.8px;
-            text-transform: uppercase;
-            margin-bottom: 2px;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
-        }
-
-        .event-title {
-            font-size: 22px;
-            font-weight: 950;
-            letter-spacing: 0.8px;
-            color: #ffffff;
-            line-height: 1.1;
-            text-transform: uppercase;
-            text-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-        }
-
-        .event-edition-pill {
-            display: inline-block;
-            background: linear-gradient(135deg, #FFE600 0%, #E5BE1E 100%);
-            color: #06221d;
-            font-size: 8.5px;
-            font-weight: 900;
-            padding: 2.5px 8px;
-            border-radius: 5px;
-            letter-spacing: 0.8px;
-            text-transform: uppercase;
-            margin-top: 4px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
-        }
-
-        .event-org {
-            font-size: 9.5px;
-            color: #d1fae5;
-            font-weight: 700;
-            margin-top: 4px;
-            letter-spacing: 0.4px;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-        }
-
-        /* Hero Access Tier Ribbon */
-        .access-tier-ribbon {
-            background: linear-gradient(90deg, #134e45 0%, #17524A 50%, #134e45 100%);
-            color: #ffffff;
-            padding: 6px 12px;
-            text-align: center;
-            font-size: 10px;
-            font-weight: 900;
-            letter-spacing: 1.2px;
-            text-transform: uppercase;
-            border-bottom: 1.5px solid rgba(229, 190, 30, 0.5);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
-        }
-
-        .access-tier-pending {
-            background: linear-gradient(90deg, #9a3412 0%, #c2410c 50%, #9a3412 100%) !important;
-            border-bottom: 1.5px solid rgba(254, 215, 170, 0.7) !important;
-        }
-
-        .access-tier-national {
-            background: linear-gradient(90deg, #b45309 0%, #d97706 50%, #b45309 100%) !important;
-            color: #ffffff !important;
-            border-bottom: 2px solid #FFE600 !important;
-            box-shadow: 0 2px 6px rgba(217, 119, 6, 0.3) !important;
-        }
-
-        /* Hero Section (Avatar + Big Name + Big BIB) */
-        .badge-hero {
-            padding: 14px 16px 10px;
-            text-align: center;
-            background: radial-gradient(circle at 50% 30%, #f0fdf4 0%, #ffffff 70%);
-            border-bottom: 1.5px dashed #cbd5e1;
-        }
-
-        .avatar-wrap {
-            position: relative;
-            display: inline-block;
-            margin-bottom: 8px;
-        }
-
-        .avatar-frame {
-            width: 84px;
-            height: 84px;
-            border-radius: 50%;
-            border: 2.5px solid #17524A;
-            background-color: #f8fafc;
-            overflow: hidden;
-            margin: 0 auto;
-            box-shadow: 0 4px 12px rgba(23, 82, 74, 0.2), 0 0 0 2.5px rgba(229, 190, 30, 0.6);
-            text-align: center;
-        }
-
-        .avatar-img {
-            width: 84px;
-            height: 84px;
-            object-fit: cover;
-            border-radius: 50%;
-        }
-
-        .avatar-empty {
-            padding-top: 18px;
-            color: #94a3b8;
-            font-size: 9px;
-            font-weight: 800;
-            line-height: 1.2;
-        }
-
-        .role-chip-tag {
+        .fold-label {
             position: absolute;
-            bottom: -5px;
+            background: #f8fafc;
+            border: 1px dashed #94a3b8;
+            color: #64748b;
+            font-size: 9px;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 6px;
+            white-space: nowrap;
+            transform: rotate(-90deg);
+            letter-spacing: 0.5px;
+        }
+
+        /* Base Card Styling (Screen 372px x 590px -> 1:1.587 ratio) */
+        .omatiq-card {
+            width: 372px;
+            height: 590px;
+            position: relative;
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+            background-size: 100% 100%;
+            background-repeat: no-repeat;
+            background-position: center;
+            flex-shrink: 0;
+        }
+
+        /* Front & Back Background Templates */
+        .card-front {
+            background-image: url("{{ asset('assets/images/cards/card-bg-front.png') }}");
+        }
+
+        .card-back {
+            background-image: url("{{ asset('assets/images/cards/card-bg-back.png') }}");
+        }
+
+        /* Front: Unverified Warning Badge Overlay (only when unverified) */
+        .badge-unverified-overlay {
+            position: absolute;
+            top: 15.2%;
             left: 50%;
             transform: translateX(-50%);
-            background: linear-gradient(135deg, #17524A 0%, #1f6b61 100%);
-            color: #FFE600;
-            font-size: 8px;
+            width: 91.2%;
+            padding: 6.5px 10px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, #b45309 0%, #d97706 100%);
+            border: 1.5px solid #fed7aa;
+            color: #ffffff;
+            font-size: 10.5px;
             font-weight: 900;
-            padding: 2.5px 9px;
-            border-radius: 10px;
-            border: 1px solid #FFE600;
+            letter-spacing: 0.4px;
+            text-align: center;
+            text-transform: uppercase;
+            box-shadow: 0 4px 12px rgba(180, 83, 9, 0.3);
+            z-index: 6;
             white-space: nowrap;
-            letter-spacing: 0.4px;
-            text-transform: uppercase;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
-        /* Participant Name */
-        .participant-name-title {
-            font-size: 15px;
+        /* Front: Inner Data Box */
+        .front-data-box {
+            position: absolute;
+            top: 54.0%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 88.0%;
+            height: 27.5%;
+            z-index: 5;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 6px 12px;
+            text-align: left;
+        }
+
+        .participant-name {
+            font-size: 19px;
             font-weight: 900;
-            color: #0d3832;
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
-            line-height: 1.2;
-            margin-top: 8px;
-            margin-bottom: 6px;
+            color: #09767a;
+            letter-spacing: -0.3px;
+            line-height: 1.15;
+            text-transform: capitalize;
+            text-align: center;
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
-        /* BIB / Registration Number Box */
-        .bib-container {
-            background: linear-gradient(135deg, #103c35 0%, #17524A 100%);
-            border: 1.5px solid #FFE600;
-            border-radius: 10px;
-            padding: 5px 12px;
-            display: inline-block;
-            box-shadow: 0 3px 10px rgba(23, 82, 74, 0.25);
-            margin-bottom: 8px;
-        }
-
-        .bib-label {
-            font-size: 7.5px;
+        .bib-row {
+            font-size: 10px;
             font-weight: 800;
-            color: #a7f3d0;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            display: block;
-        }
-
-        .bib-number {
-            font-size: 15px;
-            font-weight: 950;
-            color: #FFE600;
+            color: #09767a;
+            letter-spacing: 0.3px;
+            text-align: center;
+            margin-bottom: 6px;
             font-family: 'Courier New', Courier, monospace;
-            letter-spacing: 1.2px;
-            line-height: 1.1;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
         }
 
-        /* Competition Division Banner */
-        .competition-pill {
-            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-            border: 1px solid #f59e0b;
-            color: #78350f;
-            padding: 4px 12px;
-            border-radius: 16px;
-            font-size: 9.5px;
-            font-weight: 900;
-            letter-spacing: 0.4px;
-            display: inline-block;
-            text-transform: uppercase;
+        .data-divider {
+            width: 100%;
+            height: 1px;
+            background: rgba(9, 118, 122, 0.25);
+            margin-bottom: 7px;
         }
 
-        /* Credentials Metadata Grid */
-        .badge-meta-table {
+        .credentials-table {
             width: 100%;
             border-collapse: collapse;
-            background-color: #ffffff;
             font-size: 9.5px;
+            line-height: 1.35;
+            color: #09767a;
+            font-weight: 600;
         }
 
-        .meta-row td {
-            padding: 3.5px 16px;
+        .credentials-table td {
+            padding: 1.5px 0;
             vertical-align: top;
         }
 
-        .meta-lbl {
-            width: 95px;
-            color: #64748b;
-            font-weight: 800;
-            font-size: 8.5px;
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
-        }
-
-        .meta-cln {
-            width: 8px;
-            color: #94a3b8;
-            font-weight: 700;
-            text-align: center;
-        }
-
-        .meta-val {
-            color: #0f172a;
-            font-weight: 800;
-            font-size: 9.5px;
-        }
-
-        /* Rapid Checkpoint Single QR Verification Access Section */
-        .badge-scan-section {
-            background-color: #f8fafc;
-            border-top: 1.5px dashed #cbd5e1;
-            padding: 12px 14px 10px;
-            text-align: center;
-        }
-
-        .scan-instruction-label {
-            font-size: 8px;
-            font-weight: 900;
-            color: #17524A;
-            letter-spacing: 0.8px;
-            text-transform: uppercase;
-            margin-bottom: 6px;
-        }
-
-        .qr-box-pass {
-            display: inline-block;
-            background: #ffffff;
-            padding: 6px;
-            border-radius: 12px;
-            border: 1.8px solid #17524A;
-            box-shadow: 0 2px 8px rgba(23, 82, 74, 0.12);
-        }
-
-        .qr-box-pass svg {
-            display: block;
-            margin: 0 auto;
+        .credentials-table td.col-lbl {
             width: 92px;
-            height: 92px;
+            font-weight: 700;
+            color: #09767a;
+            white-space: nowrap;
         }
 
-        .qr-bib-code {
-            font-size: 10px;
-            font-family: 'Courier New', monospace;
-            font-weight: 900;
-            color: #17524A;
-            letter-spacing: 1px;
-            margin-top: 5px;
+        .credentials-table td.col-sep {
+            width: 10px;
+            text-align: center;
+            font-weight: 700;
+            color: #09767a;
         }
 
-        .status-chip-event {
-            margin-top: 4px;
-            display: inline-block;
-            background: linear-gradient(135deg, #17524A 0%, #1f6b61 100%);
+        .credentials-table td.col-val {
+            font-weight: 700;
+            color: #075e61;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 180px;
+        }
+
+        /* Front: Bottom Sponsor Bar */
+        .front-sponsors-bar {
+            position: absolute;
+            top: 87.2%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 88.0%;
+            height: 7.5%;
+            z-index: 5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 4px;
+        }
+
+        .sponsor-logos-grid {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 4px;
+        }
+
+        .sponsor-logos-grid img {
+            max-height: 15px;
+            max-width: 34px;
+            width: auto;
+            object-fit: contain;
+            filter: contrast(1.05);
+        }
+
+        /* Back: QR Code Center Container */
+        .back-qr-box {
+            position: absolute;
+            top: 36.1%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 56.8%;
+            height: 32.1%;
+            z-index: 5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+            overflow: hidden;
+        }
+
+        .qr-svg-wrapper {
+            width: 100%;
+            height: 100%;
+            max-width: 165px;
+            max-height: 165px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .qr-svg-wrapper svg {
+            width: 100% !important;
+            height: 100% !important;
+            display: block;
+        }
+
+        /* Unverified Security Lock & Watermark Over QR */
+        .qr-lock-container {
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            text-align: center;
+            z-index: 10;
+        }
+
+        .qr-void-banner {
+            position: absolute;
+            top: 18px;
+            left: -25px;
+            right: -25px;
+            background: #dc2626;
             color: #ffffff;
             font-size: 8px;
             font-weight: 900;
-            padding: 2.5px 12px;
-            border-radius: 10px;
-            border: 1px solid #E5BE1E;
-            letter-spacing: 0.6px;
-            text-transform: uppercase;
-        }
-
-        .status-chip-pending {
-            background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%) !important;
-            border-color: #fed7aa !important;
-            color: #ffffff !important;
-        }
-
-        /* Hologram / Security Footer Strip */
-        .badge-footer {
-            background: linear-gradient(180deg, #12433c 0%, #0c332d 100%);
-            color: #e2e8f0;
-            padding: 8px 14px;
-            border-top: 2px solid #E5BE1E;
-            text-align: center;
-            font-size: 7.5px;
-            line-height: 1.35;
-        }
-
-        .badge-footer-pending {
-            background: linear-gradient(180deg, #431407 0%, #270b04 100%) !important;
-            border-top: 2px solid #f97316 !important;
-        }
-
-        .footer-stamp-pending {
-            color: #fed7aa !important;
-        }
-
-        .footer-stamp-text {
-            color: #FFE600;
-            font-weight: 900;
+            padding: 3px 0;
             letter-spacing: 0.8px;
-            font-size: 8.5px;
             text-transform: uppercase;
-            margin-bottom: 2px;
+            transform: rotate(-12deg);
+            box-shadow: 0 2px 6px rgba(220, 38, 38, 0.4);
+            white-space: nowrap;
         }
 
-        /* PRINT STYLESHEET (Scaled to ~1/3 of A4 page) */
+        .lock-badge-icon {
+            font-size: 26px;
+            margin-bottom: 2px;
+            color: #b45309;
+        }
+
+        .lock-badge-title {
+            font-size: 11px;
+            font-weight: 900;
+            color: #b45309;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+        }
+
+        .lock-badge-subtitle {
+            font-size: 7.5px;
+            font-weight: 700;
+            color: #64748b;
+            line-height: 1.2;
+            margin-top: 2px;
+            max-width: 140px;
+        }
+
+        /* Print Instruction Note */
+        .print-instruction-note {
+            margin-top: 16px;
+            font-size: 11.5px;
+            color: #475569;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+        }
+
+        /* ================= PRINT STYLES ================= */
         @media print {
-            html, body {
-                background: none !important;
-                background-color: #ffffff !important;
+            body {
+                background: #ffffff !important;
                 padding: 0 !important;
                 margin: 0 !important;
-                width: 100% !important;
-                height: auto !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
+                min-height: auto !important;
+                display: block !important;
             }
 
-            .toolbar {
+            .toolbar, .status-banner, .print-instruction-note {
                 display: none !important;
             }
 
-            .badge-container {
+            .cards-stage {
                 width: 100% !important;
                 max-width: 100% !important;
                 margin: 0 !important;
                 padding: 0 !important;
+            }
+
+            .print-sheet {
+                padding: 0 !important;
+                margin: 0 auto !important;
+                border: 1px dashed #94a3b8 !important;
+                border-radius: 0 !important;
+                box-shadow: none !important;
+                background: #ffffff !important;
+                width: 172mm !important;
                 display: flex !important;
-                flex-direction: column !important;
+                flex-direction: row !important;
+                justify-content: center !important;
                 align-items: center !important;
                 page-break-inside: avoid !important;
                 break-inside: avoid !important;
             }
 
-            .badge-wrapper {
+            .fold-divider {
+                width: 0 !important;
+                height: 136.5mm !important;
+                border-left: 1px dashed #64748b !important;
+                margin: 0 !important;
+            }
+
+            .fold-label {
+                font-size: 5.5pt !important;
+                padding: 2px 4px !important;
+            }
+
+            /* Exact Standard Event Lanyard Size: 86mm x 136.5mm */
+            .omatiq-card {
                 width: 86mm !important;
-                max-width: 86mm !important;
-                border: 2px solid #17524A !important;
-                border-radius: 14px !important;
+                height: 136.5mm !important;
+                border-radius: 4mm !important;
                 box-shadow: none !important;
-                margin: 0 auto !important;
                 page-break-inside: avoid !important;
                 break-inside: avoid !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
             }
 
-            .print-guide {
-                display: block !important;
-                width: 86mm !important;
-                margin: 6px auto 0 !important;
-                text-align: center !important;
-                font-size: 7pt !important;
-                color: #64748b !important;
-                font-style: italic !important;
-            }
-
-            .lanyard-bar {
-                padding: 6px 0 4px !important;
-            }
-
-            .lanyard-slot {
-                width: 34px !important;
-                height: 4px !important;
-            }
-
-            .badge-header {
-                padding: 8px 10px 7px !important;
-                border-bottom: 2.5px solid #E5BE1E !important;
-            }
-
-            .header-logo-wrap {
-                margin-bottom: 2px !important;
-            }
-
-            .header-logo-img {
-                height: 18px !important;
-                max-width: 100px !important;
-                margin-bottom: 1px !important;
-            }
-
-            .event-tagline {
+            .badge-unverified-overlay {
+                width: 78.4mm !important;
+                top: 20.5mm !important;
                 font-size: 6.5pt !important;
-                letter-spacing: 1px !important;
+                padding: 1.5mm 2.5mm !important;
             }
 
-            .event-title {
-                font-size: 14pt !important;
+            .front-data-box {
+                width: 75.7mm !important;
+                top: 73.7mm !important;
+                height: 37.5mm !important;
+                padding: 1.5mm 3mm !important;
             }
 
-            .event-edition-pill {
-                font-size: 6.5pt !important;
-                padding: 1px 5px !important;
+            .front-sponsors-bar {
+                width: 75.7mm !important;
+                top: 119mm !important;
+                height: 10mm !important;
             }
 
-            .event-org {
-                font-size: 6.5pt !important;
+            .back-qr-box {
+                width: 48.8mm !important;
+                height: 43.8mm !important;
+                top: 49.2mm !important;
+                padding: 2mm !important;
             }
 
-            .access-tier-ribbon {
-                font-size: 7.5pt !important;
-                padding: 3px 8px !important;
-            }
-
-            .badge-hero {
-                padding: 8px 10px 6px !important;
-            }
-
-            .avatar-wrap {
-                margin-bottom: 4px !important;
-            }
-
-            .avatar-frame, .avatar-img {
-                width: 58px !important;
-                height: 58px !important;
-                border-width: 2px !important;
-            }
-
-            .avatar-empty {
-                padding-top: 10px !important;
-                font-size: 7pt !important;
-            }
-
-            .role-chip-tag {
-                font-size: 6.5pt !important;
-                padding: 1.5px 6px !important;
-                bottom: -4px !important;
-            }
-
-            .participant-name-title {
-                font-size: 10.5pt !important;
-                margin-top: 6px !important;
-                margin-bottom: 4px !important;
-            }
-
-            .bib-container {
-                padding: 3px 8px !important;
-                margin-bottom: 5px !important;
-                border-width: 1px !important;
-            }
-
-            .bib-label {
-                font-size: 5.5pt !important;
-            }
-
-            .bib-number {
+            .participant-name {
                 font-size: 11pt !important;
-                letter-spacing: 1px !important;
+                margin-bottom: 1.5pt !important;
             }
 
-            .competition-pill {
-                font-size: 7.5pt !important;
-                padding: 2px 8px !important;
-            }
-
-            .badge-meta-table {
-                font-size: 7pt !important;
-            }
-
-            .meta-row td {
-                padding: 2px 10px !important;
-            }
-
-            .meta-lbl {
-                width: 75px !important;
+            .bib-row {
                 font-size: 6.5pt !important;
+                margin-bottom: 3.5pt !important;
             }
 
-            .meta-val {
-                font-size: 7pt !important;
+            .credentials-table {
+                font-size: 6.2pt !important;
+                line-height: 1.3 !important;
             }
 
-            .badge-scan-section {
-                padding: 6px 8px 5px !important;
+            .credentials-table td.col-lbl {
+                width: 22mm !important;
             }
 
-            .scan-instruction-label {
-                font-size: 5.5pt !important;
-                margin-bottom: 2px !important;
+            .credentials-table td.col-val {
+                max-width: 42mm !important;
             }
 
-            .qr-box-pass {
-                padding: 3px !important;
-                border-radius: 6px !important;
-                border-width: 1px !important;
+            .sponsor-logos-grid img {
+                max-height: 3.5mm !important;
+                max-width: 8mm !important;
             }
 
-            .qr-box-pass svg {
-                width: 62px !important;
-                height: 62px !important;
+            .qr-svg-wrapper {
+                max-width: 38mm !important;
+                max-height: 38mm !important;
             }
 
-            .qr-bib-code {
-                font-size: 6.5pt !important;
-                margin-top: 2px !important;
+            /* Duplex Mode Print Handling */
+            body.duplex-mode .print-sheet {
+                border: none !important;
+                width: 100% !important;
+                flex-direction: column !important;
             }
 
-            .status-chip-event {
-                font-size: 5.5pt !important;
-                padding: 1px 6px !important;
-                margin-top: 2px !important;
+            body.duplex-mode .fold-divider {
+                display: none !important;
             }
 
-            .badge-footer {
-                padding: 5px 8px !important;
-                font-size: 5.5pt !important;
-                line-height: 1.2 !important;
+            body.duplex-mode .omatiq-card {
+                margin: 0 auto !important;
             }
 
-            .footer-stamp-text {
-                font-size: 6pt !important;
+            body.duplex-mode .card-back {
+                page-break-before: always !important;
+                break-before: page !important;
+                margin-top: 10mm !important;
             }
         }
     </style>
@@ -699,166 +616,154 @@
 <body>
 
     @if(empty($isPdf))
-    <!-- Floating Web Action Toolbar -->
+    <!-- Floating Ambient Toolbar -->
     <div class="toolbar">
-        <div class="toolbar-title">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E5BE1E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-            <span>OMATIQ {{ $participant->event_year ?? 2026 }} {{ !empty($isNational) ? 'Finalis Nasional' : ($participant->status === 'submitted' ? 'Proof' : 'Pass') }}</span>
+        <div class="toolbar-brand">
+            <img src="{{ asset('assets/images/icon-omatiq.png') }}" alt="OMATIQ 2026">
+            <div>
+                <div class="toolbar-title">OMATIQ 2026 &bull; Kartu Tanda Peserta {{ !empty($isNational) ? '(Babak Final Nasional)' : '' }}</div>
+                <div class="toolbar-subtitle">{{ $participant->registration_number }} &bull; {{ $student->full_name ?? $participant->user?->name ?? 'Peserta' }}</div>
+            </div>
         </div>
-        <div>
-            <button class="btn-print" onclick="window.print()" title="Cetak langsung atau Simpan sebagai PDF">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+
+        <div class="toolbar-actions">
+            <button type="button" class="btn-mode active" id="btnFoldMode" onclick="setPrintMode('fold')" title="Cetak Depan-Belakang berdampingan di 1 lembar A4 untuk dilipat">
+                <span>📄 Mode Lipat A4 (1 Lembar)</span>
+            </button>
+            <button type="button" class="btn-mode" id="btnDuplexMode" onclick="setPrintMode('duplex')" title="Cetak bolak-balik printer duplex (2 halaman)">
+                <span>📑 Mode 2 Halaman</span>
+            </button>
+            <button type="button" class="btn-print" onclick="window.print()" title="Unduh / Cetak sebagai PDF">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 <span>Unduh / Cetak PDF</span>
             </button>
         </div>
     </div>
+
+    <!-- Status Banner Notice -->
+    @if(empty($isVerified))
+        <div class="status-banner pending">
+            <div>
+                <strong>&#9203; BUKTI PENDAFTARAN SEMENTARA</strong> &mdash; Pendaftaran sedang menunggu verifikasi admin/panitia pusat.
+            </div>
+            <div>STATUS: MENUNGGU VERIFIKASI ADMIN</div>
+        </div>
+    @else
+        <div class="status-banner verified">
+            <div>
+                <strong>&#10003; KARTU RESMI TERVERIFIKASI</strong> &mdash; Akses resmi kompetisi OMATIQ 2026 {{ !empty($isNational) ? 'Babak Final Nasional' : '' }} aktif.
+            </div>
+            <div>STATUS: TERVERIFIKASI</div>
+        </div>
+    @endif
     @endif
 
-    <!-- Official Event Lanyard Badge Container -->
-    <div class="badge-container">
-        <div class="badge-wrapper">
-            <!-- Top Lanyard Slot -->
-            <div class="lanyard-bar">
-                <div class="lanyard-slot"></div>
-            </div>
-
-            <!-- Event Branding Header -->
-            <div class="badge-header">
-                <div class="header-logo-wrap">
-                    <img src="{{ asset('assets/images/LOGO OMATIQ-Fav.png') }}" alt="OMATIQ" class="header-logo-img">
+    <!-- Cards Container Stage -->
+    <div class="cards-stage">
+        <div class="print-sheet" id="printSheet">
+            
+            <!-- SISI DEPAN (FRONT CARD) -->
+            <div class="omatiq-card card-front">
+                <!-- Warning Badge: Hanya ditampilkan jika peserta belum terverifikasi -->
+                @if(empty($isVerified))
+                <div class="badge-unverified-overlay">
+                    {{ !empty($isNational) ? 'FINALIS NASIONAL • MENUNGGU VERIFIKASI' : 'BUKTI PENDAFTARAN SEMENTARA' }}
                 </div>
-                <div class="event-tagline">&bull; {{ $participant->status === 'submitted' ? 'REGISTRATION PROOF' : (!empty($isNational) ? 'OFFICIAL NATIONAL FINALIST CREDENTIAL' : 'OFFICIAL PARTICIPANT CREDENTIAL') }} &bull;</div>
-                <div class="event-title">OMATIQ {{ $participant->event_year ?? 2026 }}</div>
-                <div>
-                    @if(!empty($isNational))
-                        <span class="event-edition-pill" style="background: linear-gradient(135deg, #FFE600 0%, #E5BE1E 100%); color: #081d1a; font-weight: 900; border: 1.5px solid #ffffff;">&#127942; BABAK FINAL NASIONAL</span>
-                    @else
-                        <span class="event-edition-pill">&#9889; AI &amp; Future Talent Edition</span>
-                    @endif
-                </div>
-                <div class="event-org">Olimpiade Matematika &amp; Al-Qur'an &bull; Laznas Yatim Mandiri</div>
-            </div>
-
-            <!-- Access Category Ribbon -->
-            <div class="access-tier-ribbon {{ $participant->status === 'submitted' ? 'access-tier-pending' : (!empty($isNational) ? 'access-tier-national' : '') }}">
-                @if($participant->status === 'submitted')
-                    BUKTI PENDAFTARAN &bull; <span>MENUNGGU VERIFIKASI ADMIN</span>
-                @elseif(!empty($isNational))
-                    &#127942; FINALIS NASIONAL &bull; <span>{{ $student?->is_binaan ? 'BINAAN SANGGAR' : 'PESERTA UMUM' }}</span>
-                @else
-                    OFFICIAL PASS &bull; <span>{{ $student?->is_binaan ? 'BINAAN SANGGAR' : 'PESERTA UMUM' }}</span>
                 @endif
+
+                <!-- Inner Data Container -->
+                <div class="front-data-box">
+                    <div class="participant-name" title="{{ $student->full_name ?? $participant->user?->name ?? '-' }}">
+                        {{ ucwords(strtolower($student->full_name ?? $participant->user?->name ?? '-')) }}
+                    </div>
+                    <div class="bib-row">
+                        REGISTRATION / BIB: {{ $participant->registration_number }}
+                    </div>
+                    <div class="data-divider"></div>
+                    <table class="credentials-table">
+                        <tr>
+                            <td class="col-lbl">Asal Sekolah</td>
+                            <td class="col-sep">:</td>
+                            <td class="col-val">{{ $student->school_name ?? '-' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="col-lbl">Jenjang &amp; Kelas</td>
+                            <td class="col-sep">:</td>
+                            <td class="col-val">{{ $student->school_level ?? 'SD/MI' }} - Kelas {{ $student->grade ?? '-' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="col-lbl">Cabang / Wilayah</td>
+                            <td class="col-sep">:</td>
+                            <td class="col-val">{{ $participant->branch ?? $student->regency?->name ?? '-' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="col-lbl">Orang Tua / Wali</td>
+                            <td class="col-sep">:</td>
+                            <td class="col-val">{{ $participant->guardian_signature_name ?? $student->guardian_signature_name ?? $student->parent_name ?? '-' }}</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Bottom Sponsor Bar -->
+                <div class="front-sponsors-bar">
+                    <div class="sponsor-logos-grid">
+                        @foreach($sponsors as $sp)
+                            <img src="{{ asset('assets/images/sponsor/' . $sp['file']) }}" alt="{{ $sp['name'] }}" title="{{ $sp['name'] }}">
+                        @endforeach
+                    </div>
+                </div>
             </div>
 
-            <!-- Hero Section: Avatar, Big Name, BIB Number -->
-            <div class="badge-hero">
-                <div class="avatar-wrap">
-                    <div class="avatar-frame">
-                        @if(!empty($student->photo_url))
-                            <img src="{{ $student->photo_url }}" alt="Foto Peserta" class="avatar-img">
-                        @else
-                            <div class="avatar-empty">
-                                <div style="font-size: 20px; margin-bottom: 2px;">👤</div>
-                                <div>PAS FOTO</div>
-                                <div style="font-size: 7.5px; color: #94a3b8;">3 &times; 4 cm</div>
-                            </div>
+            <!-- FOLD GUIDE LINE -->
+            <div class="fold-divider">
+                <span class="fold-label">✂ Garis Lipat Tengah (Fold Line)</span>
+            </div>
+
+            <!-- SISI BELAKANG (BACK CARD) -->
+            <div class="omatiq-card card-back">
+                <!-- Center QR Code Scanner -->
+                <div class="back-qr-box">
+                    <div class="qr-svg-wrapper">
+                        {!! $qrCodeSvg !!}
+
+                        @if(empty($isVerified))
+                        <!-- Security Watermark & Lock Overlay to Prevent Scanning When Unverified -->
+                        <div class="qr-lock-container">
+                            <div class="qr-void-banner">⛔ BELUM TERVERIFIKASI ⛔</div>
+                            <div class="lock-badge-icon">🔒</div>
+                            <div class="lock-badge-title">SCAN TERKUNCI</div>
+                            <div class="lock-badge-subtitle">Barcode otomatis aktif setelah pendaftaran diverifikasi admin</div>
+                        </div>
                         @endif
                     </div>
-                    <span class="role-chip-tag">
-                        {{ $student?->is_binaan ? 'Peserta Binaan' : 'Peserta Umum' }}
-                    </span>
-                </div>
-
-                <!-- Participant Name -->
-                <div class="participant-name-title">
-                    {{ strtoupper($student->full_name ?? $participant->user?->name ?? '-') }}
-                </div>
-
-                <!-- Massive Marathon/Event BIB Code -->
-                <div class="bib-container">
-                    <span class="bib-label">REGISTRATION / BIB NO.</span>
-                    <span class="bib-number">{{ $participant->registration_number }}</span>
-                </div>
-
-                <!-- Competition Category Banner -->
-                <div>
-                    <span class="competition-pill">
-                        &#127942; {{ $participant->olimpiade?->name ?? 'OMATIQ' }}
-                        @if($participant->olimpiade?->category)
-                            ({{ $participant->olimpiade->category }})
-                        @endif
-                    </span>
                 </div>
             </div>
 
-            <!-- Credentials / Metadata Grid -->
-            <table class="badge-meta-table">
-                <tr class="meta-row">
-                    <td class="meta-lbl">Asal Sekolah</td>
-                    <td class="meta-cln">:</td>
-                    <td class="meta-val">{{ $student->school_name ?? '-' }}</td>
-                </tr>
-                <tr class="meta-row">
-                    <td class="meta-lbl">Jenjang &amp; Kelas</td>
-                    <td class="meta-cln">:</td>
-                    <td class="meta-val">
-                        {{ $student->school_level ?? 'SD/MI' }} &bull; Kelas {{ $student->grade ?? '-' }}
-                    </td>
-                </tr>
-                <tr class="meta-row">
-                    <td class="meta-lbl">Cabang / Wilayah</td>
-                    <td class="meta-cln">:</td>
-                    <td class="meta-val">
-                        {{ $student->regency?->name ?? $participant->branch ?? $participant->penyaluran_sanggar_name ?? '-' }}
-                    </td>
-                </tr>
-                <tr class="meta-row">
-                    <td class="meta-lbl">{{ ($student->is_binaan ?? false) ? 'Guru Pendamping' : 'Orang Tua / Wali' }}</td>
-                    <td class="meta-cln">:</td>
-                    <td class="meta-val">
-                        {{ $participant->mentor?->name ?? $student->mentor_name ?? $participant->guardian_signature_name ?? '-' }}
-                    </td>
-                </tr>
-            </table>
-
-            <!-- Checkpoint Single QR Code Access Scanning -->
-            <div class="badge-scan-section">
-                <div class="scan-instruction-label">
-                    <span>&#128269; SCAN UNTUK VERIFIKASI KEASLIAN</span>
-                </div>
-                <div class="qr-box-pass">
-                    {!! $qrCodeSvg !!}
-                </div>
-                <div class="qr-bib-code">{{ $participant->registration_number }}</div>
-                <div>
-                    @if($participant->status === 'submitted')
-                        <span class="status-chip-event status-chip-pending">
-                            &#9203; MENUNGGU VERIFIKASI ADMIN
-                        </span>
-                    @else
-                        <span class="status-chip-event">
-                            &#10003; TERVERIFIKASI &bull; ACCESS GRANTED
-                        </span>
-                    @endif
-                </div>
-            </div>
-
-            <!-- Security / Hologram Event Footer -->
-            <div class="badge-footer {{ $participant->status === 'submitted' ? 'badge-footer-pending' : '' }}">
-                @if($participant->status === 'submitted')
-                    <div class="footer-stamp-text footer-stamp-pending">&bull; BUKTI REGISTRASI SEMENTARA OMATIQ &bull;</div>
-                    <div>Dokumen ini adalah Bukti Pendaftaran Sementara OMATIQ. Silakan simpan dan tunggu verifikasi pembayaran/data oleh panitia untuk validasi resmi kartu lomba.</div>
-                @else
-                    <div class="footer-stamp-text">&bull; OMATIQ OFFICIAL COMPETITOR PASS &bull;</div>
-                    <div>Wajib dikenakan/dibawa selama rangkaian perlombaan. Scan QR Code untuk memeriksa keaslian kartu dan registrasi ulang panitia.</div>
-                @endif
-            </div>
         </div>
 
-        <div class="print-guide">
-            ✂ Gunting mengikuti garis tepi kartu (Ukuran ID Card / Lanyard Event)
+        @if(empty($isPdf))
+        <div class="print-instruction-note">
+            <span>💡</span>
+            <span><strong>Panduan Cetak:</strong> Pada pengaturan printer, pilih ukuran kertas <strong>A4</strong>, skala <strong>100% (Default)</strong>, dan centang <strong>"Background graphics"</strong> untuk hasil cetak maksimal.</span>
         </div>
+        @endif
     </div>
 
+    <script>
+        function setPrintMode(mode) {
+            const btnFold = document.getElementById('btnFoldMode');
+            const btnDuplex = document.getElementById('btnDuplexMode');
+            
+            if (mode === 'duplex') {
+                document.body.classList.add('duplex-mode');
+                btnDuplex.classList.add('active');
+                btnFold.classList.remove('active');
+            } else {
+                document.body.classList.remove('duplex-mode');
+                btnFold.classList.add('active');
+                btnDuplex.classList.remove('active');
+            }
+        }
+    </script>
 </body>
 </html>

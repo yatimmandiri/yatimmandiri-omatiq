@@ -466,7 +466,10 @@ export default function ListChaperonesPage() {
                         <div className="w-48">
                             <SelectComponent
                                 placeholder="Semua Cabang"
-                                data={branches.map((b: string) => ({ value: b, label: b }))}
+                                data={[
+                                    { value: '', label: 'Semua Cabang' },
+                                    ...branches.map((b: string) => ({ value: b, label: b })),
+                                ]}
                                 dataSelected={filterValue.branch ?? ''}
                                 handleOnChange={(val: string) =>
                                     setFilterValue((prev) => ({ ...prev, branch: val }))
@@ -479,6 +482,7 @@ export default function ListChaperonesPage() {
                         <SelectComponent
                             placeholder="Semua Status"
                             data={[
+                                { value: '', label: 'Semua Status' },
                                 { value: 'submitted', label: 'Menunggu' },
                                 { value: 'verified', label: 'Disetujui' },
                                 { value: 'rejected', label: 'Ditolak' },
@@ -494,6 +498,7 @@ export default function ListChaperonesPage() {
                         <SelectComponent
                             placeholder="Semua Asal"
                             data={[
+                                { value: '', label: 'Semua Asal' },
                                 { value: 'guru', label: 'Guru Pembimbing' },
                                 { value: 'karyawan', label: 'Karyawan Cabang' },
                             ]}

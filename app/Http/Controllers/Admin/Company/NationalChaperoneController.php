@@ -106,67 +106,80 @@ class NationalChaperoneController extends Controller
                 'province:id,name',
                 'regency:id,name',
                 'participants:id,registration_number,branch',
-                'participants.student:id,full_name',
+                'participants.student:id,full_name,nik',
             ])
             ->withCount('participants');
 
+        // Extract filter values safely whether sent in filterValue or query params
+        $filterValue = $request->input('filterValue', []);
+        if (is_string($filterValue)) {
+            $filterValue = json_decode($filterValue, true) ?? [];
+        }
+
+        $branchFilter = data_get($filterValue, 'branch', $request->input('branch'));
+        $statusFilter = data_get($filterValue, 'status', $request->input('status'));
+        $sourceTypeFilter = data_get($filterValue, 'source_type', $request->input('source_type'));
+
         if ($isCabang) {
             $query->forBranch($branch, $user->kantor_id);
-        } elseif ($request->filled('branch')) {
-            $query->where('branch', $request->string('branch')->toString());
+        } elseif (filled($branchFilter) && $branchFilter !== 'all') {
+            $query->where('branch', $branchFilter);
         }
 
-        if ($request->filled('status')) {
-            $query->where('status', $request->string('status')->toString());
+        if (filled($statusFilter) && $statusFilter !== 'all') {
+            $query->where('status', $statusFilter);
         }
 
-        if ($request->filled('source_type')) {
-            $query->where('source_type', $request->string('source_type')->toString());
+        if (filled($sourceTypeFilter) && $sourceTypeFilter !== 'all') {
+            $query->where('source_type', $sourceTypeFilter);
         }
 
         if ($request->filled('globalSearch')) {
             $search = strtolower(trim($request->string('globalSearch')->toString()));
-            $cleanId = preg_replace('/^off-?0*/i', '', $search);
+            $cleanId = preg_replace('/^(omq-)?(pen|off)-?0*/i', '', $search);
             $query->where(function ($q) use ($search, $cleanId) {
                 $q->whereRaw('LOWER(name) LIKE ?', ["%{$search}%"])
                     ->orWhere('nik', 'like', "%{$search}%")
                     ->orWhere('phone', 'like', "%{$search}%")
                     ->orWhereRaw('LOWER(branch) LIKE ?', ["%{$search}%"])
-                    ->orWhereRaw('LOWER(position) LIKE ?', ["%{$search}%"]);
+                    ->orWhereRaw('LOWER(position) LIKE ?', ["%{$search}%"])
+                    ->orWhereHas('participants.student', function ($sq) use ($search) {
+                        $sq->whereRaw('LOWER(full_name) LIKE ?', ["%{$search}%"])
+                            ->orWhere('nik', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('participants', function ($pq) use ($search) {
+                        $pq->whereRaw('LOWER(registration_number) LIKE ?', ["%{$search}%"]);
+                    });
                 if (is_numeric($cleanId) && (int) $cleanId > 0) {
                     $q->orWhere('id', (int) $cleanId);
                 }
             });
         }
 
-        $sortField = $request->input('sortField', 'created_at');
-        $sortOrder = $request->input('sortOrder', 'desc');
-        $allowedSort = ['name', 'branch', 'source_type', 'status', 'created_at'];
-        if (in_array($sortField, $allowedSort, true)) {
-            $query->orderBy($sortField, $sortOrder === 'asc' ? 'asc' : 'desc');
+        $orderBy = $request->input('orderBy', $request->input('sortField', 'created_at'));
+        $orderDirection = strtolower((string) $request->input('orderDirection', $request->input('sortOrder', 'desc'))) === 'asc' ? 'asc' : 'desc';
+
+        $allowedSort = ['id', 'name', 'branch', 'source_type', 'status', 'created_at'];
+        if (in_array($orderBy, $allowedSort, true)) {
+            $query->orderBy($orderBy, $orderDirection);
         } else {
             $query->orderBy('created_at', 'desc');
         }
 
-        $perPage = max(1, min((int) $request->input('pageSize', 10), 100));
-        $chaperones = $query->paginate($perPage);
+        $perPage = min(max((int) ($request->input('perPage') ?? $request->input('pageSize') ?? 10), 1), 100);
+        $page = max((int) $request->input('page', 1), 1);
+        $chaperones = $query->paginate($perPage, ['*'], 'page', $page);
 
-        return response()->json([
-            'data' => $chaperones->items(),
-            'total' => $chaperones->total(),
-            'current_page' => $chaperones->currentPage(),
-            'per_page' => $chaperones->perPage(),
-            'last_page' => $chaperones->lastPage(),
-        ]);
+        return response()->json($chaperones);
     }
 
-    public function create(): Response
+    public function create(Request $request): Response
     {
         $this->authorize('create', NationalChaperone::class);
 
         $user = Auth::user();
         $isCabang = $user->hasRole('Cabang') && ! $user->hasRole('Administrators');
-        $branch = $this->resolveBranch($user);
+        $branch = $isCabang ? $this->resolveBranch($user) : ($request->input('branch') ?? $this->resolveBranch($user));
 
         // Fetch eligible teachers for this branch
         $teachers = $this->getEligibleTeachers($user, $branch);
@@ -176,6 +189,11 @@ class NationalChaperoneController extends Controller
 
         $provinces = Province::query()->orderBy('name')->get(['id', 'name']);
 
+        $selectedParticipantIds = [];
+        if ($request->filled('participant_id')) {
+            $selectedParticipantIds = [(int) $request->input('participant_id')];
+        }
+
         return Inertia::render('admin/company/chaperones/create', [
             'isCabang' => $isCabang,
             'defaultBranch' => $branch ?? '',
@@ -183,7 +201,46 @@ class NationalChaperoneController extends Controller
             'teachers' => $teachers,
             'participants' => $participants,
             'provinces' => $provinces,
+            'selectedParticipantIds' => $selectedParticipantIds,
         ]);
+    }
+
+    public function assignParticipant(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'chaperone_id' => ['required', 'integer', 'exists:national_chaperones,id'],
+            'participant_id' => ['required', 'integer', 'exists:participants,id'],
+        ]);
+
+        $chaperone = NationalChaperone::findOrFail($validated['chaperone_id']);
+        $this->authorize('update', $chaperone);
+
+        $participant = Participant::with('student')->findOrFail($validated['participant_id']);
+
+        $chaperone->participants()->syncWithoutDetaching([$participant->id]);
+
+        $studentName = $participant->student?->full_name ?? $participant->registration_number;
+
+        return back()->with('success', "Peserta {$studentName} ({$participant->registration_number}) berhasil ditugaskan ke pendamping {$chaperone->name} ({$chaperone->branch}).");
+    }
+
+    public function unassignParticipant(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'chaperone_id' => ['required', 'integer', 'exists:national_chaperones,id'],
+            'participant_id' => ['required', 'integer', 'exists:participants,id'],
+        ]);
+
+        $chaperone = NationalChaperone::findOrFail($validated['chaperone_id']);
+        $this->authorize('update', $chaperone);
+
+        $participant = Participant::with('student')->findOrFail($validated['participant_id']);
+
+        $chaperone->participants()->detach($participant->id);
+
+        $studentName = $participant->student?->full_name ?? $participant->registration_number;
+
+        return back()->with('success', "Peserta {$studentName} berhasil dilepas dari pendamping {$chaperone->name}.");
     }
 
     public function store(StoreNationalChaperoneRequest $request): RedirectResponse

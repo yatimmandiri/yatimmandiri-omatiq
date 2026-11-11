@@ -243,6 +243,68 @@ class DashboardService
 
         $title = $branch ? "Dashboard Cabang {$branch}" : 'Dashboard Cabang';
 
+        // National Chaperone monitoring metrics for Cabang
+        $nationalBaseQuery = Participant::query()
+            ->whereHas('national', fn ($q) => $q->whereNull('deleted_at'));
+
+        if (filled($branch)) {
+            $nationalBaseQuery->where(function ($q) use ($branch) {
+                $q->where('branch', $branch)
+                    ->orWhere('branch', 'like', "%{$branch}%");
+            });
+        }
+
+        $totalNationalCount = (clone $nationalBaseQuery)->count();
+        $nationalWithChaperoneCount = (clone $nationalBaseQuery)->whereHas('nationalChaperones')->count();
+        $nationalWithoutChaperoneCount = (clone $nationalBaseQuery)->whereDoesntHave('nationalChaperones')->count();
+
+        $unaccompaniedNationalList = (clone $nationalBaseQuery)
+            ->whereDoesntHave('nationalChaperones')
+            ->with([
+                'student:id,full_name,school_name,grade,is_binaan',
+                'olimpiade:id,name,category',
+                'national:id,participant_id,status,payment_status',
+            ])
+            ->select('id', 'registration_number', 'branch', 'student_id', 'olimpiade_id', 'created_at')
+            ->orderBy('id')
+            ->get()
+            ->map(function (Participant $p) {
+                return [
+                    'id' => $p->id,
+                    'registration_number' => $p->registration_number,
+                    'name' => $p->student?->full_name ?? '-',
+                    'branch' => $p->branch ?? '-',
+                    'school_name' => $p->student?->school_name ?? '-',
+                    'grade' => $p->student?->grade ?? '-',
+                    'olimpiade_name' => $p->olimpiade?->name ?? '-',
+                    'category' => $p->olimpiade?->category ?? '-',
+                    'is_binaan' => (bool) $p->student?->is_binaan,
+                    'national_status' => $p->national?->status ?? 'unconfirmed',
+                ];
+            })
+            ->values()
+            ->all();
+
+        $chaperoneQuery = NationalChaperone::query()->forBranch($branch, $userKantorId);
+        $chaperoneCount = (clone $chaperoneQuery)->count();
+
+        $chaperonesList = $chaperoneQuery
+            ->select('id', 'name', 'branch', 'source_type', 'phone', 'status')
+            ->withCount('participants')
+            ->orderBy('name')
+            ->get()
+            ->map(fn ($c) => [
+                'id' => $c->id,
+                'name' => $c->name,
+                'branch' => $c->branch,
+                'source_type' => $c->source_type,
+                'phone' => $c->phone,
+                'status' => $c->status,
+                'participants_count' => $c->participants_count,
+            ])
+            ->values()
+            ->all();
+
         return [
             'view' => 'admin/dashboard/admin',
             'data' => [
@@ -255,6 +317,12 @@ class DashboardService
                 'teacherCount' => $teacherCount,
                 'studentCount' => $studentCount,
                 'sanggarCount' => $sanggarCount,
+                'chaperoneCount' => $chaperoneCount,
+                'totalNationalCount' => $totalNationalCount,
+                'nationalWithChaperoneCount' => $nationalWithChaperoneCount,
+                'nationalWithoutChaperoneCount' => $nationalWithoutChaperoneCount,
+                'unaccompaniedNationalList' => $unaccompaniedNationalList,
+                'chaperonesList' => $chaperonesList,
             ],
         ];
     }
@@ -284,8 +352,56 @@ class DashboardService
                 ->orWhereNull('payment_status');
         })->count();
 
-        $umumCount = (clone $participantQuery)->where('registration_type', 'umum')->count();
-        $binaanCount = (clone $participantQuery)->where('registration_type', 'binaan')->count();
+        $umumCount = (clone $participantQuery)->whereIn('registration_type', ['public', 'umum'])->count();
+        $binaanCount = (clone $participantQuery)->whereIn('registration_type', ['teacher', 'binaan'])->count();
+
+        // Monitoring & Verifikasi Pembayaran Peserta Umum Babak Final Nasional
+        $nationalUmumQuery = Participant::query()
+            ->whereHas('national', fn ($q) => $q->whereNull('deleted_at'))
+            ->whereIn('registration_type', ['public', 'umum'])
+            ->with([
+                'student:id,full_name,school_name,grade,nik,regency_id',
+                'student.regency:id,name',
+                'user:id,name,email',
+                'olimpiade:id,name,category',
+                'national:id,participant_id,status,payment_status,payment_amount,payment_proof_path,shirt_size,registered_at,notes,decline_reason',
+            ]);
+
+        if (filled($branch)) {
+            $nationalUmumQuery->where(function ($q) use ($branch) {
+                $q->where('branch', $branch)
+                    ->orWhere('branch', 'like', "%{$branch}%");
+            });
+        }
+
+        $nationalUmumParticipants = (clone $nationalUmumQuery)->get();
+
+        $totalNationalUmumCount = $nationalUmumParticipants->count();
+        $nationalUmumVerifiedCount = $nationalUmumParticipants->filter(fn ($p) => $p->national?->status === 'verified')->count();
+        $nationalUmumWaitingCount = $nationalUmumParticipants->filter(fn ($p) => $p->national?->status === 'waiting_confirmation' || ($p->national?->status !== 'verified' && filled($p->national?->payment_proof_path)))->count();
+        $nationalUmumUnconfirmedCount = $nationalUmumParticipants->filter(fn ($p) => $p->national?->status === 'unconfirmed')->count();
+        $nationalUmumDeclinedCount = $nationalUmumParticipants->filter(fn ($p) => $p->national?->status === 'declined')->count();
+
+        $nationalUmumList = $nationalUmumParticipants->map(function (Participant $p) {
+            return [
+                'id' => $p->id,
+                'registration_number' => $p->registration_number,
+                'name' => $p->student?->full_name ?? $p->user?->name ?? 'Peserta',
+                'nik' => $p->student?->nik ?? $p->nik ?? '-',
+                'school_name' => $p->student?->school_name ?? '-',
+                'branch' => $p->branch ?? $p->student?->regency?->name ?? '-',
+                'olimpiade_name' => $p->olimpiade?->name ?? '-',
+                'category' => $p->olimpiade?->category ?? '-',
+                'national_status' => $p->national?->status ?? 'unconfirmed',
+                'payment_status' => $p->national?->payment_status ?? 'unpaid',
+                'payment_amount' => (float) ($p->national?->payment_amount ?? 0),
+                'payment_proof_url' => $p->national?->payment_proof_url,
+                'shirt_size' => $p->national?->shirt_size ?? '-',
+                'registered_at' => $p->national?->registered_at?->format('d/m/Y H:i') ?? null,
+                'notes' => $p->national?->notes,
+                'decline_reason' => $p->national?->decline_reason,
+            ];
+        })->values()->all();
 
         $title = $branch ? "Dashboard Keuangan {$branch}" : 'Dashboard Keuangan';
 
@@ -304,6 +420,12 @@ class DashboardService
                 'unpaidCount' => $unpaidCount,
                 'umumCount' => $umumCount,
                 'binaanCount' => $binaanCount,
+                'totalNationalUmumCount' => $totalNationalUmumCount,
+                'nationalUmumVerifiedCount' => $nationalUmumVerifiedCount,
+                'nationalUmumWaitingCount' => $nationalUmumWaitingCount,
+                'nationalUmumUnconfirmedCount' => $nationalUmumUnconfirmedCount,
+                'nationalUmumDeclinedCount' => $nationalUmumDeclinedCount,
+                'nationalUmumList' => $nationalUmumList,
             ],
         ];
     }
@@ -334,6 +456,100 @@ class DashboardService
             $studentCount = Student::where('is_binaan', true)->count();
         }
 
+        // National Chaperone monitoring metrics for Admin
+        $nationalBaseQuery = Participant::query()
+            ->whereHas('national', fn ($q) => $q->whereNull('deleted_at'));
+
+        $totalNationalCount = (clone $nationalBaseQuery)->count();
+        $nationalWithChaperoneCount = (clone $nationalBaseQuery)->whereHas('nationalChaperones')->count();
+        $nationalWithoutChaperoneCount = (clone $nationalBaseQuery)->whereDoesntHave('nationalChaperones')->count();
+
+        $unaccompaniedNationalList = (clone $nationalBaseQuery)
+            ->whereDoesntHave('nationalChaperones')
+            ->with([
+                'student:id,full_name,school_name,grade,is_binaan',
+                'olimpiade:id,name,category',
+                'national:id,participant_id,status,payment_status',
+            ])
+            ->select('id', 'registration_number', 'branch', 'student_id', 'olimpiade_id', 'created_at')
+            ->orderBy('branch')
+            ->orderBy('id')
+            ->get()
+            ->map(function (Participant $p) {
+                return [
+                    'id' => $p->id,
+                    'registration_number' => $p->registration_number,
+                    'name' => $p->student?->full_name ?? '-',
+                    'branch' => $p->branch ?? '-',
+                    'school_name' => $p->student?->school_name ?? '-',
+                    'grade' => $p->student?->grade ?? '-',
+                    'olimpiade_name' => $p->olimpiade?->name ?? '-',
+                    'category' => $p->olimpiade?->category ?? '-',
+                    'is_binaan' => (bool) $p->student?->is_binaan,
+                    'national_status' => $p->national?->status ?? 'unconfirmed',
+                ];
+            })
+            ->values()
+            ->all();
+
+        $chaperoneCount = NationalChaperone::count();
+        $chaperonesList = NationalChaperone::query()
+            ->select('id', 'name', 'branch', 'source_type', 'phone', 'status')
+            ->withCount('participants')
+            ->orderBy('branch')
+            ->orderBy('name')
+            ->get()
+            ->map(fn ($c) => [
+                'id' => $c->id,
+                'name' => $c->name,
+                'branch' => $c->branch,
+                'source_type' => $c->source_type,
+                'phone' => $c->phone,
+                'status' => $c->status,
+                'participants_count' => $c->participants_count,
+            ])
+            ->values()
+            ->all();
+
+        $nationalUmumQuery = Participant::query()
+            ->whereHas('national', fn ($q) => $q->whereNull('deleted_at'))
+            ->whereIn('registration_type', ['public', 'umum'])
+            ->with([
+                'student:id,full_name,school_name,grade,nik,regency_id',
+                'student.regency:id,name',
+                'user:id,name,email',
+                'olimpiade:id,name,category',
+                'national:id,participant_id,status,payment_status,payment_amount,payment_proof_path,shirt_size,registered_at,notes,decline_reason',
+            ]);
+
+        $nationalUmumParticipants = (clone $nationalUmumQuery)->get();
+        $totalNationalUmumCount = $nationalUmumParticipants->count();
+        $nationalUmumVerifiedCount = $nationalUmumParticipants->filter(fn ($p) => $p->national?->status === 'verified')->count();
+        $nationalUmumWaitingCount = $nationalUmumParticipants->filter(fn ($p) => $p->national?->status === 'waiting_confirmation' || ($p->national?->status !== 'verified' && filled($p->national?->payment_proof_path)))->count();
+        $nationalUmumUnconfirmedCount = $nationalUmumParticipants->filter(fn ($p) => $p->national?->status === 'unconfirmed')->count();
+        $nationalUmumDeclinedCount = $nationalUmumParticipants->filter(fn ($p) => $p->national?->status === 'declined')->count();
+
+        $nationalUmumList = $nationalUmumParticipants->map(function (Participant $p) {
+            return [
+                'id' => $p->id,
+                'registration_number' => $p->registration_number,
+                'name' => $p->student?->full_name ?? $p->user?->name ?? 'Peserta',
+                'nik' => $p->student?->nik ?? $p->nik ?? '-',
+                'school_name' => $p->student?->school_name ?? '-',
+                'branch' => $p->branch ?? $p->student?->regency?->name ?? '-',
+                'olimpiade_name' => $p->olimpiade?->name ?? '-',
+                'category' => $p->olimpiade?->category ?? '-',
+                'national_status' => $p->national?->status ?? 'unconfirmed',
+                'payment_status' => $p->national?->payment_status ?? 'unpaid',
+                'payment_amount' => (float) ($p->national?->payment_amount ?? 0),
+                'payment_proof_url' => $p->national?->payment_proof_url,
+                'shirt_size' => $p->national?->shirt_size ?? '-',
+                'registered_at' => $p->national?->registered_at?->format('d/m/Y H:i') ?? null,
+                'notes' => $p->national?->notes,
+                'decline_reason' => $p->national?->decline_reason,
+            ];
+        })->values()->all();
+
         return [
             'view' => 'admin/dashboard/admin',
             'data' => [
@@ -344,6 +560,18 @@ class DashboardService
                 'teacherCount' => $teacherCount,
                 'studentCount' => $studentCount,
                 'olimpiadeCount' => Olimpiade::count(),
+                'chaperoneCount' => $chaperoneCount,
+                'totalNationalCount' => $totalNationalCount,
+                'nationalWithChaperoneCount' => $nationalWithChaperoneCount,
+                'nationalWithoutChaperoneCount' => $nationalWithoutChaperoneCount,
+                'unaccompaniedNationalList' => $unaccompaniedNationalList,
+                'chaperonesList' => $chaperonesList,
+                'totalNationalUmumCount' => $totalNationalUmumCount,
+                'nationalUmumVerifiedCount' => $nationalUmumVerifiedCount,
+                'nationalUmumWaitingCount' => $nationalUmumWaitingCount,
+                'nationalUmumUnconfirmedCount' => $nationalUmumUnconfirmedCount,
+                'nationalUmumDeclinedCount' => $nationalUmumDeclinedCount,
+                'nationalUmumList' => $nationalUmumList,
             ],
         ];
     }

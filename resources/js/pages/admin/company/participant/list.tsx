@@ -19,6 +19,7 @@ import { formatExportString } from '@/utils/formatCsv';
 import {
     confirmAction,
     confirmDelete,
+    confirmTwoStepDelete,
     showWarningAlert,
 } from '@/utils/sweetalert';
 import { router, usePage } from '@inertiajs/react';
@@ -102,6 +103,7 @@ export default function ListPage() {
     const [proofUrl, setProofUrl] = useState<string | null>(null);
     const [proofTitle, setProofTitle] = useState<string>('Bukti Pembayaran');
     const [isProofModalOpen, setIsProofModalOpen] = useState(false);
+    const [selectedParticipantForProof, setSelectedParticipantForProof] = useState<any | null>(null);
 
     const [selectedRows, setSelectedRows] = useState<any[]>([]);
     const [isReRegisterModalOpen, setIsReRegisterModalOpen] = useState(false);
@@ -136,18 +138,31 @@ export default function ListPage() {
             htmlText += `<br><br><span class="text-xs text-amber-600 dark:text-amber-400"><strong>Catatan:</strong> Terdapat ${registeredCount} peserta yang sudah melakukan daftar ulang nasional. Peserta tersebut hanya dapat dibatalkan oleh Admin Pusat dan akan otomatis dilewati.</span>`;
         }
 
-        const isConfirmed = await confirmAction({
-            title: isQualify
-                ? `Loloskan ${selectedRows.length} Peserta ke Babak Nasional?`
-                : `Batalkan Kelolosan ${selectedRows.length} Peserta?`,
-            html: htmlText,
-            icon: isQualify ? 'question' : 'warning',
-            confirmButtonText: isQualify
-                ? `Ya, Loloskan (${selectedRows.length})`
-                : `Ya, Batalkan (${selectedRows.length})`,
-            cancelButtonText: 'Kembali',
-            isDanger: !isQualify,
-        });
+        let isConfirmed = false;
+        if (!isQualify) {
+            isConfirmed = await confirmTwoStepDelete({
+                titleStep1: `Batalkan Kelolosan ${selectedRows.length} Peserta?`,
+                htmlStep1: htmlText,
+                confirmTextStep1: 'Lanjut ke Konfirmasi Akhir →',
+                cancelTextStep1: 'Kembali',
+                titleStep2: `⚠️ Konfirmasi Terakhir Pembatalan Masal (${selectedRows.length} Peserta)`,
+                htmlStep2: `<div class="p-3 bg-red-50 text-red-900 border border-red-200 rounded-lg text-xs leading-relaxed text-left mb-3 dark:bg-red-950/40 dark:text-red-200 dark:border-red-800">
+                    <strong>PERINGATAN TINGKAT TINGGI:</strong> Anda akan membatalkan status lolos Babak Final Nasional untuk <strong>${selectedRows.length} peserta</strong> terpilih secara masal.
+                </div>
+                Apakah Anda benar-benar yakin 100% ingin membatalkan status kelolosan peserta-peserta ini?`,
+                confirmTextStep2: `Ya, Batalkan ${selectedRows.length} Peserta Sekarang`,
+                cancelTextStep2: 'Batal (Jangan Proses)',
+            });
+        } else {
+            isConfirmed = await confirmAction({
+                title: `Loloskan ${selectedRows.length} Peserta ke Babak Nasional?`,
+                html: htmlText,
+                icon: 'question',
+                confirmButtonText: `Ya, Loloskan (${selectedRows.length})`,
+                cancelButtonText: 'Kembali',
+                isDanger: false,
+            });
+        }
 
         if (isConfirmed) {
             router.post(
@@ -160,6 +175,74 @@ export default function ListPage() {
                     preserveScroll: true,
                     onSuccess: () => {
                         setSelectedRows([]);
+                        setRefreshData((v) => !v);
+                    },
+                },
+            );
+        }
+    };
+
+    const handleVerifyNationalDirectFromModal = async (participantRow: any) => {
+        if (!participantRow) return;
+        const studentName =
+            participantRow.student?.full_name ??
+            participantRow.user?.name ??
+            'Peserta';
+        const isConfirmed = await confirmAction({
+            title: 'Verifikasi & Set Lunas Babak Final?',
+            html: `Apakah Anda yakin ingin memverifikasi pendaftaran ulang dan menetapkan status <strong>LUNAS</strong> babak final nasional untuk <strong>${studentName}</strong> (${participantRow.registration_number})?`,
+            icon: 'question',
+            confirmButtonText: 'Ya, Verifikasi & Lunas',
+            cancelButtonText: 'Batal',
+        });
+
+        if (isConfirmed) {
+            router.post(
+                participants.nationalVerify(participantRow.id).url,
+                {
+                    status: 'verified',
+                    payment_status: 'paid',
+                },
+                {
+                    preserveScroll: true,
+                    onSuccess: () => {
+                        setIsProofModalOpen(false);
+                        setSelectedParticipantForProof(null);
+                        setRefreshData((v) => !v);
+                    },
+                },
+            );
+        }
+    };
+
+    const handleRejectNationalDirectFromModal = async (participantRow: any) => {
+        if (!participantRow) return;
+        const studentName =
+            participantRow.student?.full_name ??
+            participantRow.user?.name ??
+            'Peserta';
+        const isConfirmed = await confirmAction({
+            title: 'Tolak Bukti Transfer Babak Final?',
+            html: `Apakah Anda yakin ingin menolak bukti transfer babak final nasional untuk <strong>${studentName}</strong> (${participantRow.registration_number})? Peserta akan diminta untuk mengunggah ulang bukti transfer yang sah.`,
+            icon: 'warning',
+            confirmButtonText: 'Ya, Tolak Bukti',
+            cancelButtonText: 'Batal',
+            isDanger: true,
+        });
+
+        if (isConfirmed) {
+            router.post(
+                participants.nationalVerify(participantRow.id).url,
+                {
+                    status: 'waiting_confirmation',
+                    payment_status: 'unpaid',
+                    notes: 'Bukti transfer ditolak oleh bagian keuangan / panitia pusat. Silakan unggah bukti transfer yang valid.',
+                },
+                {
+                    preserveScroll: true,
+                    onSuccess: () => {
+                        setIsProofModalOpen(false);
+                        setSelectedParticipantForProof(null);
                         setRefreshData((v) => !v);
                     },
                 },
@@ -191,30 +274,52 @@ export default function ListPage() {
                         return;
                     }
 
-                    const isConfirmed = await confirmAction({
-                        title: isCurrentlyQualified
-                            ? 'Batalkan Kelolosan Nasional?'
-                            : 'Loloskan ke Babak Nasional?',
-                        html: isCurrentlyQualified
-                            ? `Apakah Anda yakin ingin membatalkan status lolos nasional untuk <strong>${name}</strong> (${row.registration_number})?`
-                            : `Apakah Anda yakin ingin meloloskan <strong>${name}</strong> (${row.registration_number}) ke Babak Final OMATIQ Nasional 2026?`,
-                        icon: isCurrentlyQualified ? 'warning' : 'question',
-                        confirmButtonText: isCurrentlyQualified
-                            ? 'Ya, Batalkan Lolos'
-                            : 'Ya, Loloskan ke Nasional',
-                        cancelButtonText: 'Kembali',
-                        isDanger: isCurrentlyQualified,
-                    });
+                    if (isCurrentlyQualified) {
+                        // Strict Two-Step Confirmation for Disqualification
+                        const isConfirmed = await confirmTwoStepDelete({
+                            titleStep1: 'Batalkan Kelolosan Nasional?',
+                            htmlStep1: `Apakah Anda yakin ingin membatalkan status lolos babak nasional untuk <strong>${name}</strong> (${row.registration_number})?`,
+                            confirmTextStep1: 'Lanjut ke Konfirmasi Akhir →',
+                            cancelTextStep1: 'Kembali',
+                            titleStep2: '⚠️ Konfirmasi Terakhir Batalkan Lolos Nasional',
+                            htmlStep2: `<div class="p-3 bg-red-50 text-red-900 border border-red-200 rounded-lg text-xs leading-relaxed text-left mb-3 dark:bg-red-950/40 dark:text-red-200 dark:border-red-800">
+                                <strong>PERINGATAN:</strong> Peserta <strong>${name}</strong> (${row.registration_number}) akan kehilangan status finalis Babak Nasional OMATIQ 2026. Anda harus mengonfirmasi kedua kalinya untuk memproses pembatalan ini.
+                            </div>
+                            Apakah Anda benar-benar yakin ingin membatalkan kelolosan peserta ini?`,
+                            confirmTextStep2: 'Ya, Saya Yakin 100% Batalkan',
+                            cancelTextStep2: 'Kembali (Tetap Lolos)',
+                        });
 
-                    if (isConfirmed) {
-                        router.post(
-                            participants.nationalQualify(row.id).url,
-                            {},
-                            {
-                                preserveScroll: true,
-                                onSuccess: () => setRefreshData((v) => !v),
-                            },
-                        );
+                        if (isConfirmed) {
+                            router.post(
+                                participants.nationalQualify(row.id).url,
+                                { action: 'disqualify' },
+                                {
+                                    preserveScroll: true,
+                                    onSuccess: () => setRefreshData((v) => !v),
+                                },
+                            );
+                        }
+                    } else {
+                        const isConfirmed = await confirmAction({
+                            title: 'Loloskan ke Babak Nasional?',
+                            html: `Apakah Anda yakin ingin meloloskan <strong>${name}</strong> (${row.registration_number}) ke Babak Final OMATIQ Nasional 2026?`,
+                            icon: 'question',
+                            confirmButtonText: 'Ya, Loloskan ke Nasional',
+                            cancelButtonText: 'Kembali',
+                            isDanger: false,
+                        });
+
+                        if (isConfirmed) {
+                            router.post(
+                                participants.nationalQualify(row.id).url,
+                                { action: 'qualify' },
+                                {
+                                    preserveScroll: true,
+                                    onSuccess: () => setRefreshData((v) => !v),
+                                },
+                            );
+                        }
                     }
                 };
 
@@ -629,9 +734,69 @@ export default function ListPage() {
                     </DropdownMenu>
                 );
 
+                const hasNational = Boolean(row.national);
+                const isBinaan = Boolean(
+                    row.student?.is_binaan ||
+                        row.registration_type === 'teacher',
+                );
+                const nationalPaymentStatus = row.national?.payment_status;
+                const nationalStatus = row.national?.status;
+
                 return (
                     <div className="flex flex-col items-start gap-1">
-                        {badgeNode}
+                        {hasNational ? (
+                            <div className="flex flex-col items-start gap-1">
+                                <div className="flex items-center gap-1.5">
+                                    <span className="text-[10px] font-semibold text-muted-foreground">
+                                        Penyisihan:
+                                    </span>
+                                    {badgeNode}
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <span className="text-[10px] font-semibold text-muted-foreground">
+                                        Final:
+                                    </span>
+                                    {isBinaan ? (
+                                        <Badge
+                                            variant="secondary"
+                                            className="h-5 px-1.5 text-[10px] font-semibold border-emerald-300 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"
+                                        >
+                                            Gratis (Binaan)
+                                        </Badge>
+                                    ) : nationalStatus === 'verified' || nationalPaymentStatus === 'paid' ? (
+                                        <Badge
+                                            variant="default"
+                                            className="h-5 gap-1 px-1.5 text-[10px] font-bold bg-emerald-600 hover:bg-emerald-700 text-white"
+                                        >
+                                            <CheckCircle2 className="size-3" /> Lunas
+                                        </Badge>
+                                    ) : nationalStatus === 'waiting_confirmation' || nationalPaymentStatus === 'waiting_confirmation' ? (
+                                        <Badge
+                                            variant="secondary"
+                                            className="h-5 gap-1 px-1.5 text-[10px] font-semibold border-amber-300 bg-amber-100 text-amber-900 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-300"
+                                        >
+                                            <Clock3 className="size-3 text-amber-600" /> Menunggu Konfirmasi
+                                        </Badge>
+                                    ) : nationalStatus === 'declined' ? (
+                                        <Badge
+                                            variant="outline"
+                                            className="h-5 gap-1 px-1.5 text-[10px] font-semibold border-rose-300 text-rose-700 dark:border-rose-800 dark:text-rose-400"
+                                        >
+                                            <XCircle className="size-3 text-rose-600" /> Batal Hadir
+                                        </Badge>
+                                    ) : (
+                                        <Badge
+                                            variant="outline"
+                                            className="h-5 gap-1 px-1.5 text-[10px] font-medium border-amber-400 text-amber-800 dark:text-amber-300"
+                                        >
+                                            Belum Daftar Ulang
+                                        </Badge>
+                                    )}
+                                </div>
+                            </div>
+                        ) : (
+                            badgeNode
+                        )}
                         {!isAdmin && row.status === 'rejected' && (
                             <Badge
                                 variant="destructive"
@@ -743,6 +908,7 @@ export default function ListPage() {
                                     setProofTitle(
                                         `Bukti Transfer Babak Final Nasional - ${row.registration_number} (${studentName})`,
                                     );
+                                    setSelectedParticipantForProof(row);
                                     setIsProofModalOpen(true);
                                 }}
                             >
@@ -762,6 +928,7 @@ export default function ListPage() {
                                     setProofTitle(
                                         `Bukti Transfer Penyisihan - ${row.registration_number} (${studentName})`,
                                     );
+                                    setSelectedParticipantForProof(null);
                                     setIsProofModalOpen(true);
                                 }}
                             >
@@ -1115,9 +1282,95 @@ export default function ListPage() {
 
             <ProofModal
                 open={isProofModalOpen}
-                onOpenChange={setIsProofModalOpen}
+                onOpenChange={(open) => {
+                    setIsProofModalOpen(open);
+                    if (!open) setSelectedParticipantForProof(null);
+                }}
                 href={proofUrl ?? ''}
                 title={proofTitle}
+                extraContent={
+                    selectedParticipantForProof?.national ? (
+                        <div className="flex flex-wrap items-center gap-2 text-xs">
+                            <span className="font-semibold text-muted-foreground">
+                                Status Final:
+                            </span>
+                            <Badge
+                                variant={
+                                    selectedParticipantForProof.national
+                                        .status === 'verified'
+                                        ? 'default'
+                                        : 'secondary'
+                                }
+                                className={
+                                    selectedParticipantForProof.national
+                                        .status === 'verified'
+                                        ? 'bg-emerald-600 text-white'
+                                        : 'border-amber-400 bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200'
+                                }
+                            >
+                                {selectedParticipantForProof.national
+                                    .status === 'verified'
+                                    ? '✓ Lunas & Terverifikasi Final'
+                                    : selectedParticipantForProof.national
+                                            .status === 'waiting_confirmation'
+                                      ? 'Menunggu Verifikasi Pembayaran'
+                                      : 'Belum Selesai'}
+                            </Badge>
+                            {selectedParticipantForProof.national
+                                .shirt_size && (
+                                <span className="text-muted-foreground">
+                                    • Ukuran Baju:{' '}
+                                    <strong>
+                                        {
+                                            selectedParticipantForProof.national
+                                                .shirt_size
+                                        }
+                                    </strong>
+                                </span>
+                            )}
+                        </div>
+                    ) : null
+                }
+                actions={
+                    selectedParticipantForProof?.national &&
+                    (isAdmin || isKeuangan) ? (
+                        <div className="flex items-center gap-2">
+                            {selectedParticipantForProof.national.status !==
+                                'verified' && (
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    className="gap-1.5 bg-emerald-600 font-bold text-white hover:bg-emerald-700 shadow-sm"
+                                    onClick={() =>
+                                        handleVerifyNationalDirectFromModal(
+                                            selectedParticipantForProof,
+                                        )
+                                    }
+                                >
+                                    <CheckCircle2 className="size-4" />
+                                    <span>Verifikasi & Set Lunas</span>
+                                </Button>
+                            )}
+                            {selectedParticipantForProof.national.status ===
+                                'waiting_confirmation' && (
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    className="gap-1.5 border-rose-300 text-rose-700 hover:bg-rose-50 dark:border-rose-800 dark:text-rose-300 dark:hover:bg-rose-950"
+                                    onClick={() =>
+                                        handleRejectNationalDirectFromModal(
+                                            selectedParticipantForProof,
+                                        )
+                                    }
+                                >
+                                    <XCircle className="size-4" />
+                                    <span>Tolak Bukti TF</span>
+                                </Button>
+                            )}
+                        </div>
+                    ) : undefined
+                }
             />
 
             <NationalReRegisterModal
