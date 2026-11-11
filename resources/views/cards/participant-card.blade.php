@@ -694,7 +694,7 @@
                         <tr>
                             <td class="col-lbl">Cabang / Wilayah</td>
                             <td class="col-sep">:</td>
-                            <td class="col-val">{{ $student->regency?->name ?? $participant->branch ?? '-' }}</td>
+                            <td class="col-val">{{ $participant->branch ?? $student->regency?->name ?? '-' }}</td>
                         </tr>
                         <tr>
                             <td class="col-lbl">Orang Tua / Wali</td>

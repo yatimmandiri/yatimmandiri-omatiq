@@ -50,10 +50,18 @@ class UpdateParticipantRequest extends FormRequest
             'data_truth_consent' => ['sometimes', 'boolean'],
             'documentation_consent' => ['sometimes', 'boolean'],
             'rules_consent' => ['sometimes', 'boolean'],
-            'participant_signature_name' => ['required', 'string', 'max:255'],
-            'guardian_signature_name' => ['required', 'string', 'max:255'],
+            'participant_signature_name' => ['nullable', 'string', 'max:255'],
+            'guardian_signature_name' => ['nullable', 'string', 'max:255'],
             'status' => ['required', Rule::in(['submitted', 'verified', 'rejected'])],
             'notes' => ['nullable', 'string'],
+            'is_national_qualified' => ['nullable', 'boolean'],
+            'national_shirt_size' => ['nullable', 'string', Rule::in(['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'])],
+            'national_status' => ['nullable', 'string', Rule::in(['unconfirmed', 'waiting_confirmation', 'verified', 'rejected', 'declined'])],
+            'national_payment_status' => ['nullable', 'string', Rule::in(['unpaid', 'waiting_confirmation', 'paid'])],
+            'national_payment_amount' => ['nullable', 'numeric', 'min:0'],
+            'national_payment_proof' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:4096'],
+            'national_availability_letter' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:4096'],
+            'national_notes' => ['nullable', 'string'],
         ];
     }
 }

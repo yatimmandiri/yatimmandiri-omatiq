@@ -9,11 +9,15 @@ export function ProofModal({
     open,
     onOpenChange,
     title = 'Bukti Pembayaran',
+    actions,
+    extraContent,
 }: {
     href: string;
     open: boolean;
     onOpenChange: (v: boolean) => void;
     title?: string;
+    actions?: React.ReactNode;
+    extraContent?: React.ReactNode;
 }) {
     const isPdf = href?.toLowerCase().endsWith('.pdf');
     const [scale, setScale] = useState(1);
@@ -124,10 +128,10 @@ export function ProofModal({
                 </DialogHeader>
 
                 {isPdf ? (
-                    <iframe src={href} className="h-[78vh] w-full rounded-lg border shadow-inner" title="Bukti Pembayaran PDF" />
+                    <iframe src={href} className="h-[74vh] w-full rounded-lg border shadow-inner" title="Bukti Pembayaran PDF" />
                 ) : (
                     <div
-                        className="relative flex h-[75vh] w-full items-center justify-center overflow-auto rounded-lg border bg-zinc-900/90 p-4 shadow-inner"
+                        className="relative flex h-[70vh] w-full items-center justify-center overflow-auto rounded-lg border bg-zinc-900/90 p-4 shadow-inner"
                         onWheel={handleWheel}
                     >
                         <div
@@ -140,9 +144,18 @@ export function ProofModal({
                             <img
                                 src={href}
                                 alt="Bukti Pembayaran"
-                                className="max-h-[70vh] max-w-full rounded object-contain shadow-2xl select-none"
+                                className="max-h-[66vh] max-w-full rounded object-contain shadow-2xl select-none"
                                 draggable={false}
                             />
+                        </div>
+                    </div>
+                )}
+
+                {(actions || extraContent) && (
+                    <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3 border-t bg-muted/40 p-3 -mx-4 -mb-4 sm:-mx-6 sm:-mb-6 rounded-b-lg mt-2">
+                        <div className="flex items-center">{extraContent}</div>
+                        <div className="flex flex-wrap items-center justify-end gap-2">
+                            {actions}
                         </div>
                     </div>
                 )}

@@ -18,12 +18,14 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { ProofModal } from '@/components/ui/proof-modal';
 import { dashboard } from '@/routes/admin';
 import chaperones from '@/routes/admin/companies/chaperones';
 import olimpiades from '@/routes/admin/companies/olimpiades';
 import participants from '@/routes/admin/companies/participants';
 import students from '@/routes/admin/companies/students';
 import teachers from '@/routes/admin/companies/teachers';
+import { confirmAction } from '@/utils/sweetalert';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     AlertCircle,
@@ -33,19 +35,23 @@ import {
     CheckCircle2,
     ChevronRight,
     ClipboardList,
+    Clock3,
     CreditCard,
     ExternalLink,
+    Eye,
     GraduationCap,
     MapIcon,
     Plus,
     Receipt,
     Search,
     ShieldAlert,
+    Shirt,
     Sparkles,
     Trophy,
     UserCheck,
     UserPlus,
     Users,
+    XCircle,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useMemo, useState } from 'react';
@@ -74,6 +80,12 @@ export default function Dashboard() {
         nationalWithoutChaperoneCount = 0,
         unaccompaniedNationalList = [],
         chaperonesList = [],
+        totalNationalUmumCount = 0,
+        nationalUmumVerifiedCount = 0,
+        nationalUmumWaitingCount = 0,
+        nationalUmumUnconfirmedCount = 0,
+        nationalUmumDeclinedCount = 0,
+        nationalUmumList = [],
     } = usePage<{
         pageTitle?: string;
         branchName?: string | null;
@@ -97,6 +109,12 @@ export default function Dashboard() {
         nationalWithoutChaperoneCount?: number;
         unaccompaniedNationalList?: any[];
         chaperonesList?: any[];
+        totalNationalUmumCount?: number;
+        nationalUmumVerifiedCount?: number;
+        nationalUmumWaitingCount?: number;
+        nationalUmumUnconfirmedCount?: number;
+        nationalUmumDeclinedCount?: number;
+        nationalUmumList?: any[];
     }>().props;
 
     // Quick Assignment Modal State
@@ -105,6 +123,14 @@ export default function Dashboard() {
     const [selectedChaperoneId, setSelectedChaperoneId] = useState<string>('');
     const [assignProcessing, setAssignProcessing] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+
+    // National Umum Verification State
+    const [nationalTab, setNationalTab] = useState<'all' | 'waiting' | 'verified' | 'unconfirmed'>('all');
+    const [nationalSearch, setNationalSearch] = useState('');
+    const [proofModalOpen, setProofModalOpen] = useState(false);
+    const [activeProofUrl, setActiveProofUrl] = useState<string | null>(null);
+    const [activeProofTitle, setActiveProofTitle] = useState('');
+    const [activeParticipantForProof, setActiveParticipantForProof] = useState<any | null>(null);
 
     const verificationRate = participantCount
         ? Math.round((verifiedParticipantCount / participantCount) * 100)
@@ -170,6 +196,87 @@ export default function Dashboard() {
                 },
             }
         );
+    };
+
+    const filteredNationalUmum = useMemo(() => {
+        return (nationalUmumList || []).filter((p: any) => {
+            if (nationalTab === 'waiting') {
+                const isWaiting =
+                    p.national_status === 'waiting_confirmation' ||
+                    (p.national_status !== 'verified' && Boolean(p.payment_proof_url));
+                if (!isWaiting) return false;
+            } else if (nationalTab === 'verified') {
+                if (p.national_status !== 'verified') return false;
+            } else if (nationalTab === 'unconfirmed') {
+                if (p.national_status !== 'unconfirmed' || Boolean(p.payment_proof_url)) return false;
+            }
+
+            if (!nationalSearch.trim()) return true;
+            const q = nationalSearch.toLowerCase();
+            return (
+                (p.name || '').toLowerCase().includes(q) ||
+                (p.registration_number || '').toLowerCase().includes(q) ||
+                (p.school_name || '').toLowerCase().includes(q) ||
+                (p.branch || '').toLowerCase().includes(q) ||
+                (p.nik || '').toLowerCase().includes(q)
+            );
+        });
+    }, [nationalUmumList, nationalTab, nationalSearch]);
+
+    const handleVerifyNationalFromDashboard = async (p: any) => {
+        const isConfirmed = await confirmAction({
+            title: 'Verifikasi & Set Lunas Babak Final?',
+            html: `Apakah Anda yakin ingin memverifikasi pendaftaran ulang dan menetapkan status <strong>LUNAS</strong> babak final nasional untuk <strong>${p.name}</strong> (${p.registration_number})?`,
+            icon: 'question',
+            confirmButtonText: 'Ya, Verifikasi & Lunas',
+            cancelButtonText: 'Batal',
+        });
+
+        if (isConfirmed) {
+            router.post(
+                participants.nationalVerify(p.id).url,
+                {
+                    status: 'verified',
+                    payment_status: 'paid',
+                },
+                {
+                    preserveScroll: true,
+                    onSuccess: () => {
+                        setProofModalOpen(false);
+                        setActiveParticipantForProof(null);
+                    },
+                },
+            );
+        }
+    };
+
+    const handleRejectNationalFromDashboard = async (p: any) => {
+        const isConfirmed = await confirmAction({
+            title: 'Tolak Bukti Transfer Babak Final?',
+            html: `Apakah Anda yakin ingin menolak bukti transfer babak final nasional untuk <strong>${p.name}</strong> (${p.registration_number})? Peserta akan diminta untuk mengunggah ulang bukti transfer.`,
+            icon: 'warning',
+            confirmButtonText: 'Ya, Tolak Bukti',
+            cancelButtonText: 'Batal',
+            isDanger: true,
+        });
+
+        if (isConfirmed) {
+            router.post(
+                participants.nationalVerify(p.id).url,
+                {
+                    status: 'waiting_confirmation',
+                    payment_status: 'unpaid',
+                    notes: 'Bukti transfer ditolak oleh bagian keuangan. Silakan unggah bukti transfer yang valid.',
+                },
+                {
+                    preserveScroll: true,
+                    onSuccess: () => {
+                        setProofModalOpen(false);
+                        setActiveParticipantForProof(null);
+                    },
+                },
+            );
+        }
     };
 
     return (
@@ -255,7 +362,7 @@ export default function Dashboard() {
 
                 {/* Metrics */}
                 {isKeuangan ? (
-                    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                         <Metric
                             label="Total Peserta"
                             value={participantCount}
@@ -277,16 +384,38 @@ export default function Dashboard() {
                         <Metric
                             label="Menunggu Konfirmasi"
                             value={waitingConfirmationCount}
-                            sub="Perlu cek bukti transfer"
+                            sub="Bukti transfer penyisihan"
                             icon={<ClipboardList />}
                             accent="#f59e0b"
                         />
                         <Metric
-                            label="Belum Bayar"
+                            label="Belum Bayar (Penyisihan)"
                             value={unpaidCount}
                             sub="Belum upload / konfirmasi"
                             icon={<CreditCard />}
                             accent="#ef4444"
+                        />
+                        <Metric
+                            label="Finalis Umum Nasional"
+                            value={totalNationalUmumCount}
+                            sub={`${nationalUmumVerifiedCount} terverifikasi • ${nationalUmumWaitingCount} menunggu`}
+                            icon={<Trophy />}
+                            accent="#E5BE1E"
+                            dark
+                        />
+                        <Metric
+                            label="Menunggu Verifikasi Final"
+                            value={nationalUmumWaitingCount}
+                            sub="Perlu cek bukti TF final"
+                            icon={<AlertCircle />}
+                            accent="#f97316"
+                        />
+                        <Metric
+                            label="Finalis Lunas & Verified"
+                            value={nationalUmumVerifiedCount}
+                            sub="Lanyard & kartu resmi aktif"
+                            icon={<CheckCircle2 />}
+                            accent="#10b981"
                         />
                         <Metric
                             label="Peserta Jalur Umum"
@@ -294,14 +423,6 @@ export default function Dashboard() {
                             sub="Registrasi mandiri / umum"
                             icon={<Receipt />}
                             accent="#0ea5e9"
-                        />
-                        <Metric
-                            label="Peserta Sanggar Binaan"
-                            value={binaanCount}
-                            sub="Rekomendasi guru / sanggar"
-                            icon={<GraduationCap />}
-                            accent="#8b5cf6"
-                            dark
                         />
                     </div>
                 ) : (
@@ -570,6 +691,332 @@ export default function Dashboard() {
                     </Card>
                 )}
 
+                {/* Verifikasi Pembayaran & Kelolosan Finalis Umum Nasional (Keuangan & Admin) */}
+                {(isKeuangan || !isCabang) && (
+                    <Card className="overflow-hidden rounded-[2rem] border bg-card shadow-sm">
+                        <div className="border-b bg-gradient-to-r from-amber-500/10 via-emerald-500/5 to-transparent p-5 sm:p-6">
+                            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                                <div>
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <Badge
+                                            variant="outline"
+                                            className="border-amber-500/40 bg-amber-500/10 font-bold text-amber-900 dark:text-amber-300"
+                                        >
+                                            <Trophy className="mr-1 h-3.5 w-3.5 text-amber-600" />
+                                            Babak Final OMATIQ 2026 • Peserta Umum
+                                        </Badge>
+                                        {nationalUmumWaitingCount > 0 ? (
+                                            <Badge
+                                                variant="outline"
+                                                className="border-amber-400 bg-amber-100 font-bold text-amber-900 dark:bg-amber-950/60 dark:text-amber-200"
+                                            >
+                                                <AlertCircle className="mr-1 h-3.5 w-3.5 text-amber-600" />
+                                                {nationalUmumWaitingCount} Bukti TF Perlu Diverifikasi
+                                            </Badge>
+                                        ) : (
+                                            <Badge
+                                                variant="outline"
+                                                className="border-emerald-300 bg-emerald-50 font-semibold text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"
+                                            >
+                                                <CheckCircle2 className="mr-1 h-3.5 w-3.5 text-emerald-600" />
+                                                Semua Finalis Umum Terverifikasi Lunas
+                                            </Badge>
+                                        )}
+                                    </div>
+                                    <h2 className="mt-2 text-lg font-bold tracking-tight text-foreground sm:text-xl">
+                                        Verifikasi Pembayaran &amp; Kelolosan Finalis Umum Nasional
+                                    </h2>
+                                    <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+                                        Periksa bukti transfer babak final nasional peserta jalur umum dan eksekusi verifikasi pendaftaran serta status lunas secara instan.
+                                    </p>
+                                </div>
+
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <Link
+                                        href={`${participants.index().url}?registration_type=public&national_status=waiting_confirmation`}
+                                        className="inline-flex items-center gap-1.5 rounded-xl border border-input bg-background px-3.5 py-2 text-xs font-semibold text-foreground shadow-xs hover:bg-accent"
+                                    >
+                                        <span>Buka di Tabel Peserta</span>
+                                        <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
+                                    </Link>
+                                </div>
+                            </div>
+
+                            {/* Toolbar: Search & Tab Filter */}
+                            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                <div className="relative w-full max-w-sm">
+                                    <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                                    <Input
+                                        placeholder="Cari nama, no registrasi, sekolah, cabang..."
+                                        value={nationalSearch}
+                                        onChange={(e) =>
+                                            setNationalSearch(e.target.value)
+                                        }
+                                        className="h-9 rounded-xl pl-9 text-xs"
+                                    />
+                                </div>
+
+                                <div className="flex flex-wrap items-center gap-1.5 rounded-xl border bg-muted/40 p-1 text-xs">
+                                    <button
+                                        type="button"
+                                        onClick={() => setNationalTab('all')}
+                                        className={`rounded-lg px-2.5 py-1 font-semibold transition-all ${nationalTab === 'all' ? 'bg-background text-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground'}`}
+                                    >
+                                        Semua ({totalNationalUmumCount})
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setNationalTab('waiting')
+                                        }
+                                        className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 font-semibold transition-all ${nationalTab === 'waiting' ? 'bg-amber-500 text-white shadow-xs' : 'text-amber-800 hover:text-amber-900 dark:text-amber-300'}`}
+                                    >
+                                        <span>Perlu Cek TF</span>
+                                        <span
+                                            className={`rounded-full px-1.5 text-[10px] ${nationalTab === 'waiting' ? 'bg-amber-700 text-white' : 'bg-amber-100 text-amber-900'}`}
+                                        >
+                                            {nationalUmumWaitingCount}
+                                        </span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setNationalTab('verified')
+                                        }
+                                        className={`rounded-lg px-2.5 py-1 font-semibold transition-all ${nationalTab === 'verified' ? 'bg-emerald-600 text-white shadow-xs' : 'text-emerald-800 hover:text-emerald-900 dark:text-emerald-300'}`}
+                                    >
+                                        Lunas ({nationalUmumVerifiedCount})
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setNationalTab('unconfirmed')
+                                        }
+                                        className={`rounded-lg px-2.5 py-1 font-semibold transition-all ${nationalTab === 'unconfirmed' ? 'bg-background text-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground'}`}
+                                    >
+                                        Belum Konfirmasi (
+                                        {nationalUmumUnconfirmedCount})
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Table Content */}
+                        <div className="p-0">
+                            {filteredNationalUmum.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center p-8 text-center text-muted-foreground">
+                                    <CheckCircle2 className="mb-2 h-10 w-10 text-muted-foreground/40" />
+                                    <p className="text-sm font-semibold">
+                                        Tidak ada peserta yang sesuai dengan filter.
+                                    </p>
+                                    <p className="text-xs">
+                                        Semua data finalis umum telah terverifikasi atau tidak ada data yang cocok dengan kata kunci pencarian.
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left text-xs">
+                                        <thead className="border-b bg-muted/30 text-[11px] uppercase tracking-wider text-muted-foreground">
+                                            <tr>
+                                                <th className="px-4 py-3 font-semibold">
+                                                    Peserta
+                                                </th>
+                                                <th className="px-3.5 py-3 font-semibold">
+                                                    Asal Sekolah &amp; Cabang
+                                                </th>
+                                                <th className="px-3.5 py-3 font-semibold">
+                                                    Olimpiade
+                                                </th>
+                                                <th className="px-3.5 py-3 font-semibold">
+                                                    Baju
+                                                </th>
+                                                <th className="px-3.5 py-3 text-center font-semibold">
+                                                    Bukti TF Final
+                                                </th>
+                                                <th className="px-3.5 py-3 font-semibold">
+                                                    Status Final
+                                                </th>
+                                                <th className="px-4 py-3 text-right font-semibold">
+                                                    Aksi Shortcut
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-border">
+                                            {filteredNationalUmum.map((p: any) => (
+                                                <tr
+                                                    key={p.id}
+                                                    className="transition-colors hover:bg-muted/30"
+                                                >
+                                                    <td className="px-4 py-3">
+                                                        <div className="text-sm font-bold text-foreground">
+                                                            {p.name}
+                                                        </div>
+                                                        <div className="mt-0.5 flex items-center gap-1.5 font-mono text-[11px] text-muted-foreground">
+                                                            <span>
+                                                                {p.registration_number}
+                                                            </span>
+                                                            {p.nik &&
+                                                                p.nik !==
+                                                                    '-' && (
+                                                                    <>
+                                                                        <span>
+                                                                            •
+                                                                        </span>
+                                                                        <span>
+                                                                            NIK:{' '}
+                                                                            {
+                                                                                p.nik
+                                                                            }
+                                                                        </span>
+                                                                    </>
+                                                                )}
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-3.5 py-3 text-muted-foreground">
+                                                        <div className="font-semibold text-foreground">
+                                                            {p.school_name}
+                                                        </div>
+                                                        <div className="mt-0.5 flex items-center gap-1 text-[11px]">
+                                                            <Building2 className="size-3 text-[#17524A]" />
+                                                            <span>
+                                                                {p.branch}
+                                                            </span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-3.5 py-3">
+                                                        <div className="font-semibold text-foreground">
+                                                            {p.olimpiade_name}
+                                                        </div>
+                                                        <span className="text-[10px] text-muted-foreground">
+                                                            {p.category}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-3.5 py-3">
+                                                        {p.shirt_size &&
+                                                        p.shirt_size !== '-' ? (
+                                                            <Badge
+                                                                variant="outline"
+                                                                className="font-mono text-[11px] font-bold"
+                                                            >
+                                                                {p.shirt_size}
+                                                            </Badge>
+                                                        ) : (
+                                                            <span className="text-xs text-muted-foreground">
+                                                                -
+                                                            </span>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-3.5 py-3 text-center">
+                                                        {p.payment_proof_url ? (
+                                                            <Button
+                                                                type="button"
+                                                                size="sm"
+                                                                variant="outline"
+                                                                className="h-7 gap-1 border-amber-500 bg-amber-50 px-2.5 text-xs font-bold text-amber-900 shadow-2xs hover:bg-amber-100 hover:text-amber-950 dark:border-amber-700 dark:bg-amber-950/50 dark:text-amber-200"
+                                                                onClick={() => {
+                                                                    setActiveProofUrl(
+                                                                        p.payment_proof_url,
+                                                                    );
+                                                                    setActiveProofTitle(
+                                                                        `Bukti Transfer Final Nasional - ${p.registration_number} (${p.name})`,
+                                                                    );
+                                                                    setActiveParticipantForProof(
+                                                                        p,
+                                                                    );
+                                                                    setProofModalOpen(
+                                                                        true,
+                                                                    );
+                                                                }}
+                                                            >
+                                                                <Trophy className="size-3 shrink-0 text-amber-600" />
+                                                                <span>
+                                                                    Cek Bukti TF Final
+                                                                </span>
+                                                            </Button>
+                                                        ) : (
+                                                            <span className="text-xs italic text-muted-foreground">
+                                                                Belum Unggah
+                                                            </span>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-3.5 py-3">
+                                                        {p.national_status ===
+                                                        'verified' ? (
+                                                            <Badge className="gap-1 bg-emerald-600 text-[11px] font-semibold text-white hover:bg-emerald-700">
+                                                                <CheckCircle2 className="size-3" />
+                                                                Lunas &amp; Verified
+                                                            </Badge>
+                                                        ) : p.national_status ===
+                                                          'waiting_confirmation' ? (
+                                                            <Badge
+                                                                variant="secondary"
+                                                                className="gap-1 border-amber-400 bg-amber-100 text-[11px] font-semibold text-amber-900 dark:bg-amber-950/60 dark:text-amber-300"
+                                                            >
+                                                                <Clock3 className="size-3 text-amber-600" />
+                                                                Menunggu Verifikasi
+                                                            </Badge>
+                                                        ) : p.national_status ===
+                                                          'declined' ? (
+                                                            <Badge
+                                                                variant="destructive"
+                                                                className="gap-1 text-[11px] font-semibold"
+                                                            >
+                                                                <XCircle className="size-3" />
+                                                                Mengundurkan Diri
+                                                            </Badge>
+                                                        ) : (
+                                                            <Badge
+                                                                variant="outline"
+                                                                className="border-zinc-300 text-[11px] text-muted-foreground"
+                                                            >
+                                                                Belum Daftar Ulang
+                                                            </Badge>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-4 py-3 text-right">
+                                                        <div className="flex items-center justify-end gap-1.5">
+                                                            {p.national_status !==
+                                                            'verified' ? (
+                                                                <Button
+                                                                    size="sm"
+                                                                    onClick={() =>
+                                                                        handleVerifyNationalFromDashboard(
+                                                                            p,
+                                                                        )
+                                                                    }
+                                                                    className="h-8 gap-1.5 rounded-lg bg-emerald-600 px-3 text-xs font-bold text-white shadow-sm hover:bg-emerald-700"
+                                                                    title="Langsung verifikasi peserta &amp; ubah status pembayaran menjadi lunas"
+                                                                >
+                                                                    <CheckCircle2 className="size-3.5" />
+                                                                    <span>
+                                                                        Verifikasi Lunas
+                                                                    </span>
+                                                                </Button>
+                                                            ) : (
+                                                                <span className="mr-2 flex items-center gap-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                                                                    <CheckCircle2 className="size-3.5" />{' '}
+                                                                    Lunas
+                                                                </span>
+                                                            )}
+                                                            <Link
+                                                                href={`/admin/companies/participants/${p.id}`}
+                                                                className="inline-flex h-8 items-center justify-center rounded-lg border border-input px-2 text-xs font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
+                                                                title="Lihat profil detail peserta"
+                                                            >
+                                                                <Eye className="size-3.5" />
+                                                            </Link>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </div>
+                    </Card>
+                )}
+
                 {/* Quick Assign Chaperone Modal Dialog */}
                 <Dialog open={assignModalOpen} onOpenChange={setAssignModalOpen}>
                     <DialogContent className="sm:max-w-[480px]">
@@ -739,6 +1186,96 @@ export default function Dashboard() {
                         />
                     </div>
                 )}
+
+                <ProofModal
+                    open={proofModalOpen}
+                    onOpenChange={(open) => {
+                        setProofModalOpen(open);
+                        if (!open) setActiveParticipantForProof(null);
+                    }}
+                    href={activeProofUrl ?? ''}
+                    title={activeProofTitle}
+                    extraContent={
+                        activeParticipantForProof ? (
+                            <div className="flex flex-wrap items-center gap-2 text-xs">
+                                <span className="font-semibold text-muted-foreground">
+                                    Status Final:
+                                </span>
+                                <Badge
+                                    variant={
+                                        activeParticipantForProof.national_status ===
+                                        'verified'
+                                            ? 'default'
+                                            : 'secondary'
+                                    }
+                                    className={
+                                        activeParticipantForProof.national_status ===
+                                        'verified'
+                                            ? 'bg-emerald-600 text-white'
+                                            : 'border-amber-400 bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200'
+                                    }
+                                >
+                                    {activeParticipantForProof.national_status ===
+                                    'verified'
+                                        ? '✓ Lunas & Terverifikasi Final'
+                                        : activeParticipantForProof.national_status ===
+                                            'waiting_confirmation'
+                                          ? 'Menunggu Verifikasi Keuangan'
+                                          : 'Belum Selesai'}
+                                </Badge>
+                                {activeParticipantForProof.shirt_size && (
+                                    <span className="text-muted-foreground">
+                                        • Ukuran Baju:{' '}
+                                        <strong>
+                                            {
+                                                activeParticipantForProof.shirt_size
+                                            }
+                                        </strong>
+                                    </span>
+                                )}
+                            </div>
+                        ) : null
+                    }
+                    actions={
+                        activeParticipantForProof ? (
+                            <div className="flex items-center gap-2">
+                                {activeParticipantForProof.national_status !==
+                                    'verified' && (
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        className="gap-1.5 bg-emerald-600 font-bold text-white shadow-sm hover:bg-emerald-700"
+                                        onClick={() =>
+                                            handleVerifyNationalFromDashboard(
+                                                activeParticipantForProof,
+                                            )
+                                        }
+                                    >
+                                        <CheckCircle2 className="size-4" />
+                                        <span>Verifikasi &amp; Set Lunas</span>
+                                    </Button>
+                                )}
+                                {activeParticipantForProof.national_status ===
+                                    'waiting_confirmation' && (
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        variant="outline"
+                                        className="gap-1.5 border-rose-300 text-rose-700 hover:bg-rose-50 dark:border-rose-800 dark:text-rose-300 dark:hover:bg-rose-950"
+                                        onClick={() =>
+                                            handleRejectNationalFromDashboard(
+                                                activeParticipantForProof,
+                                            )
+                                        }
+                                    >
+                                        <XCircle className="size-4" />
+                                        <span>Tolak Bukti TF</span>
+                                    </Button>
+                                )}
+                            </div>
+                        ) : undefined
+                    }
+                />
             </div>
         </>
     );

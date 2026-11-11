@@ -89,6 +89,20 @@ function inpaintVertical($im, $xStart, $xEnd, $yStart, $yEnd)
     }
 }
 
+function stripBlackBorders($im, $w, $h)
+{
+    for ($y = 0; $y < 6; $y++) {
+        for ($x = 0; $x < $w; $x++) {
+            imagesetpixel($im, $x, $y, imagecolorat($im, $x, 6));
+        }
+    }
+    for ($y = 1938; $y < $h; $y++) {
+        for ($x = 0; $x < $w; $x++) {
+            imagesetpixel($im, $x, $y, imagecolorat($im, $x, 1937));
+        }
+    }
+}
+
 // -------------------------------------------------------------
 // 1. GENERATE CARD-BG-BACK.PNG
 // -------------------------------------------------------------
@@ -176,6 +190,7 @@ imagecopyresampled($bgBack, $cropAmila, $aX, $aY, 0, 0, $aW, $aH, imagesx($cropA
 $white = imagecolorallocate($bgBack, 255, 255, 255);
 fillRoundedRect($bgBack, 261, 696, 960, 1332, 45, $white);
 
+stripBlackBorders($bgBack, $targetW, $targetH);
 imagepng($bgBack, $outBackPath);
 echo "Saved: $outBackPath\n";
 
@@ -247,6 +262,28 @@ $topX = 720;
 $topY = 1022 - $topH;
 imagecopyresampled($bgFront, $cropTop, $topX, $topY, 0, 0, $topW, $topH, imagesx($cropTop), imagesy($cropTop));
 
+// Erase and Stamp HD Clean YM Logo beside puzzle icon (x=595, y=123, size: 147x102)
+for ($y = 118; $y <= 230; $y++) {
+    $cL = imagecolorat($bgFront, 587, $y);
+    $cR = imagecolorat($bgFront, 756, $y);
+    $rL = ($cL >> 16) & 0xFF;
+    $gL = ($cL >> 8) & 0xFF;
+    $bL = $cL & 0xFF;
+    $rR = ($cR >> 16) & 0xFF;
+    $gR = ($cR >> 8) & 0xFF;
+    $bR = $cR & 0xFF;
+    for ($x = 588; $x <= 755; $x++) {
+        $t = ($x - 588) / (755 - 588);
+        $r = (int) ($rL + $t * ($rR - $rL));
+        $g = (int) ($gL + $t * ($gR - $gL));
+        $b = (int) ($bL + $t * ($bR - $bL));
+        imagesetpixel($bgFront, $x, $y, imagecolorallocate($bgFront, $r, $g, $b));
+    }
+}
+$rawYM = imagecreatefrompng('public/assets/images/icon-ym.png');
+$cropYM = cropToNonTransparent($rawYM);
+imagecopyresampled($bgFront, $cropYM, 595, 123, 0, 0, 147, 102, imagesx($cropYM), imagesy($cropYM));
+
 // Clear Dynamic Student Data Box & Sponsor Box
 $mintBg = imagecolorallocate($bgFront, 240, 254, 252);
 imagefilledrectangle($bgFront, 74, 1024, 1150, 1580, $mintBg);
@@ -254,6 +291,7 @@ imagefilledrectangle($bgFront, 74, 1024, 1150, 1580, $mintBg);
 $sponsorWhite = imagecolorallocate($bgFront, 255, 255, 255);
 imagefilledrectangle($bgFront, 74, 1698, 1150, 1842, $sponsorWhite);
 
+stripBlackBorders($bgFront, $targetW, $targetH);
 imagepng($bgFront, $outFrontPath);
 echo "Saved: $outFrontPath\n";
 

@@ -55,9 +55,9 @@ test('teacher can qualify and disqualify binaan student to national stage', func
     expect($participant->national)->not->toBeNull()
         ->and($participant->national->status)->toBe('unconfirmed');
 
-    // 2. Disqualify (toggle off)
+    // 2. Disqualify (explicit disqualify action)
     $response = $this->actingAs($teacherUser)
-        ->post(route('teacher.data-peserta.national-qualify', $participant->id));
+        ->post(route('teacher.data-peserta.national-qualify', $participant->id), ['action' => 'disqualify']);
 
     $response->assertSessionHasNoErrors();
     $participant->refresh();
@@ -65,7 +65,7 @@ test('teacher can qualify and disqualify binaan student to national stage', func
 
     // 3. Re-qualify (should restore soft-deleted row without error 1062)
     $response = $this->actingAs($teacherUser)
-        ->post(route('teacher.data-peserta.national-qualify', $participant->id));
+        ->post(route('teacher.data-peserta.national-qualify', $participant->id), ['action' => 'qualify']);
 
     $response->assertSessionHasNoErrors();
     $participant->refresh();
@@ -85,13 +85,13 @@ test('admin can qualify, cancel qualification, and re-qualify participant withou
     $participant->refresh();
     expect($participant->national)->not->toBeNull();
 
-    // 2. Cancel qualification (soft-deleted)
-    $this->actingAs($adminUser)->post(route('admin.companies.participants.national-qualify', $participant->id));
+    // 2. Cancel qualification (explicit disqualify action)
+    $this->actingAs($adminUser)->post(route('admin.companies.participants.national-qualify', $participant->id), ['action' => 'disqualify']);
     $participant->refresh();
     expect($participant->national)->toBeNull();
 
     // 3. Re-qualify (should restore without error 1062)
-    $response = $this->actingAs($adminUser)->post(route('admin.companies.participants.national-qualify', $participant->id));
+    $response = $this->actingAs($adminUser)->post(route('admin.companies.participants.national-qualify', $participant->id), ['action' => 'qualify']);
     $response->assertSessionHasNoErrors();
     $participant->refresh();
     expect($participant->national)->not->toBeNull()
@@ -248,7 +248,7 @@ test('admin can verify public participant national documents and activate nation
         'stage' => 'national',
     ]));
     $cardResponse->assertOk();
-    $cardResponse->assertSee('BABAK FINAL NASIONAL');
+    $cardResponse->assertSee('Babak Final Nasional');
 });
 
 test('national re-registration is blocked when setting registration_national_open is disabled', function () {
@@ -547,4 +547,62 @@ test('cabang can decline national participation for general participant with cat
         ->and($participant->national->decline_category)->toBe('Tidak Diizinkan Orang Tua / Wali')
         ->and($participant->national->decline_reason)->toBe('Orang tua berhalangan mendampingi ke babak final.')
         ->and($participant->national->declined_at)->not->toBeNull();
+});
+
+test('administrator can edit participant shirt size, guardian name, and national fields via update', function () {
+    $admin = User::factory()->create([
+        'email_verified_at' => now(),
+    ]);
+    $admin->assignRole('Administrators');
+
+    $olimpiade = Olimpiade::factory()->create(['event_year' => 2026]);
+    $student = Student::factory()->create([
+        'full_name' => 'Peserta Finalis',
+        'is_binaan' => false,
+    ]);
+
+    $participant = Participant::factory()->create([
+        'student_id' => $student->id,
+        'olimpiade_id' => $olimpiade->id,
+        'status' => 'verified',
+        'payment_status' => 'paid',
+        'guardian_signature_name' => null,
+    ]);
+
+    $national = NationalParticipant::create([
+        'participant_id' => $participant->id,
+        'qualified_by' => $admin->id,
+        'status' => 'waiting_confirmation',
+        'shirt_size' => 'M',
+        'payment_status' => 'waiting_confirmation',
+    ]);
+
+    $response = $this->actingAs($admin)->put(
+        route('admin.companies.participants.update', $participant->id),
+        [
+            'olimpiade_id' => $olimpiade->id,
+            'full_name' => 'Peserta Finalis Updated',
+            'guardian_signature_name' => 'Ahmad Suhendra (Ayah Kandung)',
+            'parent_phone' => '081234567890',
+            'status' => 'verified',
+            'payment_status' => 'paid',
+            'is_national_qualified' => 1,
+            'national_shirt_size' => 'XL',
+            'national_status' => 'verified',
+            'national_payment_status' => 'paid',
+            'national_notes' => 'Ukuran baju diverifikasi oleh admin',
+        ]
+    );
+
+    $response->assertSessionHasNoErrors();
+    $response->assertRedirect(route('admin.companies.participants.index'));
+
+    $participant->refresh();
+    expect($participant->guardian_signature_name)->toBe('Ahmad Suhendra (Ayah Kandung)');
+
+    $national->refresh();
+    expect($national->shirt_size)->toBe('XL')
+        ->and($national->status)->toBe('verified')
+        ->and($national->payment_status)->toBe('paid')
+        ->and($national->notes)->toBe('Ukuran baju diverifikasi oleh admin');
 });
