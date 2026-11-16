@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use BaconQrCode\Common\ErrorCorrectionLevel;
+use BaconQrCode\Encoder\Encoder;
 use BaconQrCode\Renderer\Color\Rgb;
 use BaconQrCode\Renderer\Image\SvgImageBackEnd;
 use BaconQrCode\Renderer\ImageRenderer;
@@ -153,20 +155,77 @@ class BarcodeService
         }
     }
 
-    private function hexToRgb(string $hex): Rgb
+    /**
+     * Generate standard QR Code as PNG binary using BaconQrCode matrix and GD.
+     */
+    public function generateQrCodePng(string $data, int $size = 400, string $color = '#17524A', int $margin = 2): string
+    {
+        $data = trim($data);
+        if ($data === '') {
+            return '';
+        }
+
+        try {
+            $qrCode = Encoder::encode($data, ErrorCorrectionLevel::M());
+            $matrix = $qrCode->getMatrix();
+            $matrixWidth = $matrix->getWidth();
+            $matrixHeight = $matrix->getHeight();
+
+            $totalWidth = $matrixWidth + ($margin * 2);
+            $totalHeight = $matrixHeight + ($margin * 2);
+
+            $scale = max(1, (int) floor($size / $totalWidth));
+            $actualWidth = $totalWidth * $scale;
+            $actualHeight = $totalHeight * $scale;
+
+            $image = imagecreatetruecolor($actualWidth, $actualHeight);
+            $bgColor = imagecolorallocate($image, 255, 255, 255);
+            imagefilledrectangle($image, 0, 0, $actualWidth, $actualHeight, $bgColor);
+
+            $rgb = $this->parseHexColor($color);
+            $fgColor = imagecolorallocate($image, $rgb['r'], $rgb['g'], $rgb['b']);
+
+            for ($y = 0; $y < $matrixHeight; $y++) {
+                for ($x = 0; $x < $matrixWidth; $x++) {
+                    if ($matrix->get($x, $y) === 1) {
+                        $startX = ($x + $margin) * $scale;
+                        $startY = ($y + $margin) * $scale;
+                        imagefilledrectangle($image, $startX, $startY, $startX + $scale - 1, $startY + $scale - 1, $fgColor);
+                    }
+                }
+            }
+
+            ob_start();
+            imagepng($image, null, 9);
+            $pngData = ob_get_clean();
+
+            return (string) $pngData;
+        } catch (\Throwable) {
+            return '';
+        }
+    }
+
+    private function parseHexColor(string $hex): array
     {
         $hex = ltrim($hex, '#');
         if (strlen($hex) === 3) {
             $hex = $hex[0].$hex[0].$hex[1].$hex[1].$hex[2].$hex[2];
         }
         if (strlen($hex) !== 6) {
-            return new Rgb(0, 0, 0);
+            return ['r' => 0, 'g' => 0, 'b' => 0];
         }
 
-        $r = (int) hexdec(substr($hex, 0, 2));
-        $g = (int) hexdec(substr($hex, 2, 2));
-        $b = (int) hexdec(substr($hex, 4, 2));
+        return [
+            'r' => (int) hexdec(substr($hex, 0, 2)),
+            'g' => (int) hexdec(substr($hex, 2, 2)),
+            'b' => (int) hexdec(substr($hex, 4, 2)),
+        ];
+    }
 
-        return new Rgb($r, $g, $b);
+    private function hexToRgb(string $hex): Rgb
+    {
+        $rgb = $this->parseHexColor($hex);
+
+        return new Rgb($rgb['r'], $rgb['g'], $rgb['b']);
     }
 }

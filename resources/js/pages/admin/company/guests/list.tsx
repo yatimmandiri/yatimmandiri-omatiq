@@ -17,48 +17,55 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { dashboard } from '@/routes/admin';
-import { confirmDelete, showSuccessAlert, showErrorAlert } from '@/utils/sweetalert';
+import { confirmAction, confirmDelete, showErrorAlert, showSuccessAlert } from '@/utils/sweetalert';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import {
+    Archive,
     CheckCircle2,
     Clock,
+    Copy,
     Crown,
+    Download,
     Eye,
     Filter,
+    Mail,
     MapPin,
     MoreHorizontal,
     Pencil,
     Plus,
     Printer,
+    QrCode,
     RotateCcw,
+    Send,
     Sparkles,
     Trash2,
     User,
     Users,
+    XCircle,
 } from 'lucide-react';
 import { useState } from 'react';
 
 const categoryLabels: Record<string, { label: string; className: string }> = {
-    vvip: {
-        label: 'VVIP',
-        className: 'bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-950/40 dark:text-amber-300 font-black',
-    },
     vip: {
         label: 'VIP',
-        className: 'bg-yellow-100 text-yellow-800 border-yellow-300 dark:bg-yellow-950/40 dark:text-yellow-300 font-bold',
+        className: 'bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-950/40 dark:text-amber-300 font-black',
     },
-    tokoh: {
-        label: 'Tokoh',
-        className: 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-950/40 dark:text-blue-300',
+    vvip: {
+        label: 'VIP',
+        className: 'bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-950/40 dark:text-amber-300 font-black',
     },
-    sponsor: {
-        label: 'Sponsor',
-        className: 'bg-purple-100 text-purple-800 border-purple-300 dark:bg-purple-950/40 dark:text-purple-300',
+    non_vip: {
+        label: 'Non-VIP',
+        className: 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300 font-semibold',
+    },
+    'non-vip': {
+        label: 'Non-VIP',
+        className: 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300 font-semibold',
     },
     umum: {
-        label: 'Umum',
-        className: 'bg-slate-100 text-slate-800 border-slate-300 dark:bg-slate-800 dark:text-slate-300',
+        label: 'Non-VIP',
+        className: 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300 font-semibold',
     },
 };
 
@@ -69,6 +76,7 @@ export default function ListGuestsPage() {
     const [refreshData, setRefreshData] = useState(false);
     const [selectedRows, setSelectedRows] = useState<any[]>([]);
     const [isCheckingIn, setIsCheckingIn] = useState(false);
+    const [isDownloading, setIsDownloading] = useState(false);
 
     const hasActiveFilter = Object.values(filterValue).some(Boolean);
 
@@ -83,6 +91,31 @@ export default function ListGuestsPage() {
             router.delete(`/admin/companies/guests/${guest.id}`, {
                 onSuccess: () => setRefreshData((prev) => !prev),
             });
+        }
+    };
+
+    const handleResetRsvp = async (guest: any) => {
+        const confirmed = await confirmAction({
+            title: 'Reset Konfirmasi RSVP?',
+            text: `Status kehadiran tamu VIP ${guest.name} (${guest.code}) akan di-reset kembali menjadi 'Diundang' (invited) sehingga formulir konfirmasi online dapat diisi kembali.`,
+            confirmButtonText: 'Ya, Reset RSVP',
+        });
+
+        if (confirmed) {
+            router.post(
+                `/admin/companies/guests/${guest.id}/reset-rsvp`,
+                {},
+                {
+                    preserveScroll: true,
+                    onSuccess: () => {
+                        showSuccessAlert('Status RSVP Berhasil Direset', 'Formulir RSVP online tamu VIP ini telah dibuka kembali.');
+                        setRefreshData((prev) => !prev);
+                    },
+                    onError: () => {
+                        showErrorAlert('Gagal Mereset RSVP', 'Terjadi kesalahan saat memproses reset RSVP.');
+                    },
+                }
+            );
         }
     };
 
@@ -102,6 +135,40 @@ export default function ListGuestsPage() {
         } finally {
             setIsCheckingIn(false);
         }
+    };
+
+    const handleBulkDownloadQr = async () => {
+        if (selectedRows.length === 0) return;
+
+        const ids = selectedRows.map((r) => r.id);
+        setIsDownloading(true);
+
+        try {
+            const res = await axios.post(
+                '/admin/companies/guests/bulk-download-rsvp-qr',
+                { ids },
+                { responseType: 'blob' }
+            );
+            const url = window.URL.createObjectURL(new Blob([res.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `QR-RSVP-Tamu-VIP-${ids.length}-Data.zip`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+            showSuccessAlert('Unduh Berhasil!', `Berhasil mengunduh ${ids.length} QR Code konfirmasi dalam file ZIP.`);
+        } catch (err: any) {
+            showErrorAlert('Gagal Mengunduh', 'Terjadi kesalahan saat membuat file ZIP.');
+        } finally {
+            setIsDownloading(false);
+        }
+    };
+
+    const handleCopyRsvp = (guest: any) => {
+        if (!guest.rsvp_url) return;
+        navigator.clipboard.writeText(guest.rsvp_url);
+        showSuccessAlert('Tautan Disalin!', `Link konfirmasi RSVP untuk ${guest.name} telah disalin ke clipboard.`);
     };
 
     const columns = [
@@ -135,6 +202,8 @@ export default function ListGuestsPage() {
             header: 'Aksi',
             cell: ({ row }: any) => {
                 const guest = row.original;
+                const isVip = ['vip', 'vvip'].includes(guest.category?.toLowerCase());
+
                 return (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -166,6 +235,38 @@ export default function ListGuestsPage() {
                                     Cetak Kartu Pass
                                 </a>
                             </DropdownMenuItem>
+                            {isVip && (
+                                <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem asChild>
+                                        <a
+                                            href={`/admin/companies/guests/${guest.id}/download-rsvp-qr`}
+                                            className="text-[#17524A] dark:text-emerald-400 font-semibold cursor-pointer"
+                                        >
+                                            <QrCode className="mr-2 h-4 w-4" />
+                                            Unduh QR RSVP (PNG)
+                                        </a>
+                                    </DropdownMenuItem>
+                                    {guest.rsvp_url && (
+                                        <DropdownMenuItem
+                                            onClick={() => handleCopyRsvp(guest)}
+                                            className="text-amber-700 dark:text-amber-400 font-medium cursor-pointer"
+                                        >
+                                            <Copy className="mr-2 h-4 w-4" />
+                                            Salin Tautan RSVP
+                                        </DropdownMenuItem>
+                                    )}
+                                    {guest.status !== 'invited' && (
+                                        <DropdownMenuItem
+                                            onClick={() => handleResetRsvp(guest)}
+                                            className="text-orange-600 dark:text-orange-400 font-medium cursor-pointer"
+                                        >
+                                            <RotateCcw className="mr-2 h-4 w-4" />
+                                            Reset RSVP (Buka Kunci Form)
+                                        </DropdownMenuItem>
+                                    )}
+                                </>
+                            )}
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                                 onClick={() => handleDelete(guest)}
@@ -257,24 +358,46 @@ export default function ListGuestsPage() {
             accessorKey: 'checked_in_at',
             header: (info: any) => renderRowHeader(info, 'Kedatangan'),
             cell: ({ row }: any) => {
-                const checked = row.original.checked_in_at;
-                if (!checked) {
-                    return (
-                        <Badge variant="outline" className="border-slate-200 text-slate-400 text-[10px]">
-                            {row.original.status === 'confirmed' ? 'Terkonfirmasi' : 'Belum Hadir'}
+                const g = row.original;
+                const checked = g.checked_in_at;
+
+                if (checked) {
+                    const checkedDate = new Date(checked);
+                    const isToday = checkedDate.toDateString() === new Date().toDateString();
+                    return isToday ? (
+                        <Badge variant="outline" className="border-emerald-300 text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/20 text-[10px] font-semibold">
+                            <CheckCircle2 className="mr-1 h-3 w-3 text-emerald-600" />
+                            Hadir Hari Ini ({checkedDate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })})
+                        </Badge>
+                    ) : (
+                        <Badge variant="outline" className="border-emerald-200 text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/20 text-[10px]">
+                            <CheckCircle2 className="mr-1 h-3 w-3 text-emerald-600" />
+                            Hari Lalu ({checkedDate.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })})
                         </Badge>
                     );
                 }
-                const checkedDate = new Date(checked);
-                const isToday = checkedDate.toDateString() === new Date().toDateString();
-                return isToday ? (
-                    <Badge variant="outline" className="border-emerald-300 text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/20 text-[10px]">
-                        <CheckCircle2 className="mr-1 h-3 w-3 text-emerald-600" />
-                        Hadir Hari Ini ({checkedDate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })})
-                    </Badge>
-                ) : (
-                    <Badge variant="outline" className="border-slate-200 text-slate-500 bg-slate-50 dark:bg-slate-900/40 text-[10px]">
-                        Hari Lalu ({checkedDate.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })})
+
+                if (g.status === 'declined') {
+                    return (
+                        <Badge variant="outline" className="border-rose-300 text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/20 text-[10px] font-semibold">
+                            <XCircle className="mr-1 h-3 w-3 text-rose-600" />
+                            Berhalangan Hadir
+                        </Badge>
+                    );
+                }
+
+                if (g.status === 'confirmed') {
+                    return (
+                        <Badge variant="outline" className="border-amber-300 text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/20 text-[10px] font-medium">
+                            <Clock className="mr-1 h-3 w-3 text-amber-600" />
+                            Terkonfirmasi
+                        </Badge>
+                    );
+                }
+
+                return (
+                    <Badge variant="outline" className="border-slate-200 text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-900/40 text-[10px]">
+                        Belum Hadir
                     </Badge>
                 );
             },
@@ -340,8 +463,8 @@ export default function ListGuestsPage() {
                     <Card className="border-slate-200/80 dark:border-slate-800 shadow-sm">
                         <CardContent className="p-4 flex items-center justify-between">
                             <div>
-                                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Tamu VVIP</p>
-                                <p className="text-2xl font-black text-amber-600 dark:text-amber-400 mt-1">{stats?.vvip ?? 0}</p>
+                                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Tamu VIP</p>
+                                <p className="text-2xl font-black text-amber-600 dark:text-amber-400 mt-1">{stats?.vip ?? 0}</p>
                             </div>
                             <div className="h-10 w-10 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 flex items-center justify-center">
                                 <Crown className="h-5 w-5" />
@@ -352,11 +475,11 @@ export default function ListGuestsPage() {
                     <Card className="border-slate-200/80 dark:border-slate-800 shadow-sm">
                         <CardContent className="p-4 flex items-center justify-between">
                             <div>
-                                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Tamu VIP</p>
-                                <p className="text-2xl font-black text-yellow-600 dark:text-yellow-400 mt-1">{stats?.vip ?? 0}</p>
+                                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Tamu Non-VIP</p>
+                                <p className="text-2xl font-black text-slate-700 dark:text-slate-300 mt-1">{stats?.non_vip ?? 0}</p>
                             </div>
-                            <div className="h-10 w-10 rounded-xl bg-yellow-50 dark:bg-yellow-950/40 text-yellow-600 flex items-center justify-center">
-                                <Sparkles className="h-5 w-5" />
+                            <div className="h-10 w-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 flex items-center justify-center">
+                                <Users className="h-5 w-5" />
                             </div>
                         </CardContent>
                     </Card>
@@ -383,11 +506,8 @@ export default function ListGuestsPage() {
                         <div className="w-40">
                             <SelectComponent
                                 options={[
-                                    { value: 'vvip', label: 'VVIP' },
-                                    { value: 'vip', label: 'VIP' },
-                                    { value: 'tokoh', label: 'Tokoh' },
-                                    { value: 'sponsor', label: 'Sponsor' },
-                                    { value: 'umum', label: 'Umum' },
+                                    { value: 'vip', label: 'Tamu VIP' },
+                                    { value: 'non_vip', label: 'Tamu Non-VIP' },
                                 ]}
                                 value={filterValue.category || ''}
                                 onValueChange={(val: string) => setFilterValue((prev) => ({ ...prev, category: val }))}
@@ -436,17 +556,30 @@ export default function ListGuestsPage() {
                         )}
                     </div>
 
-                    {/* Plan C Bulk Check-In Button */}
-                    <div className="flex items-center gap-2">
+                    {/* Bulk Action Buttons */}
+                    <div className="flex flex-wrap items-center gap-2">
                         {selectedRows.length > 0 && (
-                            <Button
-                                onClick={handleBulkCheckIn}
-                                disabled={isCheckingIn}
-                                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-600/20"
-                            >
-                                <CheckCircle2 className="mr-1.5 h-4 w-4" />
-                                Tandai Hadir ({selectedRows.length} Terpilih)
-                            </Button>
+                            <>
+                                <Button
+                                    type="button"
+                                    onClick={handleBulkDownloadQr}
+                                    disabled={isDownloading}
+                                    variant="outline"
+                                    className="border-[#17524A] text-[#17524A] hover:bg-emerald-50 dark:border-emerald-400 dark:text-emerald-300 font-bold text-xs"
+                                >
+                                    <Archive className="mr-1.5 h-3.5 w-3.5" />
+                                    {isDownloading ? 'Mengompres...' : `Unduh QR Terpilih (ZIP) (${selectedRows.length})`}
+                                </Button>
+                                <Button
+                                    type="button"
+                                    onClick={handleBulkCheckIn}
+                                    disabled={isCheckingIn}
+                                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-600/20"
+                                >
+                                    <CheckCircle2 className="mr-1.5 h-4 w-4" />
+                                    Tandai Hadir ({selectedRows.length})
+                                </Button>
+                            </>
                         )}
                     </div>
                 </div>
@@ -472,7 +605,13 @@ export default function ListGuestsPage() {
                                 'Alokasi Meja': item.table_number || 'VIP Area',
                                 'Kapasitas Pax': item.seat_count || 1,
                                 'No. HP': item.phone || '-',
-                                'Jam Masuk': item.checked_in_at ? new Date(item.checked_in_at).toLocaleString('id-ID') : 'Belum Hadir',
+                                'Jam Masuk': item.checked_in_at
+                                    ? new Date(item.checked_in_at).toLocaleString('id-ID')
+                                    : item.status === 'declined'
+                                    ? 'Berhalangan Hadir'
+                                    : item.status === 'confirmed'
+                                    ? 'Terkonfirmasi (Belum Masuk)'
+                                    : 'Belum Hadir',
                                 Status: item.status,
                             }))
                         }

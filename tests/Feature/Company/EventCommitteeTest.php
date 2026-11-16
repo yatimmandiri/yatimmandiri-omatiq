@@ -240,3 +240,69 @@ test('administrator can import committees from CSV matching Google Sheet format 
     expect($graceUpdated->branch)->toBe('Pusat 1 (Updated)')
         ->and($graceUpdated->shirt_size)->toBe('XL');
 });
+
+test('administrator and public can render virtual 3D committee pass card', function () {
+    $admin = User::factory()->create([
+        'email_verified_at' => now(),
+    ]);
+    $admin->assignRole('Administrators');
+
+    $committee = EventCommittee::create([
+        'code' => 'CREW-00001',
+        'created_by' => $admin->id,
+        'name' => 'Alfia Rahma',
+        'branch' => 'Pusat 1',
+        'division' => 'Panitia Pelaksana',
+        'position' => 'Koordinator Acara',
+        'gender' => 'female',
+        'status' => 'active',
+        'event_year' => 2026,
+    ]);
+
+    // Admin view
+    $adminResponse = $this->actingAs($admin)->get(route('admin.companies.committees.card', $committee));
+    $adminResponse->assertOk()
+        ->assertSee('Kartu-Panitia-OMATIQ-CREW-00001-Alfia Rahma')
+        ->assertSee('Alfia Rahma')
+        ->assertSee('Koordinator Acara')
+        ->assertSee('CREW-00001')
+        ->assertSee('Kartu Virtual 3D')
+        ->assertSee('Lembar Cetak A4');
+
+    // Public view by code
+    $publicResponse = $this->get(route('home.committee.card', ['identifier' => 'CREW-00001']));
+    $publicResponse->assertOk()
+        ->assertSee('Alfia Rahma')
+        ->assertSee('CREW-00001');
+
+    // PDF format stream
+    $pdfResponse = $this->actingAs($admin)->get(route('admin.companies.committees.card', ['committee' => $committee, 'format' => 'pdf']));
+    $pdfResponse->assertOk()
+        ->assertHeader('content-type', 'application/pdf');
+});
+
+test('inactive committee card is blocked for guest but allowed for administrator', function () {
+    $admin = User::factory()->create([
+        'email_verified_at' => now(),
+    ]);
+    $admin->assignRole('Administrators');
+
+    $committee = EventCommittee::create([
+        'code' => 'CREW-00002',
+        'created_by' => $admin->id,
+        'name' => 'Pending Crew',
+        'division' => 'Logistik',
+        'gender' => 'male',
+        'status' => 'inactive',
+        'event_year' => 2026,
+    ]);
+
+    // Public access should be 403
+    $publicResponse = $this->get(route('home.committee.card', ['identifier' => 'CREW-00002']));
+    $publicResponse->assertForbidden();
+
+    // Admin access allowed with unverified banner
+    $adminResponse = $this->actingAs($admin)->get(route('admin.companies.committees.card', $committee));
+    $adminResponse->assertOk()
+        ->assertSee('MENUNGGU AKTIVASI');
+});

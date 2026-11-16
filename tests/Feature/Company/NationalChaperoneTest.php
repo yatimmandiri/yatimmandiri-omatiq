@@ -134,7 +134,7 @@ test('lanyard pass card is printable for verified chaperone', function () {
 
     $response = $this->actingAs($adminUser)->get(route('admin.companies.chaperones.card', $chaperone->id));
     $response->assertOk();
-    $response->assertSee('OFFICIAL PENDAMPING');
+    $response->assertSee('Kartu Tanda Pengenal Pendamping');
     $response->assertSee('Nur Hidayah');
     $response->assertSee('JAKARTA');
 });
@@ -332,4 +332,101 @@ test('teacher detail endpoint does not collide when user id matches another teac
     $responseA->assertJsonPath('data.nik', '3372019999990001');
     $responseA->assertJsonPath('data.gender', 'female');
     $responseA->assertJsonPath('data.penyaluran_teacher_id', 500);
+});
+
+test('admin can view and print chaperone 3d card', function () {
+    $admin = User::factory()->create(['email_verified_at' => now()]);
+    $admin->assignRole('Administrators');
+
+    $chaperone = NationalChaperone::create([
+        'created_by' => $admin->id,
+        'name' => 'Alfia Rahma',
+        'nik' => '3515081234560001',
+        'branch' => 'MOJOKERTO',
+        'source_type' => 'karyawan',
+        'gender' => 'female',
+        'phone' => '081234567890',
+        'status' => 'verified',
+    ]);
+
+    $response = $this->actingAs($admin)->get(route('admin.companies.chaperones.card', $chaperone->id));
+    $response->assertOk()
+        ->assertSee('Alfia Rahma')
+        ->assertSee('MOJOKERTO')
+        ->assertSee('Kartu Tanda Pengenal Pendamping')
+        ->assertSee('Kartu Virtual 3D')
+        ->assertSee('Lembar Cetak A4');
+});
+
+test('public can view verified chaperone 3d card via public route', function () {
+    $admin = User::factory()->create(['email_verified_at' => now()]);
+    $chaperone = NationalChaperone::create([
+        'created_by' => $admin->id,
+        'name' => 'Alfia Rahma',
+        'nik' => '3515081234560002',
+        'branch' => 'SURABAYA',
+        'source_type' => 'karyawan',
+        'gender' => 'female',
+        'phone' => '081234567890',
+        'status' => 'verified',
+    ]);
+
+    $formattedId = 'OFF-'.str_pad((string) $chaperone->id, 5, '0', STR_PAD_LEFT);
+    $response = $this->get(route('home.chaperone.card', $formattedId));
+    $response->assertOk()
+        ->assertSee('Alfia Rahma')
+        ->assertSee('SURABAYA')
+        ->assertSee($formattedId);
+});
+
+test('public scanning chaperone verify url redirects to registration verify page', function () {
+    $admin = User::factory()->create(['email_verified_at' => now()]);
+    $chaperone = NationalChaperone::create([
+        'created_by' => $admin->id,
+        'name' => 'Alfia Rahma',
+        'nik' => '3515081234560003',
+        'branch' => 'SURABAYA',
+        'source_type' => 'karyawan',
+        'gender' => 'female',
+        'phone' => '081234567890',
+        'status' => 'verified',
+    ]);
+
+    $formattedId = 'OFF-'.str_pad((string) $chaperone->id, 5, '0', STR_PAD_LEFT);
+    $response = $this->get(route('home.chaperone.verify', ['code' => $formattedId]));
+    $response->assertRedirect(route('home.registration.verify', ['registrationNumber' => $formattedId]));
+
+    // Follow redirect to verify page
+    $verifyResponse = $this->get(route('home.registration.verify', ['registrationNumber' => $formattedId]));
+    $verifyResponse->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('home/registration/verify')
+            ->where('isValid', true)
+            ->where('persona', 'chaperone')
+            ->where('chaperone.name', 'Alfia Rahma')
+        );
+});
+
+test('chaperone card can be streamed as PDF', function () {
+    $admin = User::factory()->create(['email_verified_at' => now()]);
+    $admin->assignRole('Administrators');
+
+    $chaperone = NationalChaperone::create([
+        'created_by' => $admin->id,
+        'name' => 'Alfia Rahma',
+        'nik' => '3515081234560004',
+        'branch' => 'MOJOKERTO',
+        'source_type' => 'karyawan',
+        'gender' => 'female',
+        'phone' => '081234567890',
+        'status' => 'verified',
+    ]);
+
+    $response = $this->actingAs($admin)->get(route('admin.companies.chaperones.card', [
+        'chaperone' => $chaperone->id,
+        'format' => 'pdf',
+    ]));
+
+    $response->assertOk();
+    expect($response->headers->get('content-type'))->toContain('application/pdf');
 });

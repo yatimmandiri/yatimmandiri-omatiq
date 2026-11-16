@@ -384,7 +384,24 @@ class NationalChaperoneController extends Controller
     {
         $this->authorize('view', $chaperone);
 
-        if ($chaperone->status !== 'verified' && ! Auth::user()->hasRole('Administrators')) {
+        return $this->renderCardView($request, $chaperone);
+    }
+
+    public function publicPrintCard(Request $request, string $identifier)
+    {
+        $id = $identifier;
+        if (preg_match('/^off-?0*(\d+)/i', $identifier, $matches)) {
+            $id = (int) $matches[1];
+        }
+
+        $chaperone = NationalChaperone::where('id', $id)->firstOrFail();
+
+        return $this->renderCardView($request, $chaperone);
+    }
+
+    private function renderCardView(Request $request, NationalChaperone $chaperone)
+    {
+        if ($chaperone->status !== 'verified' && (! Auth::check() || ! Auth::user()->hasRole('Administrators'))) {
             abort(403, 'Kartu tanda pengenal pendamping hanya dapat dicetak setelah disetujui resmi oleh Admin Pusat.');
         }
 
@@ -396,21 +413,33 @@ class NationalChaperoneController extends Controller
         ]);
 
         $chaperoneIdFormatted = 'OFF-'.str_pad((string) $chaperone->id, 5, '0', STR_PAD_LEFT);
-        $verifyUrl = route('home.registration.verify', ['registrationNumber' => $chaperoneIdFormatted]);
-        $qrCodeSvg = $this->barcodeService->generateQrCodeSvg($verifyUrl, size: 90, color: '#17524A');
-        $barcodeSvg = $this->barcodeService->generateCode128Svg($chaperoneIdFormatted, height: 26, barWidth: 1.1, color: '#17524A');
+        $verifyUrl = route('home.chaperone.verify', ['code' => $chaperoneIdFormatted]);
+        $isVerified = $chaperone->status === 'verified';
+        $qrCodeColor = $isVerified ? '#7a6400' : '#94a3b8';
+        $qrCodeSvg = $this->barcodeService->generateQrCodeSvg($verifyUrl, size: 160, color: $qrCodeColor);
+        $barcodeSvg = $this->barcodeService->generateCode128Svg($chaperoneIdFormatted, height: 26, barWidth: 1.1, color: $qrCodeColor);
 
         $isPdf = $request->query('format') === 'pdf';
 
+        $data = [
+            'chaperone' => $chaperone,
+            'chaperoneIdFormatted' => $chaperoneIdFormatted,
+            'verifyUrl' => $verifyUrl,
+            'qrCodeSvg' => $qrCodeSvg,
+            'barcodeSvg' => $barcodeSvg,
+            'isVerified' => $isVerified,
+            'isPdf' => $isPdf,
+        ];
+
         if ($isPdf) {
-            $pdf = Pdf::loadView('cards.chaperone-card', compact('chaperone', 'chaperoneIdFormatted', 'verifyUrl', 'qrCodeSvg', 'barcodeSvg'))
+            $pdf = Pdf::loadView('cards.chaperone-card', $data)
                 ->setPaper('a4', 'portrait')
                 ->setOption(['isRemoteEnabled' => true, 'isHtml5ParserEnabled' => true]);
 
             return $pdf->stream('Kartu-Pendamping-'.$chaperone->name.'.pdf');
         }
 
-        return view('cards.chaperone-card', compact('chaperone', 'chaperoneIdFormatted', 'verifyUrl', 'qrCodeSvg', 'barcodeSvg'));
+        return view('cards.chaperone-card', $data);
     }
 
     public function teacherDetail(int|string $id): JsonResponse

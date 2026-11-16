@@ -15,11 +15,10 @@ const Helmet = ({ children }: { children: ReactNode }) => {
 
 export const HomeLayout = ({ children }: { children: ReactNode }) => {
     const { props } = usePage<any>();
-    const {
-        pageTitle,
-        meta,
-        flash: { success, error },
-    } = props;
+    const pageTitle = props.pageTitle ?? '';
+    const meta = props.meta ?? {};
+    const success = props.flash?.success;
+    const error = props.flash?.error;
 
     useEffect(() => {
         if (success) {
@@ -37,8 +36,8 @@ export const HomeLayout = ({ children }: { children: ReactNode }) => {
                 <div className="flex min-h-screen flex-col antialiased">
                     <Head title={meta.title ? meta.title : pageTitle} />
                     <Helmet>
-                        <meta name="description" content={meta.description} />
-                        <meta name="keywords" content={meta.keywords} />
+                        {meta.description && <meta name="description" content={meta.description} />}
+                        {meta.keywords && <meta name="keywords" content={meta.keywords} />}
                     </Helmet>
                     <HomeHeaderComponent />
                     <main className="flex flex-1 flex-col">{children}</main>

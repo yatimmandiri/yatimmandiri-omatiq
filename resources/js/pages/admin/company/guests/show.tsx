@@ -3,17 +3,23 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { dashboard } from '@/routes/admin';
-import { Head, Link } from '@inertiajs/react';
+import { confirmAction, showErrorAlert, showSuccessAlert } from '@/utils/sweetalert';
+import { Head, Link, router } from '@inertiajs/react';
 import {
     ArrowLeft,
     CheckCircle2,
     Clock,
+    Copy,
     Crown,
     ExternalLink,
+    Mail,
     MapPin,
     Pencil,
     Phone,
     Printer,
+    QrCode,
+    RotateCcw,
+    Send,
     Sparkles,
     User,
     Users,
@@ -24,15 +30,60 @@ type GuestShowProps = {
     guest: any;
     photoUrl?: string | null;
     verifyUrl: string;
+    rsvpUrl?: string | null;
 };
 
 export default function ShowGuestPage({
     guest,
     photoUrl,
     verifyUrl,
+    rsvpUrl,
 }: GuestShowProps) {
     const [isProofModalOpen, setIsProofModalOpen] = useState(false);
     const isAttended = !!guest.checked_in_at;
+    const isVip = ['vip', 'vvip'].includes(guest.category?.toLowerCase());
+
+    const handleSendInvitation = () => {
+        router.post(`/admin/companies/guests/${guest.id}/send-invitation`, {}, {
+            preserveScroll: true,
+            onSuccess: () => {
+                showSuccessAlert('Undangan Terkirim!', `Email undangan resmi VIP berhasil dikirimkan ke ${guest.email}.`);
+            },
+            onError: (err: any) => {
+                showErrorAlert('Gagal Mengirim Undangan', Object.values(err)[0] as string || 'Terjadi kesalahan.');
+            },
+        });
+    };
+
+    const handleCopyRsvp = () => {
+        if (!rsvpUrl) return;
+        navigator.clipboard.writeText(rsvpUrl);
+        showSuccessAlert('Tautan Disalin!', `Link konfirmasi RSVP untuk ${guest.name} telah disalin ke clipboard.`);
+    };
+
+    const handleResetRsvp = async () => {
+        const confirmed = await confirmAction({
+            title: 'Reset Konfirmasi RSVP?',
+            text: `Status kehadiran tamu VIP ${guest.name} (${guest.code}) akan di-reset kembali menjadi 'Diundang' (invited) sehingga formulir konfirmasi online dapat diisi kembali.`,
+            confirmButtonText: 'Ya, Reset RSVP',
+        });
+
+        if (confirmed) {
+            router.post(
+                `/admin/companies/guests/${guest.id}/reset-rsvp`,
+                {},
+                {
+                    preserveScroll: true,
+                    onSuccess: () => {
+                        showSuccessAlert('Status RSVP Berhasil Direset', 'Formulir RSVP online tamu VIP ini telah dibuka kembali.');
+                    },
+                    onError: () => {
+                        showErrorAlert('Gagal Mereset RSVP', 'Terjadi kesalahan saat memproses reset RSVP.');
+                    },
+                }
+            );
+        }
+    };
 
     return (
         <>
@@ -81,6 +132,41 @@ export default function ShowGuestPage({
                                 Edit Data
                             </Link>
                         </Button>
+                        {isVip && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                asChild
+                                className="border-[#17524A] text-[#17524A] hover:bg-emerald-50 dark:border-emerald-400 dark:text-emerald-300 font-semibold"
+                            >
+                                <a href={`/admin/companies/guests/${guest.id}/download-rsvp-qr`}>
+                                    <QrCode className="mr-1.5 h-4 w-4" />
+                                    Unduh QR Konfirmasi (PNG)
+                                </a>
+                            </Button>
+                        )}
+                        {isVip && rsvpUrl && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleCopyRsvp}
+                                className="border-amber-500 text-amber-700 hover:bg-amber-50 dark:border-amber-500 dark:text-amber-400"
+                            >
+                                <Copy className="mr-1.5 h-4 w-4" />
+                                Salin Link RSVP
+                            </Button>
+                        )}
+                        {isVip && guest.status !== 'invited' && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleResetRsvp}
+                                className="border-orange-500 text-orange-700 hover:bg-orange-50 dark:border-orange-500 dark:text-orange-400"
+                            >
+                                <RotateCcw className="mr-1.5 h-4 w-4" />
+                                Reset RSVP
+                            </Button>
+                        )}
                         <Button
                             size="sm"
                             asChild
@@ -244,6 +330,90 @@ export default function ShowGuestPage({
                                 )}
                             </CardContent>
                         </Card>
+
+                        {isVip && (
+                            <Card className="border-amber-200 dark:border-amber-900/40 bg-amber-50/30 dark:bg-amber-950/10">
+                                <CardHeader>
+                                    <CardTitle className="text-sm font-semibold flex items-center justify-between">
+                                        <span className="flex items-center gap-2">
+                                            <Mail className="h-4 w-4 text-amber-600" />
+                                            Proses Undangan & Konfirmasi RSVP VIP
+                                        </span>
+                                        <Badge variant="outline" className="border-amber-400 text-amber-800 dark:text-amber-300 font-bold uppercase text-[10px]">
+                                            VIP PIPELINE
+                                        </Badge>
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-3 text-xs">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div className="rounded-xl border border-amber-200 bg-white p-3 dark:border-amber-900 dark:bg-slate-900">
+                                            <span className="font-semibold text-slate-500">Metode Undangan</span>
+                                            <p className="mt-1 font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                                                <QrCode className="size-3.5 text-[#17524A]" />
+                                                QR Code Cetak (Undangan Fisik)
+                                            </p>
+                                        </div>
+
+                                        <div className="rounded-xl border border-amber-200 bg-white p-3 dark:border-amber-900 dark:bg-slate-900">
+                                            <span className="font-semibold text-slate-500">Status Konfirmasi RSVP</span>
+                                            <p className="mt-1 font-bold text-slate-900 dark:text-slate-100">
+                                                {guest.status === 'confirmed' || guest.status === 'attended' ? (
+                                                    <span className="text-emerald-600 flex items-center gap-1">
+                                                        <CheckCircle2 className="size-3.5" />
+                                                        Terkonfirmasi Hadir {guest.confirmed_at && `(${new Date(guest.confirmed_at).toLocaleDateString('id-ID')})`}
+                                                    </span>
+                                                ) : guest.status === 'declined' ? (
+                                                    <span className="text-rose-600">Berhalangan Hadir</span>
+                                                ) : (
+                                                    <span className="text-amber-700">Menunggu Scan Tamu di Undangan Fisik</span>
+                                                )}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {rsvpUrl && (
+                                        <div className="rounded-xl border border-amber-200 bg-white p-3.5 dark:border-amber-900 dark:bg-slate-900 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                            <div className="min-w-0">
+                                                <span className="font-bold text-amber-900 dark:text-amber-300 block">Link Konfirmasi RSVP Mandiri:</span>
+                                                <p className="text-[11px] text-slate-500 font-mono truncate">{rsvpUrl}</p>
+                                            </div>
+                                            <div className="flex items-center gap-2 shrink-0">
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={handleCopyRsvp}
+                                                    className="h-8 text-xs font-semibold"
+                                                >
+                                                    <Copy className="size-3.5 mr-1" /> Salin Link
+                                                </Button>
+                                                <Button
+                                                    type="button"
+                                                    size="sm"
+                                                    asChild
+                                                    className="h-8 text-xs font-semibold bg-[#17524A] text-white hover:bg-[#134e45]"
+                                                >
+                                                    <a href={rsvpUrl} target="_blank" rel="noopener noreferrer">
+                                                        <ExternalLink className="size-3.5 mr-1" /> Buka RSVP
+                                                    </a>
+                                                </Button>
+                                                {guest.status !== 'invited' && (
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={handleResetRsvp}
+                                                        className="h-8 text-xs font-semibold border-orange-500 text-orange-700 hover:bg-orange-50 dark:border-orange-500 dark:text-orange-400"
+                                                    >
+                                                        <RotateCcw className="size-3.5 mr-1" /> Reset RSVP
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        )}
 
                         <Card>
                             <CardHeader>

@@ -13,6 +13,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -32,8 +33,9 @@ class EventGuestController extends Controller
             'total' => EventGuest::count(),
             'attended' => EventGuest::whereDate('checked_in_at', today())->count(),
             'confirmed' => EventGuest::where('status', 'confirmed')->count(),
-            'vvip' => EventGuest::where('category', 'vvip')->count(),
+            'declined' => EventGuest::where('status', 'declined')->count(),
             'vip' => EventGuest::where('category', 'vip')->count(),
+            'non_vip' => EventGuest::whereIn('category', ['non_vip', 'non-vip', 'umum'])->count(),
         ];
 
         return Inertia::render('admin/company/guests/list', [
@@ -88,6 +90,12 @@ class EventGuestController extends Controller
         $perPage = (int) $request->input('pagination.pageSize', 10);
         $guests = $query->paginate($perPage);
 
+        $guests->getCollection()->transform(function (EventGuest $g) {
+            $g->rsvp_url = $g->rsvp_url;
+
+            return $g;
+        });
+
         return response()->json($guests);
     }
 
@@ -108,16 +116,24 @@ class EventGuestController extends Controller
         $data['event_year'] = 2026;
         $data['seat_count'] = $data['seat_count'] ?? 1;
 
+        $isVip = strtolower((string) ($data['category'] ?? 'vip')) === 'vip';
+        if ($isVip) {
+            $data['rsvp_token'] = Str::random(40);
+            $data['status'] = $data['status'] ?? 'invited';
+        } else {
+            $data['status'] = $data['status'] ?? 'confirmed';
+        }
+
         if ($request->hasFile('photo')) {
             $data['photo_path'] = $this->uploadFile(null, $request->file('photo'), 'guests/photos');
         }
 
-        unset($data['photo']);
+        unset($data['photo'], $data['send_invitation']);
 
         $guest = EventGuest::create($data);
 
         return redirect()->route('admin.companies.guests.index')
-            ->with('success', "Tamu undangan {$guest->name} ({$guest->code}) berhasil ditambahkan.");
+            ->with('success', "Tamu undangan {$guest->name} ({$guest->code}) berhasil ditambahkan. Silakan unduh QR Code konfirmasi untuk ditempelkan pada kartu fisik undangan.");
     }
 
     public function show(EventGuest $guest): Response
@@ -129,7 +145,8 @@ class EventGuestController extends Controller
         return Inertia::render('admin/company/guests/show', [
             'guest' => $guest,
             'photoUrl' => $guest->photo_url,
-            'verifyUrl' => route('home.guest.verify', ['code' => $guest->code]),
+            'verifyUrl' => route('home.registration.verify', ['registrationNumber' => $guest->code]),
+            'rsvpUrl' => $guest->rsvp_url,
         ]);
     }
 
@@ -140,12 +157,18 @@ class EventGuestController extends Controller
         return Inertia::render('admin/company/guests/edit', [
             'guest' => $guest,
             'photoUrl' => $guest->photo_url,
+            'rsvpUrl' => $guest->rsvp_url,
         ]);
     }
 
     public function update(UpdateEventGuestRequest $request, EventGuest $guest): RedirectResponse
     {
         $data = $request->validated();
+
+        $isVip = strtolower((string) ($data['category'] ?? 'vip')) === 'vip';
+        if ($isVip && ! $guest->rsvp_token) {
+            $data['rsvp_token'] = Str::random(40);
+        }
 
         if ($request->hasFile('photo')) {
             $data['photo_path'] = $this->uploadFile($guest->photo_path, $request->file('photo'), 'guests/photos');
@@ -157,6 +180,75 @@ class EventGuestController extends Controller
 
         return redirect()->route('admin.companies.guests.index')
             ->with('success', "Data tamu undangan {$guest->name} berhasil diperbarui.");
+    }
+
+    public function downloadRsvpQr(EventGuest $guest)
+    {
+        $this->authorize('view', $guest);
+
+        $url = $guest->rsvp_url ?: route('home.guest.rsvp', ['identifier' => $guest->code]);
+        $pngData = $this->barcodeService->generateQrCodePng($url, size: 500, color: '#17524A');
+
+        $safeName = Str::slug($guest->name, '-');
+        $fileName = "QR-RSVP-{$guest->code}-{$safeName}.png";
+
+        return response($pngData, 200, [
+            'Content-Type' => 'image/png',
+            'Content-Disposition' => "attachment; filename=\"{$fileName}\"",
+        ]);
+    }
+
+    public function bulkDownloadRsvpQr(Request $request)
+    {
+        $this->authorize('viewAny', EventGuest::class);
+
+        $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'integer|exists:event_guests,id',
+        ]);
+
+        $guests = EventGuest::whereIn('id', $request->input('ids'))->get();
+        if ($guests->isEmpty()) {
+            return response()->json(['message' => 'Tidak ada tamu yang dipilih.'], 422);
+        }
+
+        $zipFileName = 'QR-RSVP-Tamu-VIP-OMATIQ-2026-'.date('Ymd-His').'.zip';
+        $tempPath = storage_path('app/temp');
+        if (! is_dir($tempPath)) {
+            mkdir($tempPath, 0755, true);
+        }
+        $zipFullPath = $tempPath.'/'.$zipFileName;
+
+        $zip = new \ZipArchive;
+        if ($zip->open($zipFullPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
+            return response()->json(['message' => 'Gagal membuat file arsip ZIP.'], 500);
+        }
+
+        foreach ($guests as $guest) {
+            $url = $guest->rsvp_url ?: route('home.guest.rsvp', ['identifier' => $guest->code]);
+            $pngData = $this->barcodeService->generateQrCodePng($url, size: 500, color: '#17524A');
+            $safeName = Str::slug($guest->name, '-');
+            $imageName = "QR-RSVP-{$guest->code}-{$safeName}.png";
+
+            $zip->addFromString($imageName, $pngData);
+        }
+
+        $zip->close();
+
+        return response()->download($zipFullPath, $zipFileName)->deleteFileAfterSend(true);
+    }
+
+    public function resetRsvp(EventGuest $guest): RedirectResponse
+    {
+        $this->authorize('update', $guest);
+
+        $guest->updateQuietly([
+            'status' => 'invited',
+            'confirmed_at' => null,
+            'checked_in_at' => null,
+        ]);
+
+        return back()->with('success', "Status konfirmasi RSVP tamu {$guest->name} berhasil di-reset. Formulir konfirmasi tamu sekarang dapat diisi kembali.");
     }
 
     public function destroy(EventGuest $guest): RedirectResponse

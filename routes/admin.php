@@ -128,6 +128,9 @@ Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'auth.admi
         Route::resource('committees', EventCommitteeController::class);
 
         Route::get('guests/{guest}/card', [EventGuestController::class, 'printCard'])->name('guests.card');
+        Route::get('guests/{guest}/download-rsvp-qr', [EventGuestController::class, 'downloadRsvpQr'])->name('guests.download-rsvp-qr');
+        Route::post('guests/{guest}/reset-rsvp', [EventGuestController::class, 'resetRsvp'])->name('guests.reset-rsvp');
+        Route::post('guests/bulk-download-rsvp-qr', [EventGuestController::class, 'bulkDownloadRsvpQr'])->name('guests.bulk-download-rsvp-qr');
         Route::post('guests/bulk-check-in', [EventGuestController::class, 'bulkCheckIn'])->name('guests.bulk-check-in');
         Route::put('guests/{guest}/status', [EventGuestController::class, 'status'])->name('guests.status');
         Route::get('guests/data', [EventGuestController::class, 'getData'])->name('guests.data');
