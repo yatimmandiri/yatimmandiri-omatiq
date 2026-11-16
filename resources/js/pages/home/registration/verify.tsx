@@ -483,6 +483,18 @@ export default function UniversalVerifyPage({
                                                 </div>
                                             </div>
                                         )}
+
+                                        <div className="mt-6 flex justify-center gap-3">
+                                            <a
+                                                href={`/pendamping/kartu/${activeEntity.formatted_id}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="inline-flex items-center gap-2 rounded-xl bg-[#7a6400] px-5 py-2.5 text-xs font-black text-white shadow hover:bg-[#685500]"
+                                            >
+                                                <Printer className="size-4 text-[#FFE600]" />
+                                                Buka Kartu Tanda Pengenal Pendamping
+                                            </a>
+                                        </div>
                                     </div>
                                 </>
                             )}
@@ -490,7 +502,7 @@ export default function UniversalVerifyPage({
                             {/* 3. COMMITTEE PERSONA */}
                             {resolvedPersona === 'committee' && (
                                 <>
-                                    <div className="bg-gradient-to-r from-[#0f172a] via-[#1e293b] to-[#1e3a8a] px-6 py-6 text-center text-white sm:px-8">
+                                    <div className="bg-gradient-to-r from-[#09767a] via-[#0f766e] to-[#134e4a] px-6 py-6 text-center text-white sm:px-8">
                                         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white/15 backdrop-blur-md ring-2 ring-white/30">
                                             <BadgeCheck className="h-10 w-10 text-[#FFE600]" />
                                         </div>
@@ -501,7 +513,7 @@ export default function UniversalVerifyPage({
                                         <h2 className="mt-2 text-xl font-black tracking-wide uppercase sm:text-2xl">
                                             {activeEntity.name}
                                         </h2>
-                                        <p className="mx-auto mt-1 max-w-lg text-xs leading-relaxed text-indigo-100 sm:text-sm">
+                                        <p className="mx-auto mt-1 max-w-lg text-xs leading-relaxed text-teal-100 sm:text-sm">
                                             Divisi <strong>{activeEntity.division}</strong> &bull; Zona Akses: <strong>{activeEntity.access_zone}</strong>
                                         </p>
                                         {activeEntity.checked_in_at && (
@@ -526,7 +538,7 @@ export default function UniversalVerifyPage({
                                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                                             <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
                                                 <span className="text-xs font-bold text-slate-500 uppercase">Kode Panitia</span>
-                                                <p className="mt-1 font-mono text-base font-extrabold text-indigo-900">{activeEntity.code}</p>
+                                                <p className="mt-1 font-mono text-base font-extrabold text-[#09767a]">{activeEntity.code}</p>
                                             </div>
                                             <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
                                                 <span className="text-xs font-bold text-slate-500 uppercase">Jabatan / Role</span>
@@ -543,71 +555,125 @@ export default function UniversalVerifyPage({
                                                 {activeEntity.duty_description}
                                             </div>
                                         )}
+
+                                        <div className="mt-6 flex justify-center gap-3">
+                                            <a
+                                                href={`/panitia/kartu/${activeEntity.code}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="inline-flex items-center gap-2 rounded-xl bg-[#09767a] px-5 py-2.5 text-xs font-black text-white shadow hover:bg-[#075e61]"
+                                            >
+                                                <Printer className="size-4 text-[#FFE600]" />
+                                                Buka Kartu Tanda Pengenal Panitia
+                                            </a>
+                                        </div>
                                     </div>
                                 </>
                             )}
 
-                            {/* 4. GUEST PERSONA */}
-                            {resolvedPersona === 'guest' && (
-                                <>
-                                    <div className="bg-gradient-to-r from-[#18181b] via-[#27272a] to-[#3f3f46] px-6 py-6 text-center text-white sm:px-8">
-                                        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white/15 backdrop-blur-md ring-2 ring-white/30">
-                                            <Crown className="h-10 w-10 text-[#FFE600]" />
+                            {/* 4. GUEST PERSONA (VIP vs NON-VIP) */}
+                            {resolvedPersona === 'guest' && (() => {
+                                const isGuestVip = ['VIP', 'VVIP'].includes(String(activeEntity.category).toUpperCase());
+
+                                return (
+                                    <>
+                                        <div
+                                            className={
+                                                isGuestVip
+                                                    ? 'bg-gradient-to-r from-[#18181b] via-[#27272a] to-[#3f3f46] px-6 py-6 text-center text-white sm:px-8'
+                                                    : 'bg-gradient-to-r from-[#134e45] via-[#17524A] to-[#1e6b60] px-6 py-6 text-center text-white sm:px-8'
+                                            }
+                                        >
+                                            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white/15 backdrop-blur-md ring-2 ring-white/30">
+                                                {isGuestVip ? (
+                                                    <Crown className="h-10 w-10 text-[#FFE600]" />
+                                                ) : (
+                                                    <Users className="h-10 w-10 text-emerald-200" />
+                                                )}
+                                            </div>
+                                            <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-0.5 text-xs font-black tracking-wide text-white uppercase">
+                                                {isGuestVip ? (
+                                                    <>
+                                                        <Sparkles className="size-3.5 text-[#FFE600]" />
+                                                        <span className="text-[#FFE600]">TAMU KEHORMATAN VIP</span>
+                                                    </>
+                                                ) : (
+                                                    <span>TAMU UNDANGAN &bull; NON-VIP</span>
+                                                )}
+                                            </div>
+                                            <h2 className="mt-2 text-xl font-black tracking-wide uppercase sm:text-2xl">
+                                                {activeEntity.name}
+                                            </h2>
+                                            <p className="mx-auto mt-1 max-w-lg text-xs leading-relaxed text-amber-100 sm:text-sm">
+                                                {activeEntity.institution} &bull; {activeEntity.position}
+                                            </p>
+                                            {activeEntity.checked_in_at && (
+                                                <div
+                                                    className={`mt-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold ${
+                                                        activeEntity.is_checked_in_today
+                                                            ? isGuestVip
+                                                                ? 'bg-amber-500/30 text-amber-200'
+                                                                : 'bg-emerald-500/30 text-emerald-200'
+                                                            : 'bg-slate-500/30 text-slate-300'
+                                                    }`}
+                                                >
+                                                    <Clock className="size-3.5" />
+                                                    {isFirstCheckIn
+                                                        ? `Kedatangan Hari Ini Tercatat (${activeEntity.checked_in_time || activeEntity.checked_in_at})`
+                                                        : activeEntity.is_checked_in_today
+                                                          ? `Telah Hadir Hari Ini (${activeEntity.checked_in_time || activeEntity.checked_in_at})`
+                                                          : `Check-in Terakhir: ${activeEntity.checked_in_at}`}
+                                                </div>
+                                            )}
                                         </div>
-                                        <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-0.5 text-xs font-black tracking-wide text-[#FFE600] uppercase">
-                                            <Sparkles className="size-3.5" />
-                                            VIP GUEST &bull; {activeEntity.category}
-                                        </div>
-                                        <h2 className="mt-2 text-xl font-black tracking-wide uppercase sm:text-2xl">
-                                            {activeEntity.name}
-                                        </h2>
-                                        <p className="mx-auto mt-1 max-w-lg text-xs leading-relaxed text-amber-100 sm:text-sm">
-                                            {activeEntity.institution} &bull; {activeEntity.position}
-                                        </p>
-                                        {activeEntity.checked_in_at && (
+
+                                        <div className="p-6 sm:p-8">
                                             <div
-                                                className={`mt-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold ${
-                                                    activeEntity.is_checked_in_today
-                                                        ? 'bg-amber-500/30 text-amber-200'
-                                                        : 'bg-slate-500/30 text-slate-300'
+                                                className={`mb-6 rounded-2xl border-2 p-4 text-center ${
+                                                    isGuestVip
+                                                        ? 'border-amber-300 bg-amber-50/70 text-amber-950'
+                                                        : 'border-emerald-200 bg-emerald-50/60 text-emerald-950'
                                                 }`}
                                             >
-                                                <Clock className="size-3.5" />
-                                                {isFirstCheckIn
-                                                    ? `Kedatangan Hari Ini Tercatat (${activeEntity.checked_in_time || activeEntity.checked_in_at})`
-                                                    : activeEntity.is_checked_in_today
-                                                      ? `Telah Hadir Hari Ini (${activeEntity.checked_in_time || activeEntity.checked_in_at})`
-                                                      : `Check-in Terakhir: ${activeEntity.checked_in_at}`}
+                                                <span
+                                                    className={`text-xs font-bold uppercase tracking-wider ${
+                                                        isGuestVip ? 'text-amber-900' : 'text-emerald-800'
+                                                    }`}
+                                                >
+                                                    {isGuestVip ? 'Alokasi Kursi / Meja Kehormatan' : 'Alokasi Kursi / Tempat Duduk'}
+                                                </span>
+                                                <p className="mt-1 text-2xl font-black sm:text-3xl">
+                                                    {activeEntity.table_number}
+                                                </p>
+                                                <p
+                                                    className={`mt-1 text-xs font-semibold ${
+                                                        isGuestVip ? 'text-amber-800' : 'text-emerald-700'
+                                                    }`}
+                                                >
+                                                    Kapasitas: <strong>{activeEntity.seat_count} Orang</strong>
+                                                </p>
                                             </div>
-                                        )}
-                                    </div>
 
-                                    <div className="p-6 sm:p-8">
-                                        <div className="mb-6 rounded-2xl border-2 border-amber-300 bg-amber-50/70 p-4 text-center">
-                                            <span className="text-xs font-bold uppercase tracking-wider text-amber-900">
-                                                Alokasi Kursi / Meja Kehormatan
-                                            </span>
-                                            <p className="mt-1 text-2xl font-black text-amber-950 sm:text-3xl">
-                                                {activeEntity.table_number}
-                                            </p>
-                                            <p className="mt-1 text-xs text-amber-800">
-                                                Kapasitas Pendamping: <strong>{activeEntity.seat_count} Orang</strong>
-                                            </p>
-                                        </div>
-
-                                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                                            <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
-                                                <span className="text-xs font-bold text-slate-500 uppercase">Kode Undangan</span>
-                                                <p className="mt-1 font-mono text-base font-extrabold text-slate-900">{activeEntity.code}</p>
-                                            </div>
-                                            <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
-                                                <span className="text-xs font-bold text-slate-500 uppercase">Kategori Tamu</span>
-                                                <p className="mt-1 text-sm font-bold text-amber-700">{activeEntity.category}</p>
+                                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                                <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
+                                                    <span className="text-xs font-bold text-slate-500 uppercase">Kode Undangan</span>
+                                                    <p className="mt-1 font-mono text-base font-extrabold text-slate-900">{activeEntity.code}</p>
+                                                </div>
+                                                <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
+                                                    <span className="text-xs font-bold text-slate-500 uppercase">Kategori Tamu</span>
+                                                    <p
+                                                        className={`mt-1 text-sm font-bold ${
+                                                            isGuestVip ? 'text-amber-700' : 'text-emerald-700'
+                                                        }`}
+                                                    >
+                                                        {isGuestVip ? 'VIP (Tamu Kehormatan)' : 'Non-VIP (Tamu Biasa)'}
+                                                    </p>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </>
-                            )}
+                                    </>
+                                );
+                            })()}
 
                             {/* Trust Footer */}
                             <div className="border-t border-slate-100 bg-slate-50/80 px-6 py-4 text-center text-xs text-slate-500">

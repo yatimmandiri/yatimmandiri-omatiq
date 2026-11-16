@@ -26,6 +26,9 @@ use Spatie\Activitylog\Support\LogOptions;
     'seat_count',
     'photo_path',
     'status',
+    'rsvp_token',
+    'invitation_sent_at',
+    'confirmed_at',
     'checked_in_at',
     'notes',
     'event_year',
@@ -38,6 +41,8 @@ class EventGuest extends Model
     {
         return [
             'checked_in_at' => 'datetime',
+            'invitation_sent_at' => 'datetime',
+            'confirmed_at' => 'datetime',
             'event_year' => 'integer',
             'seat_count' => 'integer',
             'created_by' => 'integer',
@@ -55,6 +60,27 @@ class EventGuest extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function isVip(): bool
+    {
+        return strtolower((string) $this->category) === 'vip';
+    }
+
+    public function getRsvpUrlAttribute(): ?string
+    {
+        return route('home.guest.rsvp', ['identifier' => $this->code]);
+    }
+
+    public function ensureRsvpToken(): string
+    {
+        if (! $this->rsvp_token) {
+            $this->updateQuietly([
+                'rsvp_token' => Str::random(40),
+            ]);
+        }
+
+        return $this->rsvp_token;
     }
 
     public function getPhotoUrlAttribute(): ?string

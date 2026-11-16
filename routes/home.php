@@ -1,6 +1,9 @@
 <?php
 
+use App\Http\Controllers\Admin\Company\EventCommitteeController;
+use App\Http\Controllers\Admin\Company\NationalChaperoneController;
 use App\Http\Controllers\Company\ParticipantCardController;
+use App\Http\Controllers\Home\GuestRsvpController;
 use App\Http\Controllers\Home\MainController;
 use App\Http\Controllers\Home\ParticipantRegistrationController;
 use App\Models\Core\Region\District;
@@ -32,11 +35,17 @@ Route::post('/pendaftaran', [ParticipantRegistrationController::class, 'store'])
 Route::post('/pendaftaran/check-nik', [ParticipantRegistrationController::class, 'checkNik'])->name('home.registration.check-nik');
 Route::get('/pendaftaran/sukses/{registrationNumber}', [ParticipantRegistrationController::class, 'success'])->name('home.registration.success');
 Route::get('/pendaftaran/kartu/{registrationNumber}', [ParticipantCardController::class, 'print'])->name('home.registration.card');
+Route::get('/pendamping/kartu/{identifier}', [NationalChaperoneController::class, 'publicPrintCard'])->name('home.chaperone.card');
+Route::get('/panitia/kartu/{identifier}', [EventCommitteeController::class, 'publicPrintCard'])->name('home.committee.card');
 Route::get('/verifikasi/pendamping/{code?}', [ParticipantRegistrationController::class, 'verifyChaperone'])->name('home.chaperone.verify');
 Route::get('/verifikasi/panitia/{code?}', [ParticipantRegistrationController::class, 'verifyCommittee'])->name('home.committee.verify');
 Route::get('/verifikasi/tamu/{code?}', [ParticipantRegistrationController::class, 'verifyGuest'])->name('home.guest.verify');
 Route::get('/verifikasi/{registrationNumber?}', [ParticipantRegistrationController::class, 'verify'])->name('home.registration.verify');
 Route::get('/pendaftaran/verifikasi/{registrationNumber?}', [ParticipantRegistrationController::class, 'verify'])->name('home.registration.verify.alias');
+
+// Konfirmasi Kehadiran & VIP E-Pass Tamu Undangan
+Route::get('/undangan/{identifier}/konfirmasi', [GuestRsvpController::class, 'show'])->name('home.guest.rsvp');
+Route::post('/undangan/{identifier}/konfirmasi', [GuestRsvpController::class, 'confirm'])->name('home.guest.rsvp.confirm');
 
 // API kecil untuk cascading dropdown wilayah (dipakai pendaftaran & biodata guru)
 Route::get('/regions/regencies', function (Request $request) {

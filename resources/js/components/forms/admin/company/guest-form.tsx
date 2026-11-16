@@ -40,11 +40,8 @@ type GuestFormProps = {
 };
 
 const GUEST_CATEGORIES = [
-    { value: 'vvip', label: 'VVIP (Pejabat Tinggi & Tokoh Nasional)' },
-    { value: 'vip', label: 'VIP (Kepala Dinas, Pimpinan Mitra & Tokoh Daerah)' },
-    { value: 'tokoh', label: 'Tokoh Masyarakat / Ulama' },
-    { value: 'sponsor', label: 'Sponsor & Donatur Utama' },
-    { value: 'umum', label: 'Undangan Khusus / Umum' },
+    { value: 'vip', label: 'VIP (Undangan Email Resmi & VIP Pass QR Code)' },
+    { value: 'non_vip', label: 'Non-VIP (Tamu Biasa / Check-In Normal Venue)' },
 ];
 
 export function GuestForm({
@@ -58,12 +55,12 @@ export function GuestForm({
         name: guest?.name ?? '',
         institution: guest?.institution ?? '',
         position: guest?.position ?? '',
-        category: guest?.category ?? 'vip',
+        category: guest?.category ? (['vip', 'vvip', 'tokoh', 'sponsor'].includes(guest.category.toLowerCase()) ? 'vip' : 'non_vip') : 'vip',
         phone: guest?.phone ?? '',
         email: guest?.email ?? '',
         table_number: guest?.table_number ?? '',
         seat_count: guest?.seat_count ? String(guest.seat_count) : '1',
-        status: guest?.status ?? 'confirmed',
+        status: guest?.status ?? (guest ? 'confirmed' : 'invited'),
         notes: guest?.notes ?? '',
         photo: null as File | null,
     });
@@ -308,7 +305,7 @@ export function GuestForm({
                         {/* Email */}
                         <div className="space-y-1.5">
                             <Label htmlFor="email" className="text-xs font-semibold">
-                                Email Konfirmasi <span className="text-slate-400 font-normal">(Opsional)</span>
+                                Email Konfirmasi {data.category === 'vip' && <span className="text-amber-600 font-bold">(Sangat Disarankan untuk VIP)</span>}
                             </Label>
                             <Input
                                 id="email"
@@ -319,6 +316,11 @@ export function GuestForm({
                                 className={errors.email ? 'border-rose-500' : ''}
                             />
                             {errors.email && <p className="text-xs text-rose-500">{errors.email}</p>}
+                            {data.category === 'vip' && (
+                                <p className="text-[11px] text-amber-700 font-medium">
+                                    💡 Email ini akan menerima <strong>VIP E-Pass & Barcode Akses Masuk</strong> begitu tamu mengonfirmasi kehadiran melalui barcode pada undangan fisik.
+                                </p>
+                            )}
                         </div>
                     </div>
                 </CardContent>

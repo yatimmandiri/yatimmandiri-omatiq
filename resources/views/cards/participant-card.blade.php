@@ -1,8 +1,21 @@
+@php
+$sponsors = $sponsors ?? [
+    ['name' => 'Telkomsel', 'file' => 'telkomsel.png'],
+    ['name' => 'Telkom Indonesia', 'file' => 'telkom.png'],
+    ['name' => 'Chickin', 'file' => 'chickin.png'],
+    ['name' => 'Bank Kaltimtara', 'file' => 'bankaltimtara.png'],
+    ['name' => 'Bank BJB', 'file' => 'bankbjb.png'],
+    ['name' => 'YBM PLN', 'file' => 'ybmpln.png'],
+    ['name' => 'Nurul Hidayah', 'file' => 'nurulhidayah.png'],
+    ['name' => 'LinkAja', 'file' => 'linkaja.png'],
+    ['name' => 'LinkAja Syariah', 'file' => 'linkaja-syariah.png'],
+];
+@endphp
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Kartu-Peserta-OMATIQ-{{ $participant->registration_number }}</title>
     <link rel="icon" href="{{ asset('assets/images/LOGO OMATIQ-Fav.png') }}" type="image/png">
     <link rel="shortcut icon" href="{{ asset('assets/images/LOGO OMATIQ-Fav.png') }}" type="image/png">
@@ -34,23 +47,24 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 24px 16px 48px;
+            padding: 16px 12px 48px;
+            overflow-x: hidden;
         }
 
         /* Ambient Glass Toolbar */
         .toolbar {
             width: 100%;
             max-width: 820px;
-            margin-bottom: 24px;
+            margin-bottom: 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: rgba(255, 255, 255, 0.88);
+            background: rgba(255, 255, 255, 0.92);
             backdrop-filter: blur(14px);
             -webkit-backdrop-filter: blur(14px);
-            padding: 12px 20px;
-            border-radius: 16px;
-            border: 1px solid rgba(9, 118, 122, 0.2);
+            padding: 12px 18px;
+            border-radius: 18px;
+            border: 1px solid rgba(9, 118, 122, 0.18);
             box-shadow: 0 10px 30px rgba(9, 118, 122, 0.08);
             gap: 12px;
             flex-wrap: wrap;
@@ -59,19 +73,20 @@
         .toolbar-brand {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
         }
 
         .toolbar-brand img {
-            height: 28px;
+            height: 32px;
             width: auto;
         }
 
         .toolbar-title {
             font-weight: 800;
-            font-size: 14px;
+            font-size: 13.5px;
             color: #09767a;
             letter-spacing: -0.2px;
+            line-height: 1.25;
         }
 
         .toolbar-subtitle {
@@ -83,13 +98,14 @@
         .toolbar-actions {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
+            flex-wrap: wrap;
         }
 
-        .btn-mode {
-            padding: 7px 13px;
-            border-radius: 9px;
-            font-size: 11.5px;
+        .btn-view-mode {
+            padding: 7px 14px;
+            border-radius: 10px;
+            font-size: 12px;
             font-weight: 700;
             cursor: pointer;
             border: 1px solid rgba(9, 118, 122, 0.25);
@@ -98,13 +114,14 @@
             transition: all 0.2s ease;
             display: inline-flex;
             align-items: center;
-            gap: 5px;
+            gap: 6px;
         }
 
-        .btn-mode.active, .btn-mode:hover {
+        .btn-view-mode.active, .btn-view-mode:hover {
             background: #09767a;
             color: #ffffff;
             border-color: #09767a;
+            box-shadow: 0 4px 12px rgba(9, 118, 122, 0.2);
         }
 
         .btn-print {
@@ -133,15 +150,16 @@
         .status-banner {
             width: 100%;
             max-width: 820px;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
             padding: 10px 16px;
-            border-radius: 12px;
+            border-radius: 14px;
             font-size: 12px;
             font-weight: 700;
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 12px;
+            flex-wrap: wrap;
         }
 
         .status-banner.verified {
@@ -163,56 +181,336 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-        }
-
-        .print-sheet {
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            justify-content: center;
-            gap: 0;
-            background: #ffffff;
-            padding: 18px;
-            border-radius: 20px;
-            box-shadow: 0 16px 45px rgba(9, 118, 122, 0.12);
-            border: 1.5px dashed #cbd5e1;
             position: relative;
         }
 
-        /* Cut & Fold Line Guides */
-        .fold-divider {
-            width: 2px;
-            height: 590px;
-            border-left: 2px dashed #94a3b8;
-            position: relative;
-            margin: 0 12px;
+        /* ================= VIRTUAL 3D PASS STAGE ================= */
+        .virtual-stage {
+            width: 100%;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
+            padding: 8px 0 20px;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
-        .fold-label {
+        /* Lanyard Ribbon & Metallic Clasp */
+        .lanyard-mount {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 25;
+            margin-bottom: -18px;
+            pointer-events: none;
+        }
+
+        .lanyard-strap {
+            width: 38px;
+            height: 52px;
+            background: linear-gradient(90deg, #09767a 0%, #17524A 50%, #0d9488 100%);
+            box-shadow: 0 4px 14px rgba(9, 118, 122, 0.35);
+            border-radius: 4px 4px 0 0;
+            position: relative;
+        }
+
+        .lanyard-strap::after {
+            content: '';
             position: absolute;
-            background: #f8fafc;
-            border: 1px dashed #94a3b8;
-            color: #64748b;
-            font-size: 9px;
-            font-weight: 700;
-            padding: 4px 8px;
-            border-radius: 6px;
-            white-space: nowrap;
-            transform: rotate(-90deg);
-            letter-spacing: 0.5px;
+            inset: 0;
+            background: repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(255,255,255,0.09) 3px, rgba(255,255,255,0.09) 6px);
         }
 
-        /* Base Card Styling (Screen 372px x 590px -> 1:1.587 ratio) */
+        .lanyard-clip {
+            width: 28px;
+            height: 32px;
+            background: linear-gradient(180deg, #f1f5f9 0%, #cbd5e1 35%, #94a3b8 70%, #64748b 100%);
+            border-radius: 6px 6px 12px 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: -3px;
+            border: 1px solid #94a3b8;
+        }
+
+        .lanyard-clip::before {
+            content: '';
+            width: 12px;
+            height: 6px;
+            background: #475569;
+            border-radius: 2px;
+            position: absolute;
+            top: 4px;
+        }
+
+        .lanyard-clip::after {
+            content: '';
+            width: 14px;
+            height: 14px;
+            border: 2.5px solid #334155;
+            border-radius: 4px;
+            background: transparent;
+            margin-top: 4px;
+        }
+
+        /* 3D Scene Viewport */
+        .card-3d-scene {
+            perspective: 1200px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            cursor: grab;
+            touch-action: pan-y;
+            padding: 0;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .card-3d-scene:active {
+            cursor: grabbing;
+        }
+
+        /* Responsive Scale Container (dynamically scaled for mobile) */
+        .card-scale-container {
+            width: 372px;
+            height: 590px;
+            transform-origin: top center;
+            transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        /* 3D Rotating Flipper */
+        .card-3d-flipper {
+            width: 372px;
+            height: 590px;
+            position: relative;
+            transform-style: preserve-3d;
+            -webkit-transform-style: preserve-3d;
+            transition: transform 0.65s cubic-bezier(0.34, 1.25, 0.64, 1);
+            transform-origin: center center;
+        }
+
+        .card-3d-flipper.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        /* Card Faces (Front & Back) - Strictly Absolute so both faces stack exactly */
+        .card-3d-flipper .card-face,
+        .card-face {
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            backface-visibility: hidden !important;
+            -webkit-backface-visibility: hidden !important;
+            transform-style: preserve-3d;
+            -webkit-transform-style: preserve-3d;
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 25px 60px rgba(9, 118, 122, 0.22), 0 6px 18px rgba(0, 0, 0, 0.1);
+            margin: 0 !important;
+        }
+
+        .card-front-face {
+            transform: rotateY(0deg);
+        }
+
+        .card-back-face {
+            transform: rotateY(180deg);
+        }
+
+        /* Punch Slot Hole (Lanyard Pass Slot) */
+        .badge-punch-slot {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 44px;
+            height: 8.5px;
+            background: #0d3b37;
+            border-radius: 8px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6), 0 1px 1px rgba(255, 255, 255, 0.6);
+            z-index: 15;
+            pointer-events: none;
+        }
+
+        /* Specular Gloss & Reflection */
+        .card-glare {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 20;
+            border-radius: 18px;
+            background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0) 65%);
+            opacity: 0;
+            mix-blend-mode: overlay;
+            transition: opacity 0.3s ease;
+        }
+
+        /* Virtual Floating Controls Dock */
+        .virtual-controls-dock {
+            margin-top: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            padding: 8px 16px;
+            border-radius: 16px;
+            border: 1px solid rgba(9, 118, 122, 0.2);
+            box-shadow: 0 10px 30px rgba(9, 118, 122, 0.1);
+            flex-wrap: wrap;
+            max-width: 95vw;
+        }
+
+        .side-switcher {
+            display: flex;
+            align-items: center;
+            background: #f1f8f7;
+            padding: 3px;
+            border-radius: 12px;
+            border: 1px solid rgba(9, 118, 122, 0.15);
+            gap: 2px;
+        }
+
+        .side-pill {
+            padding: 6px 14px;
+            border-radius: 9px;
+            font-size: 11.5px;
+            font-weight: 700;
+            border: none;
+            background: transparent;
+            color: #528989;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .side-pill.active {
+            background: #09767a;
+            color: #ffffff;
+            box-shadow: 0 2px 8px rgba(9, 118, 122, 0.25);
+        }
+
+        .side-pill-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #cbd5e1;
+        }
+
+        .side-pill.active .side-pill-dot {
+            background: #FFE600;
+        }
+
+        .btn-flip-primary {
+            padding: 8px 16px;
+            border-radius: 11px;
+            font-size: 12px;
+            font-weight: 800;
+            border: 1px solid #09767a;
+            background: linear-gradient(135deg, #09767a 0%, #0d9488 100%);
+            color: #ffffff;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 4px 12px rgba(9, 118, 122, 0.25);
+            transition: all 0.2s ease;
+        }
+
+        .btn-flip-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(9, 118, 122, 0.35);
+        }
+
+        .btn-flip-primary svg {
+            transition: transform 0.4s ease;
+        }
+
+        .btn-flip-primary:hover svg {
+            transform: rotate(180deg);
+        }
+
+        .dock-divider {
+            width: 1px;
+            height: 24px;
+            background: rgba(9, 118, 122, 0.2);
+        }
+
+        .zoom-group {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: #f1f8f7;
+            padding: 3px 6px;
+            border-radius: 12px;
+            border: 1px solid rgba(9, 118, 122, 0.15);
+        }
+
+        .btn-zoom {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            border: 1px solid rgba(9, 118, 122, 0.15);
+            background: #ffffff;
+            color: #09767a;
+            font-size: 14px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .btn-zoom:hover {
+            background: #09767a;
+            color: #ffffff;
+        }
+
+        .zoom-badge {
+            font-size: 11px;
+            font-weight: 800;
+            color: #09767a;
+            min-width: 44px;
+            text-align: center;
+            font-family: monospace;
+        }
+
+        .virtual-hint-chip {
+            margin-top: 12px;
+            font-size: 11px;
+            color: #528989;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.7);
+            padding: 5px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(9, 118, 122, 0.12);
+            text-align: center;
+        }
+
+        /* ================= BASE CARD ELEMENTS (Front & Back) ================= */
         .omatiq-card {
             width: 372px;
             height: 590px;
             position: relative;
             border-radius: 18px;
             overflow: hidden;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
             background-size: 100% 100%;
             background-repeat: no-repeat;
             background-position: center;
@@ -228,7 +526,7 @@
             background-image: url("{{ asset('assets/images/cards/card-bg-back.png') }}");
         }
 
-        /* Front: Unverified Warning Badge Overlay (only when unverified) */
+        /* Front: Unverified Warning Badge Overlay */
         .badge-unverified-overlay {
             position: absolute;
             top: 15.2%;
@@ -367,32 +665,35 @@
             filter: contrast(1.05);
         }
 
-        /* Back: QR Code Center Container */
+        /* Back: QR Code Center Container (Clean & Centered) */
         .back-qr-box {
             position: absolute;
-            top: 36.1%;
+            top: 38.6%;
             left: 50%;
             transform: translateX(-50%);
-            width: 56.8%;
-            height: 32.1%;
+            width: 44.0%;
+            height: 27.5%;
             z-index: 5;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 8px;
+            padding: 4px;
             overflow: hidden;
         }
 
         .qr-svg-wrapper {
             width: 100%;
             height: 100%;
-            max-width: 165px;
-            max-height: 165px;
+            max-width: 155px;
+            max-height: 155px;
             display: flex;
             align-items: center;
             justify-content: center;
             position: relative;
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(9, 118, 122, 0.15);
         }
 
         .qr-svg-wrapper svg {
@@ -457,29 +758,170 @@
             max-width: 140px;
         }
 
+        /* ================= PRINT SHEET PREVIEW (SCREEN ONLY) ================= */
+        .print-sheet {
+            display: none; /* Hidden on screen by default; shown in sheet mode or print */
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            background: #ffffff;
+            padding: 18px;
+            border-radius: 20px;
+            box-shadow: 0 16px 45px rgba(9, 118, 122, 0.12);
+            border: 1.5px dashed #cbd5e1;
+            position: relative;
+            max-width: 100%;
+            overflow-x: auto;
+        }
+
+        .print-sheet.is-visible {
+            display: flex;
+        }
+
+        /* Cut & Fold Line Guides */
+        .fold-divider {
+            width: 2px;
+            height: 590px;
+            border-left: 2px dashed #94a3b8;
+            position: relative;
+            margin: 0 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .fold-label {
+            position: absolute;
+            background: #f8fafc;
+            border: 1px dashed #94a3b8;
+            color: #64748b;
+            font-size: 9px;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 6px;
+            white-space: nowrap;
+            transform: rotate(-90deg);
+            letter-spacing: 0.5px;
+        }
+
+        .sheet-sub-toolbar {
+            display: none;
+            gap: 8px;
+            margin-bottom: 14px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .sheet-sub-toolbar.is-visible {
+            display: flex;
+        }
+
+        .btn-sub-mode {
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 11.5px;
+            font-weight: 700;
+            cursor: pointer;
+            border: 1px solid rgba(9, 118, 122, 0.25);
+            background: #ffffff;
+            color: #09767a;
+            transition: all 0.2s ease;
+        }
+
+        .btn-sub-mode.active, .btn-sub-mode:hover {
+            background: #09767a;
+            color: #ffffff;
+        }
+
         /* Print Instruction Note */
         .print-instruction-note {
             margin-top: 16px;
             font-size: 11.5px;
             color: #475569;
             text-align: center;
-            display: flex;
+            display: none;
             align-items: center;
             gap: 6px;
             font-weight: 600;
         }
 
-        /* ================= PRINT STYLES ================= */
+        .print-instruction-note.is-visible {
+            display: flex;
+        }
+
+        /* Mobile Adjustments */
+        @media (max-width: 640px) {
+            body {
+                padding: 10px 8px 36px;
+                background-attachment: scroll;
+            }
+
+            .toolbar {
+                padding: 10px 14px;
+                border-radius: 14px;
+            }
+
+            .toolbar-brand img {
+                height: 28px;
+            }
+
+            .toolbar-title {
+                font-size: 12px;
+            }
+
+            .toolbar-subtitle {
+                font-size: 10px;
+            }
+
+            .toolbar-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .btn-view-mode, .btn-print {
+                flex: 1;
+                justify-content: center;
+                padding: 7px 10px;
+                font-size: 11.5px;
+            }
+
+            .virtual-controls-dock {
+                padding: 6px 10px;
+                gap: 8px;
+                border-radius: 14px;
+            }
+
+            .side-pill {
+                padding: 5px 10px;
+                font-size: 11px;
+            }
+
+            .btn-flip-primary {
+                padding: 7px 12px;
+                font-size: 11.5px;
+            }
+
+            .virtual-hint-chip {
+                font-size: 10px;
+                padding: 4px 10px;
+            }
+        }
+
+        /* ================= STRICT PRINT STYLES ================= */
         @media print {
             body {
                 background: #ffffff !important;
+                background-image: none !important;
                 padding: 0 !important;
                 margin: 0 !important;
                 min-height: auto !important;
                 display: block !important;
             }
 
-            .toolbar, .status-banner, .print-instruction-note {
+            .toolbar, .status-banner, .virtual-stage, .sheet-sub-toolbar, .print-instruction-note {
                 display: none !important;
             }
 
@@ -511,6 +953,7 @@
                 height: 136.5mm !important;
                 border-left: 1px dashed #64748b !important;
                 margin: 0 !important;
+                display: flex !important;
             }
 
             .fold-label {
@@ -551,10 +994,10 @@
             }
 
             .back-qr-box {
-                width: 48.8mm !important;
-                height: 43.8mm !important;
-                top: 49.2mm !important;
-                padding: 2mm !important;
+                width: 37.8mm !important;
+                height: 37.5mm !important;
+                top: 52.7mm !important;
+                padding: 1.5mm !important;
             }
 
             .participant-name {
@@ -586,8 +1029,8 @@
             }
 
             .qr-svg-wrapper {
-                max-width: 38mm !important;
-                max-height: 38mm !important;
+                max-width: 35mm !important;
+                max-height: 35mm !important;
             }
 
             /* Duplex Mode Print Handling */
@@ -621,17 +1064,18 @@
         <div class="toolbar-brand">
             <img src="{{ asset('assets/images/icon-omatiq.png') }}" alt="OMATIQ 2026">
             <div>
-                <div class="toolbar-title">OMATIQ 2026 &bull; Kartu Tanda Peserta {{ !empty($isNational) ? '(Babak Final Nasional)' : '' }}</div>
+                <div class="toolbar-title">OMATIQ 2026 &bull; Kartu Peserta {{ !empty($isNational) ? '(Babak Final Nasional)' : '' }}</div>
                 <div class="toolbar-subtitle">{{ $participant->registration_number }} &bull; {{ $student->full_name ?? $participant->user?->name ?? 'Peserta' }}</div>
             </div>
         </div>
 
         <div class="toolbar-actions">
-            <button type="button" class="btn-mode active" id="btnFoldMode" onclick="setPrintMode('fold')" title="Cetak Depan-Belakang berdampingan di 1 lembar A4 untuk dilipat">
-                <span>📄 Mode Lipat A4 (1 Lembar)</span>
+            <!-- View Mode Switcher -->
+            <button type="button" class="btn-view-mode active" id="btnViewVirtual" onclick="switchView('virtual')" title="Tampilan Kartu Virtual 3D Interaktif (Responsif)">
+                <span>🪪 Kartu Virtual 3D</span>
             </button>
-            <button type="button" class="btn-mode" id="btnDuplexMode" onclick="setPrintMode('duplex')" title="Cetak bolak-balik printer duplex (2 halaman)">
-                <span>📑 Mode 2 Halaman</span>
+            <button type="button" class="btn-view-mode" id="btnViewSheet" onclick="switchView('sheet')" title="Tampilan Lembar Cetak Kertas A4 (Lipat/Duplex)">
+                <span>📄 Lembar Cetak A4</span>
             </button>
             <button type="button" class="btn-print" onclick="window.print()" title="Unduh / Cetak sebagai PDF">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -660,7 +1104,156 @@
 
     <!-- Cards Container Stage -->
     <div class="cards-stage">
-        <div class="print-sheet" id="printSheet">
+
+        @if(empty($isPdf))
+        <!-- ================= VIRTUAL 3D COMPETITOR PASS STAGE ================= -->
+        <div class="virtual-stage" id="virtualStage">
+            <!-- Lanyard Ribbon & Clip Graphic -->
+            <div class="lanyard-mount">
+                <div class="lanyard-strap"></div>
+                <div class="lanyard-clip"></div>
+            </div>
+
+            <!-- 3D Scene Viewport with Interactive Tilt & Parallax -->
+            <div class="card-3d-scene" id="cardScene" title="Klik atau geser untuk membalik sisi kartu">
+                <div class="card-scale-container" id="cardScaleContainer">
+                    <div class="card-3d-flipper" id="cardFlipper">
+                        
+                        <!-- SISI DEPAN (FRONT FACE) -->
+                        <div class="card-face card-front-face omatiq-card card-front">
+                            <div class="badge-punch-slot"></div>
+                            <div class="card-glare" id="glareFront"></div>
+
+                            <!-- Warning Badge: Hanya ditampilkan jika peserta belum terverifikasi -->
+                            @if(empty($isVerified))
+                            <div class="badge-unverified-overlay">
+                                {{ !empty($isNational) ? 'FINALIS NASIONAL • MENUNGGU VERIFIKASI' : 'BUKTI PENDAFTARAN SEMENTARA' }}
+                            </div>
+                            @endif
+
+                            <!-- Inner Data Container -->
+                            <div class="front-data-box">
+                                <div class="participant-name" title="{{ $student->full_name ?? $participant->user?->name ?? '-' }}">
+                                    {{ ucwords(strtolower($student->full_name ?? $participant->user?->name ?? '-')) }}
+                                </div>
+                                <div class="bib-row">
+                                    REGISTRATION / BIB: {{ $participant->registration_number }}
+                                </div>
+                                <div class="data-divider"></div>
+                                <table class="credentials-table">
+                                    <tr>
+                                        <td class="col-lbl">Asal Sekolah</td>
+                                        <td class="col-sep">:</td>
+                                        <td class="col-val">{{ $student->school_name ?? '-' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="col-lbl">Jenjang &amp; Kelas</td>
+                                        <td class="col-sep">:</td>
+                                        <td class="col-val">{{ $student->school_level ?? 'SD/MI' }} - Kelas {{ $student->grade ?? '-' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="col-lbl">Cabang / Wilayah</td>
+                                        <td class="col-sep">:</td>
+                                        <td class="col-val">{{ $participant->branch ?? $student->regency?->name ?? '-' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="col-lbl">Orang Tua / Wali</td>
+                                        <td class="col-sep">:</td>
+                                        <td class="col-val">{{ $participant->guardian_signature_name ?? $student->guardian_signature_name ?? $student->parent_name ?? '-' }}</td>
+                                    </tr>
+                                </table>
+                            </div>
+
+                            <!-- Bottom Sponsor Bar -->
+                            <div class="front-sponsors-bar">
+                                <div class="sponsor-logos-grid">
+                                    @foreach($sponsors as $sp)
+                                        <img src="{{ asset('assets/images/sponsor/' . $sp['file']) }}" alt="{{ $sp['name'] }}" title="{{ $sp['name'] }}">
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SISI BELAKANG (BACK FACE) -->
+                        <div class="card-face card-back-face omatiq-card card-back">
+                            <div class="badge-punch-slot"></div>
+                            <div class="card-glare" id="glareBack"></div>
+
+                            <!-- Center QR Code Scanner -->
+                            <div class="back-qr-box">
+                                <div class="qr-svg-wrapper">
+                                    {!! $qrCodeSvg !!}
+
+                                    @if(empty($isVerified))
+                                    <!-- Security Watermark & Lock Overlay to Prevent Scanning When Unverified -->
+                                    <div class="qr-lock-container">
+                                        <div class="qr-void-banner">⛔ BELUM TERVERIFIKASI ⛔</div>
+                                        <div class="lock-badge-icon">🔒</div>
+                                        <div class="lock-badge-title">SCAN TERKUNCI</div>
+                                        <div class="lock-badge-subtitle">Barcode otomatis aktif setelah pendaftaran diverifikasi admin</div>
+                                    </div>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- Virtual Floating Controls Dock -->
+            <div class="virtual-controls-dock">
+                <!-- Side Switcher Tabs -->
+                <div class="side-switcher">
+                    <button type="button" class="side-pill active" id="pillFront" onclick="flipCardTo('front')" title="Tampilkan Sisi Depan">
+                        <span class="side-pill-dot"></span> Sisi Depan
+                    </button>
+                    <button type="button" class="side-pill" id="pillBack" onclick="flipCardTo('back')" title="Tampilkan Sisi Belakang (QR)">
+                        <span class="side-pill-dot"></span> Sisi Belakang
+                    </button>
+                </div>
+
+                <!-- Primary Flip Action -->
+                <button type="button" class="btn-flip-primary" onclick="toggleFlip()" title="Balik Kartu (Spasi / Klik Kartu)">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/>
+                        <path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/>
+                    </svg>
+                    <span>Balik Kartu</span>
+                </button>
+
+                <div class="dock-divider"></div>
+
+                <!-- Zoom In / Out Controls -->
+                <div class="zoom-group">
+                    <button type="button" class="btn-zoom" onclick="adjustZoom(-0.15)" title="Perkecil (−)">−</button>
+                    <span class="zoom-badge" id="zoomBadge">100%</span>
+                    <button type="button" class="btn-zoom" onclick="adjustZoom(0.15)" title="Perbesar (+)">+</button>
+                    <button type="button" class="btn-zoom" onclick="resetZoom()" title="Reset Ukuran (100%)">↺</button>
+                </div>
+            </div>
+
+            <!-- Hint Chip -->
+            <div class="virtual-hint-chip">
+                <span>💡 <strong>Sentuh &amp; geser (swipe)</strong> atau klik untuk membalik kartu &bull; Arahkan kursor untuk efek 3D kilau</span>
+            </div>
+        </div>
+        @endif
+
+        <!-- ================= SHEET MODE SUB-TOOLBAR ================= -->
+        @if(empty($isPdf))
+        <div class="sheet-sub-toolbar" id="sheetSubToolbar">
+            <button type="button" class="btn-sub-mode active" id="btnFoldMode" onclick="setPrintMode('fold')" title="Cetak Depan-Belakang berdampingan di 1 lembar A4 untuk dilipat">
+                <span>📄 Mode Lipat A4 (1 Lembar)</span>
+            </button>
+            <button type="button" class="btn-sub-mode" id="btnDuplexMode" onclick="setPrintMode('duplex')" title="Cetak bolak-balik printer duplex (2 halaman)">
+                <span>📑 Mode 2 Halaman Duplex</span>
+            </button>
+        </div>
+        @endif
+
+        <!-- ================= PRINT SHEET (FLAT DUPLEX / FOLDING PASS) ================= -->
+        <div class="print-sheet {{ !empty($isPdf) ? 'is-visible' : '' }}" id="printSheet">
             
             <!-- SISI DEPAN (FRONT CARD) -->
             <div class="omatiq-card card-front">
@@ -742,28 +1335,226 @@
         </div>
 
         @if(empty($isPdf))
-        <div class="print-instruction-note">
+        <div class="print-instruction-note" id="printInstruction">
             <span>💡</span>
             <span><strong>Panduan Cetak:</strong> Pada pengaturan printer, pilih ukuran kertas <strong>A4</strong>, skala <strong>100% (Default)</strong>, dan centang <strong>"Background graphics"</strong> untuk hasil cetak maksimal.</span>
         </div>
         @endif
     </div>
 
+    @if(empty($isPdf))
     <script>
+        // State variables
+        let isFlipped = false;
+        let zoomLevel = 1.0;
+        let currentView = 'virtual'; // 'virtual' | 'sheet'
+
+        const flipper = document.getElementById('cardFlipper');
+        const scaleContainer = document.getElementById('cardScaleContainer');
+        const scene = document.getElementById('cardScene');
+        const pillFront = document.getElementById('pillFront');
+        const pillBack = document.getElementById('pillBack');
+        const zoomBadge = document.getElementById('zoomBadge');
+        const glareFront = document.getElementById('glareFront');
+        const glareBack = document.getElementById('glareBack');
+
+        const virtualStage = document.getElementById('virtualStage');
+        const printSheet = document.getElementById('printSheet');
+        const sheetSubToolbar = document.getElementById('sheetSubToolbar');
+        const printInstruction = document.getElementById('printInstruction');
+        const btnViewVirtual = document.getElementById('btnViewVirtual');
+        const btnViewSheet = document.getElementById('btnViewSheet');
+
+        // Calculate base responsive scale for mobile
+        function getBaseScale() {
+            const viewportW = window.innerWidth;
+            const maxAllowedW = Math.min(viewportW - 28, 480);
+            if (maxAllowedW < 372) {
+                return maxAllowedW / 372;
+            }
+            return 1.0;
+        }
+
+        // Apply scale transform and adjust container height dynamically
+        function applyScale() {
+            if (!scaleContainer) return;
+            const base = getBaseScale();
+            const totalScale = base * zoomLevel;
+            scaleContainer.style.transform = 'scale(' + totalScale + ')';
+            
+            // Adjust scene height so it takes the visual space accurately
+            const scaledHeight = 590 * totalScale;
+            if (scene) {
+                scene.style.height = scaledHeight + 'px';
+            }
+            if (zoomBadge) {
+                zoomBadge.textContent = Math.round(zoomLevel * 100) + '%';
+            }
+        }
+
+        // Switch View: Virtual 3D vs Print Sheet
+        function switchView(mode) {
+            currentView = mode;
+            if (mode === 'virtual') {
+                virtualStage.style.display = 'flex';
+                printSheet.classList.remove('is-visible');
+                sheetSubToolbar.classList.remove('is-visible');
+                printInstruction.classList.remove('is-visible');
+                btnViewVirtual.classList.add('active');
+                btnViewSheet.classList.remove('active');
+                applyScale();
+            } else {
+                virtualStage.style.display = 'none';
+                printSheet.classList.add('is-visible');
+                sheetSubToolbar.classList.add('is-visible');
+                printInstruction.classList.add('is-visible');
+                btnViewVirtual.classList.remove('active');
+                btnViewSheet.classList.add('active');
+            }
+        }
+
+        // Flip Card Logic
+        function flipCardTo(side) {
+            if (side === 'back') {
+                isFlipped = true;
+                flipper.classList.add('is-flipped');
+                pillBack.classList.add('active');
+                pillFront.classList.remove('active');
+            } else {
+                isFlipped = false;
+                flipper.classList.remove('is-flipped');
+                pillFront.classList.add('active');
+                pillBack.classList.remove('active');
+            }
+            // Reset any tilt residue
+            flipper.style.transform = isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)';
+        }
+
+        function toggleFlip() {
+            flipCardTo(isFlipped ? 'front' : 'back');
+        }
+
+        // Zoom Controls
+        function adjustZoom(delta) {
+            zoomLevel = Math.min(1.6, Math.max(0.75, +(zoomLevel + delta).toFixed(2)));
+            applyScale();
+        }
+
+        function resetZoom() {
+            zoomLevel = 1.0;
+            applyScale();
+        }
+
+        // 3D Parallax Tilt & Specular Glare (Desktop Pointer)
+        let isTouching = false;
+        if (scene) {
+            scene.addEventListener('mousemove', function(e) {
+                if (isTouching || window.innerWidth < 768) return;
+                const rect = scene.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+
+                const tiltX = ((y - centerY) / centerY) * -11;
+                const tiltY = ((x - centerX) / centerX) * 11;
+
+                if (isFlipped) {
+                    flipper.style.transform = 'rotateX(' + tiltX + 'deg) rotateY(' + (180 + tiltY) + 'deg)';
+                    const glareX = 100 - (x / rect.width) * 100;
+                    const glareY = (y / rect.height) * 100;
+                    if (glareBack) {
+                        glareBack.style.background = 'radial-gradient(circle at ' + glareX + '% ' + glareY + '%, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0) 65%)';
+                        glareBack.style.opacity = '1';
+                    }
+                } else {
+                    flipper.style.transform = 'rotateX(' + tiltX + 'deg) rotateY(' + tiltY + 'deg)';
+                    const glareX = (x / rect.width) * 100;
+                    const glareY = (y / rect.height) * 100;
+                    if (glareFront) {
+                        glareFront.style.background = 'radial-gradient(circle at ' + glareX + '% ' + glareY + '%, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0) 65%)';
+                        glareFront.style.opacity = '1';
+                    }
+                }
+            });
+
+            scene.addEventListener('mouseleave', function() {
+                flipper.style.transform = isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)';
+                if (glareFront) glareFront.style.opacity = '0';
+                if (glareBack) glareBack.style.opacity = '0';
+            });
+        }
+
+        // Click scene to toggle flip (with debounce against synthetic mobile tap)
+        let lastTouchFlipTime = 0;
+
+        if (scene) {
+            scene.addEventListener('click', function(e) {
+                if (Date.now() - lastTouchFlipTime < 650) {
+                    return;
+                }
+                toggleFlip();
+            });
+        }
+
+        // Mobile Touch Gestures (Swipe to Flip & Tap to Flip)
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchStartTime = 0;
+
+        if (scene) {
+            scene.addEventListener('touchstart', function(e) {
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+                touchStartTime = Date.now();
+            }, { passive: true });
+
+            scene.addEventListener('touchend', function(e) {
+                const deltaX = e.changedTouches[0].clientX - touchStartX;
+                const deltaY = e.changedTouches[0].clientY - touchStartY;
+                const duration = Date.now() - touchStartTime;
+
+                // Horizontal swipe detected
+                if (Math.abs(deltaX) > 32 && Math.abs(deltaX) > Math.abs(deltaY)) {
+                    lastTouchFlipTime = Date.now();
+                    toggleFlip();
+                } else if (Math.abs(deltaX) < 12 && Math.abs(deltaY) < 12 && duration < 350) {
+                    // Tap detected
+                    lastTouchFlipTime = Date.now();
+                    toggleFlip();
+                }
+            }, { passive: true });
+        }
+
+        // Keyboard Shortcut (Space to Flip)
+        window.addEventListener('keydown', function(e) {
+            if (e.code === 'Space' && currentView === 'virtual') {
+                e.preventDefault();
+                toggleFlip();
+            }
+        });
+
+        // Window resize listener for dynamic scale
+        window.addEventListener('resize', applyScale);
+        window.addEventListener('DOMContentLoaded', applyScale);
+        applyScale();
+
+        // Print Mode for Sheet view
         function setPrintMode(mode) {
             const btnFold = document.getElementById('btnFoldMode');
             const btnDuplex = document.getElementById('btnDuplexMode');
             
             if (mode === 'duplex') {
                 document.body.classList.add('duplex-mode');
-                btnDuplex.classList.add('active');
-                btnFold.classList.remove('active');
+                if (btnDuplex) btnDuplex.classList.add('active');
+                if (btnFold) btnFold.classList.remove('active');
             } else {
                 document.body.classList.remove('duplex-mode');
-                btnFold.classList.add('active');
-                btnDuplex.classList.remove('active');
+                if (btnFold) btnFold.classList.add('active');
+                if (btnDuplex) btnDuplex.classList.remove('active');
             }
         }
     </script>
+    @endif
 </body>
 </html>

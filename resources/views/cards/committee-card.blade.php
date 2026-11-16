@@ -2,506 +2,1501 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kartu-Pass-Panitia-OMATIQ-{{ $committee->name }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kartu-Panitia-OMATIQ-{{ $committeeIdFormatted }}-{{ $committee->name }}</title>
     <link rel="icon" href="{{ asset('assets/images/LOGO OMATIQ-Fav.png') }}" type="image/png">
     <link rel="shortcut icon" href="{{ asset('assets/images/LOGO OMATIQ-Fav.png') }}" type="image/png">
     <link rel="apple-touch-icon" href="{{ asset('assets/images/LOGO OMATIQ-Fav.png') }}">
+    @if(empty($isPdf))
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+    @endif
     <style>
         @page {
-            size: a4 portrait;
-            margin: 10mm;
+            size: A4 portrait;
+            margin: 10mm 12mm;
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
         }
 
-        @if(empty($isPdf))
         body {
-            background-color: #0b1329;
-            background-image: 
-                radial-gradient(circle at 50% 0%, rgba(30, 58, 138, 0.45) 0%, transparent 65%),
-                radial-gradient(#1e3a8a 0.8px, transparent 0.8px);
-            background-size: 100% 100%, 20px 20px;
-            color: #1e293b;
-            padding: 24px 15px 40px;
+            background: linear-gradient(135deg, #f0fdfa 0%, #e6fffa 40%, #ccfbf1 100%);
+            color: #0f766e;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            min-height: 100vh;
+            padding: 16px 12px 48px;
+            overflow-x: hidden;
         }
 
+        /* Ambient Glass Toolbar */
         .toolbar {
             width: 100%;
-            max-width: 400px;
+            max-width: 820px;
             margin-bottom: 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: rgba(15, 23, 42, 0.92);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            padding: 10px 16px;
-            border-radius: 14px;
-            border: 1px solid rgba(245, 158, 11, 0.45);
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+            background: rgba(255, 255, 255, 0.94);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            padding: 12px 18px;
+            border-radius: 18px;
+            border: 1px solid rgba(13, 148, 136, 0.2);
+            box-shadow: 0 10px 30px rgba(13, 148, 136, 0.08);
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .toolbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .toolbar-brand img {
+            height: 32px;
+            width: auto;
         }
 
         .toolbar-title {
             font-weight: 800;
-            font-size: 13px;
-            color: #ffffff;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            font-size: 13.5px;
+            color: #0f766e;
+            letter-spacing: -0.2px;
+            line-height: 1.25;
         }
 
-        .toolbar-title span {
-            color: #fbbf24;
-        }
-
-        .btn-print {
-            background: linear-gradient(135deg, #f59e0b, #d97706);
-            color: #0f172a;
-            border: none;
-            padding: 6px 14px;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 800;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            box-shadow: 0 2px 8px rgba(245, 158, 11, 0.35);
-            transition: all 0.2s ease;
-        }
-
-        .btn-print:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.5);
-        }
-        @endif
-
-        /* Card Container (Standard Event Badge Width: 88mm x ~138mm) */
-        .badge-container {
-            width: 88mm;
-            min-height: 138mm;
-            background: #ffffff;
-            border-radius: 14px;
-            overflow: hidden;
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            border: 1.5px solid #0f172a;
-        }
-
-        .badge-wrapper {
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-        }
-
-        /* Lanyard Slot Guide */
-        .lanyard-slot {
-            position: absolute;
-            top: 5mm;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 14mm;
-            height: 3.2mm;
-            border-radius: 3mm;
-            background: #0f172a;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            z-index: 10;
-        }
-
-        /* Header Navy */
-        .pass-header {
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
-            color: #ffffff;
-            padding: 12mm 4mm 4mm;
-            text-align: center;
-            border-bottom: 3px solid #f59e0b;
-            position: relative;
-        }
-
-        .logo-img {
-            height: 28px;
-            max-width: 160px;
-            object-fit: contain;
-            margin-bottom: 2px;
-        }
-
-        .pass-subtitle {
-            font-size: 7.5px;
-            font-weight: 700;
-            letter-spacing: 1.2px;
-            color: #cbd5e1;
-            text-transform: uppercase;
-        }
-
-        .pass-badge-pill {
-            display: inline-block;
-            margin-top: 4px;
-            background: linear-gradient(135deg, #f59e0b, #d97706);
-            color: #0f172a;
-            font-size: 9.5px;
-            font-weight: 900;
-            letter-spacing: 1px;
-            padding: 3px 12px;
-            border-radius: 20px;
-            text-transform: uppercase;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
-        }
-
-        /* Pass Body */
-        .pass-body {
-            padding: 4mm 4mm;
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            background: #ffffff;
-        }
-
-        /* Profile Block */
-        .profile-row {
-            display: flex;
-            gap: 3.5mm;
-            align-items: center;
-            margin-bottom: 3.5mm;
-        }
-
-        .photo-box {
-            width: 25mm;
-            height: 33mm;
-            border-radius: 8px;
-            border: 2px solid #0f172a;
-            background: #f1f5f9;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            flex-shrink: 0;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .photo-img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .photo-box-text {
-            font-size: 7.5px;
-            font-weight: 800;
-            color: #64748b;
-            text-transform: uppercase;
-            text-align: center;
-            margin-top: 2px;
-        }
-
-        .profile-details {
-            flex-grow: 1;
-            overflow: hidden;
-        }
-
-        .official-id {
-            display: inline-block;
-            background: #0f172a;
-            color: #fbbf24;
-            font-family: monospace;
-            font-weight: 800;
+        .toolbar-subtitle {
             font-size: 11px;
-            padding: 2px 8px;
-            border-radius: 6px;
-            letter-spacing: 0.8px;
-            margin-bottom: 3px;
-        }
-
-        .official-name {
-            font-size: 13px;
-            font-weight: 900;
-            color: #0f172a;
-            line-height: 1.2;
-            margin-bottom: 3px;
-            text-transform: uppercase;
-        }
-
-        .official-division {
-            font-size: 9px;
-            font-weight: 800;
-            color: #d97706;
-            text-transform: uppercase;
-            margin-bottom: 2px;
-        }
-
-        .official-role {
-            font-size: 8.5px;
-            font-weight: 700;
-            color: #475569;
-        }
-
-        /* Info Table */
-        .info-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 8px;
-            margin-bottom: 3.5mm;
-            background: #f8fafc;
-            border-radius: 6px;
-            overflow: hidden;
-            border: 1px solid #e2e8f0;
-        }
-
-        .info-table td {
-            padding: 3px 5px;
-            vertical-align: top;
-        }
-
-        .info-label {
-            width: 25mm;
-            font-weight: 700;
-            color: #64748b;
-            text-transform: uppercase;
-        }
-
-        .info-separator {
-            width: 2mm;
-            text-align: center;
-            color: #94a3b8;
-        }
-
-        .info-val {
-            font-weight: 800;
-            color: #0f172a;
-        }
-
-        /* Access Zone Section */
-        .zone-badge-box {
-            background: #0f172a;
-            color: #ffffff;
-            border-radius: 8px;
-            padding: 4px 6px;
-            text-align: center;
-            margin-bottom: 3.5mm;
-            border: 1.5px solid #f59e0b;
-        }
-
-        .zone-label {
-            font-size: 7px;
-            font-weight: 800;
-            letter-spacing: 1px;
-            color: #fbbf24;
-            text-transform: uppercase;
-        }
-
-        .zone-title {
-            font-size: 11px;
-            font-weight: 900;
-            letter-spacing: 0.8px;
-            color: #ffffff;
-            text-transform: uppercase;
-        }
-
-        /* Verification QR & Barcode Row */
-        .verify-row {
-            display: flex;
-            align-items: center;
-            gap: 3mm;
-            background: #f8fafc;
-            border: 1px dashed #cbd5e1;
-            border-radius: 8px;
-            padding: 3mm;
-            margin-top: auto;
-        }
-
-        .qr-wrapper {
-            width: 21mm;
-            height: 21mm;
-            background: #ffffff;
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid #e2e8f0;
-            flex-shrink: 0;
-            padding: 1mm;
-        }
-
-        .barcode-col {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-        }
-
-        .verify-hint {
-            font-size: 6.5px;
-            color: #64748b;
-            text-align: center;
-            margin-top: 2px;
+            color: #0d9488;
             font-weight: 600;
         }
 
-        /* Pass Footer */
-        .pass-footer {
-            background: #0f172a;
-            color: #94a3b8;
-            font-size: 6.5px;
-            font-weight: 700;
-            text-align: center;
-            padding: 2.5mm 3mm;
-            border-top: 2px solid #f59e0b;
-            letter-spacing: 0.5px;
+        .toolbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
         }
 
-        @media print {
+        .btn-view-mode {
+            padding: 7px 14px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            border: 1px solid rgba(13, 148, 136, 0.25);
+            background: #ffffff;
+            color: #0f766e;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-view-mode.active, .btn-view-mode:hover {
+            background: #09767a;
+            color: #ffffff;
+            border-color: #09767a;
+            box-shadow: 0 4px 12px rgba(9, 118, 122, 0.25);
+        }
+
+        .btn-print {
+            padding: 8px 18px;
+            border-radius: 10px;
+            font-size: 12.5px;
+            font-weight: 800;
+            cursor: pointer;
+            border: none;
+            background: linear-gradient(135deg, #09767a 0%, #0d9488 100%);
+            color: #ffffff;
+            box-shadow: 0 4px 14px rgba(9, 118, 122, 0.35);
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .btn-print:hover {
+            background: linear-gradient(135deg, #07595c 0%, #0b7a70 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(9, 118, 122, 0.4);
+        }
+
+        /* Status Notice Banner */
+        .status-banner {
+            width: 100%;
+            max-width: 820px;
+            margin-bottom: 16px;
+            padding: 10px 16px;
+            border-radius: 14px;
+            font-size: 12px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .status-banner.verified {
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #065f46;
+        }
+
+        .status-banner.pending {
+            background: rgba(245, 158, 11, 0.15);
+            border: 1px solid rgba(245, 158, 11, 0.35);
+            color: #92400e;
+        }
+
+        /* Cards Layout Container */
+        .cards-stage {
+            width: 100%;
+            max-width: 820px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        /* ================= VIRTUAL 3D COMMITTEE PASS STAGE ================= */
+        .virtual-stage {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 0 20px;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* Lanyard Ribbon & Metallic Clasp (Deep Teal / Tech Accent) */
+        .lanyard-mount {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 25;
+            margin-bottom: -18px;
+            pointer-events: none;
+        }
+
+        .lanyard-strap {
+            width: 38px;
+            height: 52px;
+            background: linear-gradient(90deg, #07595c 0%, #0d9488 50%, #07595c 100%);
+            box-shadow: 0 4px 14px rgba(9, 118, 122, 0.4);
+            border-radius: 4px 4px 0 0;
+            position: relative;
+        }
+
+        .lanyard-strap::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(45, 212, 191, 0.18) 3px, rgba(45, 212, 191, 0.18) 6px);
+        }
+
+        .lanyard-clip {
+            width: 28px;
+            height: 32px;
+            background: linear-gradient(180deg, #e2e8f0 0%, #cbd5e1 35%, #94a3b8 70%, #64748b 100%);
+            border-radius: 6px 6px 12px 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: -3px;
+            border: 1px solid #cbd5e1;
+        }
+
+        .lanyard-clip::before {
+            content: '';
+            width: 12px;
+            height: 6px;
+            background: #475569;
+            border-radius: 2px;
+            position: absolute;
+            top: 4px;
+        }
+
+        .lanyard-clip::after {
+            content: '';
+            width: 14px;
+            height: 14px;
+            border: 2.5px solid #334155;
+            border-radius: 4px;
+            background: transparent;
+            margin-top: 4px;
+        }
+
+        /* 3D Scene Viewport */
+        .card-3d-scene {
+            perspective: 1200px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            cursor: grab;
+            touch-action: pan-y;
+            padding: 0;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .card-3d-scene:active {
+            cursor: grabbing;
+        }
+
+        /* Responsive Scale Container (dynamically scaled for mobile) */
+        .card-scale-container {
+            width: 372px;
+            height: 590px;
+            transform-origin: top center;
+            transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        /* 3D Rotating Flipper */
+        .card-3d-flipper {
+            width: 372px;
+            height: 590px;
+            position: relative;
+            transform-style: preserve-3d;
+            -webkit-transform-style: preserve-3d;
+            transition: transform 0.65s cubic-bezier(0.34, 1.25, 0.64, 1);
+            transform-origin: center center;
+        }
+
+        .card-3d-flipper.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        /* Card Faces (Front & Back) - Strictly Absolute so both faces stack exactly */
+        .card-3d-flipper .card-face,
+        .card-face {
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            backface-visibility: hidden !important;
+            -webkit-backface-visibility: hidden !important;
+            transform-style: preserve-3d;
+            -webkit-transform-style: preserve-3d;
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 25px 60px rgba(9, 118, 122, 0.22), 0 6px 18px rgba(0, 0, 0, 0.1);
+            margin: 0 !important;
+        }
+
+        .card-front-face {
+            transform: rotateY(0deg);
+        }
+
+        .card-back-face {
+            transform: rotateY(180deg);
+        }
+
+        /* Punch Slot Hole (Lanyard Pass Slot) */
+        .badge-punch-slot {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 44px;
+            height: 8.5px;
+            background: #042f2e;
+            border-radius: 8px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6), 0 1px 1px rgba(255, 255, 255, 0.6);
+            z-index: 15;
+            pointer-events: none;
+        }
+
+        /* Specular Gloss & Reflection */
+        .card-glare {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 20;
+            border-radius: 18px;
+            background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0) 65%);
+            opacity: 0;
+            mix-blend-mode: overlay;
+            transition: opacity 0.3s ease;
+        }
+
+        /* Virtual Floating Controls Dock */
+        .virtual-controls-dock {
+            margin-top: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.94);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            padding: 8px 16px;
+            border-radius: 16px;
+            border: 1px solid rgba(13, 148, 136, 0.2);
+            box-shadow: 0 10px 30px rgba(13, 148, 136, 0.1);
+            flex-wrap: wrap;
+            max-width: 95vw;
+        }
+
+        .side-switcher {
+            display: flex;
+            align-items: center;
+            background: #f0fdfa;
+            padding: 3px;
+            border-radius: 12px;
+            border: 1px solid rgba(13, 148, 136, 0.18);
+            gap: 2px;
+        }
+
+        .side-pill {
+            padding: 6px 14px;
+            border-radius: 9px;
+            font-size: 11.5px;
+            font-weight: 700;
+            border: none;
+            background: transparent;
+            color: #0f766e;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .side-pill.active {
+            background: #09767a;
+            color: #ffffff;
+            box-shadow: 0 2px 8px rgba(9, 118, 122, 0.3);
+        }
+
+        .side-pill-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #cbd5e1;
+        }
+
+        .side-pill.active .side-pill-dot {
+            background: #2dd4bf;
+        }
+
+        .btn-flip-primary {
+            padding: 8px 16px;
+            border-radius: 11px;
+            font-size: 12px;
+            font-weight: 800;
+            border: 1px solid #09767a;
+            background: linear-gradient(135deg, #09767a 0%, #0d9488 100%);
+            color: #ffffff;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 4px 12px rgba(9, 118, 122, 0.3);
+            transition: all 0.2s ease;
+        }
+
+        .btn-flip-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(9, 118, 122, 0.4);
+        }
+
+        .btn-flip-primary svg {
+            transition: transform 0.4s ease;
+        }
+
+        .btn-flip-primary:hover svg {
+            transform: rotate(180deg);
+        }
+
+        .dock-divider {
+            width: 1px;
+            height: 24px;
+            background: rgba(13, 148, 136, 0.2);
+        }
+
+        .zoom-group {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: #f0fdfa;
+            padding: 3px 6px;
+            border-radius: 12px;
+            border: 1px solid rgba(13, 148, 136, 0.18);
+        }
+
+        .btn-zoom {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            border: 1px solid rgba(13, 148, 136, 0.15);
+            background: #ffffff;
+            color: #0f766e;
+            font-size: 14px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .btn-zoom:hover {
+            background: #09767a;
+            color: #ffffff;
+        }
+
+        .zoom-badge {
+            font-size: 11px;
+            font-weight: 800;
+            color: #0f766e;
+            min-width: 44px;
+            text-align: center;
+            font-family: monospace;
+        }
+
+        .virtual-hint-chip {
+            margin-top: 12px;
+            font-size: 11px;
+            color: #0d9488;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.75);
+            padding: 5px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(13, 148, 136, 0.15);
+            text-align: center;
+        }
+
+        /* ================= BASE CARD ELEMENTS (Front & Back) ================= */
+        .omatiq-card {
+            width: 372px;
+            height: 590px;
+            position: relative;
+            border-radius: 18px;
+            overflow: hidden;
+            background-size: 100% 100%;
+            background-repeat: no-repeat;
+            background-position: center;
+            flex-shrink: 0;
+        }
+
+        /* Front & Back Background Templates */
+        .card-front {
+            background-image: url("{{ asset('assets/images/cards/card-committee-bg-front.png') }}");
+        }
+
+        .card-back {
+            background-image: url("{{ asset('assets/images/cards/card-committee-bg-back.png') }}");
+        }
+
+        /* Front: Inactive / Suspended Warning Badge Overlay */
+        .badge-unverified-overlay {
+            position: absolute;
+            top: 2.5%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 91.2%;
+            padding: 6.5px 10px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, #b45309 0%, #d97706 100%);
+            border: 1.5px solid #fed7aa;
+            color: #ffffff;
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: 0.4px;
+            text-align: center;
+            text-transform: uppercase;
+            box-shadow: 0 4px 12px rgba(180, 83, 9, 0.35);
+            z-index: 6;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Front: Inner Data Box (Centered over the translucent glass box) */
+        .committee-data-box {
+            position: absolute;
+            top: 54.0%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 82.0%;
+            height: 14.5%;
+            z-index: 5;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 2px 10px;
+        }
+
+        .committee-name {
+            font-size: 21px;
+            font-weight: 900;
+            color: #042f2e;
+            letter-spacing: -0.3px;
+            line-height: 1.15;
+            text-transform: capitalize;
+            text-align: center;
+            margin-bottom: 3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+        }
+
+        .committee-meta {
+            font-size: 12.5px;
+            font-weight: 700;
+            color: #09767a;
+            letter-spacing: -0.1px;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+            line-height: 1.25;
+        }
+
+        .committee-id-badge {
+            font-size: 9.5px;
+            font-weight: 800;
+            color: #0d9488;
+            letter-spacing: 0.5px;
+            text-align: center;
+            margin-top: 3px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        /* Front: Bottom Sponsor Bar inside the translucent glass box */
+        .card-sponsors-bar {
+            position: absolute;
+            top: 73.0%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 82.0%;
+            z-index: 5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            pointer-events: none;
+        }
+
+        .sponsors-label {
+            font-size: 8px;
+            font-weight: 700;
+            color: #09767a;
+            margin-bottom: 4px;
+            letter-spacing: 0.2px;
+            opacity: 0.9;
+        }
+
+        .sponsors-grid-row1 {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 5px;
+            width: 100%;
+        }
+
+        .sponsors-grid-row1 img {
+            max-height: 14px;
+            max-width: 58px;
+            width: auto;
+            object-fit: contain;
+            filter: contrast(1.05);
+        }
+
+        .sponsors-grid-row2 {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .sponsors-grid-row2 img {
+            max-height: 13px;
+            max-width: 44px;
+            width: auto;
+            object-fit: contain;
+            filter: contrast(1.05);
+        }
+
+        /* Back: QR Code Center Container (Inside the white rounded box) */
+        .committee-qr-box {
+            position: absolute;
+            top: 38.6%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 44.0%;
+            height: 27.5%;
+            z-index: 5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 4px;
+            overflow: hidden;
+        }
+
+        .qr-svg-wrapper {
+            width: 100%;
+            height: 100%;
+            max-width: 155px;
+            max-height: 155px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(15, 118, 110, 0.2);
+        }
+
+        .qr-svg-wrapper svg {
+            width: 100% !important;
+            height: 100% !important;
+            display: block;
+        }
+
+        /* Inactive Security Lock & Watermark Over QR */
+        .qr-lock-container {
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+            text-align: center;
+            z-index: 10;
+        }
+
+        .qr-void-banner {
+            position: absolute;
+            top: 14px;
+            left: -20px;
+            right: -20px;
+            background: #dc2626;
+            color: #ffffff;
+            font-size: 7.5px;
+            font-weight: 900;
+            padding: 2.5px 0;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            transform: rotate(-12deg);
+            box-shadow: 0 2px 6px rgba(220, 38, 38, 0.4);
+            white-space: nowrap;
+        }
+
+        .lock-badge-icon {
+            font-size: 24px;
+            margin-bottom: 2px;
+            color: #b45309;
+        }
+
+        .lock-badge-title {
+            font-size: 10.5px;
+            font-weight: 900;
+            color: #b45309;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+        }
+
+        .lock-badge-subtitle {
+            font-size: 7px;
+            font-weight: 700;
+            color: #64748b;
+            line-height: 1.2;
+            margin-top: 2px;
+            max-width: 130px;
+        }
+
+        /* ================= PRINT SHEET PREVIEW (SCREEN ONLY) ================= */
+        .print-sheet {
+            display: none;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            background: #ffffff;
+            padding: 18px;
+            border-radius: 20px;
+            box-shadow: 0 16px 45px rgba(9, 118, 122, 0.12);
+            border: 1.5px dashed #cbd5e1;
+            position: relative;
+            max-width: 100%;
+            overflow-x: auto;
+        }
+
+        .print-sheet.is-visible {
+            display: flex;
+        }
+
+        /* Cut & Fold Line Guides */
+        .fold-divider {
+            width: 2px;
+            height: 590px;
+            border-left: 2px dashed #94a3b8;
+            position: relative;
+            margin: 0 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .fold-label {
+            position: absolute;
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 9px;
+            font-weight: 800;
+            color: #64748b;
+            white-space: nowrap;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            transform: rotate(-90deg);
+        }
+
+        .cut-guide-border {
+            position: relative;
+            padding: 6px;
+            background: #ffffff;
+            border: 1px dashed #cbd5e1;
+            border-radius: 20px;
+        }
+
+        /* Print Instructions Panel */
+        .print-instructions {
+            width: 100%;
+            max-width: 820px;
+            margin-top: 16px;
+            background: #ffffff;
+            border: 1px solid rgba(13, 148, 136, 0.2);
+            border-radius: 16px;
+            padding: 14px 18px;
+            display: none;
+            box-shadow: 0 6px 20px rgba(9, 118, 122, 0.06);
+        }
+
+        .print-instructions.is-visible {
+            display: block;
+        }
+
+        .inst-title {
+            font-size: 12.5px;
+            font-weight: 800;
+            color: #0f766e;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 6px;
+        }
+
+        .inst-list {
+            font-size: 11.5px;
+            color: #334155;
+            line-height: 1.6;
+            padding-left: 18px;
+        }
+
+        /* Mobile Adjustments */
+        @media (max-width: 640px) {
             body {
-                background: none !important;
-                padding: 0 !important;
+                padding: 10px 8px 36px;
+                background-attachment: scroll;
             }
 
             .toolbar {
+                padding: 10px 14px;
+                border-radius: 14px;
+            }
+
+            .toolbar-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .btn-view-mode, .btn-print {
+                flex: 1;
+                justify-content: center;
+                padding: 7px 10px;
+                font-size: 11.5px;
+            }
+
+            .virtual-controls-dock {
+                padding: 6px 10px;
+                gap: 8px;
+                border-radius: 14px;
+            }
+
+            .side-pill {
+                padding: 5px 10px;
+                font-size: 11px;
+            }
+
+            .btn-flip-primary {
+                padding: 7px 12px;
+                font-size: 11.5px;
+            }
+
+            .virtual-hint-chip {
+                font-size: 10px;
+                padding: 4px 10px;
+            }
+        }
+
+        /* ================= PRINT MEDIA STYLES (@media print) ================= */
+        @media print {
+            body {
+                background: #ffffff !important;
+                background-image: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
+                min-height: auto !important;
+            }
+
+            .toolbar,
+            .status-banner,
+            .virtual-stage,
+            .print-instructions,
+            .no-print {
                 display: none !important;
             }
 
-            .badge-container {
+            .cards-stage {
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+
+            .print-sheet {
+                display: flex !important;
+                padding: 0 !important;
+                margin: 0 auto !important;
+                border: none !important;
                 box-shadow: none !important;
-                border: 1px solid #000000 !important;
-                page-break-inside: avoid;
-                margin: 0 auto;
+                background: transparent !important;
+                justify-content: center !important;
+                align-items: center !important;
+                width: 100% !important;
+                page-break-inside: avoid !important;
+            }
+
+            /* Duplex printing mode toggle */
+            body.print-mode-duplex .print-sheet {
+                display: block !important;
+            }
+
+            body.print-mode-duplex .cut-guide-border {
+                margin: 0 auto 0 !important;
+                page-break-after: always !important;
+                border: 0.5px dashed #cbd5e1 !important;
+            }
+
+            body.print-mode-duplex .fold-divider {
+                display: none !important;
+            }
+
+            /* Physical Event Lanyard Size (86mm x 136.5mm each) */
+            .cut-guide-border {
+                border: 0.5px dashed #94a3b8 !important;
+                padding: 0 !important;
+                border-radius: 4mm !important;
+            }
+
+            .omatiq-card {
+                width: 86mm !important;
+                height: 136.5mm !important;
+                border-radius: 4mm !important;
+                box-shadow: none !important;
+                page-break-inside: avoid !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            .fold-divider {
+                height: 136.5mm !important;
+                border-left: 1px dashed #94a3b8 !important;
+                margin: 0 4mm !important;
+            }
+
+            .fold-label {
+                font-size: 7pt !important;
+                padding: 1mm 2mm !important;
+            }
+
+            .committee-data-box {
+                top: 54.0% !important;
+            }
+
+            .committee-name {
+                font-size: 15pt !important;
+            }
+
+            .committee-meta {
+                font-size: 9pt !important;
+            }
+
+            .committee-id-badge {
+                font-size: 7pt !important;
+            }
+
+            .card-sponsors-bar {
+                top: 73.0% !important;
+                width: 82.0% !important;
+            }
+
+            .sponsors-label {
+                font-size: 6pt !important;
+                margin-bottom: 0.8mm !important;
+            }
+
+            .sponsors-grid-row1 {
+                gap: 2.2mm !important;
+                margin-bottom: 1.2mm !important;
+            }
+
+            .sponsors-grid-row1 img {
+                max-height: 3.5mm !important;
+                max-width: 14mm !important;
+            }
+
+            .sponsors-grid-row2 {
+                gap: 1.8mm !important;
+            }
+
+            .sponsors-grid-row2 img {
+                max-height: 3.2mm !important;
+                max-width: 11mm !important;
+            }
+
+            .committee-qr-box {
+                top: 38.6% !important;
+            }
+
+            .badge-punch-slot {
+                border: 0.5px solid rgba(255, 255, 255, 0.4) !important;
             }
         }
     </style>
 </head>
 <body>
+
     @if(empty($isPdf))
-    <div class="toolbar">
-        <div class="toolbar-title">
-            Pass Panitia <span>• {{ $committee->code }}</span>
+    <!-- Ambient Glass Toolbar -->
+    <header class="toolbar no-print">
+        <div class="toolbar-brand">
+            <img src="{{ asset('assets/images/LOGO OMATIQ.png') }}" alt="Logo OMATIQ 2026">
+            <div>
+                <div class="toolbar-title">Kartu Panitia / Crew Pass • OMATIQ 2026</div>
+                <div class="toolbar-subtitle">{{ $committee->name }} ({{ $committeeIdFormatted }})</div>
+            </div>
         </div>
-        <button onclick="window.print()" class="btn-print">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <polyline points="6 9 6 2 18 2 18 9"></polyline>
-                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-                <rect x="6" y="14" width="12" height="8"></rect>
-            </svg>
-            Cetak Kartu Pass
-        </button>
+
+        <div class="toolbar-actions">
+            <!-- View Mode Switcher -->
+            <button type="button" class="btn-view-mode active" id="btnModeVirtual" onclick="switchViewMode('virtual')">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                Kartu Virtual 3D
+            </button>
+
+            <button type="button" class="btn-view-mode" id="btnModePrint" onclick="switchViewMode('print')">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                Lembar Cetak A4
+            </button>
+
+            <!-- Direct Print / Download PDF -->
+            <button type="button" class="btn-print" onclick="window.print()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                Cetak / Unduh PDF
+            </button>
+        </div>
+    </header>
+
+    <!-- Status Banner Notice -->
+    @if($isVerified)
+    <div class="status-banner verified no-print">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            <span><strong>CREW ACCESS TERDAFTAR RESMI:</strong> Kartu tanda pengenal panitia ini aktif dan telah terverifikasi resmi oleh panitia pusat OMATIQ.</span>
+        </div>
+        <span style="font-size: 11px; font-weight: 800; color: #047857; background: rgba(16, 185, 129, 0.2); padding: 3px 8px; border-radius: 6px;">
+            DIVISI: {{ strtoupper($committee->division) }}
+        </span>
+    </div>
+    @else
+    <div class="status-banner pending no-print">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            <span><strong>STATUS NON-AKTIF:</strong> Kartu panitia ini sedang dinonaktifkan atau belum disetujui resmi oleh administrator.</span>
+        </div>
+        <span style="font-size: 11px; font-weight: 800; color: #b45309; background: rgba(245, 158, 11, 0.2); padding: 3px 8px; border-radius: 6px;">
+            MENUNGGU AKTIVASI
+        </span>
     </div>
     @endif
+    @endif
 
-    <div class="badge-container">
-        <div class="badge-wrapper">
-            <!-- Lanyard Slot -->
-            <div class="lanyard-slot"></div>
+    <!-- Cards Main Stage -->
+    <main class="cards-stage">
 
-            <!-- Pass Header -->
-            <div class="pass-header">
-                <img src="{{ asset('assets/images/LOGO OMATIQ-Fav.png') }}" alt="Logo OMATIQ" class="logo-img">
-                <div class="pass-subtitle">Olimpiade Matematika & Al-Qur'an 2026</div>
-                <div class="pass-badge-pill">PANITIA PELAKSANA</div>
+        <!-- ================= 1. VIRTUAL 3D COMMITTEE PASS STAGE ================= -->
+        <div class="virtual-stage" id="virtualStage">
+
+            <!-- Lanyard Mount (Strap + Metallic Clasp) -->
+            <div class="lanyard-mount">
+                <div class="lanyard-strap"></div>
+                <div class="lanyard-clip"></div>
             </div>
 
-            <!-- Pass Body -->
-            <div class="pass-body">
-                <!-- Profile Block -->
-                <div class="profile-row">
-                    <div class="photo-box">
-                        @if($committee->photo_path)
-                            <img src="{{ asset($committee->photo_url) }}" alt="{{ $committee->name }}" class="photo-img">
-                        @else
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2">
-                                <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
-                                <circle cx="9" cy="9" r="2"/>
-                                <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
-                            </svg>
-                            <span class="photo-box-text">Foto 3x4</span>
-                        @endif
-                    </div>
+            <!-- 3D Scene Viewport -->
+            <div class="card-3d-scene" id="card3dScene">
+                <div class="card-scale-container" id="cardScaleContainer">
+                    <div class="card-3d-flipper" id="cardFlipper">
 
-                    <div class="profile-details">
-                        <div class="official-id">{{ $committee->code }}</div>
-                        <h2 class="official-name">{{ $committee->name }}</h2>
-                        <div class="official-division">
-                            DIVISI {{ strtoupper($committee->division) }}
+                        <!-- FRONT FACE -->
+                        <div class="card-face card-front-face">
+                            <div class="omatiq-card card-front">
+                                <!-- Punch slot for lanyard pass -->
+                                <div class="badge-punch-slot"></div>
+
+                                @if(! $isVerified)
+                                <div class="badge-unverified-overlay">
+                                    AKUN PANITIA NON-AKTIF / PENDING
+                                </div>
+                                @endif
+
+                                <!-- Centered Data Box inside translucent glass panel -->
+                                <div class="committee-data-box">
+                                    <div class="committee-name">{{ $committee->name }}</div>
+                                    <div class="committee-meta">
+                                        {{ $committee->position ?: 'Panitia Pelaksana' }} • {{ $committee->division }}
+                                        @if($committee->branch)
+                                        <br><span style="font-size: 11px; font-weight: 600; opacity: 0.9;">{{ $committee->branch }}</span>
+                                        @endif
+                                    </div>
+                                    <div class="committee-id-badge">{{ $committeeIdFormatted }}</div>
+                                </div>
+
+                                <!-- Sponsor Logos Grid -->
+                                <div class="card-sponsors-bar">
+                                    <div class="sponsors-label">Supported by:</div>
+                                    <div class="sponsors-grid-row1">
+                                        <img src="{{ asset('assets/images/sponsor/telkomsel.png') }}" alt="Telkomsel" title="Telkomsel">
+                                        <img src="{{ asset('assets/images/sponsor/telkom.png') }}" alt="Telkom Indonesia" title="Telkom Indonesia">
+                                        <img src="{{ asset('assets/images/sponsor/chickin.png') }}" alt="Chickin" title="Chickin">
+                                        <img src="{{ asset('assets/images/sponsor/bankaltimtara.png') }}" alt="bankaltimtara" title="bankaltimtara">
+                                    </div>
+                                    <div class="sponsors-grid-row2">
+                                        <img src="{{ asset('assets/images/sponsor/bankbjb.png') }}" alt="bank bjb" title="bank bjb">
+                                        <img src="{{ asset('assets/images/sponsor/ybmpln.png') }}" alt="YBM PLN" title="YBM PLN">
+                                        <img src="{{ asset('assets/images/sponsor/nurulhidayah.png') }}" alt="Nurul Hidayah" title="Nurul Hidayah">
+                                        <img src="{{ asset('assets/images/sponsor/linkaja.png') }}" alt="LinkAja" title="LinkAja">
+                                        <img src="{{ asset('assets/images/sponsor/linkaja-syariah.png') }}" alt="LinkAja Syariah" title="LinkAja Syariah">
+                                    </div>
+                                </div>
+
+                                <!-- Specular Glare -->
+                                <div class="card-glare" id="cardGlareFront"></div>
+                            </div>
                         </div>
-                        <div class="official-role">
-                            {{ $committee->position ?: 'Panitia Pelaksana' }}
+
+                        <!-- BACK FACE -->
+                        <div class="card-face card-back-face">
+                            <div class="omatiq-card card-back">
+                                <!-- Punch slot for lanyard pass -->
+                                <div class="badge-punch-slot"></div>
+
+                                <!-- Centered QR Container inside the white container -->
+                                <div class="committee-qr-box">
+                                    <div class="qr-svg-wrapper">
+                                        {!! $qrCodeSvg !!}
+
+                                        @if(! $isVerified)
+                                        <div class="qr-lock-container">
+                                            <div class="qr-void-banner">SECURITY VOID • INACTIVE</div>
+                                            <div class="lock-badge-icon">🔒</div>
+                                            <div class="lock-badge-title">AKSES TERKUNCI</div>
+                                            <div class="lock-badge-subtitle">Menunggu aktivasi panitia oleh Administrator</div>
+                                        </div>
+                                        @endif
+                                    </div>
+                                </div>
+
+                                <!-- Specular Glare -->
+                                <div class="card-glare" id="cardGlareBack"></div>
+                            </div>
                         </div>
-                    </div>
-                </div>
 
-                <!-- Access Zone -->
-                <div class="zone-badge-box">
-                    <div class="zone-label">Hak Akses Venue</div>
-                    <div class="zone-title">{{ $committee->access_zone ?: 'ALL ACCESS' }}</div>
-                </div>
-
-                <!-- Info Table -->
-                <table class="info-table">
-                    @if($committee->phone)
-                    <tr>
-                        <td class="info-label">WhatsApp</td>
-                        <td class="info-separator">:</td>
-                        <td class="info-val" style="font-family: monospace;">{{ $committee->phone }}</td>
-                    </tr>
-                    @endif
-                    <tr>
-                        <td class="info-label">Jenis Kelamin</td>
-                        <td class="info-separator">:</td>
-                        <td class="info-val">{{ $committee->gender === 'female' ? 'Perempuan' : 'Laki-laki' }}</td>
-                    </tr>
-                    <tr>
-                        <td class="info-label">Tahun Acara</td>
-                        <td class="info-separator">:</td>
-                        <td class="info-val">{{ $committee->event_year }}</td>
-                    </tr>
-                    <tr>
-                        <td class="info-label">Status Keanggotaan</td>
-                        <td class="info-separator">:</td>
-                        <td class="info-val" style="color: #15803d;">RESMI / AKTIF</td>
-                    </tr>
-                </table>
-
-                <!-- Verification QR & Barcode -->
-                <div class="verify-row">
-                    <div class="qr-wrapper">
-                        @if(!empty($verifyUrl))
-                            <a href="{{ $verifyUrl }}" target="_blank" rel="noopener noreferrer" title="Buka Halaman Verifikasi Resmi" style="display: block; text-decoration: none;">
-                                {!! $qrCodeSvg !!}
-                            </a>
-                        @else
-                            {!! $qrCodeSvg !!}
-                        @endif
-                    </div>
-                    <div class="barcode-col">
-                        {!! $barcodeSvg !!}
-                        <div class="verify-hint">Scan QR kamera HP untuk validasi hak akses venue</div>
-                        <div class="verify-hint" style="color: #0f172a; font-weight: 800; margin-top: 3px;">
-                            PANITIA PUSAT OMATIQ
-                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Pass Footer -->
-            <div class="pass-footer">
-                Kartu tanda pengenal resmi panitia Babak Final Nasional OMATIQ • Yatim Mandiri
+            <!-- Virtual Floating Controls Dock -->
+            <div class="virtual-controls-dock no-print">
+                <div class="side-switcher">
+                    <button type="button" class="side-pill active" id="pillFront" onclick="setCardSide(false)">
+                        <span class="side-pill-dot"></span>
+                        Sisi Depan
+                    </button>
+                    <button type="button" class="side-pill" id="pillBack" onclick="setCardSide(true)">
+                        <span class="side-pill-dot"></span>
+                        Sisi Belakang
+                    </button>
+                </div>
+
+                <button type="button" class="btn-flip-primary" onclick="toggleCardFlip()">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                    Balik Kartu
+                </button>
+
+                <div class="dock-divider"></div>
+
+                <div class="zoom-group">
+                    <button type="button" class="btn-zoom" onclick="adjustZoom(-0.1)" title="Zoom Out">-</button>
+                    <span class="zoom-badge" id="zoomBadge">100%</span>
+                    <button type="button" class="btn-zoom" onclick="adjustZoom(0.1)" title="Zoom In">+</button>
+                    <button type="button" class="btn-zoom" onclick="resetZoom()" title="Reset Skala">↺</button>
+                </div>
             </div>
+
+            <div class="virtual-hint-chip no-print">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                Geser (Swipe) atau klik tombol Balik Kartu untuk melihat QR scanner verifikasi
+            </div>
+
         </div>
-    </div>
+
+        <!-- ================= 2. PRINT SHEET PREVIEW (A4 Folding Pass) ================= -->
+        <div class="print-sheet" id="printSheet">
+
+            <!-- FRONT CARD (Left Side in Folding Layout) -->
+            <div class="cut-guide-border">
+                <div class="omatiq-card card-front">
+                    <div class="badge-punch-slot"></div>
+
+                    @if(! $isVerified)
+                    <div class="badge-unverified-overlay">
+                        AKUN PANITIA NON-AKTIF / PENDING
+                    </div>
+                    @endif
+
+                    <div class="committee-data-box">
+                        <div class="committee-name">{{ $committee->name }}</div>
+                        <div class="committee-meta">
+                            {{ $committee->position ?: 'Panitia Pelaksana' }} • {{ $committee->division }}
+                            @if($committee->branch)
+                            <br><span style="font-size: 11px; font-weight: 600; opacity: 0.9;">{{ $committee->branch }}</span>
+                            @endif
+                        </div>
+                        <div class="committee-id-badge">{{ $committeeIdFormatted }}</div>
+                    </div>
+
+                    <!-- Sponsor Logos Grid -->
+                    <div class="card-sponsors-bar">
+                        <div class="sponsors-label">Supported by:</div>
+                        <div class="sponsors-grid-row1">
+                            <img src="{{ asset('assets/images/sponsor/telkomsel.png') }}" alt="Telkomsel" title="Telkomsel">
+                            <img src="{{ asset('assets/images/sponsor/telkom.png') }}" alt="Telkom Indonesia" title="Telkom Indonesia">
+                            <img src="{{ asset('assets/images/sponsor/chickin.png') }}" alt="Chickin" title="Chickin">
+                            <img src="{{ asset('assets/images/sponsor/bankaltimtara.png') }}" alt="bankaltimtara" title="bankaltimtara">
+                        </div>
+                        <div class="sponsors-grid-row2">
+                            <img src="{{ asset('assets/images/sponsor/bankbjb.png') }}" alt="bank bjb" title="bank bjb">
+                            <img src="{{ asset('assets/images/sponsor/ybmpln.png') }}" alt="YBM PLN" title="YBM PLN">
+                            <img src="{{ asset('assets/images/sponsor/nurulhidayah.png') }}" alt="Nurul Hidayah" title="Nurul Hidayah">
+                            <img src="{{ asset('assets/images/sponsor/linkaja.png') }}" alt="LinkAja" title="LinkAja">
+                            <img src="{{ asset('assets/images/sponsor/linkaja-syariah.png') }}" alt="LinkAja Syariah" title="LinkAja Syariah">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FOLD GUIDE DIVIDER -->
+            <div class="fold-divider">
+                <div class="fold-label">Garis Lipat Tengah</div>
+            </div>
+
+            <!-- BACK CARD (Right Side in Folding Layout) -->
+            <div class="cut-guide-border">
+                <div class="omatiq-card card-back">
+                    <div class="badge-punch-slot"></div>
+
+                    <div class="committee-qr-box">
+                        <div class="qr-svg-wrapper">
+                            {!! $qrCodeSvg !!}
+
+                            @if(! $isVerified)
+                            <div class="qr-lock-container">
+                                <div class="qr-void-banner">SECURITY VOID • INACTIVE</div>
+                                <div class="lock-badge-icon">🔒</div>
+                                <div class="lock-badge-title">AKSES TERKUNCI</div>
+                                <div class="lock-badge-subtitle">Menunggu aktivasi panitia oleh Administrator</div>
+                            </div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Print Instructions Panel -->
+        <div class="print-instructions no-print" id="printInstructions">
+            <div class="inst-title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                Petunjuk Cetak Lembar Kartu Panitia (A4 Pass):
+            </div>
+            <ol class="inst-list">
+                <li>Gunakan kertas A4 tebal berjenis <strong>Brief Card (BC), Karton Concorde, atau Art Paper 210-260 gsm</strong> untuk ketahanan maksimal.</li>
+                <li>Pada dialog cetak browser (<code>Ctrl + P</code> / <code>Cmd + P</code>), pilih ukuran kertas <strong>A4</strong> dengan orientasi <strong>Portrait</strong>.</li>
+                <li>Atur margin ke <strong>None / Minimum</strong> dan pastikan opsi <strong>Background Graphics (Grafis Latar Belakang) dicentang</strong>.</li>
+                <li>Setel Scale / Skala ke <strong>100% (Default)</strong> agar dimensi kartu presisi 86 mm × 136.5 mm per sisi.</li>
+                <li>Gunting mengikuti garis putus-putus luar, lalu lipat tepat pada garis tengah untuk dimasukkan ke dalam plastik mika ID Pass Lanyard panitia.</li>
+            </ol>
+        </div>
+
+    </main>
+
+    @if(empty($isPdf))
+    <script>
+        (function() {
+            // State
+            let isFlipped = false;
+            let currentZoom = 1.0;
+            let baseScale = 1.0;
+            let isDragging = false;
+            let startX = 0;
+            let startY = 0;
+            let currentRotateX = 0;
+            let currentRotateY = 0;
+            let targetRotateX = 0;
+            let targetRotateY = 0;
+            let touchStartX = 0;
+            let touchStartY = 0;
+            let lastTouchFlipTime = 0;
+
+            const flipper = document.getElementById('cardFlipper');
+            const scaleContainer = document.getElementById('cardScaleContainer');
+            const scene = document.getElementById('card3dScene');
+            const glareFront = document.getElementById('cardGlareFront');
+            const glareBack = document.getElementById('cardGlareBack');
+            const pillFront = document.getElementById('pillFront');
+            const pillBack = document.getElementById('pillBack');
+            const zoomBadge = document.getElementById('zoomBadge');
+            const virtualStage = document.getElementById('virtualStage');
+            const printSheet = document.getElementById('printSheet');
+            const printInstructions = document.getElementById('printInstructions');
+            const btnModeVirtual = document.getElementById('btnModeVirtual');
+            const btnModePrint = document.getElementById('btnModePrint');
+
+            // Responsive auto-scaler for mobile devices
+            function updateResponsiveScale() {
+                if (!scaleContainer) return;
+                const viewportWidth = window.innerWidth;
+                const horizontalPadding = 32;
+                const availableWidth = viewportWidth - horizontalPadding;
+                const cardWidth = 372;
+
+                if (availableWidth < cardWidth) {
+                    baseScale = Math.max(0.68, availableWidth / cardWidth);
+                } else {
+                    baseScale = 1.0;
+                }
+                applyTransform();
+            }
+
+            function applyTransform() {
+                if (!scaleContainer) return;
+                const effectiveScale = baseScale * currentZoom;
+                scaleContainer.style.transform = 'scale(' + effectiveScale + ')';
+                if (zoomBadge) {
+                    zoomBadge.textContent = Math.round(currentZoom * 100) + '%';
+                }
+            }
+
+            // Public Toggle Functions
+            window.toggleCardFlip = function() {
+                isFlipped = !isFlipped;
+                syncFlipState();
+            };
+
+            window.setCardSide = function(flipToBack) {
+                isFlipped = flipToBack;
+                syncFlipState();
+            };
+
+            function syncFlipState() {
+                if (!flipper) return;
+                if (isFlipped) {
+                    flipper.classList.add('is-flipped');
+                    if (pillBack) pillBack.classList.add('active');
+                    if (pillFront) pillFront.classList.remove('active');
+                } else {
+                    flipper.classList.remove('is-flipped');
+                    if (pillFront) pillFront.classList.add('active');
+                    if (pillBack) pillBack.classList.remove('active');
+                }
+            }
+
+            window.adjustZoom = function(delta) {
+                currentZoom = Math.min(1.5, Math.max(0.6, currentZoom + delta));
+                applyTransform();
+            };
+
+            window.resetZoom = function() {
+                currentZoom = 1.0;
+                applyTransform();
+            };
+
+            window.switchViewMode = function(mode) {
+                if (mode === 'virtual') {
+                    if (virtualStage) virtualStage.style.display = 'flex';
+                    if (printSheet) printSheet.classList.remove('is-visible');
+                    if (printInstructions) printInstructions.classList.remove('is-visible');
+                    if (btnModeVirtual) btnModeVirtual.classList.add('active');
+                    if (btnModePrint) btnModePrint.classList.remove('active');
+                    updateResponsiveScale();
+                } else {
+                    if (virtualStage) virtualStage.style.display = 'none';
+                    if (printSheet) printSheet.classList.add('is-visible');
+                    if (printInstructions) printInstructions.classList.add('is-visible');
+                    if (btnModeVirtual) btnModeVirtual.classList.remove('active');
+                    if (btnModePrint) btnModePrint.classList.add('active');
+                }
+            };
+
+            // Parallax Tilt & Specular Shine on Mouse Move
+            if (scene) {
+                scene.addEventListener('mousemove', function(e) {
+                    const rect = scene.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    const centerX = rect.width / 2;
+                    const centerY = rect.height / 2;
+
+                    // Calculate tilt angles (-12deg to 12deg)
+                    targetRotateY = ((x - centerX) / centerX) * 12;
+                    targetRotateX = -((y - centerY) / centerY) * 12;
+
+                    // Specular Glare position
+                    const activeGlare = isFlipped ? glareBack : glareFront;
+                    if (activeGlare) {
+                        const px = (x / rect.width) * 100;
+                        const py = (y / rect.height) * 100;
+                        activeGlare.style.opacity = '0.55';
+                        activeGlare.style.background = 'radial-gradient(circle at ' + px + '% ' + py + '%, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 65%)';
+                    }
+                });
+
+                scene.addEventListener('mouseleave', function() {
+                    targetRotateX = 0;
+                    targetRotateY = 0;
+                    if (glareFront) glareFront.style.opacity = '0';
+                    if (glareBack) glareBack.style.opacity = '0';
+                });
+
+                // Mobile Swipe & Tap Gestures with Debounce
+                scene.addEventListener('touchstart', function(e) {
+                    touchStartX = e.touches[0].clientX;
+                    touchStartY = e.touches[0].clientY;
+                }, { passive: true });
+
+                scene.addEventListener('touchend', function(e) {
+                    const touchEndX = e.changedTouches[0].clientX;
+                    const touchEndY = e.changedTouches[0].clientY;
+                    const deltaX = touchEndX - touchStartX;
+                    const deltaY = touchEndY - touchStartY;
+
+                    // Horizontal swipe detected
+                    if (Math.abs(deltaX) > 40 && Math.abs(deltaX) > Math.abs(deltaY)) {
+                        lastTouchFlipTime = Date.now();
+                        toggleCardFlip();
+                    } else if (Math.abs(deltaX) < 10 && Math.abs(deltaY) < 10) {
+                        // Quick tap on card flips it
+                        lastTouchFlipTime = Date.now();
+                        toggleCardFlip();
+                    }
+                }, { passive: true });
+
+                // Click on card flipper to flip (debounced to avoid duplicate trigger after touch)
+                scene.addEventListener('click', function(e) {
+                    if (Date.now() - lastTouchFlipTime < 650) return;
+                    toggleCardFlip();
+                });
+            }
+
+            // Smooth Interpolation Loop for Tilt Physics
+            function renderTilt() {
+                currentRotateX += (targetRotateX - currentRotateX) * 0.12;
+                currentRotateY += (targetRotateY - currentRotateY) * 0.12;
+
+                if (flipper) {
+                    const flipBase = isFlipped ? 180 : 0;
+                    const totalY = flipBase + (isFlipped ? -currentRotateY : currentRotateY);
+                    flipper.style.transform = 'rotateX(' + currentRotateX.toFixed(2) + 'deg) rotateY(' + totalY.toFixed(2) + 'deg)';
+                }
+                requestAnimationFrame(renderTilt);
+            }
+            renderTilt();
+
+            // Auto-scale on load and resize
+            window.addEventListener('resize', updateResponsiveScale);
+            window.addEventListener('orientationchange', function() {
+                setTimeout(updateResponsiveScale, 200);
+            });
+            updateResponsiveScale();
+
+            // Font-size auto-shrinker for long names
+            const nameEl = document.querySelector('.committee-name');
+            if (nameEl && nameEl.textContent.trim().length > 18) {
+                const len = nameEl.textContent.trim().length;
+                if (len > 25) {
+                    nameEl.style.fontSize = '16px';
+                } else {
+                    nameEl.style.fontSize = '18.5px';
+                }
+            }
+        })();
+    </script>
+    @endif
+
 </body>
 </html>

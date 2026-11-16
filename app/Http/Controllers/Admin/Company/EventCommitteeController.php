@@ -311,17 +311,53 @@ class EventCommitteeController extends Controller
     {
         $this->authorize('view', $committee);
 
-        $verifyUrl = route('home.registration.verify', ['registrationNumber' => $committee->code]);
-        $qrCodeSvg = $this->barcodeService->generateQrCodeSvg($verifyUrl, size: 85, color: '#0f172a');
-        $barcodeSvg = $this->barcodeService->generateCode128Svg($committee->code, height: 26, barWidth: 1.1, color: '#0f172a');
+        return $this->renderCardView($request, $committee);
+    }
 
-        if ($request->query('format') === 'pdf') {
-            $pdf = Pdf::loadView('cards.committee-card', compact('committee', 'verifyUrl', 'qrCodeSvg', 'barcodeSvg'))
-                ->setPaper('a4', 'portrait');
+    public function publicPrintCard(Request $request, string $identifier)
+    {
+        $code = trim($identifier);
 
-            return $pdf->stream("Kartu-Pass-Panitia-{$committee->code}.pdf");
+        $committee = EventCommittee::where('code', $code)
+            ->orWhere('id', is_numeric($code) ? (int) $code : 0)
+            ->firstOrFail();
+
+        return $this->renderCardView($request, $committee);
+    }
+
+    private function renderCardView(Request $request, EventCommittee $committee)
+    {
+        if ($committee->status !== 'active' && (! Auth::check() || ! Auth::user()->hasRole('Administrators'))) {
+            abort(403, 'Kartu tanda pengenal panitia hanya dapat dicetak setelah diaktifkan secara resmi oleh Administrator.');
         }
 
-        return view('cards.committee-card', compact('committee', 'verifyUrl', 'qrCodeSvg', 'barcodeSvg'));
+        $committeeIdFormatted = $committee->code;
+        $verifyUrl = route('home.committee.verify', ['code' => $committee->code]);
+        $isVerified = $committee->status === 'active';
+        $qrCodeColor = $isVerified ? '#09767a' : '#94a3b8';
+        $qrCodeSvg = $this->barcodeService->generateQrCodeSvg($verifyUrl, size: 160, color: $qrCodeColor);
+        $barcodeSvg = $this->barcodeService->generateCode128Svg($committee->code, height: 26, barWidth: 1.1, color: $qrCodeColor);
+
+        $isPdf = $request->query('format') === 'pdf';
+
+        $data = [
+            'committee' => $committee,
+            'committeeIdFormatted' => $committeeIdFormatted,
+            'verifyUrl' => $verifyUrl,
+            'qrCodeSvg' => $qrCodeSvg,
+            'barcodeSvg' => $barcodeSvg,
+            'isVerified' => $isVerified,
+            'isPdf' => $isPdf,
+        ];
+
+        if ($isPdf) {
+            $pdf = Pdf::loadView('cards.committee-card', $data)
+                ->setPaper('a4', 'portrait')
+                ->setOption(['isRemoteEnabled' => true, 'isHtml5ParserEnabled' => true]);
+
+            return $pdf->stream('Kartu-Pass-Panitia-'.$committee->code.'-'.$committee->name.'.pdf');
+        }
+
+        return view('cards.committee-card', $data);
     }
 }
