@@ -531,38 +531,123 @@
             text-align: center;
             text-transform: uppercase;
             box-shadow: 0 4px 12px rgba(180, 83, 9, 0.35);
-            z-index: 6;
+            z-index: 8;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
-        /* Front: Inner Data Box (Centered over the translucent glass box) */
-        .committee-data-box {
+        /* Front: Centered Header YM Logo */
+        .card-header-logo {
             position: absolute;
-            top: 54.0%;
+            top: 30px;
             left: 50%;
             transform: translateX(-50%);
-            width: 82.0%;
-            height: 14.5%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            z-index: 5;
+        }
+
+        .card-header-logo img {
+            height: 40px;
+            width: auto;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+        }
+
+        /* Front: Label Panitia (Gradient Horizontal Banner Typography) */
+        .committee-badge-pill {
+            position: absolute;
+            top: 96px;
+            left: 0;
+            right: 0;
+            width: 100%;
+            height: 44px;
+            background: linear-gradient(90deg, rgba(9, 118, 122, 0) 0%, rgba(9, 118, 122, 0.65) 10%, #09767a 20%, #09767a 80%, rgba(9, 118, 122, 0.65) 90%, rgba(9, 118, 122, 0) 100%);
+            color: #ffffff;
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            border-radius: 0;
+            box-shadow: none;
+            z-index: 5;
+            white-space: nowrap;
+        }
+
+        /* Front: Official HD Title (Tulisan Omatiq Putih.png) */
+        .card-title-wrap {
+            position: absolute;
+            top: 154px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 84%;
+            display: flex;
+            justify-content: center;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .card-title-img {
+            max-width: 310px;
+            height: auto;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.25));
+        }
+
+        /* Front: Transparent Frosted Glass Committee Data Box */
+        .committee-data-box {
+            position: absolute;
+            top: 316px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90.0%;
+            background: rgba(255, 255, 255, 0.30);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1.5px solid rgba(255, 255, 255, 0.70);
+            border-radius: 24px;
             z-index: 5;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             text-align: center;
-            padding: 2px 10px;
+            padding: 16px 14px 12px;
+            box-shadow: 0 10px 30px rgba(4, 47, 46, 0.16), inset 0 1px 2px rgba(255, 255, 255, 0.8);
+        }
+
+        /* Front: Mascots Peeking at Top-Right Corner Outside the Box */
+        .card-mascot-corner {
+            position: absolute;
+            bottom: 100%;
+            right: 20px;
+            margin-bottom: -10px;
+            z-index: 6;
+            pointer-events: none;
+            line-height: 0;
+        }
+
+        .card-mascot-img {
+            width: 105px;
+            height: auto;
+            object-fit: contain;
+            filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.2));
         }
 
         .committee-name {
-            font-size: 21px;
+            font-size: 22px;
             font-weight: 900;
-            color: #042f2e;
+            color: #09767a;
             letter-spacing: -0.3px;
-            line-height: 1.15;
-            text-transform: capitalize;
+            line-height: 1.2;
             text-align: center;
-            margin-bottom: 3px;
+            margin-bottom: 2px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -570,9 +655,9 @@
         }
 
         .committee-meta {
-            font-size: 12.5px;
+            font-size: 11px;
             font-weight: 700;
-            color: #09767a;
+            color: #065f46;
             letter-spacing: -0.1px;
             text-align: center;
             white-space: nowrap;
@@ -582,103 +667,191 @@
             line-height: 1.25;
         }
 
+        .committee-branch {
+            font-size: 11px;
+            font-weight: 800;
+            color: #0f766e;
+            text-align: center;
+            margin-top: 1px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+        }
+
         .committee-id-badge {
             font-size: 9.5px;
             font-weight: 800;
             color: #0d9488;
-            letter-spacing: 0.5px;
+            letter-spacing: 1.2px;
             text-align: center;
-            margin-top: 3px;
+            margin-top: 2px;
             font-family: 'Courier New', Courier, monospace;
         }
 
-        /* Front: Bottom Sponsor Bar inside the translucent glass box */
-        .card-sponsors-bar {
-            position: absolute;
-            top: 73.0%;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 82.0%;
-            z-index: 5;
+        .data-divider {
+            width: 84%;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.6);
+            margin: 6px auto 5px;
+        }
+
+        /* Front: Sponsors Bar (HD Assets) */
+        .card-sponsors-wrap {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            text-align: center;
-            pointer-events: none;
+            width: 100%;
+            margin-top: 2px;
         }
 
         .sponsors-label {
-            font-size: 8px;
-            font-weight: 700;
-            color: #09767a;
+            font-size: 7.5px;
+            font-weight: 800;
+            color: #042f2e;
             margin-bottom: 4px;
-            letter-spacing: 0.2px;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
             opacity: 0.9;
         }
 
-        .sponsors-grid-row1 {
+        .sponsors-row {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
-            margin-bottom: 5px;
             width: 100%;
         }
 
-        .sponsors-grid-row1 img {
-            max-height: 14px;
-            max-width: 58px;
+        .sponsors-row-1 {
+            gap: 7px;
+            margin-bottom: 3.5px;
+        }
+
+        .sponsors-row-1 img {
+            max-height: 40px;
+            max-width: 52px;
             width: auto;
             object-fit: contain;
             filter: contrast(1.05);
         }
 
-        .sponsors-grid-row2 {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            width: 100%;
+        .sponsors-row-2 {
+            gap: 6px;
         }
 
-        .sponsors-grid-row2 img {
-            max-height: 13px;
-            max-width: 44px;
+        .sponsors-row-2 img {
+            max-height: 40px;
+            max-width: 40px;
             width: auto;
             object-fit: contain;
             filter: contrast(1.05);
         }
 
-        /* Back: QR Code Center Container (Inside the white rounded box) */
-        .committee-qr-box {
+        /* Front: Official Website URL at Bottom */
+        .card-front-web {
             position: absolute;
-            top: 38.6%;
+            bottom: 12px;
             left: 50%;
             transform: translateX(-50%);
-            width: 44.0%;
-            height: 27.5%;
+            color: #ffffff;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.8px;
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
             z-index: 5;
+            white-space: nowrap;
+        }
+
+        /* Back: Title OMATIQ 2026 */
+        .card-back-title-wrap {
+            position: absolute;
+            top: 48px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 82%;
+            display: flex;
+            justify-content: center;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .card-back-title-img {
+            max-width: 295px;
+            height: auto;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.25));
+        }
+
+        /* Back: HD Mascots Left & Right (Single Instance, Zero Double Image) */
+        .mascot-back-zakki {
+            position: absolute;
+            bottom: 110px;
+            left: -8px;
+            width: 136px;
+            height: auto;
+            z-index: 5;
+            pointer-events: none;
+            filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.24));
+        }
+
+        .mascot-back-amila {
+            position: absolute;
+            bottom: 105px;
+            right: -12px;
+            width: 136px;
+            height: auto;
+            z-index: 5;
+            pointer-events: none;
+            filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.24));
+        }
+
+        /* Back: QR Code Center Container (Clean, centered between mascots) */
+        .committee-qr-box {
+            position: absolute;
+            top: 226px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 216px;
+            height: 216px;
+            z-index: 4;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 4px;
-            overflow: hidden;
+            padding: 0;
+            overflow: visible;
         }
 
         .qr-svg-wrapper {
             width: 100%;
             height: 100%;
-            max-width: 155px;
-            max-height: 155px;
+            max-width: 216px;
+            max-height: 216px;
             display: flex;
             align-items: center;
             justify-content: center;
             position: relative;
-            border-radius: 14px;
+            border-radius: 24px;
             overflow: hidden;
-            box-shadow: 0 4px 12px rgba(15, 118, 110, 0.2);
+            background: #ffffff;
+            padding: 12px;
+            box-shadow: 0 12px 32px rgba(4, 47, 46, 0.22);
+        }
+
+        /* Back: Official Website URL */
+        .card-back-web {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.8px;
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+            z-index: 6;
+            white-space: nowrap;
         }
 
         .qr-svg-wrapper svg {
@@ -962,53 +1135,157 @@
                 padding: 1mm 2mm !important;
             }
 
+            /* Print scaling for Front elements */
+            .card-header-logo {
+                top: 6.5mm !important;
+                gap: 2mm !important;
+            }
+
+            .card-header-logo img {
+                height: 9mm !important;
+                width: auto !important;
+            }
+
+            .committee-badge-pill {
+                top: 21.5mm !important;
+                left: 0 !important;
+                right: 0 !important;
+                width: 100% !important;
+                height: 10mm !important;
+                background: linear-gradient(90deg, rgba(9, 118, 122, 0) 0%, rgba(9, 118, 122, 0.65) 10%, #09767a 20%, #09767a 80%, rgba(9, 118, 122, 0.65) 90%, rgba(9, 118, 122, 0) 100%) !important;
+                color: #ffffff !important;
+                font-size: 15pt !important;
+                font-weight: 800 !important;
+                letter-spacing: 0.3mm !important;
+                border: none !important;
+                border-radius: 0 !important;
+                box-shadow: none !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            .card-title-wrap {
+                top: 34mm !important;
+                width: 84% !important;
+            }
+
+            .card-title-img {
+                max-width: 70mm !important;
+            }
+
             .committee-data-box {
-                top: 54.0% !important;
+                top: 71mm !important;
+                width: 78mm !important;
+                padding: 3.5mm 2.5mm 2.5mm !important;
+                border-radius: 4.5mm !important;
+            }
+
+            .card-mascot-corner {
+                right: 4.5mm !important;
+                margin-bottom: -2.2mm !important;
+            }
+
+            .card-mascot-img {
+                width: 24mm !important;
             }
 
             .committee-name {
-                font-size: 15pt !important;
+                font-size: 13pt !important;
+                margin-bottom: 0.5mm !important;
             }
 
             .committee-meta {
-                font-size: 9pt !important;
+                font-size: 7.5pt !important;
+                line-height: 1.2 !important;
+            }
+
+            .committee-branch {
+                font-size: 7.5pt !important;
             }
 
             .committee-id-badge {
-                font-size: 7pt !important;
+                font-size: 6.5pt !important;
+                margin-top: 0.8mm !important;
             }
 
-            .card-sponsors-bar {
-                top: 73.0% !important;
-                width: 82.0% !important;
+            .data-divider {
+                width: 82% !important;
+                margin: 1.5mm auto 1mm !important;
             }
 
             .sponsors-label {
-                font-size: 6pt !important;
+                font-size: 5pt !important;
                 margin-bottom: 0.8mm !important;
             }
 
-            .sponsors-grid-row1 {
-                gap: 2.2mm !important;
-                margin-bottom: 1.2mm !important;
+            .sponsors-row-1 {
+                gap: 1.8mm !important;
+                margin-bottom: 0.8mm !important;
             }
 
-            .sponsors-grid-row1 img {
-                max-height: 3.5mm !important;
+            .sponsors-row-1 img {
+                max-height: 8mm !important;
                 max-width: 14mm !important;
             }
 
-            .sponsors-grid-row2 {
-                gap: 1.8mm !important;
+            .sponsors-row-2 {
+                gap: 1.5mm !important;
             }
 
-            .sponsors-grid-row2 img {
-                max-height: 3.2mm !important;
-                max-width: 11mm !important;
+            .sponsors-row-2 img {
+                max-height: 8mm !important;
+                max-width: 12mm !important;
+            }
+
+            .card-front-web {
+                bottom: 3.5mm !important;
+                font-size: 6.5pt !important;
+            }
+
+            /* Print scaling for Back elements */
+            .card-back-title-wrap {
+                top: 11mm !important;
+                width: 82% !important;
+            }
+
+            .card-back-title-img {
+                max-width: 66mm !important;
+            }
+
+            .mascot-back-zakki {
+                bottom: 24mm !important;
+                width: 30mm !important;
+                left: -1mm !important;
+            }
+
+            .mascot-back-amila {
+                bottom: 23mm !important;
+                width: 30mm !important;
+                right: -1mm !important;
             }
 
             .committee-qr-box {
-                top: 38.6% !important;
+                top: 50mm !important;
+                width: 48mm !important;
+                height: 48mm !important;
+            }
+
+            .qr-svg-wrapper {
+                max-width: 48mm !important;
+                max-height: 48mm !important;
+                border-radius: 5mm !important;
+                padding: 2.5mm !important;
+            }
+
+            .card-back-web {
+                bottom: 4.5mm !important;
+                font-size: 6.5pt !important;
+            }
+                bottom: 8mm !important;
+                font-size: 7pt !important;
             }
 
             .badge-punch-slot {
@@ -1103,35 +1380,61 @@
                                 </div>
                                 @endif
 
-                                <!-- Centered Data Box inside translucent glass panel -->
+                                <!-- Centered Header YM Logo -->
+                                <div class="card-header-logo">
+                                    <img src="{{ asset('assets/images/icon-omatiq.png') }}" alt="Logo OMATIQ 2026" class="logo-omatiq">
+                                    <img src="{{ asset('assets/images/icon-ym.png') }}" alt="Yatim Mandiri" class="logo-ym">
+                                </div>
+
+                                <!-- Label Panitia (Vector Banner Typography) -->
+                                <div class="committee-badge-pill">Panitia</div>
+
+                                <!-- Official Title OMATIQ 2026 -->
+                                <div class="card-title-wrap">
+                                    <img src="{{ asset('assets/images/Tulisan Omatiq Putih.png') }}" class="card-title-img" alt="OMATIQ 2026">
+                                </div>
+
+                                <!-- Transparent Glass Data Box -->
                                 <div class="committee-data-box">
+                                    <!-- Mascots Peeking at Top-Right Corner Outside the Box -->
+                                    <div class="card-mascot-corner">
+                                        <img src="{{ asset('assets/images/Zakki Amila Atas.png') }}" class="card-mascot-img" alt="Zakki & Amila">
+                                    </div>
+
                                     <div class="committee-name">{{ $committee->name }}</div>
+                                    @if($committee->position || $committee->division)
                                     <div class="committee-meta">
                                         {{ $committee->position ?: 'Panitia Pelaksana' }} • {{ $committee->division }}
                                         @if($committee->branch)
-                                        <br><span style="font-size: 11px; font-weight: 600; opacity: 0.9;">{{ $committee->branch }}</span>
+                                        <br><span class="committee-branch">{{ $committee->branch }}</span>
                                         @endif
                                     </div>
+                                    @endif
                                     <div class="committee-id-badge">{{ $committeeIdFormatted }}</div>
+
+                                    <div class="data-divider"></div>
+
+                                    <!-- HD Sponsors -->
+                                    <div class="card-sponsors-wrap">
+                                        <div class="sponsors-label">Supported by:</div>
+                                        <div class="sponsors-row sponsors-row-1">
+                                            <img src="{{ asset('assets/images/sponsor/telkomsel.png') }}" alt="Telkomsel" title="Telkomsel">
+                                            <img src="{{ asset('assets/images/sponsor/telkom.png') }}" alt="Telkom Indonesia" title="Telkom Indonesia">
+                                            <img src="{{ asset('assets/images/sponsor/chickin.png') }}" alt="Chickin" title="Chickin">
+                                            <img src="{{ asset('assets/images/sponsor/bankaltimtara.png') }}" alt="bankaltimtara" title="bankaltimtara">
+                                        </div>
+                                        <div class="sponsors-row sponsors-row-2">
+                                            <img src="{{ asset('assets/images/sponsor/bankbjb.png') }}" alt="bank bjb" title="bank bjb">
+                                            <img src="{{ asset('assets/images/sponsor/ybmpln.png') }}" alt="YBM PLN" title="YBM PLN">
+                                            <img src="{{ asset('assets/images/sponsor/nurulhidayah.png') }}" alt="Nurul Hidayah" title="Nurul Hidayah">
+                                            <img src="{{ asset('assets/images/sponsor/linkaja.png') }}" alt="LinkAja" title="LinkAja">
+                                            <img src="{{ asset('assets/images/sponsor/linkaja-syariah.png') }}" alt="LinkAja Syariah" title="LinkAja Syariah">
+                                        </div>
+                                    </div>
                                 </div>
 
-                                <!-- Sponsor Logos Grid -->
-                                <div class="card-sponsors-bar">
-                                    <div class="sponsors-label">Supported by:</div>
-                                    <div class="sponsors-grid-row1">
-                                        <img src="{{ asset('assets/images/sponsor/telkomsel.png') }}" alt="Telkomsel" title="Telkomsel">
-                                        <img src="{{ asset('assets/images/sponsor/telkom.png') }}" alt="Telkom Indonesia" title="Telkom Indonesia">
-                                        <img src="{{ asset('assets/images/sponsor/chickin.png') }}" alt="Chickin" title="Chickin">
-                                        <img src="{{ asset('assets/images/sponsor/bankaltimtara.png') }}" alt="bankaltimtara" title="bankaltimtara">
-                                    </div>
-                                    <div class="sponsors-grid-row2">
-                                        <img src="{{ asset('assets/images/sponsor/bankbjb.png') }}" alt="bank bjb" title="bank bjb">
-                                        <img src="{{ asset('assets/images/sponsor/ybmpln.png') }}" alt="YBM PLN" title="YBM PLN">
-                                        <img src="{{ asset('assets/images/sponsor/nurulhidayah.png') }}" alt="Nurul Hidayah" title="Nurul Hidayah">
-                                        <img src="{{ asset('assets/images/sponsor/linkaja.png') }}" alt="LinkAja" title="LinkAja">
-                                        <img src="{{ asset('assets/images/sponsor/linkaja-syariah.png') }}" alt="LinkAja Syariah" title="LinkAja Syariah">
-                                    </div>
-                                </div>
+                                <!-- Official Website URL on Front -->
+                                <div class="card-front-web">www.omatiq.com</div>
 
                                 <!-- Specular Glare -->
                                 <div class="card-glare" id="cardGlareFront"></div>
@@ -1144,7 +1447,16 @@
                                 <!-- Punch slot for lanyard pass -->
                                 <div class="badge-punch-slot"></div>
 
-                                <!-- Centered QR Container inside the white container -->
+                                <!-- Title OMATIQ 2026 -->
+                                <div class="card-back-title-wrap">
+                                    <img src="{{ asset('assets/images/Tulisan Omatiq Putih.png') }}" class="card-back-title-img" alt="OMATIQ 2026">
+                                </div>
+
+                                <!-- HD Mascots on Left & Right (Single Instance, Zero Double Image) -->
+                                <img src="{{ asset('assets/images/Zakki Window Hi.png') }}" class="mascot-back-zakki" alt="Zakki">
+                                <img src="{{ asset('assets/images/Amila Window Hi.png') }}" class="mascot-back-amila" alt="Amila">
+
+                                <!-- Centered QR Container -->
                                 <div class="committee-qr-box">
                                     <div class="qr-svg-wrapper">
                                         {!! $qrCodeSvg !!}
@@ -1159,6 +1471,9 @@
                                         @endif
                                     </div>
                                 </div>
+
+                                <!-- Official Website URL -->
+                                <div class="card-back-web">www.omatiq.com</div>
 
                                 <!-- Specular Glare -->
                                 <div class="card-glare" id="cardGlareBack"></div>
@@ -1210,6 +1525,7 @@
             <!-- FRONT CARD (Left Side in Folding Layout) -->
             <div class="cut-guide-border">
                 <div class="omatiq-card card-front">
+                    <!-- Punch slot for lanyard pass -->
                     <div class="badge-punch-slot"></div>
 
                     @if(! $isVerified)
@@ -1218,34 +1534,61 @@
                     </div>
                     @endif
 
+                    <!-- Centered Header YM Logo -->
+                    <div class="card-header-logo">
+                        <img src="{{ asset('assets/images/icon-omatiq.png') }}" alt="Logo OMATIQ 2026" class="logo-omatiq">
+                        <img src="{{ asset('assets/images/icon-ym.png') }}" alt="Yatim Mandiri" class="logo-ym">
+                    </div>
+
+                    <!-- Label Panitia (Vector Banner Typography) -->
+                    <div class="committee-badge-pill">Panitia</div>
+
+                    <!-- Official Title OMATIQ 2026 -->
+                    <div class="card-title-wrap">
+                        <img src="{{ asset('assets/images/Tulisan Omatiq Putih.png') }}" class="card-title-img" alt="OMATIQ 2026">
+                    </div>
+
+                    <!-- Transparent Glass Data Box -->
                     <div class="committee-data-box">
+                        <!-- Mascots Peeking at Top-Right Corner Outside the Box -->
+                        <div class="card-mascot-corner">
+                            <img src="{{ asset('assets/images/Zakki Amila Atas.png') }}" class="card-mascot-img" alt="Zakki & Amila">
+                        </div>
+
                         <div class="committee-name">{{ $committee->name }}</div>
+                        @if($committee->position || $committee->division)
                         <div class="committee-meta">
                             {{ $committee->position ?: 'Panitia Pelaksana' }} • {{ $committee->division }}
                             @if($committee->branch)
-                            <br><span style="font-size: 11px; font-weight: 600; opacity: 0.9;">{{ $committee->branch }}</span>
+                            <br><span class="committee-branch">{{ $committee->branch }}</span>
                             @endif
                         </div>
+                        @endif
                         <div class="committee-id-badge">{{ $committeeIdFormatted }}</div>
+
+                        <div class="data-divider"></div>
+
+                        <!-- HD Sponsors -->
+                        <div class="card-sponsors-wrap">
+                            <div class="sponsors-label">Supported by:</div>
+                            <div class="sponsors-row sponsors-row-1">
+                                <img src="{{ asset('assets/images/sponsor/telkomsel.png') }}" alt="Telkomsel" title="Telkomsel">
+                                <img src="{{ asset('assets/images/sponsor/telkom.png') }}" alt="Telkom Indonesia" title="Telkom Indonesia">
+                                <img src="{{ asset('assets/images/sponsor/chickin.png') }}" alt="Chickin" title="Chickin">
+                                <img src="{{ asset('assets/images/sponsor/bankaltimtara.png') }}" alt="bankaltimtara" title="bankaltimtara">
+                            </div>
+                            <div class="sponsors-row sponsors-row-2">
+                                <img src="{{ asset('assets/images/sponsor/bankbjb.png') }}" alt="bank bjb" title="bank bjb">
+                                <img src="{{ asset('assets/images/sponsor/ybmpln.png') }}" alt="YBM PLN" title="YBM PLN">
+                                <img src="{{ asset('assets/images/sponsor/nurulhidayah.png') }}" alt="Nurul Hidayah" title="Nurul Hidayah">
+                                <img src="{{ asset('assets/images/sponsor/linkaja.png') }}" alt="LinkAja" title="LinkAja">
+                                <img src="{{ asset('assets/images/sponsor/linkaja-syariah.png') }}" alt="LinkAja Syariah" title="LinkAja Syariah">
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Sponsor Logos Grid -->
-                    <div class="card-sponsors-bar">
-                        <div class="sponsors-label">Supported by:</div>
-                        <div class="sponsors-grid-row1">
-                            <img src="{{ asset('assets/images/sponsor/telkomsel.png') }}" alt="Telkomsel" title="Telkomsel">
-                            <img src="{{ asset('assets/images/sponsor/telkom.png') }}" alt="Telkom Indonesia" title="Telkom Indonesia">
-                            <img src="{{ asset('assets/images/sponsor/chickin.png') }}" alt="Chickin" title="Chickin">
-                            <img src="{{ asset('assets/images/sponsor/bankaltimtara.png') }}" alt="bankaltimtara" title="bankaltimtara">
-                        </div>
-                        <div class="sponsors-grid-row2">
-                            <img src="{{ asset('assets/images/sponsor/bankbjb.png') }}" alt="bank bjb" title="bank bjb">
-                            <img src="{{ asset('assets/images/sponsor/ybmpln.png') }}" alt="YBM PLN" title="YBM PLN">
-                            <img src="{{ asset('assets/images/sponsor/nurulhidayah.png') }}" alt="Nurul Hidayah" title="Nurul Hidayah">
-                            <img src="{{ asset('assets/images/sponsor/linkaja.png') }}" alt="LinkAja" title="LinkAja">
-                            <img src="{{ asset('assets/images/sponsor/linkaja-syariah.png') }}" alt="LinkAja Syariah" title="LinkAja Syariah">
-                        </div>
-                    </div>
+                    <!-- Official Website URL on Front -->
+                    <div class="card-front-web">www.omatiq.com</div>
                 </div>
             </div>
 
@@ -1257,8 +1600,19 @@
             <!-- BACK CARD (Right Side in Folding Layout) -->
             <div class="cut-guide-border">
                 <div class="omatiq-card card-back">
+                    <!-- Punch slot for lanyard pass -->
                     <div class="badge-punch-slot"></div>
 
+                    <!-- Title OMATIQ 2026 -->
+                    <div class="card-back-title-wrap">
+                        <img src="{{ asset('assets/images/Tulisan Omatiq Putih.png') }}" class="card-back-title-img" alt="OMATIQ 2026">
+                    </div>
+
+                    <!-- HD Mascots on Left & Right (Single Instance, Zero Double Image) -->
+                    <img src="{{ asset('assets/images/Zakki Window Hi.png') }}" class="mascot-back-zakki" alt="Zakki">
+                    <img src="{{ asset('assets/images/Amila Window Hi.png') }}" class="mascot-back-amila" alt="Amila">
+
+                    <!-- Centered QR Container -->
                     <div class="committee-qr-box">
                         <div class="qr-svg-wrapper">
                             {!! $qrCodeSvg !!}
@@ -1273,6 +1627,9 @@
                             @endif
                         </div>
                     </div>
+
+                    <!-- Official Website URL -->
+                    <div class="card-back-web">www.omatiq.com</div>
                 </div>
             </div>
 
