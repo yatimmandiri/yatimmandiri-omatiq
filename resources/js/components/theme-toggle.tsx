@@ -1,54 +1,34 @@
 import { Button } from '@/components/ui/button';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { useAppearance } from '@/hooks/use-appearance';
-import { Check, Monitor, Moon, Sun } from 'lucide-react';
+import { Moon, Sun } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function ThemeToggle({ className }: { className?: string }) {
-    const { appearance, updateAppearance } = useAppearance();
+    const { resolvedAppearance, updateAppearance } = useAppearance();
 
-    const Icon =
-        appearance === 'dark' ? Moon : appearance === 'light' ? Sun : Monitor;
+    const isDark = resolvedAppearance === 'dark';
 
-    const options = [
-        { value: 'light' as const, label: 'Terang', icon: Sun },
-        { value: 'dark' as const, label: 'Gelap', icon: Moon },
-        { value: 'system' as const, label: 'Sistem', icon: Monitor },
-    ];
+    const handleToggle = () => {
+        updateAppearance(isDark ? 'light' : 'dark');
+    };
 
     return (
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className={cn('size-9 shrink-0', className)}
-                    aria-label="Ubah tema tampilan"
-                    title="Ubah tema tampilan"
-                >
-                    <Icon className="size-4" />
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-36">
-                {options.map((option) => (
-                    <DropdownMenuItem
-                        key={option.value}
-                        onClick={() => updateAppearance(option.value)}
-                        className="cursor-pointer"
-                    >
-                        <option.icon className="mr-2 size-4" />
-                        <span className="flex-1">{option.label}</span>
-                        {appearance === option.value && (
-                            <Check className="size-4 text-[#17524A] dark:text-emerald-400" />
-                        )}
-                    </DropdownMenuItem>
-                ))}
-            </DropdownMenuContent>
-        </DropdownMenu>
+        <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleToggle}
+            className={cn(
+                'size-9 shrink-0 text-muted-foreground hover:text-foreground',
+                className,
+            )}
+            aria-label={
+                isDark ? 'Beralih ke mode terang' : 'Beralih ke mode gelap'
+            }
+            title={isDark ? 'Beralih ke mode terang' : 'Beralih ke mode gelap'}
+        >
+            <Sun className="size-4 scale-100 rotate-0 text-amber-500 transition-all dark:scale-0 dark:-rotate-90" />
+            <Moon className="absolute size-4 scale-0 rotate-90 text-emerald-400 transition-all dark:scale-100 dark:rotate-0" />
+            <span className="sr-only">Toggle tema tampilan</span>
+        </Button>
     );
 }
