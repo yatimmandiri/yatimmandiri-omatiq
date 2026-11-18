@@ -1,6 +1,7 @@
 import { usePage } from '@inertiajs/react';
 import { Menu } from 'lucide-react';
 import { Fragment, useEffect, useState } from 'react';
+import { ThemeToggle } from '@/components/theme-toggle';
 import {
     NavigationComponent,
     NavigationSidebarComponent,
@@ -68,27 +69,37 @@ export const HomeHeaderComponent = () => {
                         )}
                     </a>
 
-                    <NavigationComponent solid={useSolidHeader} />
+                    <div className="flex items-center gap-2">
+                        <NavigationComponent solid={useSolidHeader} />
 
-                    <button
-                        type="button"
-                        aria-label="Open navigation menu"
-                        aria-expanded={isMobileMenuOpen}
-                        onClick={(event) => {
-                            event.preventDefault();
-                            event.stopPropagation();
-                            setIsMobileMenuOpen((open) => !open);
-                        }}
-                        className={`flex h-11 w-11 items-center justify-center rounded-xl backdrop-blur-md transition lg:hidden ${
-                            isMobileMenuOpen
-                                ? 'border border-[#17524A] bg-[#17524A] text-white'
-                                : useSolidHeader
-                                  ? 'border border-slate-200 bg-white text-[#17524A] shadow-sm hover:bg-[#F8FAFC] dark:border-white/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/20'
-                                  : 'border border-white/10 bg-white/10 text-white hover:bg-white/20'
-                        }`}
-                    >
-                        <Menu size={22} />
-                    </button>
+                        <ThemeToggle
+                            className={
+                                useSolidHeader
+                                    ? 'text-[#1E293B] hover:bg-[#17524A]/10 hover:text-[#17524A] dark:text-white/85 dark:hover:bg-white/10 dark:hover:text-white'
+                                    : 'text-white/85 hover:bg-white/10 hover:text-white'
+                            }
+                        />
+
+                        <button
+                            type="button"
+                            aria-label="Open navigation menu"
+                            aria-expanded={isMobileMenuOpen}
+                            onClick={(event) => {
+                                event.preventDefault();
+                                event.stopPropagation();
+                                setIsMobileMenuOpen((open) => !open);
+                            }}
+                            className={`flex h-11 w-11 items-center justify-center rounded-xl backdrop-blur-md transition lg:hidden ${
+                                isMobileMenuOpen
+                                    ? 'border border-[#17524A] bg-[#17524A] text-white'
+                                    : useSolidHeader
+                                      ? 'border border-slate-200 bg-white text-[#17524A] shadow-sm hover:bg-[#F8FAFC] dark:border-white/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/20'
+                                      : 'border border-white/10 bg-white/10 text-white hover:bg-white/20'
+                            }`}
+                        >
+                            <Menu size={22} />
+                        </button>
+                    </div>
                 </div>
             </header>
 

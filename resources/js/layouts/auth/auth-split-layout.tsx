@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 export default function AuthSplitLayout({
     children,
@@ -163,7 +164,12 @@ export default function AuthSplitLayout({
             </div>
 
             {/* Right Form Panel */}
-            <div className="flex min-h-screen items-center justify-center p-4 sm:p-8 lg:col-span-7 xl:col-span-6">
+            <div className="flex min-h-screen items-center justify-center p-4 sm:p-8 lg:col-span-7 xl:col-span-6 relative">
+                {/* Floating Theme Toggle (Top Right) */}
+                <div className="absolute top-4 right-4 z-10">
+                    <ThemeToggle />
+                </div>
+
                 {/* Mobile Top Navigation */}
                 <div className="absolute top-4 left-4 lg:hidden">
                     <Link
