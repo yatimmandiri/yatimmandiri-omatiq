@@ -7,6 +7,7 @@ import { ChevronDown, X } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { createContext, useContext, useMemo } from 'react';
 import { BsFacebook, BsInstagram, BsTiktok, BsYoutube } from 'react-icons/bs';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 export const SidebarContext = createContext({});
 
@@ -119,14 +120,17 @@ export const NavigationSidebarComponent = ({
                                 Learn. Create. Grow.
                             </p>
                         </div>
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-white transition hover:bg-white/20"
-                            aria-label="Close navigation menu"
-                        >
-                            <X size={20} />
-                        </button>
+                        <div className="flex items-center gap-2">
+                            <ThemeToggle className="text-white/80 hover:bg-white/10 hover:text-white" />
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-white transition hover:bg-white/20"
+                                aria-label="Close navigation menu"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
                     </div>
 
                     <div className="flex-1 space-y-3 p-6">

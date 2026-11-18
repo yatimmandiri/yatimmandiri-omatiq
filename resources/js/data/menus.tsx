@@ -21,6 +21,7 @@ import {
     Building2,
     CalendarClock,
     CalendarDays,
+    ChevronRight,
     ClipboardCheck,
     CogIcon,
     Contact,
@@ -61,6 +62,168 @@ import absensi from '@/routes/teacher/absensi';
 import students from '@/routes/admin/companies/students';
 
 export const NavigationList = [
+    {
+        title: 'Platform',
+        roles: ['Administrators'],
+        children: [
+            {
+                title: 'System Core',
+                roles: ['Administrators'],
+                icon: CpuIcon,
+                children: [
+                    {
+                        title: 'Permissions',
+                        href: permissions.index().url,
+                        permission: 'view-permission',
+                        icon: ChevronRight,
+                    },
+                    {
+                        title: 'Roles',
+                        href: roles.index().url,
+                        permission: 'view-role',
+                        icon: ChevronRight,
+                    },
+                    {
+                        title: 'Users',
+                        href: users.index().url,
+                        permission: 'view-user',
+                        icon: ChevronRight,
+                    },
+                    {
+                        title: 'Lokasi & Wilayah',
+                        roles: ['Administrators'],
+                        icon: MapIcon,
+                        children: [
+                            {
+                                title: 'Provinsi',
+                                href: provinces.index().url,
+                                permission: 'view-province',
+                                icon: ChevronRight,
+                            },
+                            {
+                                title: 'Kabupaten/Kota',
+                                href: regencies.index().url,
+                                permission: 'view-regency',
+                                icon: ChevronRight,
+                            },
+                            {
+                                title: 'Kecamatan',
+                                href: districts.index().url,
+                                permission: 'view-district',
+                                icon: ChevronRight,
+                            },
+                            {
+                                title: 'Desa/Kelurahan',
+                                href: villages.index().url,
+                                permission: 'view-village',
+                                icon: ChevronRight,
+                            },
+                        ],
+                    },
+                ],
+            },
+            {
+                title: 'Data Master',
+                roles: ['Administrators'],
+                icon: Database,
+                children: [
+                    {
+                        title: 'Periode',
+                        href: periods.index().url,
+                        permission: 'view-period',
+                        icon: CalendarDays,
+                    },
+                    {
+                        title: 'Olimpiade',
+                        href: olimpiades.index().url,
+                        permission: 'view-olimpiade',
+                        icon: Medal,
+                    },
+                    {
+                        title: 'Tujuan',
+                        href: olimpiadeObjectives.index().url,
+                        permission: 'view-olimpiade-objective',
+                        icon: Target,
+                    },
+                    {
+                        title: 'Jadwal Olimpiade',
+                        href: olimpiadeSchedules.index().url,
+                        permission: 'view-olimpiade-schedule',
+                        icon: CalendarClock,
+                    },
+                ],
+            },
+            {
+                title: 'Data & Konten',
+                roles: ['Administrators'],
+                icon: Trophy,
+                children: [
+                    {
+                        title: 'Konten & Media',
+                        roles: ['Administrators'],
+                        icon: Images,
+                        children: [
+                            {
+                                title: 'Galeri',
+                                href: olimpiadeGalleries.index().url,
+                                permission: 'view-olimpiade-gallery',
+                                icon: Image,
+                            },
+                            {
+                                title: 'Video',
+                                href: olimpiadeVideos.index().url,
+                                permission: 'view-olimpiade-video',
+                                icon: Video,
+                            },
+                            {
+                                title: 'Slider',
+                                href: sliders.index().url,
+                                permission: 'view-slider',
+                                icon: SlidersHorizontal,
+                            },
+                            {
+                                title: 'Testimoni',
+                                href: testimonials.index().url,
+                                permission: 'view-testimonial',
+                                icon: Quote,
+                            },
+                            {
+                                title: 'Ulasan',
+                                href: reviews.index().url,
+                                permission: 'view-review',
+                                icon: Star,
+                            },
+                            {
+                                title: 'FAQ',
+                                href: faqCompanies.index().url,
+                                permission: 'view-faq-company',
+                                icon: HelpCircle,
+                            },
+                        ],
+                    },
+                ],
+            },
+            {
+                title: 'Pengaturan',
+                roles: ['Administrators'],
+                icon: CogIcon,
+                children: [
+                    {
+                        title: 'Situs',
+                        href: site.edit().url,
+                        permission: 'view-settings-site',
+                        icon: House,
+                    },
+                    {
+                        title: 'Log Aktivitas',
+                        href: activities.index().url,
+                        permission: 'view-log-activity',
+                        icon: ClipboardCheck,
+                    },
+                ],
+            },
+        ],
+    },
     {
         title: 'Portal Guru',
         roles: ['Teacher'],
@@ -154,168 +317,6 @@ export const NavigationList = [
                 href: '/admin/companies/guests',
                 roles: ['Administrators'],
                 icon: Crown,
-            },
-        ],
-    },
-    {
-        title: 'Platform',
-        roles: ['Administrators'],
-        children: [
-            {
-                title: 'Inti Sistem',
-                roles: ['Administrators'],
-                icon: CpuIcon,
-                children: [
-                    {
-                        title: 'Perizinan',
-                        href: permissions.index().url,
-                        permission: 'view-permission',
-                        icon: KeyRound,
-                    },
-                    {
-                        title: 'Peran',
-                        href: roles.index().url,
-                        permission: 'view-role',
-                        icon: ShieldCheck,
-                    },
-                    {
-                        title: 'Pengguna',
-                        href: users.index().url,
-                        permission: 'view-user',
-                        icon: Users,
-                    },
-                    {
-                        title: 'Wilayah',
-                        roles: ['Administrators'],
-                        icon: MapIcon,
-                        children: [
-                            {
-                                title: 'Provinsi',
-                                href: provinces.index().url,
-                                permission: 'view-province',
-                                icon: Map,
-                            },
-                            {
-                                title: 'Kabupaten/Kota',
-                                href: regencies.index().url,
-                                permission: 'view-regency',
-                                icon: Building2,
-                            },
-                            {
-                                title: 'Kecamatan',
-                                href: districts.index().url,
-                                permission: 'view-district',
-                                icon: MapPin,
-                            },
-                            {
-                                title: 'Desa/Kelurahan',
-                                href: villages.index().url,
-                                permission: 'view-village',
-                                icon: House,
-                            },
-                        ],
-                    },
-                ],
-            },
-            {
-                title: 'Data & Konten',
-                roles: ['Administrators'],
-                icon: Trophy,
-                children: [
-                    {
-                        title: 'Data Master',
-                        roles: ['Administrators'],
-                        icon: Database,
-                        children: [
-                            {
-                                title: 'Periode',
-                                href: periods.index().url,
-                                permission: 'view-period',
-                                icon: CalendarDays,
-                            },
-                            {
-                                title: 'Olimpiade',
-                                href: olimpiades.index().url,
-                                permission: 'view-olimpiade',
-                                icon: Medal,
-                            },
-                            {
-                                title: 'Tujuan',
-                                href: olimpiadeObjectives.index().url,
-                                permission: 'view-olimpiade-objective',
-                                icon: Target,
-                            },
-                            {
-                                title: 'Jadwal Olimpiade',
-                                href: olimpiadeSchedules.index().url,
-                                permission: 'view-olimpiade-schedule',
-                                icon: CalendarClock,
-                            },
-                        ],
-                    },
-                    {
-                        title: 'Konten & Media',
-                        roles: ['Administrators'],
-                        icon: Images,
-                        children: [
-                            {
-                                title: 'Galeri',
-                                href: olimpiadeGalleries.index().url,
-                                permission: 'view-olimpiade-gallery',
-                                icon: Image,
-                            },
-                            {
-                                title: 'Video',
-                                href: olimpiadeVideos.index().url,
-                                permission: 'view-olimpiade-video',
-                                icon: Video,
-                            },
-                            {
-                                title: 'Slider',
-                                href: sliders.index().url,
-                                permission: 'view-slider',
-                                icon: SlidersHorizontal,
-                            },
-                            {
-                                title: 'Testimoni',
-                                href: testimonials.index().url,
-                                permission: 'view-testimonial',
-                                icon: Quote,
-                            },
-                            {
-                                title: 'Ulasan',
-                                href: reviews.index().url,
-                                permission: 'view-review',
-                                icon: Star,
-                            },
-                            {
-                                title: 'FAQ',
-                                href: faqCompanies.index().url,
-                                permission: 'view-faq-company',
-                                icon: HelpCircle,
-                            },
-                        ],
-                    },
-                ],
-            },
-            {
-                title: 'Pengaturan',
-                roles: ['Administrators'],
-                icon: CogIcon,
-                children: [
-                    {
-                        title: 'Situs',
-                        href: site.edit().url,
-                        permission: 'view-settings-site',
-                        icon: House,
-                    },
-                    {
-                        title: 'Log Aktivitas',
-                        href: activities.index().url,
-                        permission: 'view-log-activity',
-                        icon: ClipboardCheck,
-                    },
-                ],
             },
         ],
     },
