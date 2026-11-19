@@ -124,6 +124,10 @@ foreach ([
     'participants' => ['label' => 'Peserta', 'attribute' => 'full_name'],
     'teachers' => ['label' => 'Guru', 'attribute' => 'name'],
     'chaperones' => ['label' => 'Pendamping', 'attribute' => 'name'],
+    'committees' => ['label' => 'Panitia', 'attribute' => 'name'],
+    'guests' => ['label' => 'Tamu Undangan', 'attribute' => 'name'],
+    'students' => ['label' => 'Binaan', 'attribute' => 'full_name'],
+    'sanggars' => ['label' => 'Sanggar', 'attribute' => 'name'],
 ] as $resource => $config) {
     Breadcrumbs::for(
         "admin.companies.{$resource}.index",
@@ -135,7 +139,10 @@ foreach ([
     );
     Breadcrumbs::for(
         "admin.companies.{$resource}.show",
-        fn (BreadcrumbTrail $trail, $item) => $trail->parent("admin.companies.{$resource}.index")->push($item->{$config['attribute']}, route("admin.companies.{$resource}.show", $item)),
+        fn (BreadcrumbTrail $trail, $item) => $trail->parent("admin.companies.{$resource}.index")->push(
+            (is_object($item) ? ($item->{$config['attribute']} ?? $item->name ?? $item->full_name ?? $config['label']) : (is_array($item) ? ($item[$config['attribute']] ?? $item['name'] ?? $item['full_name'] ?? $config['label']) : $config['label'])),
+            route("admin.companies.{$resource}.show", $item)
+        ),
     );
     Breadcrumbs::for(
         "admin.companies.{$resource}.edit",

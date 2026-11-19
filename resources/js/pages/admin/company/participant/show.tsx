@@ -1109,7 +1109,7 @@ ShowPage.layout = {
     breadcrumbs: [
         {
             title: 'Dashboard',
-            href: dashboard(),
+            href: dashboard().url,
         },
         {
             title: 'Peserta',

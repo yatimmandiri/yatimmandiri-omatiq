@@ -21,7 +21,7 @@ Breadcrumbs::for(
 
 Breadcrumbs::for(
     'admin.core.users.show',
-    fn ($trail, $item) => $trail->parent('admin.core.users.index')->push($item->name, route('admin.core.users.show', $item))
+    fn ($trail, $item) => $trail->parent('admin.core.users.index')->push(is_object($item) ? ($item->name ?? 'Detail') : (is_array($item) ? ($item['name'] ?? 'Detail') : 'Detail'), route('admin.core.users.show', $item))
 );
 
 Breadcrumbs::for(
@@ -47,7 +47,7 @@ Breadcrumbs::for(
 
 Breadcrumbs::for(
     'admin.core.permissions.show',
-    fn ($trail, $item) => $trail->parent('admin.core.permissions.index')->push($item->name, route('admin.core.permissions.show', $item))
+    fn ($trail, $item) => $trail->parent('admin.core.permissions.index')->push(is_object($item) ? ($item->name ?? 'Detail') : (is_array($item) ? ($item['name'] ?? 'Detail') : 'Detail'), route('admin.core.permissions.show', $item))
 );
 
 Breadcrumbs::for(
@@ -73,7 +73,7 @@ Breadcrumbs::for(
 
 Breadcrumbs::for(
     'admin.core.roles.show',
-    fn ($trail, $item) => $trail->parent('admin.core.roles.index')->push($item->name, route('admin.core.roles.show', $item))
+    fn ($trail, $item) => $trail->parent('admin.core.roles.index')->push(is_object($item) ? ($item->name ?? 'Detail') : (is_array($item) ? ($item['name'] ?? 'Detail') : 'Detail'), route('admin.core.roles.show', $item))
 );
 
 Breadcrumbs::for(
@@ -99,7 +99,7 @@ Breadcrumbs::for(
 
 Breadcrumbs::for(
     'admin.core.regions.provinces.show',
-    fn ($trail, $item) => $trail->parent('admin.core.regions.provinces.index')->push($item->name, route('admin.core.regions.provinces.show', $item))
+    fn ($trail, $item) => $trail->parent('admin.core.regions.provinces.index')->push(is_object($item) ? ($item->name ?? 'Detail') : (is_array($item) ? ($item['name'] ?? 'Detail') : 'Detail'), route('admin.core.regions.provinces.show', $item))
 );
 
 Breadcrumbs::for(
@@ -125,7 +125,7 @@ Breadcrumbs::for(
 
 Breadcrumbs::for(
     'admin.core.regions.regencies.show',
-    fn ($trail, $item) => $trail->parent('admin.core.regions.regencies.index')->push($item->name, route('admin.core.regions.regencies.show', $item))
+    fn ($trail, $item) => $trail->parent('admin.core.regions.regencies.index')->push(is_object($item) ? ($item->name ?? 'Detail') : (is_array($item) ? ($item['name'] ?? 'Detail') : 'Detail'), route('admin.core.regions.regencies.show', $item))
 );
 
 Breadcrumbs::for(
@@ -151,7 +151,7 @@ Breadcrumbs::for(
 
 Breadcrumbs::for(
     'admin.core.regions.districts.show',
-    fn ($trail, $item) => $trail->parent('admin.core.regions.districts.index')->push($item->name, route('admin.core.regions.districts.show', $item))
+    fn ($trail, $item) => $trail->parent('admin.core.regions.districts.index')->push(is_object($item) ? ($item->name ?? 'Detail') : (is_array($item) ? ($item['name'] ?? 'Detail') : 'Detail'), route('admin.core.regions.districts.show', $item))
 );
 
 Breadcrumbs::for(
@@ -177,7 +177,7 @@ Breadcrumbs::for(
 
 Breadcrumbs::for(
     'admin.core.regions.villages.show',
-    fn ($trail, $item) => $trail->parent('admin.core.regions.villages.index')->push($item->name, route('admin.core.regions.villages.show', $item))
+    fn ($trail, $item) => $trail->parent('admin.core.regions.villages.index')->push(is_object($item) ? ($item->name ?? 'Detail') : (is_array($item) ? ($item['name'] ?? 'Detail') : 'Detail'), route('admin.core.regions.villages.show', $item))
 );
 
 Breadcrumbs::for(
