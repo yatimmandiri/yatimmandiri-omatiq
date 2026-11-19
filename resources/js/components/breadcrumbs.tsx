@@ -32,6 +32,14 @@ export function Breadcrumbs({
                         breadcrumbs.length > 2 &&
                         index < breadcrumbs.length - 2;
 
+                    const rawHref = item.href as any;
+                    const hrefString: string =
+                        typeof rawHref === 'string'
+                            ? rawHref
+                            : typeof rawHref?.url === 'string'
+                              ? rawHref.url
+                              : '#';
+
                     return (
                         <Fragment key={`${item.title}-${index}`}>
                             <BreadcrumbItem
@@ -40,14 +48,14 @@ export function Breadcrumbs({
                                     hideOnMobile && 'hidden sm:list-item',
                                 )}
                             >
-                                {isLast ? (
+                                {isLast || hrefString === '#' ? (
                                     <BreadcrumbPage className="max-w-40 truncate sm:max-w-64">
                                         {item.title}
                                     </BreadcrumbPage>
                                 ) : (
                                     <BreadcrumbLink asChild>
                                         <Link
-                                            href={item.href}
+                                            href={hrefString}
                                             className="flex max-w-32 items-center gap-1.5 truncate sm:max-w-48"
                                         >
                                             {isFirst && (
