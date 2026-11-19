@@ -90,31 +90,6 @@ export default function ListCommitteesPage() {
 
     const columns = [
         {
-            id: 'select',
-            header: ({ table }: any) => (
-                <input
-                    type="checkbox"
-                    className="h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500 cursor-pointer"
-                    checked={table.getIsAllPageRowsSelected()}
-                    onChange={(e) => {
-                        table.toggleAllPageRowsSelected(!!e.target.checked);
-                    }}
-                />
-            ),
-            cell: ({ row }: any) => (
-                <input
-                    type="checkbox"
-                    className="h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500 cursor-pointer"
-                    checked={row.getIsSelected()}
-                    onChange={(e) => {
-                        row.toggleSelected(!!e.target.checked);
-                    }}
-                />
-            ),
-            enableSorting: false,
-            enableHiding: false,
-        },
-        {
             id: 'actions',
             header: 'Aksi',
             cell: ({ row }: any) => {
@@ -481,6 +456,7 @@ export default function ListCommitteesPage() {
                         filterValue={filterValue}
                         refreshData={refreshData}
                         setRefreshData={setRefreshData}
+                        setRowSelection={setSelectedRows}
                         initialSorting={[{ id: 'id', desc: true }]}
                         formatDataExport={(items: any[]) =>
                             items.map((item: any, i: number) => ({

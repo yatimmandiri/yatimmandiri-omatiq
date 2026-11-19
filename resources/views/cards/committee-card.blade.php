@@ -313,6 +313,27 @@
             transform: rotateY(180deg);
         }
 
+        /* Decorative Tech Corner Accent Pattern */
+        .card-corner-pattern {
+            position: absolute;
+            width: 120px;
+            height: auto;
+            pointer-events: none;
+            z-index: 3;
+            user-select: none;
+        }
+
+        .pattern-top-left {
+            top: 0;
+            left: 0;
+        }
+
+        .pattern-bottom-right {
+            bottom: 0;
+            right: 0;
+            transform: rotate(180deg);
+        }
+
         /* Punch Slot Hole (Lanyard Pass Slot) */
         .badge-punch-slot {
             position: absolute;
@@ -1124,6 +1145,13 @@
                 print-color-adjust: exact !important;
             }
 
+            .card-corner-pattern {
+                width: 28mm !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+
             .fold-divider {
                 height: 136.5mm !important;
                 border-left: 1px dashed #94a3b8 !important;
@@ -1371,6 +1399,10 @@
                         <!-- FRONT FACE -->
                         <div class="card-face card-front-face">
                             <div class="omatiq-card card-front">
+                                <!-- Decorative Tech Corner Patterns -->
+                                <img src="{{ asset('assets/images/elect-non-pendamping.png') }}" class="card-corner-pattern pattern-top-left" alt="" aria-hidden="true">
+                                <img src="{{ asset('assets/images/elect-non-pendamping.png') }}" class="card-corner-pattern pattern-bottom-right" alt="" aria-hidden="true">
+
                                 <!-- Punch slot for lanyard pass -->
                                 <div class="badge-punch-slot"></div>
 
@@ -1444,6 +1476,10 @@
                         <!-- BACK FACE -->
                         <div class="card-face card-back-face">
                             <div class="omatiq-card card-back">
+                                <!-- Decorative Tech Corner Patterns -->
+                                <img src="{{ asset('assets/images/elect-non-pendamping.png') }}" class="card-corner-pattern pattern-top-left" alt="" aria-hidden="true">
+                                <img src="{{ asset('assets/images/elect-non-pendamping.png') }}" class="card-corner-pattern pattern-bottom-right" alt="" aria-hidden="true">
+
                                 <!-- Punch slot for lanyard pass -->
                                 <div class="badge-punch-slot"></div>
 
@@ -1525,6 +1561,10 @@
             <!-- FRONT CARD (Left Side in Folding Layout) -->
             <div class="cut-guide-border">
                 <div class="omatiq-card card-front">
+                    <!-- Decorative Tech Corner Patterns -->
+                    <img src="{{ asset('assets/images/elect-non-pendamping.png') }}" class="card-corner-pattern pattern-top-left" alt="" aria-hidden="true">
+                    <img src="{{ asset('assets/images/elect-non-pendamping.png') }}" class="card-corner-pattern pattern-bottom-right" alt="" aria-hidden="true">
+
                     <!-- Punch slot for lanyard pass -->
                     <div class="badge-punch-slot"></div>
 
@@ -1600,6 +1640,10 @@
             <!-- BACK CARD (Right Side in Folding Layout) -->
             <div class="cut-guide-border">
                 <div class="omatiq-card card-back">
+                    <!-- Decorative Tech Corner Patterns -->
+                    <img src="{{ asset('assets/images/elect-non-pendamping.png') }}" class="card-corner-pattern pattern-top-left" alt="" aria-hidden="true">
+                    <img src="{{ asset('assets/images/elect-non-pendamping.png') }}" class="card-corner-pattern pattern-bottom-right" alt="" aria-hidden="true">
+
                     <!-- Punch slot for lanyard pass -->
                     <div class="badge-punch-slot"></div>
 

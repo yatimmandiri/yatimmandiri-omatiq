@@ -163,7 +163,10 @@ test('barcode service generates valid vector svg', function () {
         ->and($qr)->toContain('<rect');
 });
 
-test('public can verify registered participant via verify route', function () {
+test('authorized verifier can verify registered participant via verify route', function () {
+    $admin = User::factory()->create();
+    $admin->assignRole('Administrators');
+
     $participant = Participant::factory()->create([
         'student_id' => $this->student->id,
         'olimpiade_id' => $this->olimpiade->id,
@@ -172,7 +175,7 @@ test('public can verify registered participant via verify route', function () {
         'status' => 'verified',
     ]);
 
-    $response = $this->get(route('home.registration.verify', $participant->registration_number));
+    $response = $this->actingAs($admin)->get(route('home.registration.verify', $participant->registration_number));
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
         ->component('home/registration/verify')
@@ -183,8 +186,11 @@ test('public can verify registered participant via verify route', function () {
     );
 });
 
-test('public gets invalid result when verifying non-existent registration number', function () {
-    $response = $this->get(route('home.registration.verify', 'REG-NONEXISTENT'));
+test('authorized verifier gets invalid result when verifying non-existent registration number', function () {
+    $admin = User::factory()->create();
+    $admin->assignRole('Administrators');
+
+    $response = $this->actingAs($admin)->get(route('home.registration.verify', 'REG-NONEXISTENT'));
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
         ->component('home/registration/verify')
@@ -192,3 +198,28 @@ test('public gets invalid result when verifying non-existent registration number
         ->where('participant', null)
     );
 });
+
+test('guest is redirected to login when accessing verify route without auth', function () {
+    $response = $this->get(route('home.registration.verify', 'REG-NONEXISTENT'));
+    $response->assertRedirect(route('login'));
+});
+
+test('participant card renders correct badge pill status class based on social_status', function ($socialStatus, $expectedClass) {
+    $participant = Participant::factory()->create([
+        'student_id' => $this->student->id,
+        'olimpiade_id' => $this->olimpiade->id,
+        'event_year' => 2026,
+        'status' => 'verified',
+        'social_status' => $socialStatus,
+    ]);
+
+    $response = $this->get(route('home.registration.card', $participant->registration_number));
+    $response->assertOk();
+    $response->assertSee($expectedClass);
+})->with([
+    ['yatim', 'status-yatim'],
+    ['yatim_piatu', 'status-yatim_piatu'],
+    ['dhuafa', 'status-dhuafa'],
+    ['umum', 'status-umum'],
+    [null, 'status-yatim'],
+]);

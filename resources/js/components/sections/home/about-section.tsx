@@ -2,7 +2,7 @@ import {
     FeatureIcon,
     SectionHeader,
 } from '@/components/marketing/marketing-components';
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import {
     ArrowRight,
     BookOpenCheck,
@@ -14,7 +14,29 @@ import {
     UsersRound,
 } from 'lucide-react';
 
-export const AboutSection = () => {
+type AboutStats = {
+    provinces?: number;
+    activeOlimpiade?: number;
+    scale?: string;
+    season?: string;
+};
+
+export const AboutSection = ({ stats }: { stats?: AboutStats }) => {
+    const pageProps = usePage<any>().props;
+    const resolvedStats: AboutStats = stats ?? pageProps.aboutStats ?? {};
+
+    const provinceValue = resolvedStats.provinces ? `${resolvedStats.provinces}` : '13';
+    const olimpiadeValue = resolvedStats.activeOlimpiade ? `${resolvedStats.activeOlimpiade}` : '2';
+    const scaleValue = resolvedStats.scale || 'Nasional';
+    const seasonValue = resolvedStats.season || '2026';
+
+    const statCards = [
+        [provinceValue, 'Provinsi'],
+        [olimpiadeValue, 'Cabang Olimpiade'],
+        [scaleValue, 'Skala Lomba'],
+        [seasonValue, 'Musim OMATIQ'],
+    ];
+
     const olympiadBranches = [
         {
             title: "Olimpiade Al-Qur'an",
@@ -135,12 +157,7 @@ export const AboutSection = () => {
 
             <section className="px-5 py-8 sm:py-10 lg:px-8">
                 <div className="mx-auto grid max-w-7xl gap-4 rounded-[32px] bg-white p-5 shadow-sm ring-1 ring-slate-100 md:grid-cols-4 md:p-8">
-                    {[
-                        ['34+', 'Provinsi'],
-                        ['2', 'Olimpiade Awal'],
-                        ['Nasional', 'Skala Lomba'],
-                        ['2026', 'Musim OMATIQ'],
-                    ].map(([value, label]) => (
+                    {statCards.map(([value, label]) => (
                         <div
                             key={label}
                             className="rounded-3xl bg-[#F8FAFC] p-6 text-center"

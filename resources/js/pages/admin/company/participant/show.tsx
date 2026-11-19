@@ -730,6 +730,18 @@ export default function ShowPage() {
                                     participant.student?.parent_phone
                                 }
                             />
+                            <Detail
+                                label="Status Kepesertaan (Badge Kartu)"
+                                value={
+                                    participant.social_status === 'yatim_piatu'
+                                        ? 'Yatim Piatu (#c9fbfe - Cyan)'
+                                        : participant.social_status === 'dhuafa'
+                                        ? 'Dhuafa (#2e318d - Navy)'
+                                        : participant.social_status === 'umum'
+                                        ? 'Umum (#ffde00 - Kuning)'
+                                        : 'Yatim (#09767a - Toska / Default)'
+                                }
+                            />
                             {isBinaan && participant.student?.penyaluran_id && (
                                 <Detail
                                     label="ID Santri Penyaluran"

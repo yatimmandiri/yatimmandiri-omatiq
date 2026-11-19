@@ -40,6 +40,14 @@ const statusOptions = [
     { value: 'rejected', label: 'Rejected' },
 ];
 
+const socialStatusOptions = [
+    { value: '', label: 'Default / Belum Diatur (Toska - Yatim)' },
+    { value: 'yatim', label: 'Yatim (#09767a - Toska)' },
+    { value: 'yatim_piatu', label: 'Yatim Piatu (#c9fbfe - Cyan)' },
+    { value: 'dhuafa', label: 'Dhuafa (#2e318d - Navy)' },
+    { value: 'umum', label: 'Umum (#ffde00 - Kuning)' },
+];
+
 const dateValue = (value?: string | null) => value?.slice(0, 10) ?? '';
 
 export function ParticipantForm({ dataId }: { dataId: number }) {
@@ -140,6 +148,7 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
             participant?.participant_signature_name ?? '',
         guardian_signature_name: participant?.guardian_signature_name ?? '',
         status: participant?.status ?? 'submitted',
+        social_status: participant?.social_status ?? '',
         notes: participant?.notes ?? '',
         // National Stage Fields
         is_national_qualified: Boolean(participant?.national),
@@ -962,6 +971,13 @@ export function ParticipantForm({ dataId }: { dataId: number }) {
                             value={form.data.status}
                             onChange={(value) => form.setData('status', value)}
                             options={statusOptions}
+                        />
+                    </Field>
+                    <Field label="Status Kepesertaan (Warna Badge Kartu)" error={error('social_status')}>
+                        <Select
+                            value={form.data.social_status}
+                            onChange={(value) => form.setData('social_status', value)}
+                            options={socialStatusOptions}
                         />
                     </Field>
                 </div>

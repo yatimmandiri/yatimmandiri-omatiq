@@ -44,17 +44,36 @@ use Spatie\Activitylog\Support\LogOptions;
     'participant_signature_name',
     'guardian_signature_name',
     'status',
+    'social_status',
     'notes',
 ])]
 class Participant extends Model
 {
     use HasFactory, LogsActivity, SoftDeletes;
 
+    public const SOCIAL_STATUS_YATIM = 'yatim';
+
+    public const SOCIAL_STATUS_YATIM_PIATU = 'yatim_piatu';
+
+    public const SOCIAL_STATUS_DHUAFA = 'dhuafa';
+
+    public const SOCIAL_STATUS_UMUM = 'umum';
+
     protected $appends = [
         'kantor_name',
         'companion_phone',
         'parent_phone',
     ];
+
+    public function getSocialStatusColorAttribute(): string
+    {
+        return match ($this->social_status) {
+            self::SOCIAL_STATUS_YATIM_PIATU => '#c9fbfe',
+            self::SOCIAL_STATUS_DHUAFA => '#2e318d',
+            self::SOCIAL_STATUS_UMUM => '#ffde00',
+            default => '#09767a',
+        };
+    }
 
     public function getKantorNameAttribute(): ?string
     {

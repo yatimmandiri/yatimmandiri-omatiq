@@ -203,16 +203,28 @@ class EventGuestController extends Controller
         $this->authorize('viewAny', EventGuest::class);
 
         $request->validate([
-            'ids' => 'required|array|min:1',
+            'ids' => 'nullable|array',
             'ids.*' => 'integer|exists:event_guests,id',
+            'all' => 'nullable|boolean',
         ]);
 
-        $guests = EventGuest::whereIn('id', $request->input('ids'))->get();
-        if ($guests->isEmpty()) {
-            return response()->json(['message' => 'Tidak ada tamu yang dipilih.'], 422);
+        $query = EventGuest::query()->where('event_year', 2026);
+
+        if (! $request->boolean('all')) {
+            $ids = $request->input('ids', []);
+            if (empty($ids)) {
+                return response()->json(['message' => 'Tidak ada tamu yang dipilih.'], 422);
+            }
+            $query->whereIn('id', $ids);
         }
 
-        $zipFileName = 'QR-RSVP-Tamu-VIP-OMATIQ-2026-'.date('Ymd-His').'.zip';
+        $guests = $query->orderBy('code')->get();
+        if ($guests->isEmpty()) {
+            return response()->json(['message' => 'Tidak ada data tamu yang ditemukan untuk diunduh.'], 422);
+        }
+
+        $count = $guests->count();
+        $zipFileName = "QR-RSVP-Tamu-VIP-OMATIQ-2026-({$count}-Tamu).zip";
         $tempPath = storage_path('app/temp');
         if (! is_dir($tempPath)) {
             mkdir($tempPath, 0755, true);
@@ -226,7 +238,7 @@ class EventGuestController extends Controller
 
         foreach ($guests as $guest) {
             $url = $guest->rsvp_url ?: route('home.guest.rsvp', ['identifier' => $guest->code]);
-            $pngData = $this->barcodeService->generateQrCodePng($url, size: 500, color: '#17524A');
+            $pngData = $this->barcodeService->generateQrCodePng($url, size: 600, color: '#17524A');
             $safeName = Str::slug($guest->name, '-');
             $imageName = "QR-RSVP-{$guest->code}-{$safeName}.png";
 

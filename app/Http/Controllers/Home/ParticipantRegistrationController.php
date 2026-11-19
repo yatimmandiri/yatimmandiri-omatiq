@@ -6,6 +6,7 @@ use App\Concerns\Traits\UploadFiles;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Company\StoreParticipantRequest;
 use App\Models\Company\EventCommittee;
+use App\Models\Company\EventConsumptionLog;
 use App\Models\Company\EventGuest;
 use App\Models\Company\NationalChaperone;
 use App\Models\Company\Olimpiade;
@@ -227,6 +228,7 @@ class ParticipantRegistrationController extends Controller
                     $data['registration_number'] = Participant::generateRegistrationNumber();
                     $data['status'] = 'submitted';
                     $data['registration_type'] = 'public';
+                    $data['social_status'] = 'umum';
                     $data['payment_status'] = 'waiting_confirmation';
                     $data['payment_proof_path'] = $paymentProofPath;
 
@@ -286,8 +288,17 @@ class ParticipantRegistrationController extends Controller
         ]);
     }
 
-    public function verify(Request $request, ?string $registrationNumber = null): Response
+    public function verify(Request $request, ?string $registrationNumber = null): Response|RedirectResponse
     {
+        $user = $request->user();
+        if (! $user) {
+            return redirect()->guest(route('login'));
+        }
+
+        if (! $user->hasAnyRole(['Administrators', 'Verifikator'])) {
+            abort(403, 'Akses Terminal Verifikasi dibatasi khusus untuk akun Administrator dan Verifikator.');
+        }
+
         $inputCode = $registrationNumber ?? $request->query('q') ?? $request->query('code') ?? $request->query('reg');
         $persona = null;
         $entity = null;
@@ -362,6 +373,7 @@ class ParticipantRegistrationController extends Controller
                     $persona = 'chaperone';
                     $isValid = $chaperone->status !== 'rejected';
                     $entity = $this->formatChaperonePayload($chaperone);
+                    $entity['consumption'] = $this->buildConsumptionPayload('chaperone', $chaperone->id);
                 }
             }
             // 4. Peserta OMATIQ (OMQ-...)
@@ -381,6 +393,7 @@ class ParticipantRegistrationController extends Controller
                     $persona = 'participant';
                     $isValid = $participant->status !== 'rejected';
                     $entity = $this->formatParticipantPayload($participant);
+                    $entity['consumption'] = $this->buildConsumptionPayload('participant', $participant->id);
                 } else {
                     // Fallback lookup if numeric phone or NIK entered
                     $committee = EventCommittee::where('code', $inputCode)->orWhere('phone', $inputCode)->orWhere('nik', $inputCode)->first();
@@ -419,6 +432,7 @@ class ParticipantRegistrationController extends Controller
                                 $persona = 'chaperone';
                                 $isValid = $chaperone->status !== 'rejected';
                                 $entity = $this->formatChaperonePayload($chaperone);
+                                $entity['consumption'] = $this->buildConsumptionPayload('chaperone', $chaperone->id);
                             }
                         }
                     }
@@ -443,6 +457,7 @@ class ParticipantRegistrationController extends Controller
             'chaperone' => $persona === 'chaperone' ? $entity : null,
             'committee' => $persona === 'committee' ? $entity : null,
             'guest' => $persona === 'guest' ? $entity : null,
+            'isAdministrator' => (bool) $user?->hasRole('Administrators'),
             'meta' => [
                 'title' => 'Universal Gate Verifikasi Venue OMATIQ',
                 'description' => 'Terminal resmi terpadu verifikasi akses masuk venue OMATIQ untuk Peserta, Pendamping, Panitia, dan Tamu Undangan.',
@@ -500,7 +515,7 @@ class ParticipantRegistrationController extends Controller
                 'is_binaan' => (bool) $participant->student->is_binaan,
                 'photo_url' => $participant->student->photo_url,
             ] : null,
-            'verified_at' => now()->translatedFormat('d F Y, H:i').' WIB',
+            'verified_at' => now()->timezone('Asia/Jakarta')->translatedFormat('d F Y, H:i').' WIB',
             'national' => $participant->national ? [
                 'status' => $participant->national->status,
                 'shirt_size' => $participant->national->shirt_size,
@@ -527,7 +542,7 @@ class ParticipantRegistrationController extends Controller
             'source_type' => $chaperone->source_type,
             'status' => $chaperone->status,
             'notes' => $chaperone->notes,
-            'verified_at' => $chaperone->verified_at ? $chaperone->verified_at->translatedFormat('d F Y, H:i').' WIB' : null,
+            'verified_at' => $chaperone->verified_at ? $chaperone->verified_at->timezone('Asia/Jakarta')->translatedFormat('d F Y, H:i').' WIB' : null,
             'verifier_name' => $chaperone->verifier?->name ?? 'Panitia Pusat OMATIQ',
             'province_name' => $chaperone->province?->name,
             'regency_name' => $chaperone->regency?->name,
@@ -570,9 +585,10 @@ class ParticipantRegistrationController extends Controller
             'status' => $committee->status,
             'notes' => $committee->notes,
             'event_year' => $committee->event_year,
-            'checked_in_at' => $checkedInAt ? $checkedInAt->translatedFormat('d F Y, H:i').' WIB' : null,
-            'checked_in_time' => $checkedInAt ? $checkedInAt->translatedFormat('H:i').' WIB' : null,
+            'checked_in_at' => $checkedInAt ? $checkedInAt->timezone('Asia/Jakarta')->translatedFormat('d F Y, H:i').' WIB' : null,
+            'checked_in_time' => $checkedInAt ? $checkedInAt->timezone('Asia/Jakarta')->translatedFormat('H:i').' WIB' : null,
             'is_checked_in_today' => $isToday,
+            'can_reset_checkin' => (bool) request()->user()?->hasRole('Administrators'),
             'has_user_account' => ! is_null($committee->user_id),
         ];
     }
@@ -597,8 +613,8 @@ class ParticipantRegistrationController extends Controller
             'status' => $guest->status,
             'notes' => $guest->notes,
             'event_year' => $guest->event_year,
-            'checked_in_at' => $checkedInAt ? $checkedInAt->translatedFormat('d F Y, H:i').' WIB' : null,
-            'checked_in_time' => $checkedInAt ? $checkedInAt->translatedFormat('H:i').' WIB' : null,
+            'checked_in_at' => $checkedInAt ? $checkedInAt->timezone('Asia/Jakarta')->translatedFormat('d F Y, H:i').' WIB' : null,
+            'checked_in_time' => $checkedInAt ? $checkedInAt->timezone('Asia/Jakarta')->translatedFormat('H:i').' WIB' : null,
             'is_checked_in_today' => $isToday,
         ];
     }
@@ -668,8 +684,94 @@ class ParticipantRegistrationController extends Controller
         ];
     }
 
+    private function buildConsumptionPayload(string $type, int $id): array
+    {
+        $availability = EventConsumptionLog::checkAvailability($type, $id);
+        $consumptionLogs = EventConsumptionLog::getTodayLogs($type, $id);
+
+        return [
+            'remaining' => $availability['remaining'],
+            'count' => $availability['count'],
+            'max' => EventConsumptionLog::DAILY_QUOTA,
+            'can_redeem' => $availability['can_redeem'],
+            'reason' => $availability['reason'],
+            'next_session' => $availability['next_session'] ?? null,
+            'message' => $availability['message'],
+            'last_redeemed_time' => $availability['last_redeemed_time'] ?? null,
+            'next_available_time' => $availability['next_available_time'] ?? null,
+            'minutes_left' => $availability['minutes_left'] ?? null,
+            'logs' => $consumptionLogs,
+        ];
+    }
+
     private function registrationNumber(): string
     {
         return Participant::generateRegistrationNumber();
+    }
+
+    public function redeemConsumption(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+        if (! $user || ! $user->hasAnyRole(['Administrators', 'Verifikator'])) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'type' => 'required|in:participant,chaperone',
+            'id' => 'required|integer',
+            'notes' => 'nullable|string|max:255',
+            'force' => 'nullable|boolean',
+        ]);
+
+        $force = (bool) ($request->boolean('force') || $user->hasRole('Administrators'));
+
+        $result = EventConsumptionLog::redeem(
+            $validated['type'],
+            (int) $validated['id'],
+            $user->id,
+            $validated['notes'] ?? null,
+            force: $force
+        );
+
+        if ($result['success']) {
+            return back()->with('success', $result['message']);
+        }
+
+        return back()->with('error', $result['message']);
+    }
+
+    public function resetConsumption(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+        if (! $user || ! $user->hasRole('Administrators')) {
+            abort(403, 'Hanya Administrator yang dapat me-reset kuota konsumsi.');
+        }
+
+        $validated = $request->validate([
+            'type' => 'required|in:participant,chaperone',
+            'id' => 'required|integer',
+        ]);
+
+        EventConsumptionLog::query()
+            ->forTarget($validated['type'], (int) $validated['id'])
+            ->today()
+            ->delete();
+
+        return back()->with('success', 'Kuota konsumsi berhasil di-reset kembali menjadi 3x untuk hari ini.');
+    }
+
+    public function resetGuestCheckIn(Request $request, EventGuest $guest): RedirectResponse
+    {
+        $user = $request->user();
+        if (! $user || ! $user->hasRole('Administrators')) {
+            abort(403, 'Hanya Administrator yang dapat me-reset kehadiran tamu VIP.');
+        }
+
+        $guest->updateQuietly([
+            'checked_in_at' => null,
+            'status' => 'confirmed',
+        ]);
+
+        return back()->with('success', "Status check-in tamu {$guest->name} berhasil di-reset.");
     }
 }
