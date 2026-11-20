@@ -107,6 +107,7 @@ Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'auth.admi
         Route::post('participants/{participant}/national-verify', [ParticipantController::class, 'nationalVerify'])->name('participants.national-verify');
         Route::put('participants/{participant}/status', [ParticipantController::class, 'status'])->name('participants.status');
         Route::put('participants/{participant}/payment-status', [ParticipantController::class, 'paymentStatus'])->name('participants.payment-status');
+        Route::put('participants/{participant}/social-status', [ParticipantController::class, 'socialStatus'])->name('participants.social-status');
         Route::get('participants/data', [ParticipantController::class, 'getData'])->name('participants.data');
         Route::post('participants/sync-sheet', [ParticipantController::class, 'syncSheet'])->name('participants.sync-sheet');
         Route::resource('participants', ParticipantController::class)->except(['create', 'store']);
