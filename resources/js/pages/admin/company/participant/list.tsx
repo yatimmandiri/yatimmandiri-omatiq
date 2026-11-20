@@ -60,6 +60,50 @@ const paymentStatusLabels: Record<string, string> = {
     paid: 'Lunas',
 };
 
+const socialStatusConfig: Record<
+    string,
+    {
+        label: string;
+        color: string;
+        badgeClass: string;
+        dotBg: string;
+        badgePreview: string;
+    }
+> = {
+    yatim: {
+        label: 'Yatim',
+        color: '#09767a',
+        badgeClass:
+            'border-[#09767a]/30 bg-[#09767a]/10 text-[#09767a] hover:bg-[#09767a]/20 dark:bg-[#09767a]/25 dark:text-teal-300 dark:border-[#09767a]/40',
+        dotBg: '#09767a',
+        badgePreview: 'Toska Gelap (#09767a)',
+    },
+    yatim_piatu: {
+        label: 'Yatim Piatu',
+        color: '#c9fbfe',
+        badgeClass:
+            'border-cyan-300 bg-cyan-50 text-cyan-800 hover:bg-cyan-100 dark:bg-cyan-950/40 dark:text-cyan-300 dark:border-cyan-800',
+        dotBg: '#06b6d4',
+        badgePreview: 'Cyan Muda (#c9fbfe)',
+    },
+    dhuafa: {
+        label: 'Dhuafa',
+        color: '#2e318d',
+        badgeClass:
+            'border-indigo-200 bg-indigo-50 text-indigo-800 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800',
+        dotBg: '#2e318d',
+        badgePreview: 'Deep Navy (#2e318d)',
+    },
+    umum: {
+        label: 'Umum',
+        color: '#ffde00',
+        badgeClass:
+            'border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800',
+        dotBg: '#eab308',
+        badgePreview: 'Kuning Emas (#ffde00)',
+    },
+};
+
 const statusVariant = (status: string) =>
     status === 'verified'
         ? 'default'
@@ -534,6 +578,110 @@ export default function ListPage() {
                             )}
                         </div>
                     </div>
+                );
+            },
+        },
+        {
+            header: 'Status Kepesertaan',
+            accessorKey: 'social_status',
+            cell: (info: any) => {
+                const row = info.row.original;
+                const currentStatus = (row.social_status || 'yatim').toLowerCase();
+                const config =
+                    socialStatusConfig[currentStatus] ?? socialStatusConfig.yatim;
+
+                if (!canUpdate || isKeuangan) {
+                    return (
+                        <Badge
+                            variant="outline"
+                            className={`inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-medium transition-colors ${config.badgeClass}`}
+                            title={`Warna Badge: ${config.badgePreview}`}
+                        >
+                            <span
+                                className="size-2 shrink-0 rounded-full ring-1 ring-black/10"
+                                style={{ backgroundColor: config.dotBg }}
+                            />
+                            <span>{config.label}</span>
+                        </Badge>
+                    );
+                }
+
+                const updateSocialStatus = (newStatus: string) => {
+                    if (newStatus === currentStatus) return;
+
+                    router.put(
+                        `/admin/companies/participants/${row.id}/social-status`,
+                        { social_status: newStatus },
+                        {
+                            preserveScroll: true,
+                            onSuccess: () => setRefreshData((v) => !v),
+                        },
+                    );
+                };
+
+                return (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <button
+                                type="button"
+                                className="group inline-flex items-center gap-1 focus:outline-hidden"
+                                title="Klik untuk ubah status kepesertaan & warna badge kartu"
+                            >
+                                <Badge
+                                    variant="outline"
+                                    className={`inline-flex cursor-pointer items-center gap-1.5 px-2.5 py-1 text-xs font-semibold shadow-2xs transition-all group-hover:scale-102 group-hover:shadow-xs ${config.badgeClass}`}
+                                >
+                                    <span
+                                        className="size-2 shrink-0 rounded-full ring-1 ring-black/10"
+                                        style={{ backgroundColor: config.dotBg }}
+                                    />
+                                    <span>{config.label}</span>
+                                    <span className="text-[10px] opacity-60 group-hover:opacity-100">
+                                        ▾
+                                    </span>
+                                </Badge>
+                            </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" className="w-56 p-1.5">
+                            <DropdownMenuLabel className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                                Status & Warna Badge Kartu
+                            </DropdownMenuLabel>
+                            <DropdownMenuSeparator className="my-1" />
+                            {Object.entries(socialStatusConfig).map(([key, item]) => {
+                                const isSelected = currentStatus === key;
+
+                                return (
+                                    <DropdownMenuItem
+                                        key={key}
+                                        onClick={() => updateSocialStatus(key)}
+                                        className={`flex cursor-pointer items-center justify-between rounded-md px-2 py-1.5 text-xs transition-colors ${
+                                            isSelected
+                                                ? 'bg-accent/80 font-bold text-accent-foreground'
+                                                : ''
+                                        }`}
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <span
+                                                className="size-2.5 shrink-0 rounded-full shadow-2xs ring-1 ring-black/15"
+                                                style={{ backgroundColor: item.dotBg }}
+                                            />
+                                            <div className="flex flex-col text-left">
+                                                <span className="font-medium text-foreground">
+                                                    {item.label}
+                                                </span>
+                                                <span className="text-[10px] text-muted-foreground">
+                                                    {item.badgePreview}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        {isSelected && (
+                                            <CheckCircle2 className="ml-1.5 size-3.5 shrink-0 text-emerald-600" />
+                                        )}
+                                    </DropdownMenuItem>
+                                );
+                            })}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 );
             },
         },
@@ -1194,6 +1342,24 @@ export default function ListPage() {
                                     }
                                 />
                             )}
+                            <SelectComponent
+                                label="Status Kepesertaan (Badge)"
+                                placeholder="Semua status kepesertaan..."
+                                data={[
+                                    { value: 'all', label: 'Semua Status Kepesertaan' },
+                                    { value: 'yatim', label: 'Yatim (Toska Gelap #09767a)' },
+                                    { value: 'yatim_piatu', label: 'Yatim Piatu (Cyan #c9fbfe)' },
+                                    { value: 'dhuafa', label: 'Dhuafa (Navy #2e318d)' },
+                                    { value: 'umum', label: 'Umum (Kuning #ffde00)' },
+                                ]}
+                                dataSelected={filterValue.social_status}
+                                handleOnChange={(value: string) =>
+                                    setFilterValue((prev) => ({
+                                        ...prev,
+                                        social_status: value,
+                                    }))
+                                }
+                            />
                             <SelectComponent
                                 label="Jalur Pendaftaran"
                                 placeholder="Semua jalur..."

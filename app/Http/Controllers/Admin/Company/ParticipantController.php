@@ -525,10 +525,11 @@ class ParticipantController extends Controller
         $request->validate([
             'status' => ['nullable', 'in:submitted,verified,rejected'],
             'payment_status' => ['nullable', 'in:unpaid,waiting_confirmation,paid'],
+            'social_status' => ['nullable', 'in:yatim,yatim_piatu,dhuafa,umum'],
             'notes' => ['nullable', 'string'],
         ]);
 
-        $data = array_filter($request->only(['status', 'payment_status', 'notes']), fn ($v) => ! is_null($v));
+        $data = array_filter($request->only(['status', 'payment_status', 'social_status', 'notes']), fn ($v) => ! is_null($v));
 
         // Auto-sync status jika payment_status diubah dan status pendaftaran tidak dispesifikasikan secara eksplisit
         if (isset($data['payment_status']) && ! isset($data['status'])) {
@@ -576,6 +577,32 @@ class ParticipantController extends Controller
         ]);
 
         return back()->with('success', 'Status Pembayaran berhasil diperbarui'.(isset($data['status']) && $data['status'] === 'verified' ? ' dan peserta otomatis Terverifikasi' : ''));
+    }
+
+    public function socialStatus(Request $request, Participant $participant)
+    {
+        $this->authorize('update', $participant);
+
+        $user = Auth::user();
+        if ($user && $user->hasRole('Keuangan') && ! $user->hasRole('Administrators')) {
+            abort(403, 'Role Keuangan tidak memiliki izin untuk mengubah status kepesertaan.');
+        }
+
+        $request->validate([
+            'social_status' => ['required', 'string', 'in:yatim,yatim_piatu,dhuafa,umum'],
+        ]);
+
+        $newSocialStatus = $request->social_status;
+        $participant->update([
+            'social_status' => $newSocialStatus,
+        ]);
+
+        $this->logSuccess('update-participant-social-status', "Social status updated: {$participant->registration_number} -> {$newSocialStatus}", [
+            'participant_id' => $participant->id,
+            'social_status' => $newSocialStatus,
+        ]);
+
+        return back()->with('success', 'Status Kepesertaan (Warna Badge Kartu) berhasil diperbarui');
     }
 
     public function syncSheet(Request $request)
@@ -641,6 +668,7 @@ class ParticipantController extends Controller
         $payStatus = data_get($filterValue, 'payment_status');
         $branchFilter = data_get($filterValue, 'branch');
         $nationalStatus = data_get($filterValue, 'national_status');
+        $socialStatus = data_get($filterValue, 'social_status');
 
         $query
             ->when(filled($status) && $status !== 'all', fn ($q) => $q->where('status', $status))
@@ -649,6 +677,16 @@ class ParticipantController extends Controller
             ->when(filled($eventYear) && $eventYear !== 'all', fn ($q) => $q->where('event_year', $eventYear))
             ->when(filled($payStatus) && $payStatus !== 'all', fn ($q) => $q->where('payment_status', $payStatus))
             ->when(filled($branchFilter) && $branchFilter !== 'all', fn ($q) => $q->where('branch', $branchFilter))
+            ->when(filled($socialStatus) && $socialStatus !== 'all', function ($q) use ($socialStatus) {
+                if ($socialStatus === 'yatim') {
+                    $q->where(function ($sub) {
+                        $sub->where('social_status', 'yatim')
+                            ->orWhereNull('social_status');
+                    });
+                } else {
+                    $q->where('social_status', $socialStatus);
+                }
+            })
             ->when(filled($nationalStatus) && $nationalStatus !== 'all', function ($q) use ($nationalStatus) {
                 if ($nationalStatus === 'not_qualified') {
                     $q->doesntHave('national');
@@ -754,6 +792,9 @@ class ParticipantController extends Controller
         $payload = $participant->toArray();
         $payload['branch'] = $participant->branch;
         $payload['kantor_name'] = $participant->branch ?? $participant->penyaluran_sanggar_name;
+        $payload['social_status'] = $participant->social_status ?? 'yatim';
+        $payload['social_status_raw'] = $participant->social_status;
+        $payload['social_status_color'] = $participant->social_status_color;
 
         if ($participant->student) {
             $payload['student'] = [
