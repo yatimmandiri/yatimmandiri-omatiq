@@ -15,6 +15,8 @@ type SliderItem = {
 type HeroStats = {
     participants?: number;
     activeOlimpiade?: number;
+    sanggars?: number;
+    schools?: number;
     communities?: number;
     partners?: number;
 };
@@ -259,21 +261,21 @@ const SliderItemSection = ({
     );
 };
 
-const getHeroStats = (stats: HeroStats) => [
-    { label: 'Peserta Belajar', value: stats.participants ?? 12000 },
-    { label: 'Cabang Olimpiade', value: stats.activeOlimpiade ?? 2 },
-    { label: 'Komunitas', value: stats.communities ?? 120 },
-    { label: 'Mitra Kolaborasi', value: stats.partners ?? 36 },
+const getHeroStats = (stats: HeroStats = {}) => [
+    { label: 'Peserta Pelajar', value: stats.participants ?? 0 },
+    { label: 'Cabang Olimpiade', value: stats.activeOlimpiade ?? 0 },
+    { label: 'Sanggar Binaan', value: stats.sanggars ?? stats.communities ?? 0 },
+    { label: 'Sekolah Mitra', value: stats.schools ?? stats.partners ?? 0 },
 ];
 
 const formatStatNumber = (value: number) => {
     if (value >= 1000) {
         const formatted = value / 1000;
 
-        return `${Number.isInteger(formatted) ? formatted : formatted.toFixed(1)}K`;
+        return `${Number.isInteger(formatted) ? formatted : formatted.toFixed(1)}K+`;
     }
 
-    return value.toLocaleString('id-ID');
+    return value > 0 ? value.toLocaleString('id-ID') : '0';
 };
 
 const getStorageImage = (path: string | null | undefined, fallback: string) => {

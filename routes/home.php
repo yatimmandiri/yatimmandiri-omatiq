@@ -37,11 +37,19 @@ Route::get('/pendaftaran/sukses/{registrationNumber}', [ParticipantRegistrationC
 Route::get('/pendaftaran/kartu/{registrationNumber}', [ParticipantCardController::class, 'print'])->name('home.registration.card');
 Route::get('/pendamping/kartu/{identifier}', [NationalChaperoneController::class, 'publicPrintCard'])->name('home.chaperone.card');
 Route::get('/panitia/kartu/{identifier}', [EventCommitteeController::class, 'publicPrintCard'])->name('home.committee.card');
-Route::get('/verifikasi/pendamping/{code?}', [ParticipantRegistrationController::class, 'verifyChaperone'])->name('home.chaperone.verify');
-Route::get('/verifikasi/panitia/{code?}', [ParticipantRegistrationController::class, 'verifyCommittee'])->name('home.committee.verify');
-Route::get('/verifikasi/tamu/{code?}', [ParticipantRegistrationController::class, 'verifyGuest'])->name('home.guest.verify');
-Route::get('/verifikasi/{registrationNumber?}', [ParticipantRegistrationController::class, 'verify'])->name('home.registration.verify');
-Route::get('/pendaftaran/verifikasi/{registrationNumber?}', [ParticipantRegistrationController::class, 'verify'])->name('home.registration.verify.alias');
+// Terminal Verifikasi & Akses Gate OMATIQ (Khusus Administrator & Verifikator)
+Route::middleware(['auth'])->group(function () {
+    Route::get('/verifikasi/pendamping/{code?}', [ParticipantRegistrationController::class, 'verifyChaperone'])->name('home.chaperone.verify');
+    Route::get('/verifikasi/panitia/{code?}', [ParticipantRegistrationController::class, 'verifyCommittee'])->name('home.committee.verify');
+    Route::get('/verifikasi/tamu/{code?}', [ParticipantRegistrationController::class, 'verifyGuest'])->name('home.guest.verify');
+    Route::get('/verifikasi/{registrationNumber?}', [ParticipantRegistrationController::class, 'verify'])->name('home.registration.verify');
+    Route::get('/pendaftaran/verifikasi/{registrationNumber?}', [ParticipantRegistrationController::class, 'verify'])->name('home.registration.verify.alias');
+
+    // Operasional Konsumsi & Reset Kehadiran Tamu VIP
+    Route::post('/verifikasi/consumption/redeem', [ParticipantRegistrationController::class, 'redeemConsumption'])->name('home.verification.consumption.redeem');
+    Route::post('/verifikasi/consumption/reset', [ParticipantRegistrationController::class, 'resetConsumption'])->name('home.verification.consumption.reset');
+    Route::post('/verifikasi/guest/{guest}/reset-checkin', [ParticipantRegistrationController::class, 'resetGuestCheckIn'])->name('home.verification.guest.reset');
+});
 
 // Konfirmasi Kehadiran & VIP E-Pass Tamu Undangan
 Route::get('/undangan/{identifier}/konfirmasi', [GuestRsvpController::class, 'show'])->name('home.guest.rsvp');

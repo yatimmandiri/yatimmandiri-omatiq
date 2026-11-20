@@ -165,6 +165,31 @@ export default function ListGuestsPage() {
         }
     };
 
+    const handleDownloadAllQr = async () => {
+        setIsDownloading(true);
+
+        try {
+            const res = await axios.post(
+                '/admin/companies/guests/bulk-download-rsvp-qr',
+                { all: true },
+                { responseType: 'blob' }
+            );
+            const url = window.URL.createObjectURL(new Blob([res.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'QR-RSVP-Semua-Tamu-VIP-OMATIQ.zip');
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+            showSuccessAlert('Unduh Berhasil!', 'Berhasil mengunduh seluruh QR Code konfirmasi tamu dalam file ZIP.');
+        } catch (err: any) {
+            showErrorAlert('Gagal Mengunduh', 'Terjadi kesalahan saat membuat file ZIP.');
+        } finally {
+            setIsDownloading(false);
+        }
+    };
+
     const handleCopyRsvp = (guest: any) => {
         if (!guest.rsvp_url) return;
         navigator.clipboard.writeText(guest.rsvp_url);
@@ -172,31 +197,6 @@ export default function ListGuestsPage() {
     };
 
     const columns = [
-        {
-            id: 'select',
-            header: ({ table }: any) => (
-                <input
-                    type="checkbox"
-                    className="h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500 cursor-pointer"
-                    checked={table.getIsAllPageRowsSelected()}
-                    onChange={(e) => {
-                        table.toggleAllPageRowsSelected(!!e.target.checked);
-                    }}
-                />
-            ),
-            cell: ({ row }: any) => (
-                <input
-                    type="checkbox"
-                    className="h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500 cursor-pointer"
-                    checked={row.getIsSelected()}
-                    onChange={(e) => {
-                        row.toggleSelected(!!e.target.checked);
-                    }}
-                />
-            ),
-            enableSorting: false,
-            enableHiding: false,
-        },
         {
             id: 'actions',
             header: 'Aksi',
@@ -421,7 +421,17 @@ export default function ListGuestsPage() {
                         </p>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={handleDownloadAllQr}
+                            disabled={isDownloading}
+                            className="border-[#17524A] text-[#17524A] hover:bg-emerald-50 dark:border-emerald-400 dark:text-emerald-300 font-bold shadow-sm"
+                        >
+                            <Archive className="mr-1.5 h-4 w-4" />
+                            {isDownloading ? 'Mengompres...' : 'Unduh Semua Barcode / QR (ZIP)'}
+                        </Button>
                         <Button
                             asChild
                             className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold shadow-md shadow-amber-500/20"
@@ -593,6 +603,7 @@ export default function ListGuestsPage() {
                         filterValue={filterValue}
                         refreshData={refreshData}
                         setRefreshData={setRefreshData}
+                        setRowSelection={setSelectedRows}
                         initialSorting={[{ id: 'id', desc: true }]}
                         formatDataExport={(items: any[]) =>
                             items.map((item: any, i: number) => ({

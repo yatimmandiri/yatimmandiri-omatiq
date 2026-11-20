@@ -1,0 +1,1807 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kartu-Panitia-OMATIQ-CREW-00053-KHOTIB</title>
+    <link rel="icon" href="http://127.0.0.1:8000/assets/images/LOGO OMATIQ-Fav.png" type="image/png">
+    <link rel="shortcut icon" href="http://127.0.0.1:8000/assets/images/LOGO OMATIQ-Fav.png" type="image/png">
+    <link rel="apple-touch-icon" href="http://127.0.0.1:8000/assets/images/LOGO OMATIQ-Fav.png">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+        <style>
+        @page {
+            size: A4 portrait;
+            margin: 10mm 12mm;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f0fdfa 0%, #e6fffa 40%, #ccfbf1 100%);
+            color: #0f766e;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px 12px 48px;
+            overflow-x: hidden;
+        }
+
+        /* Ambient Glass Toolbar */
+        .toolbar {
+            width: 100%;
+            max-width: 820px;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.94);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            padding: 12px 18px;
+            border-radius: 18px;
+            border: 1px solid rgba(13, 148, 136, 0.2);
+            box-shadow: 0 10px 30px rgba(13, 148, 136, 0.08);
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .toolbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .toolbar-brand img {
+            height: 32px;
+            width: auto;
+        }
+
+        .toolbar-title {
+            font-weight: 800;
+            font-size: 13.5px;
+            color: #0f766e;
+            letter-spacing: -0.2px;
+            line-height: 1.25;
+        }
+
+        .toolbar-subtitle {
+            font-size: 11px;
+            color: #0d9488;
+            font-weight: 600;
+        }
+
+        .toolbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn-view-mode {
+            padding: 7px 14px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            border: 1px solid rgba(13, 148, 136, 0.25);
+            background: #ffffff;
+            color: #0f766e;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-view-mode.active, .btn-view-mode:hover {
+            background: #09767a;
+            color: #ffffff;
+            border-color: #09767a;
+            box-shadow: 0 4px 12px rgba(9, 118, 122, 0.25);
+        }
+
+        .btn-print {
+            padding: 8px 18px;
+            border-radius: 10px;
+            font-size: 12.5px;
+            font-weight: 800;
+            cursor: pointer;
+            border: none;
+            background: linear-gradient(135deg, #09767a 0%, #0d9488 100%);
+            color: #ffffff;
+            box-shadow: 0 4px 14px rgba(9, 118, 122, 0.35);
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .btn-print:hover {
+            background: linear-gradient(135deg, #07595c 0%, #0b7a70 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(9, 118, 122, 0.4);
+        }
+
+        /* Status Notice Banner */
+        .status-banner {
+            width: 100%;
+            max-width: 820px;
+            margin-bottom: 16px;
+            padding: 10px 16px;
+            border-radius: 14px;
+            font-size: 12px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .status-banner.verified {
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #065f46;
+        }
+
+        .status-banner.pending {
+            background: rgba(245, 158, 11, 0.15);
+            border: 1px solid rgba(245, 158, 11, 0.35);
+            color: #92400e;
+        }
+
+        /* Cards Layout Container */
+        .cards-stage {
+            width: 100%;
+            max-width: 820px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        /* ================= VIRTUAL 3D COMMITTEE PASS STAGE ================= */
+        .virtual-stage {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 0 20px;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* Lanyard Ribbon & Metallic Clasp (Deep Teal / Tech Accent) */
+        .lanyard-mount {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 25;
+            margin-bottom: -18px;
+            pointer-events: none;
+        }
+
+        .lanyard-strap {
+            width: 38px;
+            height: 52px;
+            background: linear-gradient(90deg, #07595c 0%, #0d9488 50%, #07595c 100%);
+            box-shadow: 0 4px 14px rgba(9, 118, 122, 0.4);
+            border-radius: 4px 4px 0 0;
+            position: relative;
+        }
+
+        .lanyard-strap::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(45, 212, 191, 0.18) 3px, rgba(45, 212, 191, 0.18) 6px);
+        }
+
+        .lanyard-clip {
+            width: 28px;
+            height: 32px;
+            background: linear-gradient(180deg, #e2e8f0 0%, #cbd5e1 35%, #94a3b8 70%, #64748b 100%);
+            border-radius: 6px 6px 12px 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: -3px;
+            border: 1px solid #cbd5e1;
+        }
+
+        .lanyard-clip::before {
+            content: '';
+            width: 12px;
+            height: 6px;
+            background: #475569;
+            border-radius: 2px;
+            position: absolute;
+            top: 4px;
+        }
+
+        .lanyard-clip::after {
+            content: '';
+            width: 14px;
+            height: 14px;
+            border: 2.5px solid #334155;
+            border-radius: 4px;
+            background: transparent;
+            margin-top: 4px;
+        }
+
+        /* 3D Scene Viewport */
+        .card-3d-scene {
+            perspective: 1200px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            cursor: grab;
+            touch-action: pan-y;
+            padding: 0;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .card-3d-scene:active {
+            cursor: grabbing;
+        }
+
+        /* Responsive Scale Container (dynamically scaled for mobile) */
+        .card-scale-container {
+            width: 372px;
+            height: 590px;
+            transform-origin: top center;
+            transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        /* 3D Rotating Flipper */
+        .card-3d-flipper {
+            width: 372px;
+            height: 590px;
+            position: relative;
+            transform-style: preserve-3d;
+            -webkit-transform-style: preserve-3d;
+            transition: transform 0.65s cubic-bezier(0.34, 1.25, 0.64, 1);
+            transform-origin: center center;
+        }
+
+        .card-3d-flipper.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        /* Card Faces (Front & Back) - Strictly Absolute so both faces stack exactly */
+        .card-3d-flipper .card-face,
+        .card-face {
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            backface-visibility: hidden !important;
+            -webkit-backface-visibility: hidden !important;
+            transform-style: preserve-3d;
+            -webkit-transform-style: preserve-3d;
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 25px 60px rgba(9, 118, 122, 0.22), 0 6px 18px rgba(0, 0, 0, 0.1);
+            margin: 0 !important;
+        }
+
+        .card-front-face {
+            transform: rotateY(0deg);
+        }
+
+        .card-back-face {
+            transform: rotateY(180deg);
+        }
+
+        /* Punch Slot Hole (Lanyard Pass Slot) */
+        .badge-punch-slot {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 44px;
+            height: 8.5px;
+            background: #042f2e;
+            border-radius: 8px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6), 0 1px 1px rgba(255, 255, 255, 0.6);
+            z-index: 15;
+            pointer-events: none;
+        }
+
+        /* Specular Gloss & Reflection */
+        .card-glare {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 20;
+            border-radius: 18px;
+            background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0) 65%);
+            opacity: 0;
+            mix-blend-mode: overlay;
+            transition: opacity 0.3s ease;
+        }
+
+        /* Virtual Floating Controls Dock */
+        .virtual-controls-dock {
+            margin-top: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.94);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            padding: 8px 16px;
+            border-radius: 16px;
+            border: 1px solid rgba(13, 148, 136, 0.2);
+            box-shadow: 0 10px 30px rgba(13, 148, 136, 0.1);
+            flex-wrap: wrap;
+            max-width: 95vw;
+        }
+
+        .side-switcher {
+            display: flex;
+            align-items: center;
+            background: #f0fdfa;
+            padding: 3px;
+            border-radius: 12px;
+            border: 1px solid rgba(13, 148, 136, 0.18);
+            gap: 2px;
+        }
+
+        .side-pill {
+            padding: 6px 14px;
+            border-radius: 9px;
+            font-size: 11.5px;
+            font-weight: 700;
+            border: none;
+            background: transparent;
+            color: #0f766e;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .side-pill.active {
+            background: #09767a;
+            color: #ffffff;
+            box-shadow: 0 2px 8px rgba(9, 118, 122, 0.3);
+        }
+
+        .side-pill-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #cbd5e1;
+        }
+
+        .side-pill.active .side-pill-dot {
+            background: #2dd4bf;
+        }
+
+        .btn-flip-primary {
+            padding: 8px 16px;
+            border-radius: 11px;
+            font-size: 12px;
+            font-weight: 800;
+            border: 1px solid #09767a;
+            background: linear-gradient(135deg, #09767a 0%, #0d9488 100%);
+            color: #ffffff;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 4px 12px rgba(9, 118, 122, 0.3);
+            transition: all 0.2s ease;
+        }
+
+        .btn-flip-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(9, 118, 122, 0.4);
+        }
+
+        .btn-flip-primary svg {
+            transition: transform 0.4s ease;
+        }
+
+        .btn-flip-primary:hover svg {
+            transform: rotate(180deg);
+        }
+
+        .dock-divider {
+            width: 1px;
+            height: 24px;
+            background: rgba(13, 148, 136, 0.2);
+        }
+
+        .zoom-group {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: #f0fdfa;
+            padding: 3px 6px;
+            border-radius: 12px;
+            border: 1px solid rgba(13, 148, 136, 0.18);
+        }
+
+        .btn-zoom {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            border: 1px solid rgba(13, 148, 136, 0.15);
+            background: #ffffff;
+            color: #0f766e;
+            font-size: 14px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .btn-zoom:hover {
+            background: #09767a;
+            color: #ffffff;
+        }
+
+        .zoom-badge {
+            font-size: 11px;
+            font-weight: 800;
+            color: #0f766e;
+            min-width: 44px;
+            text-align: center;
+            font-family: monospace;
+        }
+
+        .virtual-hint-chip {
+            margin-top: 12px;
+            font-size: 11px;
+            color: #0d9488;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.75);
+            padding: 5px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(13, 148, 136, 0.15);
+            text-align: center;
+        }
+
+        /* ================= BASE CARD ELEMENTS (Front & Back) ================= */
+        .omatiq-card {
+            width: 372px;
+            height: 590px;
+            position: relative;
+            border-radius: 18px;
+            overflow: hidden;
+            background-size: 100% 100%;
+            background-repeat: no-repeat;
+            background-position: center;
+            flex-shrink: 0;
+        }
+
+        /* Front & Back Background Templates */
+        .card-front {
+            background-image: url("http://127.0.0.1:8000/assets/images/cards/card-committee-bg-front.png");
+        }
+
+        .card-back {
+            background-image: url("http://127.0.0.1:8000/assets/images/cards/card-committee-bg-back.png");
+        }
+
+        /* Front: Inactive / Suspended Warning Badge Overlay */
+        .badge-unverified-overlay {
+            position: absolute;
+            top: 2.5%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 91.2%;
+            padding: 6.5px 10px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, #b45309 0%, #d97706 100%);
+            border: 1.5px solid #fed7aa;
+            color: #ffffff;
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: 0.4px;
+            text-align: center;
+            text-transform: uppercase;
+            box-shadow: 0 4px 12px rgba(180, 83, 9, 0.35);
+            z-index: 8;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Front: Centered Header YM Logo */
+        .card-header-logo {
+            position: absolute;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            z-index: 5;
+        }
+
+        .card-header-logo img {
+            height: 40px;
+            width: auto;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+        }
+
+        /* Front: Label Panitia (Gradient Horizontal Banner Typography) */
+        .committee-badge-pill {
+            position: absolute;
+            top: 96px;
+            left: 0;
+            right: 0;
+            width: 100%;
+            height: 44px;
+            background: linear-gradient(90deg, rgba(9, 118, 122, 0) 0%, rgba(9, 118, 122, 0.65) 10%, #09767a 20%, #09767a 80%, rgba(9, 118, 122, 0.65) 90%, rgba(9, 118, 122, 0) 100%);
+            color: #ffffff;
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            border-radius: 0;
+            box-shadow: none;
+            z-index: 5;
+            white-space: nowrap;
+        }
+
+        /* Front: Official HD Title (Tulisan Omatiq Putih.png) */
+        .card-title-wrap {
+            position: absolute;
+            top: 154px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 84%;
+            display: flex;
+            justify-content: center;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .card-title-img {
+            max-width: 310px;
+            height: auto;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.25));
+        }
+
+        /* Front: Transparent Frosted Glass Committee Data Box */
+        .committee-data-box {
+            position: absolute;
+            top: 316px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90.0%;
+            background: rgba(255, 255, 255, 0.30);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1.5px solid rgba(255, 255, 255, 0.70);
+            border-radius: 24px;
+            z-index: 5;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 16px 14px 12px;
+            box-shadow: 0 10px 30px rgba(4, 47, 46, 0.16), inset 0 1px 2px rgba(255, 255, 255, 0.8);
+        }
+
+        /* Front: Mascots Peeking at Top-Right Corner Outside the Box */
+        .card-mascot-corner {
+            position: absolute;
+            bottom: 100%;
+            right: 20px;
+            margin-bottom: -10px;
+            z-index: 6;
+            pointer-events: none;
+            line-height: 0;
+        }
+
+        .card-mascot-img {
+            width: 105px;
+            height: auto;
+            object-fit: contain;
+            filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.2));
+        }
+
+        .committee-name {
+            font-size: 22px;
+            font-weight: 900;
+            color: #09767a;
+            letter-spacing: -0.3px;
+            line-height: 1.2;
+            text-align: center;
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+        }
+
+        .committee-meta {
+            font-size: 11px;
+            font-weight: 700;
+            color: #065f46;
+            letter-spacing: -0.1px;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+            line-height: 1.25;
+        }
+
+        .committee-branch {
+            font-size: 11px;
+            font-weight: 800;
+            color: #0f766e;
+            text-align: center;
+            margin-top: 1px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+        }
+
+        .committee-id-badge {
+            font-size: 9.5px;
+            font-weight: 800;
+            color: #0d9488;
+            letter-spacing: 1.2px;
+            text-align: center;
+            margin-top: 2px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        .data-divider {
+            width: 84%;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.6);
+            margin: 6px auto 5px;
+        }
+
+        /* Front: Sponsors Bar (HD Assets) */
+        .card-sponsors-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            margin-top: 2px;
+        }
+
+        .sponsors-label {
+            font-size: 7.5px;
+            font-weight: 800;
+            color: #042f2e;
+            margin-bottom: 4px;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+            opacity: 0.9;
+        }
+
+        .sponsors-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .sponsors-row-1 {
+            gap: 7px;
+            margin-bottom: 3.5px;
+        }
+
+        .sponsors-row-1 img {
+            max-height: 40px;
+            max-width: 52px;
+            width: auto;
+            object-fit: contain;
+            filter: contrast(1.05);
+        }
+
+        .sponsors-row-2 {
+            gap: 6px;
+        }
+
+        .sponsors-row-2 img {
+            max-height: 40px;
+            max-width: 40px;
+            width: auto;
+            object-fit: contain;
+            filter: contrast(1.05);
+        }
+
+        /* Front: Official Website URL at Bottom */
+        .card-front-web {
+            position: absolute;
+            bottom: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #ffffff;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.8px;
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+            z-index: 5;
+            white-space: nowrap;
+        }
+
+        /* Back: Title OMATIQ 2026 */
+        .card-back-title-wrap {
+            position: absolute;
+            top: 48px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 82%;
+            display: flex;
+            justify-content: center;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .card-back-title-img {
+            max-width: 295px;
+            height: auto;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.25));
+        }
+
+        /* Back: HD Mascots Left & Right (Single Instance, Zero Double Image) */
+        .mascot-back-zakki {
+            position: absolute;
+            bottom: 110px;
+            left: -8px;
+            width: 136px;
+            height: auto;
+            z-index: 5;
+            pointer-events: none;
+            filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.24));
+        }
+
+        .mascot-back-amila {
+            position: absolute;
+            bottom: 105px;
+            right: -12px;
+            width: 136px;
+            height: auto;
+            z-index: 5;
+            pointer-events: none;
+            filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.24));
+        }
+
+        /* Back: QR Code Center Container (Clean, centered between mascots) */
+        .committee-qr-box {
+            position: absolute;
+            top: 226px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 216px;
+            height: 216px;
+            z-index: 4;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            overflow: visible;
+        }
+
+        .qr-svg-wrapper {
+            width: 100%;
+            height: 100%;
+            max-width: 216px;
+            max-height: 216px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            border-radius: 24px;
+            overflow: hidden;
+            background: #ffffff;
+            padding: 12px;
+            box-shadow: 0 12px 32px rgba(4, 47, 46, 0.22);
+        }
+
+        /* Back: Official Website URL */
+        .card-back-web {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.8px;
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+            z-index: 6;
+            white-space: nowrap;
+        }
+
+        .qr-svg-wrapper svg {
+            width: 100% !important;
+            height: 100% !important;
+            display: block;
+        }
+
+        /* Inactive Security Lock & Watermark Over QR */
+        .qr-lock-container {
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+            text-align: center;
+            z-index: 10;
+        }
+
+        .qr-void-banner {
+            position: absolute;
+            top: 14px;
+            left: -20px;
+            right: -20px;
+            background: #dc2626;
+            color: #ffffff;
+            font-size: 7.5px;
+            font-weight: 900;
+            padding: 2.5px 0;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            transform: rotate(-12deg);
+            box-shadow: 0 2px 6px rgba(220, 38, 38, 0.4);
+            white-space: nowrap;
+        }
+
+        .lock-badge-icon {
+            font-size: 24px;
+            margin-bottom: 2px;
+            color: #b45309;
+        }
+
+        .lock-badge-title {
+            font-size: 10.5px;
+            font-weight: 900;
+            color: #b45309;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+        }
+
+        .lock-badge-subtitle {
+            font-size: 7px;
+            font-weight: 700;
+            color: #64748b;
+            line-height: 1.2;
+            margin-top: 2px;
+            max-width: 130px;
+        }
+
+        /* ================= PRINT SHEET PREVIEW (SCREEN ONLY) ================= */
+        .print-sheet {
+            display: none;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            background: #ffffff;
+            padding: 18px;
+            border-radius: 20px;
+            box-shadow: 0 16px 45px rgba(9, 118, 122, 0.12);
+            border: 1.5px dashed #cbd5e1;
+            position: relative;
+            max-width: 100%;
+            overflow-x: auto;
+        }
+
+        .print-sheet.is-visible {
+            display: flex;
+        }
+
+        /* Cut & Fold Line Guides */
+        .fold-divider {
+            width: 2px;
+            height: 590px;
+            border-left: 2px dashed #94a3b8;
+            position: relative;
+            margin: 0 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .fold-label {
+            position: absolute;
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 9px;
+            font-weight: 800;
+            color: #64748b;
+            white-space: nowrap;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            transform: rotate(-90deg);
+        }
+
+        .cut-guide-border {
+            position: relative;
+            padding: 6px;
+            background: #ffffff;
+            border: 1px dashed #cbd5e1;
+            border-radius: 20px;
+        }
+
+        /* Print Instructions Panel */
+        .print-instructions {
+            width: 100%;
+            max-width: 820px;
+            margin-top: 16px;
+            background: #ffffff;
+            border: 1px solid rgba(13, 148, 136, 0.2);
+            border-radius: 16px;
+            padding: 14px 18px;
+            display: none;
+            box-shadow: 0 6px 20px rgba(9, 118, 122, 0.06);
+        }
+
+        .print-instructions.is-visible {
+            display: block;
+        }
+
+        .inst-title {
+            font-size: 12.5px;
+            font-weight: 800;
+            color: #0f766e;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 6px;
+        }
+
+        .inst-list {
+            font-size: 11.5px;
+            color: #334155;
+            line-height: 1.6;
+            padding-left: 18px;
+        }
+
+        /* Mobile Adjustments */
+        @media (max-width: 640px) {
+            body {
+                padding: 10px 8px 36px;
+                background-attachment: scroll;
+            }
+
+            .toolbar {
+                padding: 10px 14px;
+                border-radius: 14px;
+            }
+
+            .toolbar-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .btn-view-mode, .btn-print {
+                flex: 1;
+                justify-content: center;
+                padding: 7px 10px;
+                font-size: 11.5px;
+            }
+
+            .virtual-controls-dock {
+                padding: 6px 10px;
+                gap: 8px;
+                border-radius: 14px;
+            }
+
+            .side-pill {
+                padding: 5px 10px;
+                font-size: 11px;
+            }
+
+            .btn-flip-primary {
+                padding: 7px 12px;
+                font-size: 11.5px;
+            }
+
+            .virtual-hint-chip {
+                font-size: 10px;
+                padding: 4px 10px;
+            }
+        }
+
+        /* ================= PRINT MEDIA STYLES (@media print) ================= */
+        @media print {
+            body {
+                background: #ffffff !important;
+                background-image: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
+                min-height: auto !important;
+            }
+
+            .toolbar,
+            .status-banner,
+            .virtual-stage,
+            .print-instructions,
+            .no-print {
+                display: none !important;
+            }
+
+            .cards-stage {
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+
+            .print-sheet {
+                display: flex !important;
+                padding: 0 !important;
+                margin: 0 auto !important;
+                border: none !important;
+                box-shadow: none !important;
+                background: transparent !important;
+                justify-content: center !important;
+                align-items: center !important;
+                width: 100% !important;
+                page-break-inside: avoid !important;
+            }
+
+            /* Duplex printing mode toggle */
+            body.print-mode-duplex .print-sheet {
+                display: block !important;
+            }
+
+            body.print-mode-duplex .cut-guide-border {
+                margin: 0 auto 0 !important;
+                page-break-after: always !important;
+                border: 0.5px dashed #cbd5e1 !important;
+            }
+
+            body.print-mode-duplex .fold-divider {
+                display: none !important;
+            }
+
+            /* Physical Event Lanyard Size (86mm x 136.5mm each) */
+            .cut-guide-border {
+                border: 0.5px dashed #94a3b8 !important;
+                padding: 0 !important;
+                border-radius: 4mm !important;
+            }
+
+            .omatiq-card {
+                width: 86mm !important;
+                height: 136.5mm !important;
+                border-radius: 4mm !important;
+                box-shadow: none !important;
+                page-break-inside: avoid !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            .fold-divider {
+                height: 136.5mm !important;
+                border-left: 1px dashed #94a3b8 !important;
+                margin: 0 4mm !important;
+            }
+
+            .fold-label {
+                font-size: 7pt !important;
+                padding: 1mm 2mm !important;
+            }
+
+            /* Print scaling for Front elements */
+            .card-header-logo {
+                top: 6.5mm !important;
+                gap: 2mm !important;
+            }
+
+            .card-header-logo img {
+                height: 9mm !important;
+                width: auto !important;
+            }
+
+            .committee-badge-pill {
+                top: 21.5mm !important;
+                left: 0 !important;
+                right: 0 !important;
+                width: 100% !important;
+                height: 10mm !important;
+                background: linear-gradient(90deg, rgba(9, 118, 122, 0) 0%, rgba(9, 118, 122, 0.65) 10%, #09767a 20%, #09767a 80%, rgba(9, 118, 122, 0.65) 90%, rgba(9, 118, 122, 0) 100%) !important;
+                color: #ffffff !important;
+                font-size: 15pt !important;
+                font-weight: 800 !important;
+                letter-spacing: 0.3mm !important;
+                border: none !important;
+                border-radius: 0 !important;
+                box-shadow: none !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            .card-title-wrap {
+                top: 34mm !important;
+                width: 84% !important;
+            }
+
+            .card-title-img {
+                max-width: 70mm !important;
+            }
+
+            .committee-data-box {
+                top: 71mm !important;
+                width: 78mm !important;
+                padding: 3.5mm 2.5mm 2.5mm !important;
+                border-radius: 4.5mm !important;
+            }
+
+            .card-mascot-corner {
+                right: 4.5mm !important;
+                margin-bottom: -2.2mm !important;
+            }
+
+            .card-mascot-img {
+                width: 24mm !important;
+            }
+
+            .committee-name {
+                font-size: 13pt !important;
+                margin-bottom: 0.5mm !important;
+            }
+
+            .committee-meta {
+                font-size: 7.5pt !important;
+                line-height: 1.2 !important;
+            }
+
+            .committee-branch {
+                font-size: 7.5pt !important;
+            }
+
+            .committee-id-badge {
+                font-size: 6.5pt !important;
+                margin-top: 0.8mm !important;
+            }
+
+            .data-divider {
+                width: 82% !important;
+                margin: 1.5mm auto 1mm !important;
+            }
+
+            .sponsors-label {
+                font-size: 5pt !important;
+                margin-bottom: 0.8mm !important;
+            }
+
+            .sponsors-row-1 {
+                gap: 1.8mm !important;
+                margin-bottom: 0.8mm !important;
+            }
+
+            .sponsors-row-1 img {
+                max-height: 8mm !important;
+                max-width: 14mm !important;
+            }
+
+            .sponsors-row-2 {
+                gap: 1.5mm !important;
+            }
+
+            .sponsors-row-2 img {
+                max-height: 8mm !important;
+                max-width: 12mm !important;
+            }
+
+            .card-front-web {
+                bottom: 3.5mm !important;
+                font-size: 6.5pt !important;
+            }
+
+            /* Print scaling for Back elements */
+            .card-back-title-wrap {
+                top: 11mm !important;
+                width: 82% !important;
+            }
+
+            .card-back-title-img {
+                max-width: 66mm !important;
+            }
+
+            .mascot-back-zakki {
+                bottom: 24mm !important;
+                width: 30mm !important;
+                left: -1mm !important;
+            }
+
+            .mascot-back-amila {
+                bottom: 23mm !important;
+                width: 30mm !important;
+                right: -1mm !important;
+            }
+
+            .committee-qr-box {
+                top: 50mm !important;
+                width: 48mm !important;
+                height: 48mm !important;
+            }
+
+            .qr-svg-wrapper {
+                max-width: 48mm !important;
+                max-height: 48mm !important;
+                border-radius: 5mm !important;
+                padding: 2.5mm !important;
+            }
+
+            .card-back-web {
+                bottom: 4.5mm !important;
+                font-size: 6.5pt !important;
+            }
+                bottom: 8mm !important;
+                font-size: 7pt !important;
+            }
+
+            .badge-punch-slot {
+                border: 0.5px solid rgba(255, 255, 255, 0.4) !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+        <!-- Ambient Glass Toolbar -->
+    <header class="toolbar no-print">
+        <div class="toolbar-brand">
+            <img src="http://127.0.0.1:8000/assets/images/LOGO OMATIQ.png" alt="Logo OMATIQ 2026">
+            <div>
+                <div class="toolbar-title">Kartu Panitia / Crew Pass • OMATIQ 2026</div>
+                <div class="toolbar-subtitle">KHOTIB (CREW-00053)</div>
+            </div>
+        </div>
+
+        <div class="toolbar-actions">
+            <!-- View Mode Switcher -->
+            <button type="button" class="btn-view-mode active" id="btnModeVirtual" onclick="switchViewMode('virtual')">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                Kartu Virtual 3D
+            </button>
+
+            <button type="button" class="btn-view-mode" id="btnModePrint" onclick="switchViewMode('print')">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                Lembar Cetak A4
+            </button>
+
+            <!-- Direct Print / Download PDF -->
+            <button type="button" class="btn-print" onclick="window.print()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                Cetak / Unduh PDF
+            </button>
+        </div>
+    </header>
+
+    <!-- Status Banner Notice -->
+        <div class="status-banner verified no-print">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            <span><strong>CREW ACCESS TERDAFTAR RESMI:</strong> Kartu tanda pengenal panitia ini aktif dan telah terverifikasi resmi oleh panitia pusat OMATIQ.</span>
+        </div>
+        <span style="font-size: 11px; font-weight: 800; color: #047857; background: rgba(16, 185, 129, 0.2); padding: 3px 8px; border-radius: 6px;">
+            DIVISI: PANITIA PELAKSANA BABAK FINAL
+        </span>
+    </div>
+        
+    <!-- Cards Main Stage -->
+    <main class="cards-stage">
+
+        <!-- ================= 1. VIRTUAL 3D COMMITTEE PASS STAGE ================= -->
+        <div class="virtual-stage" id="virtualStage">
+
+            <!-- Lanyard Mount (Strap + Metallic Clasp) -->
+            <div class="lanyard-mount">
+                <div class="lanyard-strap"></div>
+                <div class="lanyard-clip"></div>
+            </div>
+
+            <!-- 3D Scene Viewport -->
+            <div class="card-3d-scene" id="card3dScene">
+                <div class="card-scale-container" id="cardScaleContainer">
+                    <div class="card-3d-flipper" id="cardFlipper">
+
+                        <!-- FRONT FACE -->
+                        <div class="card-face card-front-face">
+                            <div class="omatiq-card card-front">
+                                <!-- Punch slot for lanyard pass -->
+                                <div class="badge-punch-slot"></div>
+
+                                
+                                <!-- Centered Header YM Logo -->
+                                <div class="card-header-logo">
+                                    <img src="http://127.0.0.1:8000/assets/images/icon-omatiq.png" alt="Logo OMATIQ 2026" class="logo-omatiq">
+                                    <img src="http://127.0.0.1:8000/assets/images/icon-ym.png" alt="Yatim Mandiri" class="logo-ym">
+                                </div>
+
+                                <!-- Label Panitia (Vector Banner Typography) -->
+                                <div class="committee-badge-pill">Panitia</div>
+
+                                <!-- Official Title OMATIQ 2026 -->
+                                <div class="card-title-wrap">
+                                    <img src="http://127.0.0.1:8000/assets/images/Tulisan Omatiq Putih.png" class="card-title-img" alt="OMATIQ 2026">
+                                </div>
+
+                                <!-- Transparent Glass Data Box -->
+                                <div class="committee-data-box">
+                                    <!-- Mascots Peeking at Top-Right Corner Outside the Box -->
+                                    <div class="card-mascot-corner">
+                                        <img src="http://127.0.0.1:8000/assets/images/Zakki Amila Atas.png" class="card-mascot-img" alt="Zakki & Amila">
+                                    </div>
+
+                                    <div class="committee-name">KHOTIB</div>
+                                                                        <div class="committee-meta">
+                                        Anggota Panitia • Panitia Pelaksana Babak Final
+                                                                                <br><span class="committee-branch">PUSAT 1</span>
+                                                                            </div>
+                                                                        <div class="committee-id-badge">CREW-00053</div>
+
+                                    <div class="data-divider"></div>
+
+                                    <!-- HD Sponsors -->
+                                    <div class="card-sponsors-wrap">
+                                        <div class="sponsors-label">Supported by:</div>
+                                        <div class="sponsors-row sponsors-row-1">
+                                            <img src="http://127.0.0.1:8000/assets/images/sponsor/telkomsel.png" alt="Telkomsel" title="Telkomsel">
+                                            <img src="http://127.0.0.1:8000/assets/images/sponsor/telkom.png" alt="Telkom Indonesia" title="Telkom Indonesia">
+                                            <img src="http://127.0.0.1:8000/assets/images/sponsor/chickin.png" alt="Chickin" title="Chickin">
+                                            <img src="http://127.0.0.1:8000/assets/images/sponsor/bankaltimtara.png" alt="bankaltimtara" title="bankaltimtara">
+                                        </div>
+                                        <div class="sponsors-row sponsors-row-2">
+                                            <img src="http://127.0.0.1:8000/assets/images/sponsor/bankbjb.png" alt="bank bjb" title="bank bjb">
+                                            <img src="http://127.0.0.1:8000/assets/images/sponsor/ybmpln.png" alt="YBM PLN" title="YBM PLN">
+                                            <img src="http://127.0.0.1:8000/assets/images/sponsor/nurulhidayah.png" alt="Nurul Hidayah" title="Nurul Hidayah">
+                                            <img src="http://127.0.0.1:8000/assets/images/sponsor/linkaja.png" alt="LinkAja" title="LinkAja">
+                                            <img src="http://127.0.0.1:8000/assets/images/sponsor/linkaja-syariah.png" alt="LinkAja Syariah" title="LinkAja Syariah">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Official Website URL on Front -->
+                                <div class="card-front-web">www.omatiq.com</div>
+
+                                <!-- Specular Glare -->
+                                <div class="card-glare" id="cardGlareFront"></div>
+                            </div>
+                        </div>
+
+                        <!-- BACK FACE -->
+                        <div class="card-face card-back-face">
+                            <div class="omatiq-card card-back">
+                                <!-- Punch slot for lanyard pass -->
+                                <div class="badge-punch-slot"></div>
+
+                                <!-- Title OMATIQ 2026 -->
+                                <div class="card-back-title-wrap">
+                                    <img src="http://127.0.0.1:8000/assets/images/Tulisan Omatiq Putih.png" class="card-back-title-img" alt="OMATIQ 2026">
+                                </div>
+
+                                <!-- HD Mascots on Left & Right (Single Instance, Zero Double Image) -->
+                                <img src="http://127.0.0.1:8000/assets/images/Zakki Window Hi.png" class="mascot-back-zakki" alt="Zakki">
+                                <img src="http://127.0.0.1:8000/assets/images/Amila Window Hi.png" class="mascot-back-amila" alt="Amila">
+
+                                <!-- Centered QR Container -->
+                                <div class="committee-qr-box">
+                                    <div class="qr-svg-wrapper">
+                                        <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="380" height="380" viewBox="0 0 380 380"><rect x="0" y="0" width="380" height="380" fill="#ffffff"/><g transform="scale(12.258)"><g transform="translate(1,1)"><path fill-rule="evenodd" d="M8 0L8 2L10 2L10 4L8 4L8 9L7 9L7 8L5 8L5 10L4 10L4 9L3 9L3 8L0 8L0 9L1 9L1 10L0 10L0 11L1 11L1 10L2 10L2 9L3 9L3 11L2 11L2 13L1 13L1 14L0 14L0 15L1 15L1 17L3 17L3 18L0 18L0 19L4 19L4 16L6 16L6 17L5 17L5 19L7 19L7 20L4 20L4 21L7 21L7 20L8 20L8 19L7 19L7 18L6 18L6 17L8 17L8 18L9 18L9 19L10 19L10 18L11 18L11 19L14 19L14 20L13 20L13 21L14 21L14 22L15 22L15 23L14 23L14 25L13 25L13 26L12 26L12 24L11 24L11 23L13 23L13 22L12 22L12 20L11 20L11 21L10 21L10 22L9 22L9 21L8 21L8 22L9 22L9 23L8 23L8 24L9 24L9 26L8 26L8 29L12 29L12 28L11 28L11 27L14 27L14 29L15 29L15 28L16 28L16 29L17 29L17 27L18 27L18 29L19 29L19 26L21 26L21 27L20 27L20 29L21 29L21 27L22 27L22 25L24 25L24 27L23 27L23 28L25 28L25 29L26 29L26 27L25 27L25 26L27 26L27 27L29 27L29 24L27 24L27 25L26 25L26 24L25 24L25 22L27 22L27 21L28 21L28 23L29 23L29 21L28 21L28 20L27 20L27 21L26 21L26 20L25 20L25 19L26 19L26 18L28 18L28 19L29 19L29 16L28 16L28 17L26 17L26 18L24 18L24 16L22 16L22 15L23 15L23 14L24 14L24 15L25 15L25 14L24 14L24 13L23 13L23 12L24 12L24 11L25 11L25 12L26 12L26 11L27 11L27 10L28 10L28 11L29 11L29 8L27 8L27 10L24 10L24 9L25 9L25 8L21 8L21 5L20 5L20 8L19 8L19 10L18 10L18 9L16 9L16 8L17 8L17 6L18 6L18 7L19 7L19 3L18 3L18 2L17 2L17 1L16 1L16 2L15 2L15 4L14 4L14 2L13 2L13 1L15 1L15 0L11 0L11 1L9 1L9 0ZM18 0L18 1L19 1L19 0ZM11 1L11 2L12 2L12 1ZM20 2L20 4L21 4L21 2ZM11 3L11 4L12 4L12 6L11 6L11 5L9 5L9 8L10 8L10 6L11 6L11 7L12 7L12 6L13 6L13 8L14 8L14 9L12 9L12 8L11 8L11 10L9 10L9 9L8 9L8 10L7 10L7 9L6 9L6 10L5 10L5 11L4 11L4 12L3 12L3 14L4 14L4 13L6 13L6 14L7 14L7 13L6 13L6 12L7 12L7 11L8 11L8 12L9 12L9 11L10 11L10 13L8 13L8 15L6 15L6 16L8 16L8 17L10 17L10 16L12 16L12 18L14 18L14 19L15 19L15 20L14 20L14 21L15 21L15 20L17 20L17 23L15 23L15 24L16 24L16 25L18 25L18 26L19 26L19 24L18 24L18 21L19 21L19 23L20 23L20 19L21 19L21 20L22 20L22 19L24 19L24 18L22 18L22 17L20 17L20 16L18 16L18 14L19 14L19 12L18 12L18 11L17 11L17 10L16 10L16 11L15 11L15 12L14 12L14 10L15 10L15 8L16 8L16 6L17 6L17 3L16 3L16 4L15 4L15 8L14 8L14 6L13 6L13 5L14 5L14 4L13 4L13 3ZM21 9L21 10L22 10L22 12L20 12L20 13L22 13L22 12L23 12L23 10L22 10L22 9ZM6 10L6 11L5 11L5 12L6 12L6 11L7 11L7 10ZM8 10L8 11L9 11L9 10ZM11 10L11 15L12 15L12 16L13 16L13 17L14 17L14 16L13 16L13 15L12 15L12 10ZM13 12L13 13L14 13L14 15L15 15L15 16L16 16L16 17L15 17L15 19L16 19L16 18L17 18L17 19L18 19L18 20L19 20L19 19L20 19L20 17L19 17L19 18L17 18L17 14L18 14L18 13L17 13L17 12L16 12L16 13L14 13L14 12ZM28 12L28 13L27 13L27 14L28 14L28 15L29 15L29 12ZM1 14L1 15L2 15L2 14ZM20 14L20 15L21 15L21 14ZM8 15L8 16L10 16L10 15ZM0 20L0 21L3 21L3 20ZM21 21L21 24L24 24L24 21ZM10 22L10 23L9 23L9 24L10 24L10 25L11 25L11 24L10 24L10 23L11 23L11 22ZM22 22L22 23L23 23L23 22ZM14 25L14 27L15 27L15 25ZM10 26L10 27L9 27L9 28L10 28L10 27L11 27L11 26ZM16 26L16 27L17 27L17 26ZM28 28L28 29L29 29L29 28ZM0 0L0 7L7 7L7 0ZM1 1L1 6L6 6L6 1ZM2 2L2 5L5 5L5 2ZM29 0L22 0L22 7L29 7ZM28 1L23 1L23 6L28 6ZM27 2L24 2L24 5L27 5ZM0 29L7 29L7 22L0 22ZM1 28L6 28L6 23L1 23ZM2 27L5 27L5 24L2 24Z" fill="#09767a"/></g></g></svg>
+
+                                                                            </div>
+                                </div>
+
+                                <!-- Official Website URL -->
+                                <div class="card-back-web">www.omatiq.com</div>
+
+                                <!-- Specular Glare -->
+                                <div class="card-glare" id="cardGlareBack"></div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- Virtual Floating Controls Dock -->
+            <div class="virtual-controls-dock no-print">
+                <div class="side-switcher">
+                    <button type="button" class="side-pill active" id="pillFront" onclick="setCardSide(false)">
+                        <span class="side-pill-dot"></span>
+                        Sisi Depan
+                    </button>
+                    <button type="button" class="side-pill" id="pillBack" onclick="setCardSide(true)">
+                        <span class="side-pill-dot"></span>
+                        Sisi Belakang
+                    </button>
+                </div>
+
+                <button type="button" class="btn-flip-primary" onclick="toggleCardFlip()">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                    Balik Kartu
+                </button>
+
+                <div class="dock-divider"></div>
+
+                <div class="zoom-group">
+                    <button type="button" class="btn-zoom" onclick="adjustZoom(-0.1)" title="Zoom Out">-</button>
+                    <span class="zoom-badge" id="zoomBadge">100%</span>
+                    <button type="button" class="btn-zoom" onclick="adjustZoom(0.1)" title="Zoom In">+</button>
+                    <button type="button" class="btn-zoom" onclick="resetZoom()" title="Reset Skala">↺</button>
+                </div>
+            </div>
+
+            <div class="virtual-hint-chip no-print">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                Geser (Swipe) atau klik tombol Balik Kartu untuk melihat QR scanner verifikasi
+            </div>
+
+        </div>
+
+        <!-- ================= 2. PRINT SHEET PREVIEW (A4 Folding Pass) ================= -->
+        <div class="print-sheet" id="printSheet">
+
+            <!-- FRONT CARD (Left Side in Folding Layout) -->
+            <div class="cut-guide-border">
+                <div class="omatiq-card card-front">
+                    <!-- Punch slot for lanyard pass -->
+                    <div class="badge-punch-slot"></div>
+
+                    
+                    <!-- Centered Header YM Logo -->
+                    <div class="card-header-logo">
+                        <img src="http://127.0.0.1:8000/assets/images/icon-omatiq.png" alt="Logo OMATIQ 2026" class="logo-omatiq">
+                        <img src="http://127.0.0.1:8000/assets/images/icon-ym.png" alt="Yatim Mandiri" class="logo-ym">
+                    </div>
+
+                    <!-- Label Panitia (Vector Banner Typography) -->
+                    <div class="committee-badge-pill">Panitia</div>
+
+                    <!-- Official Title OMATIQ 2026 -->
+                    <div class="card-title-wrap">
+                        <img src="http://127.0.0.1:8000/assets/images/Tulisan Omatiq Putih.png" class="card-title-img" alt="OMATIQ 2026">
+                    </div>
+
+                    <!-- Transparent Glass Data Box -->
+                    <div class="committee-data-box">
+                        <!-- Mascots Peeking at Top-Right Corner Outside the Box -->
+                        <div class="card-mascot-corner">
+                            <img src="http://127.0.0.1:8000/assets/images/Zakki Amila Atas.png" class="card-mascot-img" alt="Zakki & Amila">
+                        </div>
+
+                        <div class="committee-name">KHOTIB</div>
+                                                <div class="committee-meta">
+                            Anggota Panitia • Panitia Pelaksana Babak Final
+                                                        <br><span class="committee-branch">PUSAT 1</span>
+                                                    </div>
+                                                <div class="committee-id-badge">CREW-00053</div>
+
+                        <div class="data-divider"></div>
+
+                        <!-- HD Sponsors -->
+                        <div class="card-sponsors-wrap">
+                            <div class="sponsors-label">Supported by:</div>
+                            <div class="sponsors-row sponsors-row-1">
+                                <img src="http://127.0.0.1:8000/assets/images/sponsor/telkomsel.png" alt="Telkomsel" title="Telkomsel">
+                                <img src="http://127.0.0.1:8000/assets/images/sponsor/telkom.png" alt="Telkom Indonesia" title="Telkom Indonesia">
+                                <img src="http://127.0.0.1:8000/assets/images/sponsor/chickin.png" alt="Chickin" title="Chickin">
+                                <img src="http://127.0.0.1:8000/assets/images/sponsor/bankaltimtara.png" alt="bankaltimtara" title="bankaltimtara">
+                            </div>
+                            <div class="sponsors-row sponsors-row-2">
+                                <img src="http://127.0.0.1:8000/assets/images/sponsor/bankbjb.png" alt="bank bjb" title="bank bjb">
+                                <img src="http://127.0.0.1:8000/assets/images/sponsor/ybmpln.png" alt="YBM PLN" title="YBM PLN">
+                                <img src="http://127.0.0.1:8000/assets/images/sponsor/nurulhidayah.png" alt="Nurul Hidayah" title="Nurul Hidayah">
+                                <img src="http://127.0.0.1:8000/assets/images/sponsor/linkaja.png" alt="LinkAja" title="LinkAja">
+                                <img src="http://127.0.0.1:8000/assets/images/sponsor/linkaja-syariah.png" alt="LinkAja Syariah" title="LinkAja Syariah">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Official Website URL on Front -->
+                    <div class="card-front-web">www.omatiq.com</div>
+                </div>
+            </div>
+
+            <!-- FOLD GUIDE DIVIDER -->
+            <div class="fold-divider">
+                <div class="fold-label">Garis Lipat Tengah</div>
+            </div>
+
+            <!-- BACK CARD (Right Side in Folding Layout) -->
+            <div class="cut-guide-border">
+                <div class="omatiq-card card-back">
+                    <!-- Punch slot for lanyard pass -->
+                    <div class="badge-punch-slot"></div>
+
+                    <!-- Title OMATIQ 2026 -->
+                    <div class="card-back-title-wrap">
+                        <img src="http://127.0.0.1:8000/assets/images/Tulisan Omatiq Putih.png" class="card-back-title-img" alt="OMATIQ 2026">
+                    </div>
+
+                    <!-- HD Mascots on Left & Right (Single Instance, Zero Double Image) -->
+                    <img src="http://127.0.0.1:8000/assets/images/Zakki Window Hi.png" class="mascot-back-zakki" alt="Zakki">
+                    <img src="http://127.0.0.1:8000/assets/images/Amila Window Hi.png" class="mascot-back-amila" alt="Amila">
+
+                    <!-- Centered QR Container -->
+                    <div class="committee-qr-box">
+                        <div class="qr-svg-wrapper">
+                            <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="380" height="380" viewBox="0 0 380 380"><rect x="0" y="0" width="380" height="380" fill="#ffffff"/><g transform="scale(12.258)"><g transform="translate(1,1)"><path fill-rule="evenodd" d="M8 0L8 2L10 2L10 4L8 4L8 9L7 9L7 8L5 8L5 10L4 10L4 9L3 9L3 8L0 8L0 9L1 9L1 10L0 10L0 11L1 11L1 10L2 10L2 9L3 9L3 11L2 11L2 13L1 13L1 14L0 14L0 15L1 15L1 17L3 17L3 18L0 18L0 19L4 19L4 16L6 16L6 17L5 17L5 19L7 19L7 20L4 20L4 21L7 21L7 20L8 20L8 19L7 19L7 18L6 18L6 17L8 17L8 18L9 18L9 19L10 19L10 18L11 18L11 19L14 19L14 20L13 20L13 21L14 21L14 22L15 22L15 23L14 23L14 25L13 25L13 26L12 26L12 24L11 24L11 23L13 23L13 22L12 22L12 20L11 20L11 21L10 21L10 22L9 22L9 21L8 21L8 22L9 22L9 23L8 23L8 24L9 24L9 26L8 26L8 29L12 29L12 28L11 28L11 27L14 27L14 29L15 29L15 28L16 28L16 29L17 29L17 27L18 27L18 29L19 29L19 26L21 26L21 27L20 27L20 29L21 29L21 27L22 27L22 25L24 25L24 27L23 27L23 28L25 28L25 29L26 29L26 27L25 27L25 26L27 26L27 27L29 27L29 24L27 24L27 25L26 25L26 24L25 24L25 22L27 22L27 21L28 21L28 23L29 23L29 21L28 21L28 20L27 20L27 21L26 21L26 20L25 20L25 19L26 19L26 18L28 18L28 19L29 19L29 16L28 16L28 17L26 17L26 18L24 18L24 16L22 16L22 15L23 15L23 14L24 14L24 15L25 15L25 14L24 14L24 13L23 13L23 12L24 12L24 11L25 11L25 12L26 12L26 11L27 11L27 10L28 10L28 11L29 11L29 8L27 8L27 10L24 10L24 9L25 9L25 8L21 8L21 5L20 5L20 8L19 8L19 10L18 10L18 9L16 9L16 8L17 8L17 6L18 6L18 7L19 7L19 3L18 3L18 2L17 2L17 1L16 1L16 2L15 2L15 4L14 4L14 2L13 2L13 1L15 1L15 0L11 0L11 1L9 1L9 0ZM18 0L18 1L19 1L19 0ZM11 1L11 2L12 2L12 1ZM20 2L20 4L21 4L21 2ZM11 3L11 4L12 4L12 6L11 6L11 5L9 5L9 8L10 8L10 6L11 6L11 7L12 7L12 6L13 6L13 8L14 8L14 9L12 9L12 8L11 8L11 10L9 10L9 9L8 9L8 10L7 10L7 9L6 9L6 10L5 10L5 11L4 11L4 12L3 12L3 14L4 14L4 13L6 13L6 14L7 14L7 13L6 13L6 12L7 12L7 11L8 11L8 12L9 12L9 11L10 11L10 13L8 13L8 15L6 15L6 16L8 16L8 17L10 17L10 16L12 16L12 18L14 18L14 19L15 19L15 20L14 20L14 21L15 21L15 20L17 20L17 23L15 23L15 24L16 24L16 25L18 25L18 26L19 26L19 24L18 24L18 21L19 21L19 23L20 23L20 19L21 19L21 20L22 20L22 19L24 19L24 18L22 18L22 17L20 17L20 16L18 16L18 14L19 14L19 12L18 12L18 11L17 11L17 10L16 10L16 11L15 11L15 12L14 12L14 10L15 10L15 8L16 8L16 6L17 6L17 3L16 3L16 4L15 4L15 8L14 8L14 6L13 6L13 5L14 5L14 4L13 4L13 3ZM21 9L21 10L22 10L22 12L20 12L20 13L22 13L22 12L23 12L23 10L22 10L22 9ZM6 10L6 11L5 11L5 12L6 12L6 11L7 11L7 10ZM8 10L8 11L9 11L9 10ZM11 10L11 15L12 15L12 16L13 16L13 17L14 17L14 16L13 16L13 15L12 15L12 10ZM13 12L13 13L14 13L14 15L15 15L15 16L16 16L16 17L15 17L15 19L16 19L16 18L17 18L17 19L18 19L18 20L19 20L19 19L20 19L20 17L19 17L19 18L17 18L17 14L18 14L18 13L17 13L17 12L16 12L16 13L14 13L14 12ZM28 12L28 13L27 13L27 14L28 14L28 15L29 15L29 12ZM1 14L1 15L2 15L2 14ZM20 14L20 15L21 15L21 14ZM8 15L8 16L10 16L10 15ZM0 20L0 21L3 21L3 20ZM21 21L21 24L24 24L24 21ZM10 22L10 23L9 23L9 24L10 24L10 25L11 25L11 24L10 24L10 23L11 23L11 22ZM22 22L22 23L23 23L23 22ZM14 25L14 27L15 27L15 25ZM10 26L10 27L9 27L9 28L10 28L10 27L11 27L11 26ZM16 26L16 27L17 27L17 26ZM28 28L28 29L29 29L29 28ZM0 0L0 7L7 7L7 0ZM1 1L1 6L6 6L6 1ZM2 2L2 5L5 5L5 2ZM29 0L22 0L22 7L29 7ZM28 1L23 1L23 6L28 6ZM27 2L24 2L24 5L27 5ZM0 29L7 29L7 22L0 22ZM1 28L6 28L6 23L1 23ZM2 27L5 27L5 24L2 24Z" fill="#09767a"/></g></g></svg>
+
+                                                    </div>
+                    </div>
+
+                    <!-- Official Website URL -->
+                    <div class="card-back-web">www.omatiq.com</div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Print Instructions Panel -->
+        <div class="print-instructions no-print" id="printInstructions">
+            <div class="inst-title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                Petunjuk Cetak Lembar Kartu Panitia (A4 Pass):
+            </div>
+            <ol class="inst-list">
+                <li>Gunakan kertas A4 tebal berjenis <strong>Brief Card (BC), Karton Concorde, atau Art Paper 210-260 gsm</strong> untuk ketahanan maksimal.</li>
+                <li>Pada dialog cetak browser (<code>Ctrl + P</code> / <code>Cmd + P</code>), pilih ukuran kertas <strong>A4</strong> dengan orientasi <strong>Portrait</strong>.</li>
+                <li>Atur margin ke <strong>None / Minimum</strong> dan pastikan opsi <strong>Background Graphics (Grafis Latar Belakang) dicentang</strong>.</li>
+                <li>Setel Scale / Skala ke <strong>100% (Default)</strong> agar dimensi kartu presisi 86 mm × 136.5 mm per sisi.</li>
+                <li>Gunting mengikuti garis putus-putus luar, lalu lipat tepat pada garis tengah untuk dimasukkan ke dalam plastik mika ID Pass Lanyard panitia.</li>
+            </ol>
+        </div>
+
+    </main>
+
+        <script>
+        (function() {
+            // State
+            let isFlipped = false;
+            let currentZoom = 1.0;
+            let baseScale = 1.0;
+            let isDragging = false;
+            let startX = 0;
+            let startY = 0;
+            let currentRotateX = 0;
+            let currentRotateY = 0;
+            let targetRotateX = 0;
+            let targetRotateY = 0;
+            let touchStartX = 0;
+            let touchStartY = 0;
+            let lastTouchFlipTime = 0;
+
+            const flipper = document.getElementById('cardFlipper');
+            const scaleContainer = document.getElementById('cardScaleContainer');
+            const scene = document.getElementById('card3dScene');
+            const glareFront = document.getElementById('cardGlareFront');
+            const glareBack = document.getElementById('cardGlareBack');
+            const pillFront = document.getElementById('pillFront');
+            const pillBack = document.getElementById('pillBack');
+            const zoomBadge = document.getElementById('zoomBadge');
+            const virtualStage = document.getElementById('virtualStage');
+            const printSheet = document.getElementById('printSheet');
+            const printInstructions = document.getElementById('printInstructions');
+            const btnModeVirtual = document.getElementById('btnModeVirtual');
+            const btnModePrint = document.getElementById('btnModePrint');
+
+            // Responsive auto-scaler for mobile devices
+            function updateResponsiveScale() {
+                if (!scaleContainer) return;
+                const viewportWidth = window.innerWidth;
+                const horizontalPadding = 32;
+                const availableWidth = viewportWidth - horizontalPadding;
+                const cardWidth = 372;
+
+                if (availableWidth < cardWidth) {
+                    baseScale = Math.max(0.68, availableWidth / cardWidth);
+                } else {
+                    baseScale = 1.0;
+                }
+                applyTransform();
+            }
+
+            function applyTransform() {
+                if (!scaleContainer) return;
+                const effectiveScale = baseScale * currentZoom;
+                scaleContainer.style.transform = 'scale(' + effectiveScale + ')';
+                if (zoomBadge) {
+                    zoomBadge.textContent = Math.round(currentZoom * 100) + '%';
+                }
+            }
+
+            // Public Toggle Functions
+            window.toggleCardFlip = function() {
+                isFlipped = !isFlipped;
+                syncFlipState();
+            };
+
+            window.setCardSide = function(flipToBack) {
+                isFlipped = flipToBack;
+                syncFlipState();
+            };
+
+            function syncFlipState() {
+                if (!flipper) return;
+                if (isFlipped) {
+                    flipper.classList.add('is-flipped');
+                    if (pillBack) pillBack.classList.add('active');
+                    if (pillFront) pillFront.classList.remove('active');
+                } else {
+                    flipper.classList.remove('is-flipped');
+                    if (pillFront) pillFront.classList.add('active');
+                    if (pillBack) pillBack.classList.remove('active');
+                }
+            }
+
+            window.adjustZoom = function(delta) {
+                currentZoom = Math.min(1.5, Math.max(0.6, currentZoom + delta));
+                applyTransform();
+            };
+
+            window.resetZoom = function() {
+                currentZoom = 1.0;
+                applyTransform();
+            };
+
+            window.switchViewMode = function(mode) {
+                if (mode === 'virtual') {
+                    if (virtualStage) virtualStage.style.display = 'flex';
+                    if (printSheet) printSheet.classList.remove('is-visible');
+                    if (printInstructions) printInstructions.classList.remove('is-visible');
+                    if (btnModeVirtual) btnModeVirtual.classList.add('active');
+                    if (btnModePrint) btnModePrint.classList.remove('active');
+                    updateResponsiveScale();
+                } else {
+                    if (virtualStage) virtualStage.style.display = 'none';
+                    if (printSheet) printSheet.classList.add('is-visible');
+                    if (printInstructions) printInstructions.classList.add('is-visible');
+                    if (btnModeVirtual) btnModeVirtual.classList.remove('active');
+                    if (btnModePrint) btnModePrint.classList.add('active');
+                }
+            };
+
+            // Parallax Tilt & Specular Shine on Mouse Move
+            if (scene) {
+                scene.addEventListener('mousemove', function(e) {
+                    const rect = scene.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    const centerX = rect.width / 2;
+                    const centerY = rect.height / 2;
+
+                    // Calculate tilt angles (-12deg to 12deg)
+                    targetRotateY = ((x - centerX) / centerX) * 12;
+                    targetRotateX = -((y - centerY) / centerY) * 12;
+
+                    // Specular Glare position
+                    const activeGlare = isFlipped ? glareBack : glareFront;
+                    if (activeGlare) {
+                        const px = (x / rect.width) * 100;
+                        const py = (y / rect.height) * 100;
+                        activeGlare.style.opacity = '0.55';
+                        activeGlare.style.background = 'radial-gradient(circle at ' + px + '% ' + py + '%, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 65%)';
+                    }
+                });
+
+                scene.addEventListener('mouseleave', function() {
+                    targetRotateX = 0;
+                    targetRotateY = 0;
+                    if (glareFront) glareFront.style.opacity = '0';
+                    if (glareBack) glareBack.style.opacity = '0';
+                });
+
+                // Mobile Swipe & Tap Gestures with Debounce
+                scene.addEventListener('touchstart', function(e) {
+                    touchStartX = e.touches[0].clientX;
+                    touchStartY = e.touches[0].clientY;
+                }, { passive: true });
+
+                scene.addEventListener('touchend', function(e) {
+                    const touchEndX = e.changedTouches[0].clientX;
+                    const touchEndY = e.changedTouches[0].clientY;
+                    const deltaX = touchEndX - touchStartX;
+                    const deltaY = touchEndY - touchStartY;
+
+                    // Horizontal swipe detected
+                    if (Math.abs(deltaX) > 40 && Math.abs(deltaX) > Math.abs(deltaY)) {
+                        lastTouchFlipTime = Date.now();
+                        toggleCardFlip();
+                    } else if (Math.abs(deltaX) < 10 && Math.abs(deltaY) < 10) {
+                        // Quick tap on card flips it
+                        lastTouchFlipTime = Date.now();
+                        toggleCardFlip();
+                    }
+                }, { passive: true });
+
+                // Click on card flipper to flip (debounced to avoid duplicate trigger after touch)
+                scene.addEventListener('click', function(e) {
+                    if (Date.now() - lastTouchFlipTime < 650) return;
+                    toggleCardFlip();
+                });
+            }
+
+            // Smooth Interpolation Loop for Tilt Physics
+            function renderTilt() {
+                currentRotateX += (targetRotateX - currentRotateX) * 0.12;
+                currentRotateY += (targetRotateY - currentRotateY) * 0.12;
+
+                if (flipper) {
+                    const flipBase = isFlipped ? 180 : 0;
+                    const totalY = flipBase + (isFlipped ? -currentRotateY : currentRotateY);
+                    flipper.style.transform = 'rotateX(' + currentRotateX.toFixed(2) + 'deg) rotateY(' + totalY.toFixed(2) + 'deg)';
+                }
+                requestAnimationFrame(renderTilt);
+            }
+            renderTilt();
+
+            // Auto-scale on load and resize
+            window.addEventListener('resize', updateResponsiveScale);
+            window.addEventListener('orientationchange', function() {
+                setTimeout(updateResponsiveScale, 200);
+            });
+            updateResponsiveScale();
+
+            // Font-size auto-shrinker for long names
+            const nameEl = document.querySelector('.committee-name');
+            if (nameEl && nameEl.textContent.trim().length > 18) {
+                const len = nameEl.textContent.trim().length;
+                if (len > 25) {
+                    nameEl.style.fontSize = '16px';
+                } else {
+                    nameEl.style.fontSize = '18.5px';
+                }
+            }
+        })();
+    </script>
+    
+</body>
+</html>

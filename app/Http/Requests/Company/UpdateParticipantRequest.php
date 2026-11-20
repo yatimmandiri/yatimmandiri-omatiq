@@ -53,6 +53,7 @@ class UpdateParticipantRequest extends FormRequest
             'participant_signature_name' => ['nullable', 'string', 'max:255'],
             'guardian_signature_name' => ['nullable', 'string', 'max:255'],
             'status' => ['required', Rule::in(['submitted', 'verified', 'rejected'])],
+            'social_status' => ['nullable', 'string', Rule::in(['yatim', 'yatim_piatu', 'dhuafa', 'umum'])],
             'notes' => ['nullable', 'string'],
             'is_national_qualified' => ['nullable', 'boolean'],
             'national_shirt_size' => ['nullable', 'string', Rule::in(['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'])],

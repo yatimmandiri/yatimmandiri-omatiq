@@ -1,22 +1,29 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     AlertTriangle,
     Award,
     BadgeCheck,
     Building2,
     Calendar,
+    Camera,
+    CameraOff,
     Check,
     CheckCircle2,
     Clock,
+    Coffee,
     Copy,
     Crown,
     ExternalLink,
     GraduationCap,
     Home,
+    Info,
+    Mail,
     MapPin,
     Phone,
     Printer,
     QrCode,
+    RefreshCw,
+    RotateCcw,
     Search,
     ShieldAlert,
     ShieldCheck,
@@ -25,8 +32,35 @@ import {
     User,
     UserCheck,
     Users,
+    Utensils,
+    X,
 } from 'lucide-react';
 import { FormEvent, useEffect, useRef, useState } from 'react';
+import { Html5Qrcode } from 'html5-qrcode';
+import { confirmAction } from '@/utils/sweetalert';
+
+type ConsumptionLog = {
+    id: number;
+    session_number?: number | null;
+    redeemed_at: string;
+    redeemed_time?: string;
+    verifier_name: string;
+    notes?: string | null;
+};
+
+type ConsumptionData = {
+    remaining: number;
+    count: number;
+    max: number;
+    can_redeem: boolean;
+    reason: 'ready' | 'cooldown' | 'exhausted';
+    next_session?: number | null;
+    message?: string | null;
+    last_redeemed_time?: string | null;
+    next_available_time?: string | null;
+    minutes_left?: number | null;
+    logs: ConsumptionLog[];
+};
 
 type ParticipantEntity = {
     id: number;
@@ -37,6 +71,7 @@ type ParticipantEntity = {
     branch?: string | null;
     penyaluran_sanggar_name?: string | null;
     guardian_name?: string | null;
+    consumption?: ConsumptionData;
     olimpiade?: {
         id?: number;
         name?: string;
@@ -81,6 +116,7 @@ type ChaperoneEntity = {
     verifier_name?: string;
     province_name?: string | null;
     regency_name?: string | null;
+    consumption?: ConsumptionData;
     participants_count: number;
     participants: Array<{
         id: number;
@@ -115,6 +151,8 @@ type CommitteeEntity = {
     notes?: string | null;
     event_year: number;
     checked_in_at?: string | null;
+    checked_in_time?: string | null;
+    is_checked_in_today?: boolean;
     has_user_account?: boolean;
 };
 
@@ -134,6 +172,8 @@ type GuestEntity = {
     notes?: string | null;
     event_year: number;
     checked_in_at?: string | null;
+    checked_in_time?: string | null;
+    is_checked_in_today?: boolean;
 };
 
 type VerifyProps = {
@@ -143,6 +183,8 @@ type VerifyProps = {
     isValid: boolean;
     isFirstCheckIn?: boolean;
     entity?: any;
+    isAdministrator?: boolean;
+    currentMode?: 'access' | 'consumption';
     // Backward-compat props
     queryRegistrationNumber?: string | null;
     participant?: ParticipantEntity | null;
@@ -151,6 +193,234 @@ type VerifyProps = {
     guest?: GuestEntity | null;
 };
 
+function ConsumptionCard({
+    consumption,
+    entityName,
+    isAdministrator,
+    isProcessing,
+    onRedeem,
+    onReset,
+    theme = 'emerald',
+}: {
+    consumption: ConsumptionData;
+    entityName: string;
+    isAdministrator: boolean;
+    isProcessing: boolean;
+    onRedeem: (force?: boolean) => void;
+    onReset: () => void;
+    theme?: 'emerald' | 'teal';
+}) {
+    const isEmerald = theme === 'emerald';
+    const lightBg = isEmerald ? 'bg-emerald-50/50' : 'bg-teal-50/50';
+
+    const sessionNames = ['Makan Pagi', 'Makan Siang', 'Makan Malam'];
+
+    return (
+        <div className={`mt-6 rounded-3xl border-2 ${isEmerald ? 'border-emerald-500/30' : 'border-teal-500/30'} ${lightBg} p-5 sm:p-6 shadow-sm`}>
+            {/* Header info */}
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-3">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/80">
+                        <Utensils className="h-5 w-5 text-[#17524A]" />
+                    </div>
+                    <div>
+                        <h4 className="text-base font-black text-slate-900 sm:text-lg">
+                            Jatah Konsumsi Harian
+                        </h4>
+                        <p className="text-xs text-slate-500">
+                            3x Makan / Hari (Pagi, Siang, Malam) &bull; Reset otomatis 00:00 WIB
+                        </p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-2">
+                    <span
+                        className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-black shadow-sm ${
+                            consumption.remaining > 0
+                                ? 'bg-[#17524A] text-white'
+                                : 'bg-slate-300 text-slate-700'
+                        }`}
+                    >
+                        {consumption.remaining > 0 ? (
+                            <>
+                                <span className="h-2 w-2 rounded-full bg-[#FFE600] animate-pulse" />
+                                Sisa: {consumption.remaining} dari {consumption.max} Porsi
+                            </>
+                        ) : (
+                            'Selesai (3/3 Porsi)'
+                        )}
+                    </span>
+                </div>
+            </div>
+
+            {/* 3x Portion Visual Status Cards */}
+            <div className="mt-5 grid grid-cols-3 gap-2.5 sm:gap-3.5">
+                {[1, 2, 3].map((num) => {
+                    const log = consumption.logs?.find((l: ConsumptionLog) => l.session_number === num) || consumption.logs?.[num - 1];
+                    const isTaken = num <= consumption.count;
+                    const isNext = num === (consumption.count + 1);
+
+                    return (
+                        <div
+                            key={num}
+                            className={`relative flex flex-col justify-between rounded-2xl border p-3 sm:p-4 text-center transition ${
+                                isTaken
+                                    ? 'border-emerald-300 bg-emerald-100/70 text-emerald-950 shadow-sm'
+                                    : isNext
+                                    ? 'border-amber-300 bg-white ring-2 ring-amber-400/50 shadow-sm'
+                                    : 'border-slate-200/80 bg-white/70 text-slate-400'
+                            }`}
+                        >
+                            <div>
+                                <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">
+                                    {sessionNames[num - 1] || `Sesi ${num}`}
+                                </span>
+                                <h5 className="mt-0.5 text-xs sm:text-sm font-black">
+                                    Porsi {num}
+                                </h5>
+                            </div>
+
+                            <div className="my-2 flex justify-center">
+                                {isTaken ? (
+                                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-600 text-white shadow-sm">
+                                        <Check className="h-4 w-4 stroke-[3]" />
+                                    </div>
+                                ) : isNext ? (
+                                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-100 text-amber-700 ring-1 ring-amber-300">
+                                        <Utensils className="h-4 w-4" />
+                                    </div>
+                                ) : (
+                                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-300">
+                                        <Clock className="h-4 w-4" />
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="text-[11px] font-bold">
+                                {isTaken ? (
+                                    <span className="text-emerald-800">
+                                        {log?.redeemed_at ? `${log.redeemed_at} WIB` : 'Sudah Diambil'}
+                                    </span>
+                                ) : isNext ? (
+                                    <span className="text-amber-700 font-extrabold">Giliran Berikutnya</span>
+                                ) : (
+                                    <span className="text-slate-400">Belum Diambil</span>
+                                )}
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+
+            {/* COOLDOWN / EXHAUSTED STATES */}
+            <div className="mt-5 space-y-3">
+                {/* 1. Kondisi Jeda 2 Jam (Anti Fraud / Duplikasi) */}
+                {consumption.reason === 'cooldown' && (
+                    <div className="rounded-2xl border-2 border-amber-300 bg-amber-50 p-4 sm:p-5 text-amber-950 shadow-sm">
+                        <div className="flex items-start gap-3">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-200 text-amber-800">
+                                <Clock className="h-5 w-5" />
+                            </div>
+                            <div className="flex-1">
+                                <h5 className="text-sm font-black text-amber-900 uppercase tracking-wide">
+                                    ⏳ Jeda Waktu Makan Aktif (Anti-Duplikasi Barcode)
+                                </h5>
+                                <p className="mt-1 text-xs leading-relaxed text-amber-800">
+                                    Porsi ke-{consumption.count} baru saja diambil pukul{' '}
+                                    <span className="font-extrabold underline">{consumption.last_redeemed_time} WIB</span>.
+                                    Untuk mencegah pemakaian ganda oleh pihak lain, sesi berikutnya (Porsi ke-{consumption.next_session})
+                                    baru dapat diambil mulai pukul{' '}
+                                    <span className="font-extrabold underline text-amber-900">{consumption.next_available_time} WIB</span>{' '}
+                                    (jeda 2 jam &bull; &plusmn;{consumption.minutes_left} menit lagi).
+                                </p>
+
+                                <div className="mt-3 flex flex-wrap items-center gap-2">
+                                    <div className="inline-flex items-center gap-1.5 rounded-xl bg-amber-200/80 px-3 py-1.5 text-xs font-bold text-amber-900">
+                                        <Clock className="h-3.5 w-3.5" />
+                                        Tersedia Kembali Pukul {consumption.next_available_time} WIB
+                                    </div>
+
+                                    {isAdministrator && (
+                                        <button
+                                            type="button"
+                                            onClick={() => onRedeem(true)}
+                                            disabled={isProcessing}
+                                            className="inline-flex items-center gap-1 rounded-xl bg-rose-600 px-3 py-1.5 text-xs font-black text-white hover:bg-rose-700 transition"
+                                            title="Bypass jeda khusus jika disetujui panitia/admin"
+                                        >
+                                            <ShieldAlert className="h-3.5 w-3.5" />
+                                            Bypass Jeda Sesi (Khusus Admin)
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* 3. Kondisi Jatah Habis (exhausted) */}
+                {consumption.reason === 'exhausted' && (
+                    <div className="flex items-center gap-3.5 rounded-2xl border-2 border-emerald-300 bg-emerald-100/60 p-4 sm:p-5 text-emerald-950">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white">
+                            <CheckCircle2 className="h-6 w-6" />
+                        </div>
+                        <div>
+                            <h5 className="text-sm font-black text-emerald-900 uppercase">
+                                ✅ Seluruh Jatah Konsumsi Hari Ini Lengkap (3/3 Porsi)
+                            </h5>
+                            <p className="mt-0.5 text-xs text-emerald-800">
+                                {entityName} telah mengambil semua 3 porsi makan hari ini. Jatah baru akan otomatis tersedia besok pagi pukul 00:00 WIB.
+                            </p>
+                        </div>
+                    </div>
+                )}
+
+                {/* Admin Reset Button */}
+                {isAdministrator && (
+                    <div className="flex justify-end pt-1">
+                        <button
+                            type="button"
+                            onClick={onReset}
+                            disabled={isProcessing}
+                            className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-600 hover:text-rose-800 hover:underline transition"
+                        >
+                            <RotateCcw className="h-3.5 w-3.5" />
+                            Reset Kuota Hari Ini (Admin Saja)
+                        </button>
+                    </div>
+                )}
+            </div>
+
+            {/* Riwayat Log Pengambilan Hari Ini */}
+            {consumption.logs && consumption.logs.length > 0 && (
+                <div className="mt-5 border-t border-slate-200/80 pt-4">
+                    <h5 className="text-xs font-black uppercase tracking-wider text-slate-500">
+                        Riwayat Pengambilan Hari Ini:
+                    </h5>
+                    <ul className="mt-2 space-y-2">
+                        {consumption.logs.map((log: ConsumptionLog) => (
+                            <li
+                                key={log.id}
+                                className="flex flex-wrap items-center justify-between rounded-xl bg-white px-3.5 py-2 text-xs border border-slate-100 shadow-xs"
+                            >
+                                <div className="flex items-center gap-2 font-bold text-slate-800">
+                                    <span className="rounded-md bg-emerald-50 px-2 py-0.5 text-[11px] font-black text-emerald-800 border border-emerald-200">
+                                        Porsi {log.session_number}
+                                    </span>
+                                    <span>Pukul {log.redeemed_at} WIB</span>
+                                </div>
+                                <div className="text-slate-500 text-[11px]">
+                                    Petugas: <span className="font-semibold text-slate-700">{log.verifier_name}</span>
+                                    {log.notes && <span className="ml-1 text-slate-400">({log.notes})</span>}
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
+        </div>
+    );
+}
+
 export default function UniversalVerifyPage({
     pageTitle,
     queryCode,
@@ -158,16 +428,26 @@ export default function UniversalVerifyPage({
     isValid,
     isFirstCheckIn,
     entity,
+    isAdministrator = false,
     queryRegistrationNumber,
     participant: propParticipant,
     chaperone: propChaperone,
     committee: propCommittee,
     guest: propGuest,
 }: VerifyProps) {
+    const { flash } = usePage().props as unknown as { flash?: { success?: string | null; error?: string | null; info?: string | null } };
     const activeCode = queryCode ?? queryRegistrationNumber ?? '';
     const [searchQuery, setSearchQuery] = useState(activeCode);
     const [copied, setCopied] = useState(false);
+    const [isCameraActive, setIsCameraActive] = useState(false);
+    const [cameraError, setCameraError] = useState<string | null>(null);
+    const [isProcessingAction, setIsProcessingAction] = useState(false);
+    const [scanCooldownCountdown, setScanCooldownCountdown] = useState<number>(0);
+
     const searchInputRef = useRef<HTMLInputElement>(null);
+    const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
+    const isScanLockedRef = useRef(false);
+    const scannerContainerId = 'venue-qr-reader';
 
     // Resolve active persona & data
     const resolvedPersona = persona ?? (
@@ -236,11 +516,51 @@ export default function UniversalVerifyPage({
         searchInputRef.current?.select();
     }, [activeCode, isValid, isFirstCheckIn]);
 
+    // Clean up camera on unmount
+    useEffect(() => {
+        return () => {
+            if (html5QrCodeRef.current && html5QrCodeRef.current.isScanning) {
+                html5QrCodeRef.current.stop().catch(() => {}).finally(() => {
+                    html5QrCodeRef.current?.clear();
+                });
+            }
+        };
+    }, []);
+
+    // Extract code from full URLs (e.g., https://omatiq.com/verifikasi/OMQ-20261104-0005) or raw text
+    const extractCode = (rawText: string): string => {
+        const text = rawText.trim();
+
+        try {
+            if (text.startsWith('http://') || text.startsWith('https://')) {
+                const url = new URL(text);
+                const pathParts = url.pathname.split('/').filter(Boolean);
+
+                if (pathParts.length > 0) {
+                    return decodeURIComponent(pathParts[pathParts.length - 1]);
+                }
+            }
+        } catch {
+            // Fallback to text
+        }
+
+        return text;
+    };
+
+    const navigateToCode = (code: string) => {
+        const cleanCode = extractCode(code);
+        
+        if (!cleanCode) return;
+
+        const url = `/verifikasi/${encodeURIComponent(cleanCode)}`;
+        router.get(url, {}, { preserveScroll: true });
+    };
+
     const handleSearch = (e: FormEvent) => {
         e.preventDefault();
         const trimmed = searchQuery.trim();
         if (trimmed) {
-            router.get(`/verifikasi/${encodeURIComponent(trimmed)}`);
+            navigateToCode(trimmed);
         }
     };
 
@@ -252,11 +572,155 @@ export default function UniversalVerifyPage({
         }
     };
 
+    // Toggle Camera Scanner
+    const toggleCameraScanner = async () => {
+        if (isCameraActive) {
+            // Stop scanning
+            if (html5QrCodeRef.current && html5QrCodeRef.current.isScanning) {
+                try {
+                    await html5QrCodeRef.current.stop();
+                    html5QrCodeRef.current.clear();
+                } catch (err) {
+                    console.error('Error stopping QR scanner:', err);
+                }
+            }
+            setIsCameraActive(false);
+            setCameraError(null);
+            return;
+        }
+
+        // Start scanning
+        setCameraError(null);
+        setIsCameraActive(true);
+
+        // Give React a tick to mount container
+        setTimeout(async () => {
+            try {
+                const qrScanner = new Html5Qrcode(scannerContainerId);
+                html5QrCodeRef.current = qrScanner;
+
+                const config = {
+                    fps: 10,
+                    qrbox: { width: 250, height: 250 },
+                    aspectRatio: 1.0,
+                };
+
+                await qrScanner.start(
+                    { facingMode: 'environment' },
+                    config,
+                    (decodedText) => {
+                        // Success callback
+                        const detected = extractCode(decodedText);
+                        if (!detected) return;
+
+                        // Cegah multi-frame burst saat kartu masih berada di depan kamera
+                        if (isScanLockedRef.current) return;
+
+                        isScanLockedRef.current = true;
+                        setScanCooldownCountdown(3);
+                        setSearchQuery(detected);
+                        navigateToCode(detected);
+
+                        let secondsLeft = 3;
+                        const interval = setInterval(() => {
+                            secondsLeft -= 1;
+                            setScanCooldownCountdown(secondsLeft);
+                            if (secondsLeft <= 0) {
+                                clearInterval(interval);
+                                isScanLockedRef.current = false;
+                                setScanCooldownCountdown(0);
+                            }
+                        }, 1000);
+                    },
+                    () => {
+                        // Frame scan error / no QR detected, ignore frame failures
+                    }
+                );
+            } catch (err: any) {
+                console.error('Failed to start camera:', err);
+                setCameraError(err?.message || 'Tidak dapat mengakses kamera. Pastikan izin kamera telah diberikan di peramban.');
+                setIsCameraActive(false);
+            }
+        }, 100);
+    };
+
+    // Redeem consumption (manual button)
+    const handleRedeemConsumption = (force: boolean = false) => {
+        if (!activeEntity?.id || !resolvedPersona) return;
+        setIsProcessingAction(true);
+        router.post(
+            '/verifikasi/consumption/redeem',
+            {
+                type: resolvedPersona,
+                id: activeEntity.id,
+                force: force,
+                notes: 'Pengambilan konsumsi verifikator gate',
+            },
+            {
+                preserveScroll: true,
+                onFinish: () => setIsProcessingAction(false),
+            }
+        );
+    };
+
+    // Reset daily consumption (Admin only)
+    const handleResetConsumption = async () => {
+        if (!activeEntity?.id || !resolvedPersona) return;
+
+        const confirmed = await confirmAction({
+            title: 'Reset Kuota Konsumsi?',
+            text: `Kuota konsumsi hari ini untuk ${activeEntity.student?.full_name || activeEntity.name} akan dikembalikan menjadi 3 porsi.`,
+            confirmButtonText: 'Ya, Reset Kuota',
+            cancelButtonText: 'Batal',
+            icon: 'warning',
+        });
+
+        if (!confirmed) return;
+
+        setIsProcessingAction(true);
+        router.post(
+            '/verifikasi/consumption/reset',
+            {
+                type: resolvedPersona,
+                id: activeEntity.id,
+            },
+            {
+                preserveScroll: true,
+                onFinish: () => setIsProcessingAction(false),
+            }
+        );
+    };
+
+    // Reset VIP Guest Check-in (Admin only)
+    const handleResetGuestCheckIn = async () => {
+        if (!activeEntity?.id) return;
+
+        const confirmed = await confirmAction({
+            title: 'Reset Kehadiran Tamu?',
+            text: `Status check-in tamu VIP ${activeEntity.name} akan dikembalikan menjadi belum check-in hari ini.`,
+            confirmButtonText: 'Ya, Reset Check-in',
+            cancelButtonText: 'Batal',
+            icon: 'warning',
+        });
+
+        if (!confirmed) return;
+
+        setIsProcessingAction(true);
+        router.post(
+            `/verifikasi/guest/${activeEntity.id}/reset-checkin`,
+            {},
+            {
+                preserveScroll: true,
+                onFinish: () => setIsProcessingAction(false),
+            }
+        );
+    };
+
     return (
         <>
             <Head title={pageTitle || 'Universal Gate Terminal OMATIQ'} />
 
-            <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-[#f0fdf4] via-[#f8fafc] to-[#ffffff] px-4 pt-28 pb-24 sm:px-6 lg:px-8">
+            <div className={`relative min-h-screen overflow-hidden bg-gradient-to-b from-[#f0fdf4] via-[#f8fafc] to-[#ffffff] px-4 pt-24 ${activeEntity?.consumption ? 'pb-36 sm:pb-32' : 'pb-24'} sm:px-6 lg:px-8`}>
                 {/* Background ambient lighting */}
                 <div className="pointer-events-none absolute -top-20 left-1/2 h-[500px] w-[500px] -translate-x-1/2 rounded-full bg-[#17524A]/10 blur-3xl sm:w-[800px]" />
                 <div className="pointer-events-none absolute top-1/3 -right-20 h-72 w-72 rounded-full bg-[#FFE600]/15 blur-3xl" />
@@ -277,17 +741,104 @@ export default function UniversalVerifyPage({
                         </p>
                     </div>
 
-                    {/* Scanner Input Terminal (Optimized for USB Cashier Barcode Guns) */}
+                    {/* Flash Message Banner */}
+                    {flash?.success && (
+                        <div className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-900 shadow-sm">
+                            <div className="flex items-center gap-2">
+                                <CheckCircle2 className="size-5 shrink-0 text-emerald-600" />
+                                <span>{flash.success}</span>
+                            </div>
+                        </div>
+                    )}
+                    {flash?.error && (
+                        <div className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-900 shadow-sm">
+                            <div className="flex items-center gap-2">
+                                <AlertTriangle className="size-5 shrink-0 text-rose-600" />
+                                <span>{flash.error}</span>
+                            </div>
+                        </div>
+                    )}
+                    {flash?.info && (
+                        <div className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm font-bold text-sky-900 shadow-sm">
+                            <div className="flex items-center gap-2">
+                                <Info className="size-5 shrink-0 text-sky-600" />
+                                <span>{flash.info}</span>
+                            </div>
+                        </div>
+                    )}
+
+
+
+                    {/* Scanner Input Terminal (Optimized for USB Cashier Barcode Guns & Camera) */}
                     <div className="mb-6 rounded-2xl bg-white p-3.5 shadow-xl shadow-slate-200/50 ring-2 ring-[#17524A]/20">
                         <div className="mb-2 flex items-center justify-between px-1">
                             <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[#17524A]">
                                 <QrCode className="size-4" />
                                 Kotak Scan Barcode / QR / Kode Akses
                             </span>
-                            <span className="rounded bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
-                                Continuous USB Scanner Mode
-                            </span>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={toggleCameraScanner}
+                                    className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-black transition ${
+                                        isCameraActive
+                                            ? 'bg-rose-100 text-rose-700 hover:bg-rose-200'
+                                            : 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
+                                    }`}
+                                >
+                                    {isCameraActive ? (
+                                        <>
+                                            <CameraOff className="size-3.5" />
+                                            Tutup Kamera
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Camera className="size-3.5" />
+                                            Scan via Kamera
+                                        </>
+                                    )}
+                                </button>
+                                <span className="hidden sm:inline-block rounded bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
+                                    USB Scanner Ready
+                                </span>
+                            </div>
                         </div>
+
+                        {/* Live Camera Scanner Box */}
+                        {isCameraActive && (
+                            <div className="mb-3 overflow-hidden rounded-2xl border-2 border-emerald-500 bg-slate-950 p-2 text-center text-white">
+                                <div className="mb-2 flex items-center justify-between px-2 text-xs font-bold text-emerald-400">
+                                    <span className="flex items-center gap-1.5">
+                                        <span className="size-2 rounded-full bg-emerald-400 animate-ping" />
+                                        Arahkan Kamera ke Barcode / QR Code
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={toggleCameraScanner}
+                                        className="text-slate-400 hover:text-white"
+                                    >
+                                        <X className="size-4" />
+                                    </button>
+                                </div>
+                                <div id={scannerContainerId} className="w-full overflow-hidden rounded-xl bg-black" />
+                                {scanCooldownCountdown > 0 ? (
+                                    <div className="mt-2 rounded-lg bg-amber-500/20 px-3 py-1.5 text-xs font-bold text-amber-300">
+                                        ⚡ Barcode terdeteksi! Menunggu jeda ({scanCooldownCountdown}s) sebelum scan berikutnya...
+                                    </div>
+                                ) : (
+                                    <p className="mt-2 text-[11px] text-slate-400">
+                                        Sistem otomatis mendeteksi QR Code dan langsung mengarahkan ke kartu identitas.
+                                    </p>
+                                )}
+                            </div>
+                        )}
+
+                        {cameraError && (
+                            <div className="mb-3 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-semibold text-rose-800">
+                                {cameraError}
+                            </div>
+                        )}
+
                         <form onSubmit={handleSearch} className="flex flex-col gap-2 sm:flex-row sm:items-center">
                             <div className="relative flex-1">
                                 <Search className="absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -330,7 +881,9 @@ export default function UniversalVerifyPage({
                     {/* Result Container: Check Persona */}
                     {isValid && activeEntity ? (
                         <div className="overflow-hidden rounded-[28px] bg-white shadow-2xl shadow-slate-200/60 ring-1 ring-slate-200/80">
-                            {/* 1. PARTICIPANT PERSONA */}
+                            {/* =========================================================================
+                                1. PARTICIPANT PERSONA
+                               ========================================================================= */}
                             {resolvedPersona === 'participant' && (
                                 <>
                                     <div className="bg-gradient-to-r from-[#134e45] via-[#17524A] to-[#258a7c] px-6 py-6 text-center text-white sm:px-8">
@@ -350,6 +903,7 @@ export default function UniversalVerifyPage({
                                     </div>
 
                                     <div className="p-6 sm:p-8">
+                                        {/* Profile Card Header */}
                                         <div className="flex flex-col items-center gap-6 border-b border-slate-100 pb-6 text-center sm:flex-row sm:text-left">
                                             <div className="relative">
                                                 <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-2xl border-2 border-[#17524A] bg-slate-100 shadow-md">
@@ -364,9 +918,21 @@ export default function UniversalVerifyPage({
                                                 </div>
                                             </div>
                                             <div className="flex-1">
-                                                <div className="inline-flex items-center gap-2 rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-black text-[#17524A]">
-                                                    <Trophy className="h-3.5 w-3.5 text-[#E5BE1E]" />
-                                                    {activeEntity.olimpiade?.name ?? 'OMATIQ'} ({activeEntity.olimpiade?.category ?? '-'})
+                                                <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+                                                    <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-black text-[#17524A]">
+                                                        <Trophy className="h-3.5 w-3.5 text-[#E5BE1E]" />
+                                                        {activeEntity.olimpiade?.name ?? 'OMATIQ'} ({activeEntity.olimpiade?.category ?? '-'})
+                                                    </span>
+                                                    {activeEntity.student?.is_binaan && (
+                                                        <span className="rounded-lg bg-teal-100 px-2 py-0.5 text-xs font-black text-teal-800">
+                                                            Santri Binaan
+                                                        </span>
+                                                    )}
+                                                    {activeEntity.national?.is_verified && (
+                                                        <span className="rounded-lg bg-amber-100 px-2 py-0.5 text-xs font-black text-amber-800">
+                                                            Finalis Nasional
+                                                        </span>
+                                                    )}
                                                 </div>
                                                 <h3 className="mt-2 text-2xl font-black text-slate-900">
                                                     {activeEntity.student?.full_name}
@@ -387,6 +953,7 @@ export default function UniversalVerifyPage({
                                             </div>
                                         </div>
 
+                                        {/* Detailed Information Grid */}
                                         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
                                             <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
                                                 <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase">
@@ -396,6 +963,7 @@ export default function UniversalVerifyPage({
                                                 <p className="mt-1 text-sm font-bold text-slate-800">
                                                     {activeEntity.student?.school_name ?? '-'} (Kelas {activeEntity.student?.grade ?? '-'})
                                                 </p>
+                                                <p className="text-xs text-slate-500">{activeEntity.student?.school_level ?? '-'}</p>
                                             </div>
                                             <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
                                                 <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase">
@@ -405,8 +973,45 @@ export default function UniversalVerifyPage({
                                                 <p className="mt-1 text-sm font-bold text-slate-800">
                                                     {activeEntity.branch ?? activeEntity.student?.regency_name ?? '-'}
                                                 </p>
+                                                {activeEntity.penyaluran_sanggar_name && (
+                                                    <p className="text-xs text-slate-500">Sanggar: {activeEntity.penyaluran_sanggar_name}</p>
+                                                )}
+                                            </div>
+                                            <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
+                                                <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase">
+                                                    <User className="size-4 text-[#17524A]" />
+                                                    Guru Pembimbing / Pendamping
+                                                </div>
+                                                <p className="mt-1 text-sm font-bold text-slate-800">
+                                                    {activeEntity.student?.mentor_name ?? '-'}
+                                                </p>
+                                            </div>
+                                            <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
+                                                <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase">
+                                                    <Award className="size-4 text-[#17524A]" />
+                                                    Atribut Peserta Nasional
+                                                </div>
+                                                <p className="mt-1 text-sm font-bold text-slate-800">
+                                                    Ukuran Kaos: {activeEntity.national?.shirt_size ?? '-'}
+                                                </p>
+                                                <p className="text-xs text-emerald-700">Status: {activeEntity.status === 'verified' ? 'Terverifikasi Resmi' : activeEntity.status}</p>
                                             </div>
                                         </div>
+
+                                        {/* =========================================================================
+                                            CONSUMPTION TRACKING WIDGET (PARTICIPANT)
+                                           ========================================================================= */}
+                                        {activeEntity.consumption && (
+                                            <ConsumptionCard
+                                                consumption={activeEntity.consumption}
+                                                entityName={activeEntity.student?.full_name || activeEntity.name}
+                                                isAdministrator={isAdministrator}
+                                                isProcessing={isProcessingAction}
+                                                onRedeem={handleRedeemConsumption}
+                                                onReset={handleResetConsumption}
+                                                theme="emerald"
+                                            />
+                                        )}
 
                                         <div className="mt-6 flex justify-center gap-3">
                                             <a
@@ -423,7 +1028,9 @@ export default function UniversalVerifyPage({
                                 </>
                             )}
 
-                            {/* 2. CHAPERONE PERSONA */}
+                            {/* =========================================================================
+                                2. CHAPERONE PERSONA
+                               ========================================================================= */}
                             {resolvedPersona === 'chaperone' && (
                                 <>
                                     <div className="bg-gradient-to-r from-[#0f766e] via-[#115e59] to-[#134e4a] px-6 py-6 text-center text-white sm:px-8">
@@ -438,7 +1045,7 @@ export default function UniversalVerifyPage({
                                             {activeEntity.name}
                                         </h2>
                                         <p className="mx-auto mt-1 max-w-lg text-xs leading-relaxed text-teal-100 sm:text-sm">
-                                            Official pendamping terverifikasi sah mewakili kontingen cabang {activeEntity.branch}.
+                                            Official pendamping terverifikasi sah mewakili kontingen cabang <strong>{activeEntity.branch}</strong>.
                                         </p>
                                     </div>
 
@@ -447,16 +1054,63 @@ export default function UniversalVerifyPage({
                                             <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
                                                 <span className="text-xs font-bold text-slate-500 uppercase">ID Pendamping</span>
                                                 <p className="mt-1 font-mono text-base font-extrabold text-teal-900">{activeEntity.formatted_id}</p>
+                                                {activeEntity.nik && <p className="text-[11px] text-slate-500">NIK: {activeEntity.nik}</p>}
                                             </div>
                                             <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
                                                 <span className="text-xs font-bold text-slate-500 uppercase">Kontingen Cabang</span>
                                                 <p className="mt-1 text-sm font-bold text-slate-800">{activeEntity.branch}</p>
+                                                {activeEntity.position && <p className="text-[11px] text-slate-500">Jabatan: {activeEntity.position}</p>}
                                             </div>
                                             <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
                                                 <span className="text-xs font-bold text-slate-500 uppercase">Total Santri Dampingan</span>
                                                 <p className="mt-1 text-base font-extrabold text-[#17524A]">{activeEntity.participants_count} Finalis</p>
+                                                <p className="text-[11px] text-emerald-700">Status: {activeEntity.status === 'verified' ? 'Terverifikasi' : activeEntity.status}</p>
                                             </div>
                                         </div>
+
+                                        {/* Contact & Verification Info */}
+                                        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                            <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
+                                                <span className="text-xs font-bold text-slate-500 uppercase">Kontak Pendamping</span>
+                                                <div className="mt-1 text-xs text-slate-700 space-y-1">
+                                                    {activeEntity.phone && (
+                                                        <p className="flex items-center gap-1.5 font-bold">
+                                                            <Phone className="size-3.5 text-[#17524A]" />
+                                                            {activeEntity.phone}
+                                                        </p>
+                                                    )}
+                                                    {activeEntity.email && (
+                                                        <p className="flex items-center gap-1.5">
+                                                            <Mail className="size-3.5 text-[#17524A]" />
+                                                            {activeEntity.email}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
+                                                <span className="text-xs font-bold text-slate-500 uppercase">Verifikator Resmi</span>
+                                                <p className="mt-1 text-sm font-bold text-slate-800">{activeEntity.verifier_name || 'Admin Pusat OMATIQ'}</p>
+                                                {activeEntity.verified_at && <p className="text-[11px] text-slate-500">Diverifikasi: {activeEntity.verified_at}</p>}
+                                            </div>
+                                        </div>
+
+                                        {/* =========================================================================
+                                            CONSUMPTION TRACKING WIDGET (CHAPERONE)
+                                           ========================================================================= */}
+                                        {/* =========================================================================
+                                            CONSUMPTION TRACKING WIDGET (CHAPERONE)
+                                           ========================================================================= */}
+                                        {activeEntity.consumption && (
+                                            <ConsumptionCard
+                                                consumption={activeEntity.consumption}
+                                                entityName={activeEntity.name}
+                                                isAdministrator={isAdministrator}
+                                                isProcessing={isProcessingAction}
+                                                onRedeem={handleRedeemConsumption}
+                                                onReset={handleResetConsumption}
+                                                theme="teal"
+                                            />
+                                        )}
 
                                         {/* Accompanied Participants */}
                                         {activeEntity.participants?.length > 0 && (
@@ -471,13 +1125,17 @@ export default function UniversalVerifyPage({
                                                                 <p className="font-bold text-slate-900">{p.name}</p>
                                                                 <p className="text-slate-500">{p.olimpiade_name} &bull; {p.school_name}</p>
                                                             </div>
-                                                            <a
-                                                                href={`/verifikasi/${p.registration_number}`}
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setSearchQuery(p.registration_number);
+                                                                    navigateToCode(p.registration_number);
+                                                                }}
                                                                 className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-1 font-mono text-[11px] font-bold text-slate-700 hover:bg-slate-200"
                                                             >
                                                                 {p.registration_number}
                                                                 <ExternalLink className="size-3" />
-                                                            </a>
+                                                            </button>
                                                         </div>
                                                     ))}
                                                 </div>
@@ -499,7 +1157,9 @@ export default function UniversalVerifyPage({
                                 </>
                             )}
 
-                            {/* 3. COMMITTEE PERSONA */}
+                            {/* =========================================================================
+                                3. COMMITTEE PERSONA
+                               ========================================================================= */}
                             {resolvedPersona === 'committee' && (
                                 <>
                                     <div className="bg-gradient-to-r from-[#09767a] via-[#0f766e] to-[#134e4a] px-6 py-6 text-center text-white sm:px-8">
@@ -549,6 +1209,7 @@ export default function UniversalVerifyPage({
                                                 <p className="mt-1 text-sm font-bold text-emerald-700">Aktif & Terdaftar</p>
                                             </div>
                                         </div>
+
                                         {activeEntity.duty_description && (
                                             <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3.5 text-xs text-slate-700">
                                                 <span className="font-bold text-slate-900">Uraian Tugas: </span>
@@ -571,7 +1232,9 @@ export default function UniversalVerifyPage({
                                 </>
                             )}
 
-                            {/* 4. GUEST PERSONA (VIP vs NON-VIP) */}
+                            {/* =========================================================================
+                                4. GUEST PERSONA (VIP vs NON-VIP)
+                               ========================================================================= */}
                             {resolvedPersona === 'guest' && (() => {
                                 const isGuestVip = ['VIP', 'VVIP'].includes(String(activeEntity.category).toUpperCase());
 
@@ -628,6 +1291,7 @@ export default function UniversalVerifyPage({
                                         </div>
 
                                         <div className="p-6 sm:p-8">
+                                            {/* Seating / Table Allocation */}
                                             <div
                                                 className={`mb-6 rounded-2xl border-2 p-4 text-center ${
                                                     isGuestVip
@@ -643,7 +1307,7 @@ export default function UniversalVerifyPage({
                                                     {isGuestVip ? 'Alokasi Kursi / Meja Kehormatan' : 'Alokasi Kursi / Tempat Duduk'}
                                                 </span>
                                                 <p className="mt-1 text-2xl font-black sm:text-3xl">
-                                                    {activeEntity.table_number}
+                                                    {activeEntity.table_number || 'Sesuai Arahan Protokoler'}
                                                 </p>
                                                 <p
                                                     className={`mt-1 text-xs font-semibold ${
@@ -670,6 +1334,21 @@ export default function UniversalVerifyPage({
                                                     </p>
                                                 </div>
                                             </div>
+
+                                            {/* Reset Check-in Button for Admin */}
+                                            {isAdministrator && activeEntity.checked_in_at && (
+                                                <div className="mt-6 flex justify-center border-t border-slate-100 pt-4">
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleResetGuestCheckIn}
+                                                        disabled={isProcessingAction}
+                                                        className="inline-flex items-center gap-1.5 rounded-xl border border-rose-300 bg-rose-50 px-4 py-2 text-xs font-bold text-rose-700 hover:bg-rose-100 transition"
+                                                    >
+                                                        <RotateCcw className="size-4" />
+                                                        Reset Kehadiran Tamu VIP Hari Ini (Admin)
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
                                     </>
                                 );
@@ -716,7 +1395,7 @@ export default function UniversalVerifyPage({
                                         Terminal Siap Pindai Lanyard Pass
                                     </h2>
                                     <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-slate-600">
-                                        Arahkan alat scanner USB ke barcode 1D atau QR Code pada lanyard pass pengunjung gate untuk verifikasi instan.
+                                        Arahkan alat scanner USB atau gunakan kamera bawaan ke barcode 1D atau QR Code pada lanyard pass untuk verifikasi instan.
                                     </p>
                                     <div className="mt-6 inline-flex items-center gap-2 rounded-xl bg-slate-50 px-4 py-2 text-xs font-semibold text-slate-500 border border-slate-200">
                                         <span className="flex size-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -728,6 +1407,63 @@ export default function UniversalVerifyPage({
                     )}
                 </div>
             </div>
+
+            {/* Sticky Bottom Action Bar for Mobile & Fast Verification */}
+            {activeEntity?.consumption && (
+                <div className="fixed bottom-0 inset-x-0 z-50 bg-white/95 backdrop-blur-md border-t border-slate-200/90 shadow-[0_-8px_30px_rgba(0,0,0,0.15)] px-4 py-3 sm:py-3.5">
+                    <div className="mx-auto flex max-w-3xl flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-4">
+                        {/* Summary Identitas & Sisa Kuota */}
+                        <div className="flex items-center justify-between sm:justify-start gap-2.5 min-w-0">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-[#17524A] ring-1 ring-emerald-200">
+                                    <Utensils className="h-5 w-5" />
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="truncate text-xs sm:text-sm font-black text-slate-900">
+                                        {activeEntity.student?.full_name || activeEntity.name}
+                                    </p>
+                                    <p className="text-[11px] text-slate-500">
+                                        {resolvedPersona === 'participant' ? 'Peserta' : 'Pendamping'} &bull; Sisa:{' '}
+                                        <strong className="text-emerald-700 font-extrabold">{activeEntity.consumption.remaining}</strong>{' '}
+                                        dari {activeEntity.consumption.max} Porsi
+                                    </p>
+                                </div>
+                            </div>
+
+                            <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-black text-slate-700 sm:hidden border border-slate-200">
+                                {activeEntity.consumption.count}/3 Selesai
+                            </span>
+                        </div>
+
+                        {/* Sticky Action Button */}
+                        <div className="shrink-0 flex items-center gap-2">
+                            {activeEntity.consumption.can_redeem ? (
+                                <button
+                                    type="button"
+                                    onClick={() => handleRedeemConsumption(false)}
+                                    disabled={isProcessingAction}
+                                    className="flex w-full sm:w-auto h-12 sm:h-13 items-center justify-center gap-2.5 rounded-2xl bg-[#17524A] px-5 sm:px-8 text-center font-black text-white shadow-lg shadow-[#17524A]/25 transition hover:bg-[#12423b] active:scale-95 disabled:opacity-70 disabled:cursor-wait"
+                                >
+                                    <Utensils className="h-4 w-4 text-[#FFE600]" />
+                                    <span className="text-xs sm:text-sm uppercase tracking-wide">
+                                        Ambil Porsi Ke-{activeEntity.consumption.next_session || (activeEntity.consumption.count + 1)} (-1 Porsi)
+                                    </span>
+                                </button>
+                            ) : activeEntity.consumption.reason === 'cooldown' ? (
+                                <div className="flex w-full sm:w-auto h-11 sm:h-12 items-center justify-center gap-2 rounded-2xl bg-amber-100 px-4 sm:px-6 font-bold text-amber-900 border border-amber-300 text-xs sm:text-sm shadow-xs">
+                                    <Clock className="h-4 w-4 shrink-0 text-amber-700" />
+                                    <span>⏳ Jeda Sesi (Tersedia {activeEntity.consumption.next_available_time} WIB)</span>
+                                </div>
+                            ) : (
+                                <div className="flex w-full sm:w-auto h-11 sm:h-12 items-center justify-center gap-2 rounded-2xl bg-emerald-100 px-4 sm:px-6 font-bold text-emerald-900 border border-emerald-300 text-xs sm:text-sm shadow-xs">
+                                    <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-700" />
+                                    <span>✅ Kuota 3/3 Porsi Lengkap</span>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 }

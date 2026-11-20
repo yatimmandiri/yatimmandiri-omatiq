@@ -118,7 +118,7 @@
             font-weight: 800;
             cursor: pointer;
             border: none;
-            background: linear-gradient(135deg, #7a6400 0%, #a18200 100%);
+            background: linear-gradient(135deg, #7a6400 0%, #9c8210 100%);
             color: #ffffff;
             box-shadow: 0 4px 14px rgba(122, 100, 0, 0.35);
             transition: all 0.2s ease;
@@ -128,7 +128,7 @@
         }
 
         .btn-print:hover {
-            background: linear-gradient(135deg, #685500 0%, #8c7100 100%);
+            background: linear-gradient(135deg, #685500 0%, #856f00 100%);
             transform: translateY(-1px);
             box-shadow: 0 6px 18px rgba(122, 100, 0, 0.4);
         }
@@ -183,7 +183,7 @@
             -webkit-user-select: none;
         }
 
-        /* Lanyard Ribbon & Metallic Clasp (Gold Tech Accent) */
+        /* Lanyard Ribbon & Metallic Clasp (Deep Teal / Tech Accent) */
         .lanyard-mount {
             display: flex;
             flex-direction: column;
@@ -206,13 +206,13 @@
             content: '';
             position: absolute;
             inset: 0;
-            background: repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(255, 230, 0, 0.12) 3px, rgba(255, 230, 0, 0.12) 6px);
+            background: repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(255, 255, 255, 0.12) 3px, rgba(255, 255, 255, 0.12) 6px);
         }
 
         .lanyard-clip {
             width: 28px;
             height: 32px;
-            background: linear-gradient(180deg, #fef08a 0%, #cbd5e1 35%, #94a3b8 70%, #64748b 100%);
+            background: linear-gradient(180deg, #f1f5f9 0%, #cbd5e1 35%, #94a3b8 70%, #64748b 100%);
             border-radius: 6px 6px 12px 12px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
             position: relative;
@@ -301,7 +301,7 @@
             -webkit-transform-style: preserve-3d;
             border-radius: 18px;
             overflow: hidden;
-            box-shadow: 0 25px 60px rgba(122, 100, 0, 0.22), 0 6px 18px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 25px 60px rgba(122, 100, 0, 0.18), 0 6px 18px rgba(0, 0, 0, 0.1);
             margin: 0 !important;
         }
 
@@ -313,30 +313,59 @@
             transform: rotateY(180deg);
         }
 
+        /* Decorative Tech Corner Accent Pattern */
+        .card-corner-pattern {
+            position: absolute;
+            width: 120px;
+            height: auto;
+            pointer-events: none;
+            z-index: 3;
+            user-select: none;
+        }
+
+        .pattern-top-left {
+            top: 0;
+            left: 0;
+        }
+
+        .pattern-bottom-right {
+            bottom: 0;
+            right: 0;
+            transform: rotate(180deg);
+        }
+
         /* Punch Slot Hole (Lanyard Pass Slot) */
         .badge-punch-slot {
             position: absolute;
             top: 10px;
             left: 50%;
             transform: translateX(-50%);
-            width: 44px;
-            height: 8.5px;
-            background: #453700;
-            border-radius: 8px;
-            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6), 0 1px 1px rgba(255, 255, 255, 0.6);
-            z-index: 15;
+            width: 52px;
+            height: 14px;
+            background: #ffffff;
+            border-radius: 7px;
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.4), 0 1px 1px rgba(255, 255, 255, 0.8);
+            border: 2px solid rgba(122, 100, 0, 0.35);
+            z-index: 20;
             pointer-events: none;
         }
 
-        /* Specular Gloss & Reflection */
+        .badge-punch-slot::after {
+            content: '';
+            position: absolute;
+            inset: 2px 4px;
+            background: #0f172a;
+            border-radius: 4px;
+            box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.8);
+        }
+
+        /* Dynamic Parallax Glare Highlight Overlay */
         .card-glare {
             position: absolute;
             inset: 0;
             pointer-events: none;
-            z-index: 20;
-            border-radius: 18px;
-            background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0) 65%);
-            opacity: 0;
+            z-index: 15;
+            background: radial-gradient(circle at 50% 30%, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0) 65%);
             mix-blend-mode: overlay;
             transition: opacity 0.3s ease;
         }
@@ -362,7 +391,7 @@
         .side-switcher {
             display: flex;
             align-items: center;
-            background: #fefce8;
+            background: #fffdf5;
             padding: 3px;
             border-radius: 12px;
             border: 1px solid rgba(122, 100, 0, 0.18);
@@ -376,7 +405,7 @@
             font-weight: 700;
             border: none;
             background: transparent;
-            color: #9c8210;
+            color: #7a6400;
             cursor: pointer;
             transition: all 0.2s ease;
             display: inline-flex;
@@ -394,11 +423,11 @@
             width: 6px;
             height: 6px;
             border-radius: 50%;
-            background: #e2e8f0;
+            background: #cbd5e1;
         }
 
         .side-pill.active .side-pill-dot {
-            background: #FFE600;
+            background: #fde047;
         }
 
         .btn-flip-primary {
@@ -407,7 +436,7 @@
             font-size: 12px;
             font-weight: 800;
             border: 1px solid #7a6400;
-            background: linear-gradient(135deg, #7a6400 0%, #a18200 100%);
+            background: linear-gradient(135deg, #7a6400 0%, #9c8210 100%);
             color: #ffffff;
             cursor: pointer;
             display: inline-flex;
@@ -439,21 +468,21 @@
         .zoom-group {
             display: flex;
             align-items: center;
-            gap: 4px;
-            background: #fefce8;
-            padding: 3px 6px;
+            background: #fffdf5;
             border-radius: 12px;
+            padding: 3px;
             border: 1px solid rgba(122, 100, 0, 0.18);
+            gap: 3px;
         }
 
         .btn-zoom {
             width: 28px;
             height: 28px;
             border-radius: 8px;
-            border: 1px solid rgba(122, 100, 0, 0.15);
+            border: none;
             background: #ffffff;
             color: #7a6400;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 800;
             display: flex;
             align-items: center;
@@ -479,7 +508,7 @@
         .virtual-hint-chip {
             margin-top: 12px;
             font-size: 11px;
-            color: #8c7300;
+            color: #7a6400;
             font-weight: 600;
             display: flex;
             align-items: center;
@@ -504,16 +533,18 @@
             flex-shrink: 0;
         }
 
-        /* Front & Back Background Templates */
-        .card-front {
-            background-image: url("{{ asset('assets/images/cards/card-chaperone-bg-front.png') }}");
+        /* Front & Back Background Templates (Menggunakan bg-pendamping.png dengan adaptasi gradasi) */
+        .card-front, .card-back {
+            background-color: #fdfaf2;
+            background-image:
+                linear-gradient(180deg, #fdfaf2 0%, #fdfaf2 16%, rgba(253, 250, 242, 0.3) 35%, rgba(253, 250, 242, 0) 50%),
+                url("{{ asset('assets/images/bg-pendamping.png') }}");
+            background-repeat: no-repeat;
+            background-position: center bottom;
+            background-size: 100% auto;
         }
 
-        .card-back {
-            background-image: url("{{ asset('assets/images/cards/card-chaperone-bg-back.png') }}");
-        }
-
-        /* Front: Unverified Warning Badge Overlay */
+        /* Front: Inactive / Suspended Warning Badge Overlay */
         .badge-unverified-overlay {
             position: absolute;
             top: 2.5%;
@@ -531,36 +562,121 @@
             text-align: center;
             text-transform: uppercase;
             box-shadow: 0 4px 12px rgba(180, 83, 9, 0.35);
-            z-index: 6;
+            z-index: 8;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
-        /* Front: Inner Data Box (Centered over the white/cream box) */
-        .chaperone-data-box {
+        /* Front: Centered Header YM Logo */
+        .card-header-logo {
             position: absolute;
-            top: 53.5%;
+            top: 30px;
             left: 50%;
             transform: translateX(-50%);
-            width: 82.0%;
-            height: 14.0%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            z-index: 5;
+        }
+
+        .card-header-logo img {
+            height: 40px;
+            width: auto;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+        }
+
+        /* Front: Label Pendamping (Gradient Horizontal Banner Typography) */
+        .committee-badge-pill {
+            position: absolute;
+            top: 96px;
+            left: 0;
+            right: 0;
+            width: 100%;
+            height: 44px;
+            background: linear-gradient(90deg, rgba(255, 253, 210, 0) 0%, rgba(255, 253, 210, 0.45) 10%, #fffdd2 22%, #fffdd2 78%, rgba(255, 253, 210, 0.45) 90%, rgba(255, 253, 210, 0) 100%);
+            color: #7a6400;
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            border-radius: 0;
+            box-shadow: none;
+            z-index: 5;
+            white-space: nowrap;
+        }
+
+        /* Front: Official HD Title (Tulisan Omatiq.png) */
+        .card-title-wrap {
+            position: absolute;
+            top: 154px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 84%;
+            display: flex;
+            justify-content: center;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .card-title-img {
+            max-width: 310px;
+            height: auto;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 4px rgba(122, 100, 0, 0.25));
+        }
+
+        /* Front: Transparent Frosted Glass Chaperone Data Box */
+        .committee-data-box {
+            position: absolute;
+            top: 316px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90.0%;
+            background: rgba(255, 255, 255, 0.30);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1.5px solid rgba(255, 255, 255, 0.70);
+            border-radius: 24px;
             z-index: 5;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             text-align: center;
-            padding: 2px 10px;
+            padding: 16px 14px 12px;
+            box-shadow: 0 10px 30px rgba(122, 100, 0, 0.16), inset 0 1px 2px rgba(255, 255, 255, 0.8);
         }
 
-        .chaperone-name {
-            font-size: 21px;
+        /* Front: Mascots Peeking at Top-Right Corner Outside the Box */
+        .card-mascot-corner {
+            position: absolute;
+            bottom: 100%;
+            right: 20px;
+            margin-bottom: -10px;
+            z-index: 6;
+            pointer-events: none;
+            line-height: 0;
+        }
+
+        .card-mascot-img {
+            width: 105px;
+            height: auto;
+            object-fit: contain;
+            filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.2));
+        }
+
+        .committee-name {
+            font-size: 22px;
             font-weight: 900;
             color: #7a6400;
             letter-spacing: -0.3px;
-            line-height: 1.15;
-            text-transform: capitalize;
+            line-height: 1.2;
             text-align: center;
             margin-bottom: 2px;
             white-space: nowrap;
@@ -569,57 +685,174 @@
             width: 100%;
         }
 
-        .chaperone-branch {
-            font-size: 13.5px;
+        .committee-meta {
+            font-size: 11px;
             font-weight: 700;
-            color: #7a6400;
+            color: #8c7300;
             letter-spacing: -0.1px;
             text-align: center;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             width: 100%;
+            line-height: 1.25;
         }
 
-        .chaperone-id-badge {
+        .committee-branch {
+            font-size: 11px;
+            font-weight: 800;
+            color: #7a6400;
+            text-align: center;
+            margin-top: 1px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+        }
+
+        .committee-id-badge {
             font-size: 9.5px;
             font-weight: 800;
             color: #9c8210;
-            letter-spacing: 0.5px;
+            letter-spacing: 1.2px;
             text-align: center;
             margin-top: 2px;
             font-family: 'Courier New', Courier, monospace;
         }
 
-        /* Back: QR Code Center Container (Inside the white rounded box) */
-        .chaperone-qr-box {
-            position: absolute;
-            top: 38.6%;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 44.0%;
-            height: 27.5%;
-            z-index: 5;
+        .data-divider {
+            width: 84%;
+            height: 1px;
+            background: rgba(122, 100, 0, 0.2);
+            margin: 6px auto 5px;
+        }
+
+        /* Front: Sponsors Bar (HD Assets) */
+        .card-sponsors-wrap {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 4px;
-            overflow: hidden;
+            width: 100%;
+            margin-top: 2px;
+        }
+
+        .sponsors-label {
+            font-size: 7.5px;
+            font-weight: 800;
+            color: #7a6400;
+            margin-bottom: 4px;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+            opacity: 0.9;
+        }
+
+        .sponsors-grid {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 6px 10px;
+            max-width: 95%;
+        }
+
+        .sponsor-logo {
+            height: 14px;
+            width: auto;
+            max-width: 58px;
+            object-fit: contain;
+            filter: contrast(1.05);
+        }
+
+        /* Front: Official Website URL at Bottom */
+        .card-front-web {
+            position: absolute;
+            bottom: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #7a6400;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.8px;
+            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.85);
+            z-index: 5;
+            white-space: nowrap;
+        }
+
+        /* Back: Title OMATIQ 2026 */
+        .card-back-title-wrap {
+            position: absolute;
+            top: 48px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 82%;
+            display: flex;
+            justify-content: center;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .card-back-title-img {
+            max-width: 295px;
+            height: auto;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 4px rgba(122, 100, 0, 0.25));
+        }
+
+        /* Back: HD Mascots Left & Right (Single Instance, Zero Double Image) */
+        .mascot-back-zakki {
+            position: absolute;
+            bottom: 110px;
+            left: -8px;
+            width: 136px;
+            height: auto;
+            z-index: 5;
+            pointer-events: none;
+            filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.24));
+        }
+
+        .mascot-back-amila {
+            position: absolute;
+            bottom: 105px;
+            right: -12px;
+            width: 136px;
+            height: auto;
+            z-index: 5;
+            pointer-events: none;
+            filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.24));
+        }
+
+        /* Back: QR Code Center Container (Clean, centered between mascots) */
+        .committee-qr-box {
+            position: absolute;
+            top: 226px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 216px;
+            height: 216px;
+            z-index: 4;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            overflow: visible;
         }
 
         .qr-svg-wrapper {
             width: 100%;
             height: 100%;
-            max-width: 155px;
-            max-height: 155px;
+            max-width: 216px;
+            max-height: 216px;
             display: flex;
             align-items: center;
             justify-content: center;
             position: relative;
-            border-radius: 14px;
+            border-radius: 24px;
             overflow: hidden;
-            box-shadow: 0 4px 12px rgba(122, 100, 0, 0.15);
+            background: #ffffff;
+            padding: 12px;
+            box-shadow: 0 12px 32px rgba(122, 100, 0, 0.22);
         }
 
         .qr-svg-wrapper svg {
@@ -632,7 +865,7 @@
         .qr-lock-container {
             position: absolute;
             inset: 0;
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.92);
             backdrop-filter: blur(4px);
             -webkit-backdrop-filter: blur(4px);
             display: flex;
@@ -651,9 +884,9 @@
             right: -20px;
             background: #dc2626;
             color: #ffffff;
-            font-size: 7.5px;
+            font-size: 8px;
             font-weight: 900;
-            padding: 2.5px 0;
+            padding: 3px 0;
             letter-spacing: 0.8px;
             text-transform: uppercase;
             transform: rotate(-12deg);
@@ -662,13 +895,13 @@
         }
 
         .lock-badge-icon {
-            font-size: 24px;
+            font-size: 28px;
             margin-bottom: 2px;
             color: #b45309;
         }
 
         .lock-badge-title {
-            font-size: 10.5px;
+            font-size: 11px;
             font-weight: 900;
             color: #b45309;
             letter-spacing: 0.3px;
@@ -676,12 +909,27 @@
         }
 
         .lock-badge-subtitle {
-            font-size: 7px;
+            font-size: 7.5px;
             font-weight: 700;
             color: #64748b;
-            line-height: 1.2;
+            line-height: 1.25;
             margin-top: 2px;
-            max-width: 130px;
+            max-width: 140px;
+        }
+
+        /* Back: Official Website URL */
+        .card-back-web {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #7a6400;
+            font-size: 10.5px;
+            font-weight: 800;
+            letter-spacing: 0.8px;
+            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.85);
+            z-index: 5;
+            white-space: nowrap;
         }
 
         /* ================= PRINT SHEET PREVIEW (SCREEN ONLY) ================= */
@@ -750,48 +998,53 @@
             border-radius: 8px;
             font-size: 11.5px;
             font-weight: 700;
-            cursor: pointer;
             border: 1px solid rgba(122, 100, 0, 0.25);
             background: #ffffff;
             color: #7a6400;
+            cursor: pointer;
             transition: all 0.2s ease;
         }
 
         .btn-sub-mode.active, .btn-sub-mode:hover {
             background: #7a6400;
             color: #ffffff;
+            border-color: #7a6400;
         }
 
-        /* Print Instruction Note */
+        /* Print Instructions Card (Screen Only) */
         .print-instruction-note {
-            margin-top: 16px;
-            font-size: 11.5px;
-            color: #475569;
-            text-align: center;
             display: none;
-            align-items: center;
-            gap: 6px;
-            font-weight: 600;
+            max-width: 820px;
+            margin-top: 18px;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(122, 100, 0, 0.2);
+            border-radius: 14px;
+            padding: 12px 18px;
+            font-size: 11.5px;
+            color: #7a6400;
+            line-height: 1.5;
+            box-shadow: 0 4px 14px rgba(122, 100, 0, 0.06);
         }
 
         .print-instruction-note.is-visible {
-            display: flex;
+            display: block;
+        }
+
+        .print-instruction-note strong {
+            color: #685500;
         }
 
         /* Mobile Adjustments */
-        @media (max-width: 640px) {
+        @media screen and (max-width: 640px) {
             body {
                 padding: 10px 8px 36px;
-                background-attachment: scroll;
             }
 
             .toolbar {
-                padding: 10px 14px;
+                padding: 10px 12px;
                 border-radius: 14px;
-            }
-
-            .toolbar-brand img {
-                height: 28px;
+                gap: 8px;
             }
 
             .toolbar-title {
@@ -899,43 +1152,185 @@
                 print-color-adjust: exact !important;
             }
 
+            .card-corner-pattern {
+                width: 28mm !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+
+            .badge-punch-slot {
+                top: 2.5mm !important;
+                width: 12mm !important;
+                height: 3.2mm !important;
+                border-radius: 1.6mm !important;
+                border-width: 0.5mm !important;
+            }
+
+            .badge-punch-slot::after {
+                inset: 0.5mm 1mm !important;
+                border-radius: 1mm !important;
+            }
+
             .badge-unverified-overlay {
                 width: 78.4mm !important;
-                top: 4.5mm !important;
-                font-size: 6pt !important;
+                top: 3.5mm !important;
+                font-size: 5.5pt !important;
                 padding: 1.2mm 2mm !important;
             }
 
-            .chaperone-data-box {
-                width: 70.5mm !important;
+            .card-header-logo {
+                top: 7.0mm !important;
+                gap: 1.8mm !important;
+            }
+
+            .card-header-logo img {
+                height: 9.2mm !important;
+            }
+
+            .committee-badge-pill {
+                top: 22.0mm !important;
+                height: 10.2mm !important;
+                font-size: 15.5pt !important;
+                letter-spacing: 0.3mm !important;
+                color: #7a6400 !important;
+                background: linear-gradient(90deg, rgba(255, 253, 210, 0) 0%, rgba(255, 253, 210, 0.45) 10%, #fffdd2 22%, #fffdd2 78%, rgba(255, 253, 210, 0.45) 90%, rgba(255, 253, 210, 0) 100%) !important;
+            }
+
+            .card-title-wrap {
+                top: 35.5mm !important;
+                width: 84% !important;
+            }
+
+            .card-title-img {
+                max-width: 71.5mm !important;
+            }
+
+            .committee-data-box {
+                width: 77.4mm !important;
                 top: 73.0mm !important;
-                height: 19.1mm !important;
-                padding: 1mm 2mm !important;
+                border-radius: 5.5mm !important;
+                padding: 3.8mm 3.2mm 2.8mm !important;
+                border-width: 0.4mm !important;
             }
 
-            .chaperone-name {
-                font-size: 11pt !important;
-                margin-bottom: 1pt !important;
+            .card-mascot-corner {
+                right: 4.6mm !important;
+                margin-bottom: -2.3mm !important;
             }
 
-            .chaperone-branch {
-                font-size: 7.5pt !important;
+            .card-mascot-img {
+                width: 24.2mm !important;
             }
 
-            .chaperone-id-badge {
+            .committee-name {
+                font-size: 12.5pt !important;
+                margin-bottom: 0.5mm !important;
+                color: #7a6400 !important;
+            }
+
+            .committee-meta {
+                font-size: 6.8pt !important;
+                color: #8c7300 !important;
+            }
+
+            .committee-branch {
+                font-size: 6.8pt !important;
+                color: #7a6400 !important;
+                margin-top: 0.3mm !important;
+            }
+
+            .committee-id-badge {
                 font-size: 5.8pt !important;
+                color: #9c8210 !important;
+                margin-top: 0.5mm !important;
             }
 
-            .chaperone-qr-box {
-                width: 37.8mm !important;
-                height: 37.5mm !important;
-                top: 52.7mm !important;
-                padding: 1.5mm !important;
+            .data-divider {
+                margin: 1.4mm auto 1.2mm !important;
+                background: rgba(122, 100, 0, 0.25) !important;
+            }
+
+            .sponsors-label {
+                font-size: 4.5pt !important;
+                color: #7a6400 !important;
+                margin-bottom: 0.9mm !important;
+            }
+
+            .sponsors-grid {
+                gap: 1.4mm 2.2mm !important;
+            }
+
+            .sponsor-logo {
+                height: 3.2mm !important;
+                max-width: 13.4mm !important;
+            }
+
+            .card-front-web {
+                bottom: 2.8mm !important;
+                font-size: 5.8pt !important;
+                color: #7a6400 !important;
+                text-shadow: none !important;
+            }
+
+            .card-back-title-wrap {
+                top: 11.0mm !important;
+                width: 82% !important;
+            }
+
+            .card-back-title-img {
+                max-width: 68.0mm !important;
+            }
+
+            .mascot-back-zakki {
+                bottom: 25.4mm !important;
+                left: -1.8mm !important;
+                width: 31.4mm !important;
+            }
+
+            .mascot-back-amila {
+                bottom: 24.2mm !important;
+                right: -2.8mm !important;
+                width: 31.4mm !important;
+            }
+
+            .committee-qr-box {
+                top: 52.2mm !important;
+                width: 50.0mm !important;
+                height: 50.0mm !important;
             }
 
             .qr-svg-wrapper {
-                max-width: 35mm !important;
-                max-height: 35mm !important;
+                max-width: 50.0mm !important;
+                max-height: 50.0mm !important;
+                border-radius: 5.5mm !important;
+                padding: 2.8mm !important;
+            }
+
+            .qr-void-banner {
+                top: 3.2mm !important;
+                font-size: 5pt !important;
+                padding: 0.7mm 0 !important;
+            }
+
+            .lock-badge-icon {
+                font-size: 16pt !important;
+            }
+
+            .lock-badge-title {
+                font-size: 6.5pt !important;
+            }
+
+            .lock-badge-subtitle {
+                font-size: 4.5pt !important;
+                max-width: 32mm !important;
+            }
+
+            .card-back-web {
+                bottom: 4.6mm !important;
+                font-size: 6pt !important;
+                color: #7a6400 !important;
+                text-shadow: none !important;
             }
 
             /* Duplex Mode Print Handling */
@@ -1013,7 +1408,7 @@
         @if(empty($isPdf))
         <!-- ================= VIRTUAL 3D CHAPERONE PASS STAGE ================= -->
         <div class="virtual-stage" id="virtualStage">
-            <!-- Lanyard Ribbon & Clip Graphic (Gold Tech Theme) -->
+            <!-- Lanyard Ribbon & Clip Graphic (Deep Teal / Tech Theme) -->
             <div class="lanyard-mount">
                 <div class="lanyard-strap"></div>
                 <div class="lanyard-clip"></div>
@@ -1026,6 +1421,9 @@
                         
                         <!-- SISI DEPAN (FRONT FACE) -->
                         <div class="card-face card-front-face omatiq-card card-front">
+                            <!-- Decorative Tech Corner Patterns -->
+                            <img src="{{ asset('assets/images/elect-pendamping.png') }}" class="card-corner-pattern pattern-top-left" alt="" aria-hidden="true">
+                            <img src="{{ asset('assets/images/elect-pendamping.png') }}" class="card-corner-pattern pattern-bottom-right" alt="" aria-hidden="true">
                             <div class="badge-punch-slot"></div>
                             <div class="card-glare" id="glareFront"></div>
 
@@ -1036,27 +1434,84 @@
                             </div>
                             @endif
 
-                            <!-- Center Data Box: Nama & Cabang Pendamping -->
-                            <div class="chaperone-data-box">
-                                <div class="chaperone-name" title="{{ $chaperone->name }}">
+                            <!-- Center Header YM Logo -->
+                            <div class="card-header-logo">
+                                <img src="{{ asset('assets/images/icon-omatiq.png') }}" alt="OMATIQ">
+                                <img src="{{ asset('assets/images/icon-ym.png') }}" alt="Yatim Mandiri">
+                            </div>
+
+                            <!-- Label Pendamping (Gradient Horizontal Banner) -->
+                            <div class="committee-badge-pill">
+                                Pendamping
+                            </div>
+
+                            <!-- Official HD Title -->
+                            <div class="card-title-wrap">
+                                <img src="{{ asset('assets/images/Tulisan Omatiq.png') }}" alt="OMATIQ 2026 Building Future Innovator" class="card-title-img">
+                            </div>
+
+                            <!-- Center Frosted Data Box: Nama & Data Pendamping -->
+                            <div class="committee-data-box">
+                                <!-- Mascot Top-Right Corner -->
+                                <div class="card-mascot-corner">
+                                    <img src="{{ asset('assets/images/Zakki Amila Atas.png') }}" alt="Zakki & Amila" class="card-mascot-img">
+                                </div>
+
+                                <div class="committee-name" title="{{ $chaperone->name }}">
                                     {{ $chaperone->name }}
                                 </div>
-                                <div class="chaperone-branch">
-                                    {{ $chaperone->branch ?? $chaperone->regency?->name ?? 'Cabang / Wilayah' }}
+                                <div class="committee-meta">
+                                    {{ $chaperone->position ?? 'Guru Pembimbing Cabang' }}
                                 </div>
-                                <div class="chaperone-id-badge">
-                                    ID: {{ $chaperoneIdFormatted }}
+                                <div class="committee-branch">
+                                    CABANG {{ strtoupper($chaperone->branch ?? $chaperone->regency?->name ?? 'KANTOR PUSAT') }}
+                                </div>
+                                <div class="committee-id-badge">
+                                    {{ $chaperoneIdFormatted }}
+                                </div>
+
+                                <div class="data-divider"></div>
+
+                                <!-- Supported by: HD Sponsors Bar -->
+                                <div class="card-sponsors-wrap">
+                                    <div class="sponsors-label">Supported by:</div>
+                                    <div class="sponsors-grid">
+                                        <img src="{{ asset('assets/images/sponsor/telkomsel.png') }}" alt="Telkomsel" class="sponsor-logo">
+                                        <img src="{{ asset('assets/images/sponsor/telkom-indonesia.png') }}" alt="Telkom Indonesia" class="sponsor-logo">
+                                        <img src="{{ asset('assets/images/sponsor/chickin.png') }}" alt="Chickin" class="sponsor-logo">
+                                        <img src="{{ asset('assets/images/sponsor/bankaltimtara.png') }}" alt="Bankaltimtara" class="sponsor-logo">
+                                        <img src="{{ asset('assets/images/sponsor/bank-bjb.png') }}" alt="Bank BJB" class="sponsor-logo">
+                                        <img src="{{ asset('assets/images/sponsor/ybm-pln.png') }}" alt="YBM PLN" class="sponsor-logo">
+                                        <img src="{{ asset('assets/images/sponsor/bmt-tumang.png') }}" alt="BMT Tumang" class="sponsor-logo">
+                                        <img src="{{ asset('assets/images/sponsor/link-aja.png') }}" alt="LinkAja" class="sponsor-logo">
+                                        <img src="{{ asset('assets/images/sponsor/link-aja-syariah.png') }}" alt="LinkAja Syariah" class="sponsor-logo">
+                                    </div>
                                 </div>
                             </div>
+
+                            <!-- Website URL at Bottom -->
+                            <div class="card-front-web">www.omatiq.com</div>
                         </div>
 
                         <!-- SISI BELAKANG (BACK FACE) -->
                         <div class="card-face card-back-face omatiq-card card-back">
+                            <!-- Decorative Tech Corner Patterns -->
+                            <img src="{{ asset('assets/images/elect-pendamping.png') }}" class="card-corner-pattern pattern-top-left" alt="" aria-hidden="true">
+                            <img src="{{ asset('assets/images/elect-pendamping.png') }}" class="card-corner-pattern pattern-bottom-right" alt="" aria-hidden="true">
                             <div class="badge-punch-slot"></div>
                             <div class="card-glare" id="glareBack"></div>
 
-                            <!-- Center QR Code Scanner: Olive/Gold QR Code -->
-                            <div class="chaperone-qr-box">
+                            <!-- Back Title OMATIQ 2026 -->
+                            <div class="card-back-title-wrap">
+                                <img src="{{ asset('assets/images/Tulisan Omatiq.png') }}" alt="OMATIQ 2026 Building Future Innovator" class="card-back-title-img">
+                            </div>
+
+                            <!-- Mascots Left & Right -->
+                            <img src="{{ asset('assets/images/Zakki Window Hi.png') }}" alt="Zakki" class="mascot-back-zakki">
+                            <img src="{{ asset('assets/images/Amila Window Hi.png') }}" alt="Amila" class="mascot-back-amila">
+
+                            <!-- Center QR Code Scanner -->
+                            <div class="committee-qr-box">
                                 <div class="qr-svg-wrapper">
                                     {!! $qrCodeSvg !!}
 
@@ -1071,6 +1526,9 @@
                                     @endif
                                 </div>
                             </div>
+
+                            <!-- Website URL at Bottom -->
+                            <div class="card-back-web">www.omatiq.com</div>
                         </div>
 
                     </div>
@@ -1133,6 +1591,11 @@
             
             <!-- SISI DEPAN (FRONT CARD) -->
             <div class="omatiq-card card-front">
+                <!-- Decorative Tech Corner Patterns -->
+                <img src="{{ asset('assets/images/elect-pendamping.png') }}" class="card-corner-pattern pattern-top-left" alt="" aria-hidden="true">
+                <img src="{{ asset('assets/images/elect-pendamping.png') }}" class="card-corner-pattern pattern-bottom-right" alt="" aria-hidden="true">
+                <div class="badge-punch-slot"></div>
+
                 <!-- Warning Badge: Hanya ditampilkan jika pendamping belum terverifikasi -->
                 @if(empty($isVerified))
                 <div class="badge-unverified-overlay">
@@ -1140,29 +1603,88 @@
                 </div>
                 @endif
 
-                <!-- Center Data Box: Nama & Cabang Pendamping -->
-                <div class="chaperone-data-box">
-                    <div class="chaperone-name" title="{{ $chaperone->name }}">
+                <!-- Center Header YM Logo -->
+                <div class="card-header-logo">
+                    <img src="{{ asset('assets/images/icon-omatiq.png') }}" alt="OMATIQ">
+                    <img src="{{ asset('assets/images/icon-ym.png') }}" alt="Yatim Mandiri">
+                </div>
+
+                <!-- Label Pendamping (Gradient Horizontal Banner) -->
+                <div class="committee-badge-pill">
+                    Pendamping
+                </div>
+
+                <!-- Official HD Title -->
+                <div class="card-title-wrap">
+                    <img src="{{ asset('assets/images/Tulisan Omatiq.png') }}" alt="OMATIQ 2026 Building Future Innovator" class="card-title-img">
+                </div>
+
+                <!-- Center Frosted Data Box: Nama & Data Pendamping -->
+                <div class="committee-data-box">
+                    <!-- Mascot Top-Right Corner -->
+                    <div class="card-mascot-corner">
+                        <img src="{{ asset('assets/images/Zakki Amila Atas.png') }}" alt="Zakki & Amila" class="card-mascot-img">
+                    </div>
+
+                    <div class="committee-name" title="{{ $chaperone->name }}">
                         {{ $chaperone->name }}
                     </div>
-                    <div class="chaperone-branch">
-                        {{ $chaperone->branch ?? $chaperone->regency?->name ?? 'Cabang / Wilayah' }}
+                    <div class="committee-meta">
+                        {{ $chaperone->position ?? 'Guru Pembimbing Cabang' }}
                     </div>
-                    <div class="chaperone-id-badge">
-                        ID: {{ $chaperoneIdFormatted }}
+                    <div class="committee-branch">
+                        CABANG {{ strtoupper($chaperone->branch ?? $chaperone->regency?->name ?? 'KANTOR PUSAT') }}
+                    </div>
+                    <div class="committee-id-badge">
+                        {{ $chaperoneIdFormatted }}
+                    </div>
+
+                    <div class="data-divider"></div>
+
+                    <!-- Supported by: HD Sponsors Bar -->
+                    <div class="card-sponsors-wrap">
+                        <div class="sponsors-label">Supported by:</div>
+                        <div class="sponsors-grid">
+                            <img src="{{ asset('assets/images/sponsor/telkomsel.png') }}" alt="Telkomsel" class="sponsor-logo">
+                            <img src="{{ asset('assets/images/sponsor/telkom-indonesia.png') }}" alt="Telkom Indonesia" class="sponsor-logo">
+                            <img src="{{ asset('assets/images/sponsor/chickin.png') }}" alt="Chickin" class="sponsor-logo">
+                            <img src="{{ asset('assets/images/sponsor/bankaltimtara.png') }}" alt="Bankaltimtara" class="sponsor-logo">
+                            <img src="{{ asset('assets/images/sponsor/bank-bjb.png') }}" alt="Bank BJB" class="sponsor-logo">
+                            <img src="{{ asset('assets/images/sponsor/ybm-pln.png') }}" alt="YBM PLN" class="sponsor-logo">
+                            <img src="{{ asset('assets/images/sponsor/bmt-tumang.png') }}" alt="BMT Tumang" class="sponsor-logo">
+                            <img src="{{ asset('assets/images/sponsor/link-aja.png') }}" alt="LinkAja" class="sponsor-logo">
+                            <img src="{{ asset('assets/images/sponsor/link-aja-syariah.png') }}" alt="LinkAja Syariah" class="sponsor-logo">
+                        </div>
                     </div>
                 </div>
+
+                <!-- Website URL at Bottom -->
+                <div class="card-front-web">www.omatiq.com</div>
             </div>
 
-            <!-- FOLD GUIDE LINE -->
+            <!-- Central Fold / Cut Guide Line -->
             <div class="fold-divider">
-                <span class="fold-label">✂ Garis Lipat Tengah (Fold Line)</span>
+                <span class="fold-label">GARIS LIPAT / POTONG</span>
             </div>
 
             <!-- SISI BELAKANG (BACK CARD) -->
             <div class="omatiq-card card-back">
+                <!-- Decorative Tech Corner Patterns -->
+                <img src="{{ asset('assets/images/elect-pendamping.png') }}" class="card-corner-pattern pattern-top-left" alt="" aria-hidden="true">
+                <img src="{{ asset('assets/images/elect-pendamping.png') }}" class="card-corner-pattern pattern-bottom-right" alt="" aria-hidden="true">
+                <div class="badge-punch-slot"></div>
+
+                <!-- Back Title OMATIQ 2026 -->
+                <div class="card-back-title-wrap">
+                    <img src="{{ asset('assets/images/Tulisan Omatiq.png') }}" alt="OMATIQ 2026 Building Future Innovator" class="card-back-title-img">
+                </div>
+
+                <!-- Mascots Left & Right -->
+                <img src="{{ asset('assets/images/Zakki Window Hi.png') }}" alt="Zakki" class="mascot-back-zakki">
+                <img src="{{ asset('assets/images/Amila Window Hi.png') }}" alt="Amila" class="mascot-back-amila">
+
                 <!-- Center QR Code Scanner -->
-                <div class="chaperone-qr-box">
+                <div class="committee-qr-box">
                     <div class="qr-svg-wrapper">
                         {!! $qrCodeSvg !!}
 
@@ -1177,71 +1699,69 @@
                         @endif
                     </div>
                 </div>
+
+                <!-- Website URL at Bottom -->
+                <div class="card-back-web">www.omatiq.com</div>
             </div>
 
         </div>
 
         @if(empty($isPdf))
+        <!-- Instruction Note for Printing -->
         <div class="print-instruction-note" id="printInstruction">
-            <span>💡</span>
-            <span><strong>Panduan Cetak:</strong> Pada pengaturan printer, pilih ukuran kertas <strong>A4</strong>, skala <strong>100% (Default)</strong>, dan centang <strong>"Background graphics"</strong> untuk hasil cetak maksimal.</span>
+            <strong>Petunjuk Pencetakan:</strong> Gunakan kertas <em>Art Paper / Brief Card 210-260 gsm</em> ukuran A4. Pilih skala <strong>100% (Actual Size)</strong> pada jendela cetak printer untuk hasil dimensi kartu standar lanyard (86 mm &times; 136.5 mm). Lipat mengikuti garis tengah atau potong rapi untuk dimasukkan ke dalam plastik mika / holder ID card.
         </div>
         @endif
+
     </div>
 
     @if(empty($isPdf))
     <script>
         // State variables
         let isFlipped = false;
-        let zoomLevel = 1.0;
-        let currentView = 'virtual'; // 'virtual' | 'sheet'
+        let currentScale = 1.0;
+        let isAutoScaled = true;
 
         const flipper = document.getElementById('cardFlipper');
-        const scaleContainer = document.getElementById('cardScaleContainer');
         const scene = document.getElementById('cardScene');
+        const scaleContainer = document.getElementById('cardScaleContainer');
+        const glareFront = document.getElementById('glareFront');
+        const glareBack = document.getElementById('glareBack');
         const pillFront = document.getElementById('pillFront');
         const pillBack = document.getElementById('pillBack');
         const zoomBadge = document.getElementById('zoomBadge');
-        const glareFront = document.getElementById('glareFront');
-        const glareBack = document.getElementById('glareBack');
-
         const virtualStage = document.getElementById('virtualStage');
         const printSheet = document.getElementById('printSheet');
-        const sheetSubToolbar = document.getElementById('sheetSubToolbar');
-        const printInstruction = document.getElementById('printInstruction');
         const btnViewVirtual = document.getElementById('btnViewVirtual');
         const btnViewSheet = document.getElementById('btnViewSheet');
+        const sheetSubToolbar = document.getElementById('sheetSubToolbar');
+        const printInstruction = document.getElementById('printInstruction');
 
-        // Calculate base responsive scale for mobile
-        function getBaseScale() {
-            const viewportW = window.innerWidth;
-            const maxAllowedW = Math.min(viewportW - 28, 480);
-            if (maxAllowedW < 372) {
-                return maxAllowedW / 372;
-            }
-            return 1.0;
+        // Card flip toggler
+        function toggleFlip() {
+            isFlipped = !isFlipped;
+            updateFlipState();
         }
 
-        // Apply scale transform and adjust container height dynamically
-        function applyScale() {
-            if (!scaleContainer) return;
-            const base = getBaseScale();
-            const totalScale = base * zoomLevel;
-            scaleContainer.style.transform = 'scale(' + totalScale + ')';
-            
-            // Adjust scene height so it takes the visual space accurately
-            const scaledHeight = 590 * totalScale;
-            if (scene) {
-                scene.style.height = scaledHeight + 'px';
-            }
-            if (zoomBadge) {
-                zoomBadge.textContent = Math.round(zoomLevel * 100) + '%';
+        function flipCardTo(side) {
+            isFlipped = (side === 'back');
+            updateFlipState();
+        }
+
+        function updateFlipState() {
+            if (isFlipped) {
+                flipper.classList.add('is-flipped');
+                pillFront.classList.remove('active');
+                pillBack.classList.add('active');
+            } else {
+                flipper.classList.remove('is-flipped');
+                pillBack.classList.remove('active');
+                pillFront.classList.add('active');
             }
         }
 
-        // Switch View: Virtual 3D vs Print Sheet
+        // View Switcher (3D Virtual Pass vs A4 Print Sheet)
         function switchView(mode) {
-            currentView = mode;
             if (mode === 'virtual') {
                 virtualStage.style.display = 'flex';
                 printSheet.classList.remove('is-visible');
@@ -1249,159 +1769,148 @@
                 printInstruction.classList.remove('is-visible');
                 btnViewVirtual.classList.add('active');
                 btnViewSheet.classList.remove('active');
-                applyScale();
+                handleResponsiveScale();
             } else {
                 virtualStage.style.display = 'none';
                 printSheet.classList.add('is-visible');
                 sheetSubToolbar.classList.add('is-visible');
                 printInstruction.classList.add('is-visible');
-                btnViewVirtual.classList.remove('active');
                 btnViewSheet.classList.add('active');
+                btnViewVirtual.classList.remove('active');
             }
         }
 
-        // Flip Card Logic
-        function flipCardTo(side) {
-            if (side === 'back') {
-                isFlipped = true;
-                flipper.classList.add('is-flipped');
-                pillBack.classList.add('active');
-                pillFront.classList.remove('active');
+        // Print Mode Options (Fold vs Duplex)
+        function setPrintMode(mode) {
+            const btnFold = document.getElementById('btnFoldMode');
+            const btnDuplex = document.getElementById('btnDuplexMode');
+
+            if (mode === 'duplex') {
+                document.body.classList.add('duplex-mode');
+                btnDuplex.classList.add('active');
+                btnFold.classList.remove('active');
             } else {
-                isFlipped = false;
-                flipper.classList.remove('is-flipped');
-                pillFront.classList.add('active');
-                pillBack.classList.remove('active');
+                document.body.classList.remove('duplex-mode');
+                btnFold.classList.add('active');
+                btnDuplex.classList.remove('active');
             }
-            // Reset any tilt residue
-            flipper.style.transform = isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)';
         }
 
-        function toggleFlip() {
-            flipCardTo(isFlipped ? 'front' : 'back');
-        }
-
-        // Zoom Controls
+        // Zoom & Scaling Engine
         function adjustZoom(delta) {
-            zoomLevel = Math.min(1.6, Math.max(0.75, +(zoomLevel + delta).toFixed(2)));
+            isAutoScaled = false;
+            currentScale = Math.min(Math.max(currentScale + delta, 0.5), 1.6);
             applyScale();
         }
 
         function resetZoom() {
-            zoomLevel = 1.0;
+            isAutoScaled = true;
+            handleResponsiveScale();
+        }
+
+        function applyScale() {
+            if (scaleContainer) {
+                scaleContainer.style.transform = `scale(${currentScale})`;
+                if (zoomBadge) {
+                    zoomBadge.textContent = `${Math.round(currentScale * 100)}%`;
+                }
+            }
+        }
+
+        // Auto-scale on mobile screen
+        function handleResponsiveScale() {
+            if (!isAutoScaled || !virtualStage || virtualStage.style.display === 'none') return;
+            const screenWidth = window.innerWidth;
+            const availableWidth = screenWidth - 28;
+            const baseCardWidth = 372;
+
+            if (availableWidth < baseCardWidth) {
+                currentScale = Math.max(availableWidth / baseCardWidth, 0.65);
+            } else {
+                currentScale = 1.0;
+            }
             applyScale();
         }
 
-        // 3D Parallax Tilt & Specular Glare (Desktop Pointer)
-        let isTouching = false;
+        window.addEventListener('resize', handleResponsiveScale);
+        document.addEventListener('DOMContentLoaded', handleResponsiveScale);
+
+        // 3D Mouse Parallax & Dynamic Glare
         if (scene) {
-            scene.addEventListener('mousemove', function(e) {
-                if (isTouching || window.innerWidth < 768) return;
+            scene.addEventListener('mousemove', (e) => {
                 const rect = scene.getBoundingClientRect();
                 const x = e.clientX - rect.left;
                 const y = e.clientY - rect.top;
                 const centerX = rect.width / 2;
                 const centerY = rect.height / 2;
 
-                const tiltX = ((y - centerY) / centerY) * -11;
-                const tiltY = ((x - centerX) / centerX) * 11;
+                const rotateX = ((y - centerY) / centerY) * -12;
+                const rotateY = ((x - centerX) / centerX) * 12;
 
-                if (isFlipped) {
-                    flipper.style.transform = 'rotateX(' + tiltX + 'deg) rotateY(' + (180 + tiltY) + 'deg)';
-                    const glareX = 100 - (x / rect.width) * 100;
-                    const glareY = (y / rect.height) * 100;
-                    if (glareBack) {
-                        glareBack.style.background = 'radial-gradient(circle at ' + glareX + '% ' + glareY + '%, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0) 65%)';
-                        glareBack.style.opacity = '1';
-                    }
-                } else {
-                    flipper.style.transform = 'rotateX(' + tiltX + 'deg) rotateY(' + tiltY + 'deg)';
-                    const glareX = (x / rect.width) * 100;
-                    const glareY = (y / rect.height) * 100;
-                    if (glareFront) {
-                        glareFront.style.background = 'radial-gradient(circle at ' + glareX + '% ' + glareY + '%, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0) 65%)';
-                        glareFront.style.opacity = '1';
-                    }
+                const baseRotation = isFlipped ? 180 : 0;
+                flipper.style.transform = `rotateY(${baseRotation + rotateY}deg) rotateX(${rotateX}deg)`;
+
+                const glareX = (x / rect.width) * 100;
+                const glareY = (y / rect.height) * 100;
+                const targetGlare = isFlipped ? glareBack : glareFront;
+                if (targetGlare) {
+                    targetGlare.style.background = `radial-gradient(circle at ${glareX}% ${glareY}%, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0) 65%)`;
                 }
             });
 
-            scene.addEventListener('mouseleave', function() {
+            scene.addEventListener('mouseleave', () => {
                 flipper.style.transform = isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)';
-                if (glareFront) glareFront.style.opacity = '0';
-                if (glareBack) glareBack.style.opacity = '0';
+                if (glareFront) glareFront.style.background = '';
+                if (glareBack) glareBack.style.background = '';
             });
-        }
 
-        // Click scene to toggle flip (with debounce against synthetic mobile tap)
-        let lastTouchFlipTime = 0;
-
-        if (scene) {
-            scene.addEventListener('click', function(e) {
-                if (Date.now() - lastTouchFlipTime < 650) {
-                    return;
+            // Click on scene flips card
+            scene.addEventListener('click', (e) => {
+                if (!e.target.closest('a') && !e.target.closest('button')) {
+                    toggleFlip();
                 }
-                toggleFlip();
             });
-        }
 
-        // Mobile Touch Gestures (Swipe to Flip & Tap to Flip)
-        let touchStartX = 0;
-        let touchStartY = 0;
-        let touchStartTime = 0;
+            // Touch Swipe Gesture on Mobile
+            let touchStartX = 0;
+            let touchStartY = 0;
 
-        if (scene) {
-            scene.addEventListener('touchstart', function(e) {
-                touchStartX = e.touches[0].clientX;
-                touchStartY = e.touches[0].clientY;
-                touchStartTime = Date.now();
+            scene.addEventListener('touchstart', (e) => {
+                touchStartX = e.changedTouches[0].screenX;
+                touchStartY = e.changedTouches[0].screenY;
             }, { passive: true });
 
-            scene.addEventListener('touchend', function(e) {
-                const deltaX = e.changedTouches[0].clientX - touchStartX;
-                const deltaY = e.changedTouches[0].clientY - touchStartY;
-                const duration = Date.now() - touchStartTime;
+            scene.addEventListener('touchend', (e) => {
+                const touchEndX = e.changedTouches[0].screenX;
+                const touchEndY = e.changedTouches[0].screenY;
+                const diffX = touchEndX - touchStartX;
+                const diffY = touchEndY - touchStartY;
 
-                // Horizontal swipe detected
-                if (Math.abs(deltaX) > 32 && Math.abs(deltaX) > Math.abs(deltaY)) {
-                    lastTouchFlipTime = Date.now();
-                    toggleFlip();
-                } else if (Math.abs(deltaX) < 12 && Math.abs(deltaY) < 12 && duration < 350) {
-                    // Tap detected
-                    lastTouchFlipTime = Date.now();
+                if (Math.abs(diffX) > 40 && Math.abs(diffX) > Math.abs(diffY)) {
                     toggleFlip();
                 }
             }, { passive: true });
         }
 
-        // Keyboard Shortcut (Space to Flip)
-        window.addEventListener('keydown', function(e) {
-            if (e.code === 'Space' && currentView === 'virtual') {
+        // Keyboard Shortcuts
+        window.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+            if (e.code === 'Space') {
                 e.preventDefault();
                 toggleFlip();
+            } else if (e.code === 'KeyP' && (e.ctrlKey || e.metaKey)) {
+                // native print
+            } else if (e.code === 'Digit1') {
+                switchView('virtual');
+            } else if (e.code === 'Digit2') {
+                switchView('sheet');
+            } else if (e.code === 'Escape') {
+                resetZoom();
             }
         });
-
-        // Window resize listener for dynamic scale
-        window.addEventListener('resize', applyScale);
-        window.addEventListener('DOMContentLoaded', applyScale);
-        applyScale();
-
-        // Print Mode for Sheet view
-        function setPrintMode(mode) {
-            const btnFold = document.getElementById('btnFoldMode');
-            const btnDuplex = document.getElementById('btnDuplexMode');
-            
-            if (mode === 'duplex') {
-                document.body.classList.add('duplex-mode');
-                if (btnDuplex) btnDuplex.classList.add('active');
-                if (btnFold) btnFold.classList.remove('active');
-            } else {
-                document.body.classList.remove('duplex-mode');
-                if (btnFold) btnFold.classList.add('active');
-                if (btnDuplex) btnDuplex.classList.remove('active');
-            }
-        }
     </script>
     @endif
+
 </body>
 </html>

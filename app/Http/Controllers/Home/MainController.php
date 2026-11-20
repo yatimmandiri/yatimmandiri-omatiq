@@ -6,9 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\Company\FaqCompany;
 use App\Models\Company\Olimpiade;
 use App\Models\Company\OlimpiadeSchedule;
+use App\Models\Company\Participant;
 use App\Models\Company\Review;
 use App\Models\Company\Slider;
+use App\Models\Company\Student;
 use App\Models\Company\Testimonial;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class MainController extends Controller
@@ -29,6 +33,22 @@ class MainController extends Controller
             'testimonials' => Testimonial::get(),
             'reviews' => Review::get(),
             'sliders' => Slider::query()->active()->ordered()->get(),
+            'heroStats' => Cache::remember('home:hero_stats', 300, fn () => [
+                'participants' => Participant::count(),
+                'activeOlimpiade' => Olimpiade::active()->count(),
+                'sanggars' => Participant::whereNotNull('penyaluran_sanggar_name')->where('penyaluran_sanggar_name', '!=', '')->distinct('penyaluran_sanggar_name')->count('penyaluran_sanggar_name'),
+                'schools' => Student::whereNotNull('school_name')->where('school_name', '!=', '')->distinct('school_name')->count('school_name'),
+            ]),
+            'aboutStats' => Cache::remember('home:about_stats', 300, fn () => [
+                'provinces' => DB::table('students')
+                    ->join('regencies', 'students.regency_id', '=', 'regencies.id')
+                    ->join('provinces', 'regencies.province_id', '=', 'provinces.id')
+                    ->distinct('provinces.id')
+                    ->count('provinces.id') ?: 13,
+                'activeOlimpiade' => Olimpiade::active()->count() ?: 2,
+                'scale' => 'Nasional',
+                'season' => (string) (Olimpiade::max('event_year') ?: date('Y')),
+            ]),
             'meta' => [
                 'title' => 'OMATIQ',
                 'description' => 'OMATIQ adalah olimpiade nasional Al-Quran dan Matematika untuk anak Indonesia.',

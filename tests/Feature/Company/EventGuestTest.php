@@ -233,7 +233,10 @@ test('non-vip guest can check-in normally at unified gate /verifikasi/', functio
         'event_year' => 2026,
     ]);
 
-    $response = $this->get(route('home.registration.verify', ['registrationNumber' => $guest->code]));
+    $admin = User::factory()->create(['email_verified_at' => now()]);
+    $admin->assignRole('Administrators');
+
+    $response = $this->actingAs($admin)->get(route('home.registration.verify', ['registrationNumber' => $guest->code]));
     $response->assertOk();
 
     $guest->refresh();

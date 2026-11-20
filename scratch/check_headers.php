@@ -1,16 +1,11 @@
 <?php
 
-foreach ([
-    'peserta' => 'public/assets/images/cards/card-bg-front.png',
-    'pendamping' => 'public/assets/images/cards/card-chaperone-bg-front.png',
-    'panitia' => 'public/assets/images/cards/card-committee-bg-front.png',
-] as $type => $path) {
-    $im = imagecreatefrompng($path);
-    $w = imagesx($im);
-    $h = imagesy($im);
-    // Crop header area (x: 350..874, y: 70..280)
-    $crop = imagecreatetruecolor(524, 210);
-    imagecopy($crop, $im, 0, 0, 350, 70, 524, 210);
-    imagepng($crop, "scratch/header_{$type}.png");
-    echo "Saved scratch/header_{$type}.png\n";
+$imFront = imagecreatefrompng('public/assets/images/cards/test_raw_3ae89431.png');
+$imBack = imagecreatefrompng('public/assets/images/cards/test_raw_1b8f3562.png');
+
+echo "=== FRONT (3ae89431 / 6193fbbe) 408x648 ===\n";
+for ($y = 15; $y <= 45; $y += 10) {
+    $cBack = imagecolorsforindex($imBack, imagecolorat($imBack, 204, $y));
+    $cFront = imagecolorsforindex($imFront, imagecolorat($imFront, 204, $y));
+    echo "y=$y: Front=({$cFront['red']},{$cFront['green']},{$cFront['blue']}) Back=({$cBack['red']},{$cBack['green']},{$cBack['blue']})\n";
 }
