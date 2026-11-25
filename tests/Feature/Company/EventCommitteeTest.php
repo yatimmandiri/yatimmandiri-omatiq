@@ -306,3 +306,118 @@ test('inactive committee card is blocked for guest but allowed for administrator
     $adminResponse->assertOk()
         ->assertSee('MENUNGGU AKTIVASI');
 });
+
+test('administrator can store and update daily duties for 4 days and view them in show', function () {
+    $admin = User::factory()->create([
+        'email_verified_at' => now(),
+    ]);
+    $admin->assignRole('Administrators');
+
+    $response = $this->actingAs($admin)->post(route('admin.companies.committees.store'), [
+        'name' => 'Muhammad Rizky Panitia',
+        'branch' => 'Surabaya',
+        'gender' => 'male',
+        'shirt_size' => 'L',
+        'division' => 'Acara & Lomba',
+        'position' => 'Koordinator Lapangan',
+        'access_zone' => 'All Access',
+        'status' => 'active',
+        'daily_duties' => [
+            'day_1' => 'Penginapan / Registrasi Asrama',
+            'day_2' => 'Venue Perlombaan (Gate Utama)',
+            'day_3' => 'Area Panggung & Arena Lomba',
+            'day_4' => 'Pemandu Bus & Study Tour',
+        ],
+    ]);
+
+    $response->assertRedirect(route('admin.companies.committees.index'));
+
+    $committee = EventCommittee::where('name', 'Muhammad Rizky Panitia')->first();
+    expect($committee)->not->toBeNull()
+        ->and($committee->daily_duties)->toBeArray()
+        ->and($committee->getDutyForDay(1))->toBe('Penginapan / Registrasi Asrama')
+        ->and($committee->getDutyForDay(2))->toBe('Venue Perlombaan (Gate Utama)')
+        ->and($committee->getDutyForDay(3))->toBe('Area Panggung & Arena Lomba')
+        ->and($committee->getDutyForDay(4))->toBe('Pemandu Bus & Study Tour');
+
+    // Update duties
+    $updateResponse = $this->actingAs($admin)->put(route('admin.companies.committees.update', $committee), [
+        'name' => 'Muhammad Rizky Panitia Updated',
+        'branch' => 'Surabaya',
+        'gender' => 'male',
+        'shirt_size' => 'L',
+        'division' => 'Acara & Lomba',
+        'position' => 'Koordinator Lapangan',
+        'access_zone' => 'All Access',
+        'status' => 'active',
+        'daily_duties' => [
+            'day_1' => 'Pos Logistik & Konsumsi',
+            'day_2' => 'Portal Presscon & Media',
+            'day_3' => 'Area Panggung & Arena Lomba',
+            'day_4' => 'All Access / Koordinator Lapangan',
+        ],
+    ]);
+
+    $updateResponse->assertRedirect(route('admin.companies.committees.index'));
+    $committee->refresh();
+    expect($committee->getDutyForDay(1))->toBe('Pos Logistik & Konsumsi')
+        ->and($committee->getDutyForDay(2))->toBe('Portal Presscon & Media');
+
+    // Show page returns committee and checkInTimeline
+    $showResponse = $this->actingAs($admin)->get(route('admin.companies.committees.show', $committee));
+    $showResponse->assertOk();
+});
+
+test('committee getData endpoint respects perPage, sorting and page parameters from DataTable', function () {
+    $admin = User::factory()->create([
+        'email_verified_at' => now(),
+    ]);
+    $admin->assignRole('Administrators');
+
+    // Create 30 committee members
+    for ($i = 1; $i <= 30; $i++) {
+        EventCommittee::create([
+            'code' => 'CREW-'.str_pad((string) $i, 5, '0', STR_PAD_LEFT),
+            'created_by' => $admin->id,
+            'name' => "Panitia Nomor {$i}",
+            'division' => 'Acara & Lomba',
+            'gender' => 'male',
+            'status' => 'active',
+            'event_year' => 2026,
+        ]);
+    }
+
+    // Default perPage = 10
+    $resDefault = $this->actingAs($admin)->getJson(route('admin.companies.committees.data'));
+    $resDefault->assertOk();
+    expect($resDefault->json('per_page'))->toBe(10)
+        ->and(count($resDefault->json('data')))->toBe(10)
+        ->and($resDefault->json('total'))->toBe(30);
+
+    // Request perPage = 25
+    $res25 = $this->actingAs($admin)->getJson(route('admin.companies.committees.data', [
+        'perPage' => 25,
+        'page' => 1,
+    ]));
+    $res25->assertOk();
+    expect($res25->json('per_page'))->toBe(25)
+        ->and(count($res25->json('data')))->toBe(25);
+
+    // Request perPage = 25 page 2 -> remaining 5
+    $res25Page2 = $this->actingAs($admin)->getJson(route('admin.companies.committees.data', [
+        'perPage' => 25,
+        'page' => 2,
+    ]));
+    $res25Page2->assertOk();
+    expect($res25Page2->json('per_page'))->toBe(25)
+        ->and(count($res25Page2->json('data')))->toBe(5);
+
+    // Sorting by name asc
+    $resSort = $this->actingAs($admin)->getJson(route('admin.companies.committees.data', [
+        'perPage' => 10,
+        'orderBy' => 'name',
+        'orderDirection' => 'asc',
+    ]));
+    $resSort->assertOk();
+    expect($resSort->json('data.0.name'))->toBe('Panitia Nomor 1');
+});

@@ -41,7 +41,7 @@ export default function ShowGuestPage({
 }: GuestShowProps) {
     const [isProofModalOpen, setIsProofModalOpen] = useState(false);
     const isAttended = !!guest.checked_in_at;
-    const isVip = ['vip', 'vvip'].includes(guest.category?.toLowerCase());
+    const isVip = ['vip', 'vvip', 'press', 'media'].includes(guest.category?.toLowerCase());
 
     const handleSendInvitation = () => {
         router.post(`/admin/companies/guests/${guest.id}/send-invitation`, {}, {
@@ -132,19 +132,6 @@ export default function ShowGuestPage({
                                 Edit Data
                             </Link>
                         </Button>
-                        {isVip && (
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                asChild
-                                className="border-[#17524A] text-[#17524A] hover:bg-emerald-50 dark:border-emerald-400 dark:text-emerald-300 font-semibold"
-                            >
-                                <a href={`/admin/companies/guests/${guest.id}/download-rsvp-qr`}>
-                                    <QrCode className="mr-1.5 h-4 w-4" />
-                                    Unduh QR Konfirmasi (PNG)
-                                </a>
-                            </Button>
-                        )}
                         {isVip && rsvpUrl && (
                             <Button
                                 variant="outline"
@@ -167,6 +154,20 @@ export default function ShowGuestPage({
                                 Reset RSVP
                             </Button>
                         )}
+                        <Button
+                            size="sm"
+                            asChild
+                            className="bg-[#17524A] hover:bg-[#12423c] text-white font-bold shadow-md shadow-emerald-950/20"
+                        >
+                            <a
+                                href={`/admin/companies/guests/${guest.id}/invitation`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                <Mail className="mr-1.5 h-4 w-4" />
+                                Cetak Undangan (A5)
+                            </a>
+                        </Button>
                         <Button
                             size="sm"
                             asChild

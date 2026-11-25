@@ -28,6 +28,9 @@ class GuestRsvpController extends Controller
 
         $verifyUrl = route('home.registration.verify', ['registrationNumber' => $guest->code]);
         $qrCodeSvg = $this->barcodeService->generateQrCodeSvg($verifyUrl, size: 180, color: '#17524A');
+        $categoryLower = strtolower((string) $guest->category);
+        $isPress = in_array($categoryLower, ['press', 'media'], true);
+        $isVip = in_array($categoryLower, ['vip', 'vvip', 'tokoh', 'sponsor'], true) || ! $isPress;
 
         return Inertia::render('home/guests/rsvp', [
             'guest' => [
@@ -45,16 +48,26 @@ class GuestRsvpController extends Controller
                 'confirmed_at' => $guest->confirmed_at?->translatedFormat('d F Y, H:i').' WIB',
                 'checked_in_at' => $guest->checked_in_at?->translatedFormat('d F Y, H:i').' WIB',
             ],
+            'isPress' => $isPress,
+            'isVip' => $isVip,
             'token' => $guest->code,
             'verifyUrl' => $verifyUrl,
             'qrCodeSvg' => $qrCodeSvg,
-            'eventInfo' => [
-                'name' => 'OMATIQ 2026 — Grand Final & Penganugerahan Juara',
-                'date' => 'Minggu, 20 Desember 2026',
-                'time' => '07.30 WIB - Selesai',
-                'venue' => 'Grand City Convention & Exhibition Hall, Surabaya',
-                'organizer' => 'Panitia Pelaksana OMATIQ & Laznas Yatim Mandiri',
-            ],
+            'eventInfo' => $isPress
+                ? [
+                    'name' => 'Press Conference OMATIQ 2026 & Tema Tahunan 2027',
+                    'date' => 'Senin, 14 Desember 2026',
+                    'time' => '09.00 WIB - Selesai',
+                    'venue' => 'Lobby Abdurrahman Saleh RRI, Jl. Medan Merdeka Barat, Kec. Gambir, Jakarta Pusat',
+                    'organizer' => 'Panitia Pelaksana OMATIQ & Laznas Yatim Mandiri',
+                ]
+                : [
+                    'name' => 'Grand Final OMATIQ & Sholawat Senandung Islami Bersama Haddad Alwi',
+                    'date' => 'Rabu, 16 Desember 2026',
+                    'time' => '13.00 WIB - Selesai',
+                    'venue' => 'Auditorium Abdurrahman Saleh RRI, Jl. Medan Merdeka Barat, Kec. Gambir, Jakarta Pusat',
+                    'organizer' => 'Panitia Pelaksana OMATIQ & Laznas Yatim Mandiri',
+                ],
             'pageTitle' => "Konfirmasi Kehadiran VIP — {$guest->name}",
             'meta' => [
                 'title' => "Konfirmasi Kehadiran VIP — {$guest->name}",
@@ -74,22 +87,47 @@ class GuestRsvpController extends Controller
             return back()->with('error', 'Konfirmasi kehadiran telah tercatat sebelumnya dan formulir telah dikunci. Hubungi panitia jika membutuhkan perubahan data.');
         }
 
-        $validated = $request->validate([
+        $categoryLower = strtolower((string) $guest->category);
+        $isPress = in_array($categoryLower, ['press', 'media'], true);
+
+        $rules = [
             'attendance' => ['required', 'in:confirmed,declined'],
-            'seat_count' => ['nullable', 'integer', 'min:1', 'max:10'],
             'notes' => ['nullable', 'string', 'max:500'],
+        ];
+
+        if ($request->input('attendance') === 'confirmed' && ! $isPress) {
+            $rules['name'] = ['required', 'string', 'max:255'];
+            $rules['email'] = ['required', 'email', 'max:255'];
+            $rules['phone'] = ['required', 'string', 'max:30'];
+            $rules['has_companion'] = ['nullable', 'boolean'];
+            $rules['seat_count'] = ['nullable', 'integer', 'min:1', 'max:2'];
+        }
+
+        $validated = $request->validate($rules, [
+            'name.required' => 'Nama lengkap perwakilan yang hadir wajib diisi.',
+            'email.required' => 'Email aktif wajib diisi untuk pengiriman tiket VIP Pass.',
+            'email.email' => 'Format alamat email tidak valid.',
+            'phone.required' => 'Nomor WhatsApp / HP aktif wajib diisi.',
         ]);
 
         $newStatus = $validated['attendance'];
         $guest->status = $newStatus;
         $guest->confirmed_at = now();
 
-        if (! empty($validated['notes'])) {
-            $guest->notes = trim(($guest->notes ? $guest->notes."\n[Catatan Tamu: " : '[Catatan Tamu: ').$validated['notes'].']');
+        if ($newStatus === 'confirmed') {
+            if ($isPress) {
+                $guest->seat_count = 1;
+            } else {
+                $guest->name = trim($validated['name']);
+                $guest->email = strtolower(trim($validated['email']));
+                $guest->phone = trim($validated['phone']);
+                $hasCompanion = ! empty($validated['has_companion']) || ((int) ($validated['seat_count'] ?? 1) === 2);
+                $guest->seat_count = $hasCompanion ? 2 : 1;
+            }
         }
 
-        if (! empty($validated['seat_count'])) {
-            $guest->seat_count = (int) $validated['seat_count'];
+        if (! empty($validated['notes'])) {
+            $guest->notes = trim(($guest->notes ? $guest->notes."\n[Catatan Tamu: " : '[Catatan Tamu: ').$validated['notes'].']');
         }
 
         $guest->save();
@@ -103,7 +141,7 @@ class GuestRsvpController extends Controller
         }
 
         $message = $newStatus === 'confirmed'
-            ? 'Terima kasih atas konfirmasi kehadiran Anda. VIP E-Pass dan QR Code telah dikirimkan ke email Anda dan dapat dilihat di bawah.'
+            ? "Terima kasih atas konfirmasi kehadiran Anda. VIP E-Pass dan QR Code telah dikirimkan ke email {$guest->email} dan dapat dilihat di bawah."
             : 'Terima kasih atas konfirmasi Anda. Kami memaklumi bila Bapak/Ibu berhalangan hadir pada acara ini.';
 
         return back()->with('success', $message);

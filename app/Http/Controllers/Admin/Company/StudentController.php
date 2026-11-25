@@ -637,7 +637,7 @@ class StudentController extends Controller
             ->orderBy($orderBy, $direction)
             ->orderBy('id', 'desc');
 
-        $perPage = min($request->integer('perPage') ?: 10, 100);
+        $perPage = min(max((int) ($request->input('perPage') ?? $request->input('pageSize') ?? 10), 1), 100);
 
         $data = $query->paginate($perPage, ['*'], 'page', $request->integer('page') ?: null);
 

@@ -77,18 +77,19 @@ class EventGuestController extends Controller
             });
         }
 
-        $sortField = $request->input('sorting.0.id', 'id');
-        $sortDesc = $request->boolean('sorting.0.desc', true);
+        $orderBy = $request->input('orderBy') ?? $request->input('sorting.0.id', 'id');
+        $orderDirection = strtolower((string) ($request->input('orderDirection') ?? ($request->boolean('sorting.0.desc', true) ? 'desc' : 'asc'))) === 'asc' ? 'asc' : 'desc';
         $allowedSorts = ['id', 'code', 'name', 'institution', 'position', 'category', 'status', 'checked_in_at', 'created_at'];
 
-        if (in_array($sortField, $allowedSorts, true)) {
-            $query->orderBy($sortField, $sortDesc ? 'desc' : 'asc');
+        if (in_array($orderBy, $allowedSorts, true)) {
+            $query->orderBy($orderBy, $orderDirection);
         } else {
-            $query->orderByDesc('id');
+            $query->orderBy('id', 'desc');
         }
 
-        $perPage = (int) $request->input('pagination.pageSize', 10);
-        $guests = $query->paginate($perPage);
+        $perPage = min(max((int) ($request->input('perPage') ?? $request->input('pageSize') ?? $request->input('pagination.pageSize') ?? 10), 1), 100);
+        $page = max((int) $request->input('page', 1), 1);
+        $guests = $query->paginate($perPage, ['*'], 'page', $page);
 
         $guests->getCollection()->transform(function (EventGuest $g) {
             $g->rsvp_url = $g->rsvp_url;
@@ -116,8 +117,8 @@ class EventGuestController extends Controller
         $data['event_year'] = 2026;
         $data['seat_count'] = $data['seat_count'] ?? 1;
 
-        $isVip = strtolower((string) ($data['category'] ?? 'vip')) === 'vip';
-        if ($isVip) {
+        $hasRsvp = in_array(strtolower((string) ($data['category'] ?? 'vip')), ['vip', 'vvip', 'press', 'media'], true);
+        if ($hasRsvp) {
             $data['rsvp_token'] = Str::random(40);
             $data['status'] = $data['status'] ?? 'invited';
         } else {
@@ -133,7 +134,7 @@ class EventGuestController extends Controller
         $guest = EventGuest::create($data);
 
         return redirect()->route('admin.companies.guests.index')
-            ->with('success', "Tamu undangan {$guest->name} ({$guest->code}) berhasil ditambahkan. Silakan unduh QR Code konfirmasi untuk ditempelkan pada kartu fisik undangan.");
+            ->with('success', "Tamu undangan {$guest->name} ({$guest->code}) berhasil ditambahkan. Silakan cetak undangan A5 untuk tamu ini.");
     }
 
     public function show(EventGuest $guest): Response
@@ -165,8 +166,8 @@ class EventGuestController extends Controller
     {
         $data = $request->validated();
 
-        $isVip = strtolower((string) ($data['category'] ?? 'vip')) === 'vip';
-        if ($isVip && ! $guest->rsvp_token) {
+        $hasRsvp = in_array(strtolower((string) ($data['category'] ?? 'vip')), ['vip', 'vvip', 'press', 'media'], true);
+        if ($hasRsvp && ! $guest->rsvp_token) {
             $data['rsvp_token'] = Str::random(40);
         }
 
@@ -186,7 +187,7 @@ class EventGuestController extends Controller
     {
         $this->authorize('view', $guest);
 
-        $url = $guest->rsvp_url ?: route('home.guest.rsvp', ['identifier' => $guest->code]);
+        $url = route('home.registration.verify', ['registrationNumber' => $guest->code]);
         $pngData = $this->barcodeService->generateQrCodePng($url, size: 500, color: '#17524A');
 
         $safeName = Str::slug($guest->name, '-');
@@ -237,7 +238,7 @@ class EventGuestController extends Controller
         }
 
         foreach ($guests as $guest) {
-            $url = $guest->rsvp_url ?: route('home.guest.rsvp', ['identifier' => $guest->code]);
+            $url = route('home.registration.verify', ['registrationNumber' => $guest->code]);
             $pngData = $this->barcodeService->generateQrCodePng($url, size: 600, color: '#17524A');
             $safeName = Str::slug($guest->name, '-');
             $imageName = "QR-RSVP-{$guest->code}-{$safeName}.png";
@@ -332,5 +333,66 @@ class EventGuestController extends Controller
         }
 
         return view('cards.guest-card', compact('guest', 'verifyUrl', 'qrCodeSvg', 'barcodeSvg'));
+    }
+
+    public function printInvitation(Request $request, EventGuest $guest)
+    {
+        $this->authorize('view', $guest);
+
+        $guestList = [$guest];
+        $pageTitle = "Undangan Resmi OMATIQ 2026 - {$guest->name}";
+
+        if ($request->query('format') === 'pdf') {
+            $pdf = Pdf::loadView('invitations.guest-invitation', compact('guestList', 'pageTitle'))
+                ->setPaper('a5', 'landscape');
+
+            return $pdf->stream("Undangan-{$guest->code}.pdf");
+        }
+
+        return view('invitations.guest-invitation', compact('guestList', 'pageTitle'));
+    }
+
+    public function bulkPrintInvitations(Request $request)
+    {
+        $this->authorize('viewAny', EventGuest::class);
+
+        $request->validate([
+            'ids' => 'nullable|array',
+            'ids.*' => 'integer|exists:event_guests,id',
+            'category' => 'nullable|string',
+            'all' => 'nullable|boolean',
+        ]);
+
+        $query = EventGuest::query()->where('event_year', 2026);
+
+        if ($request->filled('category')) {
+            $query->where('category', $request->string('category')->toString());
+        }
+
+        if (! $request->boolean('all') && ! $request->filled('category')) {
+            $ids = $request->input('ids', []);
+            if (empty($ids)) {
+                return back()->with('error', 'Pilih minimal satu tamu untuk mencetak undangan.');
+            }
+            $query->whereIn('id', $ids);
+        }
+
+        $guestList = $query->orderBy('code')->get();
+
+        if ($guestList->isEmpty()) {
+            return back()->with('error', 'Tidak ada data tamu yang ditemukan untuk dicetak.');
+        }
+
+        $count = $guestList->count();
+        $pageTitle = "Undangan Cetak Massal OMATIQ 2026 ({$count} Lembar)";
+
+        if ($request->query('format') === 'pdf') {
+            $pdf = Pdf::loadView('invitations.guest-invitation', compact('guestList', 'pageTitle'))
+                ->setPaper('a5', 'landscape');
+
+            return $pdf->stream("Undangan-Massal-OMATIQ-2026-({$count}).pdf");
+        }
+
+        return view('invitations.guest-invitation', compact('guestList', 'pageTitle'));
     }
 }

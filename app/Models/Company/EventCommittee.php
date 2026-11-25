@@ -26,6 +26,7 @@ use Spatie\Activitylog\Support\LogOptions;
     'division',
     'position',
     'access_zone',
+    'daily_duties',
     'photo_path',
     'shirt_size',
     'status',
@@ -41,10 +42,28 @@ class EventCommittee extends Model
     {
         return [
             'checked_in_at' => 'datetime',
+            'daily_duties' => 'array',
             'event_year' => 'integer',
             'user_id' => 'integer',
             'created_by' => 'integer',
         ];
+    }
+
+    public function getDutyForDay(int $dayNumber = 1): string
+    {
+        if (is_array($this->daily_duties)) {
+            if (! empty($this->daily_duties["day_{$dayNumber}"])) {
+                return (string) $this->daily_duties["day_{$dayNumber}"];
+            }
+            if (! empty($this->daily_duties[$dayNumber])) {
+                return (string) $this->daily_duties[$dayNumber];
+            }
+            if (! empty($this->daily_duties[(string) $dayNumber])) {
+                return (string) $this->daily_duties[(string) $dayNumber];
+            }
+        }
+
+        return $this->access_zone ?: ($this->division.' - '.($this->position ?: 'Panitia Pelaksana'));
     }
 
     public function getActivitylogOptions(): LogOptions

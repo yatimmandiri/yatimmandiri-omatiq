@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Home;
 use App\Concerns\Traits\UploadFiles;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Company\StoreParticipantRequest;
+use App\Models\Company\EventCheckInLog;
 use App\Models\Company\EventCommittee;
 use App\Models\Company\EventConsumptionLog;
 use App\Models\Company\EventGuest;
@@ -292,6 +293,14 @@ class ParticipantRegistrationController extends Controller
     {
         $user = $request->user();
         if (! $user) {
+            $inputCode = trim((string) ($registrationNumber ?? $request->query('q') ?? $request->query('code') ?? $request->query('reg') ?? ''));
+            if ($inputCode !== '' && preg_match('/^(?:inv|vip)-?/i', $inputCode)) {
+                $guest = EventGuest::where('code', $inputCode)->orWhere('phone', $inputCode)->first();
+                if ($guest) {
+                    return redirect()->route('home.guest.rsvp', ['identifier' => $guest->code]);
+                }
+            }
+
             return redirect()->guest(route('login'));
         }
 
@@ -299,14 +308,21 @@ class ParticipantRegistrationController extends Controller
             abort(403, 'Akses Terminal Verifikasi dibatasi khusus untuk akun Administrator dan Verifikator.');
         }
 
+        $activeDay = max(1, min(EventCheckInLog::TOTAL_DAYS, $request->integer('day') ?: 1));
+        $activeCheckpoint = $request->string('checkpoint')->toString() ?: 'penginapan';
+        $checkpointLabel = $request->string('checkpoint_label')->toString()
+            ?: (EventCheckInLog::CHECKPOINT_OPTIONS[$activeCheckpoint] ?? 'Penginapan / Asrama');
+
         $inputCode = $registrationNumber ?? $request->query('q') ?? $request->query('code') ?? $request->query('reg');
         $persona = null;
         $entity = null;
         $isValid = false;
         $isFirstCheckIn = false;
+        $checkInMessage = null;
 
         if (! empty($inputCode)) {
             $inputCode = trim((string) $inputCode);
+            $targetId = null;
 
             // 1. Panitia Pelaksana (CREW-XXXXX / PAN-XXXXX)
             if (preg_match('/^(?:crew|pan)-?/i', $inputCode)) {
@@ -317,14 +333,14 @@ class ParticipantRegistrationController extends Controller
 
                 if ($committee) {
                     $persona = 'committee';
+                    $targetId = $committee->id;
                     $isValid = $committee->status === 'active';
                     $isCheckInToday = $committee->checked_in_at && $committee->checked_in_at->isToday();
                     if ($isValid && ! $isCheckInToday) {
-                        $isFirstCheckIn = true;
                         $committee->updateQuietly(['checked_in_at' => now()]);
                         $committee->refresh();
                     }
-                    $entity = $this->formatCommitteePayload($committee);
+                    $entity = $this->formatCommitteePayload($committee, $activeDay);
                 }
             }
             // 2. Tamu Undangan (INV-XXXXX / VIP-XXXXX)
@@ -334,11 +350,15 @@ class ParticipantRegistrationController extends Controller
                     ->first();
 
                 if ($guest) {
+                    if (! auth()->check()) {
+                        return redirect()->route('home.guest.rsvp', ['identifier' => $guest->code]);
+                    }
+
                     $persona = 'guest';
+                    $targetId = $guest->id;
                     $isValid = $guest->status !== 'declined';
                     $isCheckInToday = $guest->checked_in_at && $guest->checked_in_at->isToday();
                     if ($isValid && ! $isCheckInToday) {
-                        $isFirstCheckIn = true;
                         $guest->updateQuietly(['checked_in_at' => now(), 'status' => 'attended']);
                         $guest->refresh();
                     }
@@ -358,7 +378,7 @@ class ParticipantRegistrationController extends Controller
                     'verifier:id,name',
                     'participants.student:id,full_name,school_name,school_level,grade,is_binaan,photo_path',
                     'participants.olimpiade:id,name,category',
-                    'participants.national:id,participant_id,status',
+                    'participants.national:id,participant_id,status,shirt_size',
                 ])
                     ->where(function ($q) use ($id, $inputCode) {
                         if (is_numeric($id)) {
@@ -371,6 +391,7 @@ class ParticipantRegistrationController extends Controller
 
                 if ($chaperone) {
                     $persona = 'chaperone';
+                    $targetId = $chaperone->id;
                     $isValid = $chaperone->status !== 'rejected';
                     $entity = $this->formatChaperonePayload($chaperone);
                     $entity['consumption'] = $this->buildConsumptionPayload('chaperone', $chaperone->id);
@@ -391,6 +412,7 @@ class ParticipantRegistrationController extends Controller
 
                 if ($participant) {
                     $persona = 'participant';
+                    $targetId = $participant->id;
                     $isValid = $participant->status !== 'rejected';
                     $entity = $this->formatParticipantPayload($participant);
                     $entity['consumption'] = $this->buildConsumptionPayload('participant', $participant->id);
@@ -399,22 +421,22 @@ class ParticipantRegistrationController extends Controller
                     $committee = EventCommittee::where('code', $inputCode)->orWhere('phone', $inputCode)->orWhere('nik', $inputCode)->first();
                     if ($committee) {
                         $persona = 'committee';
+                        $targetId = $committee->id;
                         $isValid = $committee->status === 'active';
                         $isCheckInToday = $committee->checked_in_at && $committee->checked_in_at->isToday();
                         if ($isValid && ! $isCheckInToday) {
-                            $isFirstCheckIn = true;
                             $committee->updateQuietly(['checked_in_at' => now()]);
                             $committee->refresh();
                         }
-                        $entity = $this->formatCommitteePayload($committee);
+                        $entity = $this->formatCommitteePayload($committee, $activeDay);
                     } else {
                         $guest = EventGuest::where('code', $inputCode)->orWhere('phone', $inputCode)->first();
                         if ($guest) {
                             $persona = 'guest';
+                            $targetId = $guest->id;
                             $isValid = $guest->status !== 'declined';
                             $isCheckInToday = $guest->checked_in_at && $guest->checked_in_at->isToday();
                             if ($isValid && ! $isCheckInToday) {
-                                $isFirstCheckIn = true;
                                 $guest->updateQuietly(['checked_in_at' => now(), 'status' => 'attended']);
                                 $guest->refresh();
                             }
@@ -426,10 +448,11 @@ class ParticipantRegistrationController extends Controller
                                 'verifier:id,name',
                                 'participants.student:id,full_name,school_name,school_level,grade,is_binaan,photo_path',
                                 'participants.olimpiade:id,name,category',
-                                'participants.national:id,participant_id,status',
+                                'participants.national:id,participant_id,status,shirt_size',
                             ])->where('phone', $inputCode)->orWhere('nik', $inputCode)->first();
                             if ($chaperone) {
                                 $persona = 'chaperone';
+                                $targetId = $chaperone->id;
                                 $isValid = $chaperone->status !== 'rejected';
                                 $entity = $this->formatChaperonePayload($chaperone);
                                 $entity['consumption'] = $this->buildConsumptionPayload('chaperone', $chaperone->id);
@@ -437,6 +460,30 @@ class ParticipantRegistrationController extends Controller
                         }
                     }
                 }
+            }
+
+            if ($persona && $targetId && $isValid) {
+                // Auto Check-In Engine (Opsi A)
+                $checkInResult = EventCheckInLog::recordCheckIn(
+                    $persona,
+                    $targetId,
+                    $activeDay,
+                    $activeCheckpoint,
+                    $checkpointLabel,
+                    $user->id
+                );
+
+                if ($checkInResult['is_new']) {
+                    $isFirstCheckIn = true;
+                }
+                $checkInMessage = $checkInResult['message'];
+
+                $entity['check_in_timeline'] = EventCheckInLog::getTimeline($persona, $targetId);
+                $entity['check_in_today'] = EventCheckInLog::getTodayCheckIn($persona, $targetId, $activeCheckpoint);
+                $entity['check_in_message'] = $checkInMessage;
+            } elseif ($persona && $targetId) {
+                $entity['check_in_timeline'] = EventCheckInLog::getTimeline($persona, $targetId);
+                $entity['check_in_today'] = EventCheckInLog::getTodayCheckIn($persona, $targetId, $activeCheckpoint);
             }
 
             if (! $persona) {
@@ -450,7 +497,16 @@ class ParticipantRegistrationController extends Controller
             'persona' => $persona,
             'isValid' => $isValid,
             'isFirstCheckIn' => $isFirstCheckIn,
+            'autoCheckedIn' => $isFirstCheckIn,
+            'checkInMessage' => $checkInMessage,
             'entity' => $entity,
+            'timeline' => $entity['check_in_timeline'] ?? [],
+            'todayCheckIn' => $entity['check_in_today'] ?? null,
+            'activeDay' => $activeDay,
+            'activeCheckpoint' => $activeCheckpoint,
+            'activeCheckpointLabel' => $checkpointLabel,
+            'dayOptions' => EventCheckInLog::DAY_CONFIG,
+            'checkpointOptions' => EventCheckInLog::CHECKPOINT_OPTIONS,
             // Backward-compatible props
             'queryRegistrationNumber' => $inputCode,
             'participant' => $persona === 'participant' ? $entity : null,
@@ -492,11 +548,16 @@ class ParticipantRegistrationController extends Controller
             'id' => $participant->id,
             'registration_number' => $participant->registration_number,
             'status' => $participant->status,
+            'social_status' => $participant->social_status ?? 'yatim',
             'registration_type' => $participant->registration_type,
             'event_year' => $participant->event_year ?? 2026,
             'branch' => $participant->branch,
             'penyaluran_sanggar_name' => $participant->penyaluran_sanggar_name,
             'guardian_name' => $participant->guardian_signature_name,
+            'is_national_qualified' => ! is_null($participant->national),
+            'shirt_size' => $participant->national?->shirt_size ?? '-',
+            'pack_is_received' => ! is_null($participant->national?->pack_received_at),
+            'pack_received_at' => $participant->national?->pack_received_at ? $participant->national->pack_received_at->timezone('Asia/Jakarta')->translatedFormat('d F Y, H:i').' WIB' : null,
             'olimpiade' => [
                 'id' => $participant->olimpiade?->id,
                 'name' => $participant->olimpiade?->name,
@@ -535,6 +596,9 @@ class ParticipantRegistrationController extends Controller
             'name' => $chaperone->name,
             'nik' => $chaperone->nik ? (strlen($chaperone->nik) === 16 ? substr($chaperone->nik, 0, 6).'******'.substr($chaperone->nik, -4) : $chaperone->nik) : null,
             'gender' => $chaperone->gender,
+            'shirt_size' => $chaperone->shirt_size ?? '-',
+            'pack_is_received' => ! is_null($chaperone->pack_received_at),
+            'pack_received_at' => $chaperone->pack_received_at ? $chaperone->pack_received_at->timezone('Asia/Jakarta')->translatedFormat('d F Y, H:i').' WIB' : null,
             'phone' => $chaperone->phone,
             'email' => $chaperone->email,
             'branch' => $chaperone->branch,
@@ -558,13 +622,16 @@ class ParticipantRegistrationController extends Controller
                 'category' => $p->olimpiade?->category ?? '-',
                 'is_binaan' => (bool) $p->student?->is_binaan,
                 'photo_url' => $p->student?->photo_url,
+                'shirt_size' => $p->national?->shirt_size ?? '-',
+                'pack_is_received' => ! is_null($p->pack_received_at),
                 'national_status' => $p->national?->status ?? 'unconfirmed',
                 'is_national_verified' => $p->national?->status === 'verified',
+                'consumption' => $this->buildConsumptionPayload('participant', $p->id),
             ])->all(),
         ];
     }
 
-    private function formatCommitteePayload(EventCommittee $committee): array
+    private function formatCommitteePayload(EventCommittee $committee, int $activeDay = 1): array
     {
         $checkedInAt = $committee->checked_in_at;
         $isToday = $checkedInAt && $checkedInAt->isToday();
@@ -575,11 +642,14 @@ class ParticipantRegistrationController extends Controller
             'name' => $committee->name,
             'nik' => $committee->nik ? (strlen($committee->nik) === 16 ? substr($committee->nik, 0, 6).'******'.substr($committee->nik, -4) : $committee->nik) : null,
             'gender' => $committee->gender,
+            'shirt_size' => $committee->shirt_size ?? '-',
             'phone' => $committee->phone,
             'email' => $committee->email,
             'division' => $committee->division,
             'position' => $committee->position ?: 'Panitia Pelaksana',
             'access_zone' => $committee->access_zone ?: 'All Access',
+            'duty_today' => $committee->getDutyForDay($activeDay),
+            'daily_duties' => $committee->daily_duties ?? [],
             'duty_description' => $committee->duty_description,
             'photo_url' => $committee->photo_url,
             'status' => $committee->status,
@@ -773,5 +843,149 @@ class ParticipantRegistrationController extends Controller
         ]);
 
         return back()->with('success', "Status check-in tamu {$guest->name} berhasil di-reset.");
+    }
+
+    public function resetCheckIn(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+        if (! $user || ! $user->hasRole('Administrators')) {
+            abort(403, 'Hanya Administrator yang berwenang me-reset kehadiran.');
+        }
+
+        $validated = $request->validate([
+            'persona' => ['required', 'string', 'in:participant,chaperone,committee,guest'],
+            'target_id' => ['required', 'integer'],
+            'log_id' => ['nullable', 'integer'],
+            'day_number' => ['nullable', 'integer', 'min:1', 'max:4'],
+        ]);
+
+        $persona = $validated['persona'];
+        $targetId = (int) $validated['target_id'];
+        $logId = isset($validated['log_id']) ? (int) $validated['log_id'] : null;
+        $dayNumber = isset($validated['day_number']) ? (int) $validated['day_number'] : null;
+
+        $deleted = EventCheckInLog::resetCheckIn($persona, $targetId, $logId, $dayNumber);
+
+        // Khusus committee: jika check-in hari ini sudah tidak ada lagi di EventCheckInLog, kosongkan checked_in_at
+        if ($persona === 'committee') {
+            $hasRemainingToday = EventCheckInLog::query()
+                ->forTarget('committee', $targetId)
+                ->today()
+                ->exists();
+
+            if (! $hasRemainingToday) {
+                EventCommittee::where('id', $targetId)->update(['checked_in_at' => null]);
+            }
+        } elseif ($persona === 'guest') {
+            EventGuest::where('id', $targetId)->update(['checked_in_at' => null, 'status' => 'confirmed']);
+        }
+
+        $msg = $deleted > 0
+            ? "Riwayat check-in ({$deleted} log) berhasil di-reset oleh Administrator."
+            : 'Tidak ada riwayat check-in yang di-reset.';
+
+        return back()->with('success', $msg);
+    }
+
+    public function redeemChaperoneStudents(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+        if (! $user || ! $user->hasAnyRole(['Administrators', 'Verifikator'])) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'chaperone_id' => 'required|integer|exists:national_chaperones,id',
+            'participant_ids' => 'required|array|min:1',
+            'participant_ids.*' => 'integer|exists:participants,id',
+            'include_chaperone' => 'nullable|boolean',
+            'force' => 'nullable|boolean',
+            'notes' => 'nullable|string|max:255',
+        ]);
+
+        $chaperone = NationalChaperone::findOrFail($validated['chaperone_id']);
+        $force = (bool) ($request->boolean('force') || $user->hasRole('Administrators'));
+
+        $result = EventConsumptionLog::redeemBatchForChaperoneStudents(
+            $chaperone,
+            $validated['participant_ids'],
+            $user->id,
+            includeChaperone: (bool) ($validated['include_chaperone'] ?? false),
+            force: $force,
+            customNotes: $validated['notes'] ?? null,
+        );
+
+        if ($result['success']) {
+            return back()->with('success', $result['message']);
+        }
+
+        return back()->with('error', $result['message']);
+    }
+
+    public function handoverPack(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+        if (! $user || ! $user->hasAnyRole(['Administrators', 'Verifikator'])) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'type' => 'required|in:participant,chaperone',
+            'id' => 'required|integer',
+        ]);
+
+        if ($validated['type'] === 'participant') {
+            $participant = Participant::with(['student', 'national'])->findOrFail($validated['id']);
+            $displayName = $participant->student?->full_name ?? $participant->registration_number;
+
+            if (! $participant->national) {
+                return back()->with('error', "Peserta {$displayName} bukan peserta babak nasional dan tidak memiliki alokasi event pack.");
+            }
+
+            $participant->national->update([
+                'pack_received_at' => now(),
+                'pack_received_by' => $user->id,
+            ]);
+        } else {
+            $chaperone = NationalChaperone::findOrFail($validated['id']);
+            $displayName = $chaperone->name;
+            $chaperone->update([
+                'pack_received_at' => now(),
+                'pack_received_by' => $user->id,
+            ]);
+        }
+
+        return back()->with('success', "Event Pack & Kaos berhasil diserahkan kepada {$displayName}!");
+    }
+
+    public function resetPack(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+        if (! $user || ! $user->hasRole('Administrators')) {
+            abort(403, 'Hanya Administrator yang dapat me-reset status penyerahan pack.');
+        }
+
+        $validated = $request->validate([
+            'type' => 'required|in:participant,chaperone',
+            'id' => 'required|integer',
+        ]);
+
+        if ($validated['type'] === 'participant') {
+            $participant = Participant::with('national')->findOrFail($validated['id']);
+            if ($participant->national) {
+                $participant->national->update([
+                    'pack_received_at' => null,
+                    'pack_received_by' => null,
+                ]);
+            }
+        } else {
+            $item = NationalChaperone::findOrFail($validated['id']);
+            $item->update([
+                'pack_received_at' => null,
+                'pack_received_by' => null,
+            ]);
+        }
+
+        return back()->with('success', 'Status serah terima event pack berhasil di-reset.');
     }
 }

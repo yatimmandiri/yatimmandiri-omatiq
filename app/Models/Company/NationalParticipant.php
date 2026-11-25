@@ -19,6 +19,8 @@ use Spatie\Activitylog\Support\LogOptions;
     'qualified_at',
     'status',
     'shirt_size',
+    'pack_received_at',
+    'pack_received_by',
     'availability_letter_path',
     'payment_proof_path',
     'payment_status',
@@ -54,8 +56,14 @@ class NationalParticipant extends Model
             'qualified_at' => 'datetime',
             'registered_at' => 'datetime',
             'declined_at' => 'datetime',
+            'pack_received_at' => 'datetime',
             'payment_amount' => 'decimal:2',
         ];
+    }
+
+    public function packReceiver(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'pack_received_by');
     }
 
     public function getActivitylogOptions(): LogOptions

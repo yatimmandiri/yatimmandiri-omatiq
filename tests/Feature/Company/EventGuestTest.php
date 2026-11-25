@@ -195,7 +195,7 @@ test('vip guest can view rsvp page using code and confirm attendance which sends
         'email' => 'khofifah@undangan.local',
         'status' => 'invited',
         'table_number' => 'Meja VVIP Utama',
-        'seat_count' => 2,
+        'seat_count' => 1,
         'event_year' => 2026,
     ]);
 
@@ -203,10 +203,13 @@ test('vip guest can view rsvp page using code and confirm attendance which sends
     $showResponse = $this->get(route('home.guest.rsvp', ['identifier' => $guest->code]));
     $showResponse->assertOk();
 
-    // 2. Submit confirmation
+    // 2. Submit confirmation with representative details and companion
     $postResponse = $this->post(route('home.guest.rsvp.confirm', ['identifier' => $guest->code]), [
+        'name' => 'Dr. H. Bambang Subroto, M.Si',
+        'email' => 'bambang.subroto@undangan.local',
+        'phone' => '081234567890',
         'attendance' => 'confirmed',
-        'seat_count' => 2,
+        'has_companion' => true,
         'notes' => 'Akan hadir tepat waktu.',
     ]);
 
@@ -214,11 +217,94 @@ test('vip guest can view rsvp page using code and confirm attendance which sends
 
     $guest->refresh();
     expect($guest->status)->toBe('confirmed')
+        ->and($guest->name)->toBe('Dr. H. Bambang Subroto, M.Si')
+        ->and($guest->email)->toBe('bambang.subroto@undangan.local')
+        ->and($guest->phone)->toBe('081234567890')
+        ->and($guest->seat_count)->toBe(2)
         ->and($guest->confirmed_at)->not->toBeNull();
 
     Mail::assertSent(VipPassTicketMail::class, function ($mail) use ($guest) {
-        return $mail->hasTo($guest->email) && $mail->guest->id === $guest->id;
+        return $mail->hasTo('bambang.subroto@undangan.local') && $mail->guest->id === $guest->id;
     });
+});
+
+test('press guest can confirm attendance strictly for 1 seat without companion or re-entering identity', function () {
+    $guest = EventGuest::create([
+        'code' => 'INV-00008',
+        'name' => 'Ahmad Jurnalis',
+        'institution' => 'Jawa Pos Media Group',
+        'email' => 'ahmad@jawapos.local',
+        'phone' => '081399887766',
+        'category' => 'press',
+        'status' => 'invited',
+        'table_number' => 'Area Press Conference',
+        'seat_count' => 1,
+        'event_year' => 2026,
+    ]);
+
+    $postResponse = $this->post(route('home.guest.rsvp.confirm', ['identifier' => $guest->code]), [
+        'attendance' => 'confirmed',
+        'has_companion' => true, // Attempting to pass companion should still be forced to 1 seat for press
+    ]);
+
+    $postResponse->assertSessionHas('success');
+
+    $guest->refresh();
+    expect($guest->status)->toBe('confirmed')
+        ->and($guest->name)->toBe('Ahmad Jurnalis')
+        ->and($guest->email)->toBe('ahmad@jawapos.local')
+        ->and($guest->phone)->toBe('081399887766')
+        ->and($guest->seat_count)->toBe(1);
+});
+
+test('admin can print single guest invitation as A5 landscape', function () {
+    $admin = User::factory()->create(['email_verified_at' => now()]);
+    $admin->assignRole('Administrators');
+
+    $guest = EventGuest::create([
+        'code' => 'INV-00010',
+        'name' => 'Bpk. H. Ahmad Dahlan',
+        'institution' => 'Kementerian Agama Jawa Timur',
+        'category' => 'vip',
+        'status' => 'invited',
+        'event_year' => 2026,
+    ]);
+
+    $response = $this->actingAs($admin)->get(route('admin.companies.guests.invitation', $guest));
+    $response->assertOk()
+        ->assertViewIs('invitations.guest-invitation')
+        ->assertSee('Kementerian Agama Jawa Timur')
+        ->assertSee('Grand Final OMATIQ');
+});
+
+test('admin can bulk print guest invitations', function () {
+    $admin = User::factory()->create(['email_verified_at' => now()]);
+    $admin->assignRole('Administrators');
+
+    $g1 = EventGuest::create([
+        'code' => 'INV-00011',
+        'name' => 'Tamu Pertama',
+        'category' => 'vip',
+        'status' => 'invited',
+        'event_year' => 2026,
+    ]);
+
+    $g2 = EventGuest::create([
+        'code' => 'INV-00012',
+        'name' => 'Tamu Kedua',
+        'category' => 'vip',
+        'status' => 'invited',
+        'event_year' => 2026,
+    ]);
+
+    $response = $this->actingAs($admin)->get(route('admin.companies.guests.bulk-invitations', [
+        'ids' => [$g1->id, $g2->id],
+    ]));
+
+    $response->assertOk()
+        ->assertViewIs('invitations.guest-invitation')
+        ->assertSee('Tamu Pertama')
+        ->assertSee('Tamu Kedua');
 });
 
 test('non-vip guest can check-in normally at unified gate /verifikasi/', function () {
@@ -242,4 +328,68 @@ test('non-vip guest can check-in normally at unified gate /verifikasi/', functio
     $guest->refresh();
     expect($guest->status)->toBe('attended')
         ->and($guest->checked_in_at)->not->toBeNull();
+});
+
+test('unauthenticated guest scanning universal qr /verifikasi/{code} is redirected to rsvp page', function () {
+    $guest = EventGuest::create([
+        'code' => 'INV-00100',
+        'name' => 'Instansi Tamu VIP',
+        'institution' => 'Dinas Pendidikan',
+        'category' => 'vip',
+        'status' => 'invited',
+        'event_year' => 2026,
+    ]);
+
+    $response = $this->get(route('home.registration.verify', ['registrationNumber' => $guest->code]));
+    $response->assertRedirect(route('home.guest.rsvp', ['identifier' => $guest->code]));
+});
+
+test('authenticated verifier scanning universal qr for invited guest who forgot rsvp still checks them in', function () {
+    $guest = EventGuest::create([
+        'code' => 'INV-00101',
+        'name' => 'Instansi Lupa RSVP',
+        'institution' => 'Kementerian Agama',
+        'category' => 'vip',
+        'status' => 'invited',
+        'event_year' => 2026,
+    ]);
+
+    $admin = User::factory()->create(['email_verified_at' => now()]);
+    $admin->assignRole('Administrators');
+
+    $response = $this->actingAs($admin)->get(route('home.registration.verify', ['registrationNumber' => $guest->code]));
+    $response->assertOk();
+
+    $guest->refresh();
+    expect($guest->status)->toBe('attended')
+        ->and($guest->checked_in_at)->not->toBeNull();
+});
+
+test('guest getData endpoint respects perPage, sorting and page parameters from DataTable', function () {
+    $admin = User::factory()->create(['email_verified_at' => now()]);
+    $admin->assignRole('Administrators');
+
+    for ($i = 1; $i <= 30; $i++) {
+        EventGuest::create([
+            'code' => 'INV-'.str_pad((string) $i, 5, '0', STR_PAD_LEFT),
+            'name' => "Tamu Undangan {$i}",
+            'category' => 'vip',
+            'status' => 'invited',
+            'event_year' => 2026,
+        ]);
+    }
+
+    $resDefault = $this->actingAs($admin)->getJson(route('admin.companies.guests.data'));
+    $resDefault->assertOk();
+    expect($resDefault->json('per_page'))->toBe(10)
+        ->and(count($resDefault->json('data')))->toBe(10)
+        ->and($resDefault->json('total'))->toBe(30);
+
+    $res25 = $this->actingAs($admin)->getJson(route('admin.companies.guests.data', [
+        'perPage' => 25,
+        'page' => 1,
+    ]));
+    $res25->assertOk();
+    expect($res25->json('per_page'))->toBe(25)
+        ->and(count($res25->json('data')))->toBe(25);
 });

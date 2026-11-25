@@ -5,6 +5,7 @@ import {
     BadgeCheck,
     Building2,
     Calendar,
+    CalendarDays,
     Camera,
     CameraOff,
     Check,
@@ -20,6 +21,7 @@ import {
     Mail,
     MapPin,
     Phone,
+    Plus,
     Printer,
     QrCode,
     RefreshCw,
@@ -28,6 +30,7 @@ import {
     ShieldAlert,
     ShieldCheck,
     Sparkles,
+    Trash2,
     Trophy,
     User,
     UserCheck,
@@ -38,6 +41,17 @@ import {
 import { FormEvent, useEffect, useRef, useState } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 import { confirmAction } from '@/utils/sweetalert';
+import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 type ConsumptionLog = {
     id: number;
@@ -46,6 +60,37 @@ type ConsumptionLog = {
     redeemed_time?: string;
     verifier_name: string;
     notes?: string | null;
+};
+
+type CheckInLogItem = {
+    id: number;
+    checkpoint: string;
+    checkpoint_label: string;
+    checked_in_at: string;
+    checked_in_date: string;
+    verifier_name: string;
+    notes?: string | null;
+};
+
+type CheckInTimelineItem = {
+    day_number: number;
+    name: string;
+    title: string;
+    subtitle: string;
+    is_checked_in: boolean;
+    primary_time?: string | null;
+    primary_date?: string | null;
+    primary_checkpoint?: string | null;
+    primary_verifier?: string | null;
+    all_logs: CheckInLogItem[];
+};
+
+type DayOption = {
+    name: string;
+    title: string;
+    subtitle: string;
+    default_checkpoint: string;
+    default_checkpoint_label: string;
 };
 
 type ConsumptionData = {
@@ -66,11 +111,18 @@ type ParticipantEntity = {
     id: number;
     registration_number: string;
     status: 'submitted' | 'verified' | 'rejected' | string;
+    social_status?: string | null;
     registration_type?: string;
     event_year: number;
     branch?: string | null;
     penyaluran_sanggar_name?: string | null;
     guardian_name?: string | null;
+    shirt_size?: string | null;
+    is_national_qualified?: boolean;
+    pack_is_received?: boolean;
+    pack_received_at?: string | null;
+    check_in_timeline?: CheckInTimelineItem[];
+    check_in_today?: any;
     consumption?: ConsumptionData;
     olimpiade?: {
         id?: number;
@@ -105,6 +157,12 @@ type ChaperoneEntity = {
     name: string;
     nik?: string | null;
     gender: 'male' | 'female';
+    shirt_size?: string | null;
+    is_national_qualified?: boolean;
+    pack_is_received?: boolean;
+    pack_received_at?: string | null;
+    check_in_timeline?: CheckInTimelineItem[];
+    check_in_today?: any;
     phone?: string | null;
     email?: string | null;
     branch?: string | null;
@@ -129,8 +187,11 @@ type ChaperoneEntity = {
         category: string;
         is_binaan: boolean;
         photo_url?: string | null;
+        shirt_size?: string | null;
+        pack_is_received?: boolean;
         national_status: string;
         is_national_verified: boolean;
+        consumption?: ConsumptionData;
     }>;
 };
 
@@ -140,11 +201,14 @@ type CommitteeEntity = {
     name: string;
     nik?: string | null;
     gender: 'male' | 'female';
+    shirt_size?: string | null;
     phone?: string | null;
     email?: string | null;
     division: string;
     position: string;
     access_zone: string;
+    duty_today?: string | null;
+    daily_duties?: Record<string, string>;
     duty_description?: string | null;
     photo_url?: string | null;
     status: 'active' | 'inactive' | string;
@@ -154,6 +218,8 @@ type CommitteeEntity = {
     checked_in_time?: string | null;
     is_checked_in_today?: boolean;
     has_user_account?: boolean;
+    check_in_timeline?: CheckInTimelineItem[];
+    check_in_today?: any;
 };
 
 type GuestEntity = {
@@ -174,6 +240,8 @@ type GuestEntity = {
     checked_in_at?: string | null;
     checked_in_time?: string | null;
     is_checked_in_today?: boolean;
+    check_in_timeline?: CheckInTimelineItem[];
+    check_in_today?: any;
 };
 
 type VerifyProps = {
@@ -182,9 +250,15 @@ type VerifyProps = {
     persona?: 'participant' | 'chaperone' | 'committee' | 'guest' | 'not_found' | null;
     isValid: boolean;
     isFirstCheckIn?: boolean;
+    checkInMessage?: string | null;
     entity?: any;
     isAdministrator?: boolean;
     currentMode?: 'access' | 'consumption';
+    activeDay?: number;
+    activeCheckpoint?: string;
+    activeCheckpointLabel?: string;
+    dayOptions?: Record<number, DayOption>;
+    checkpointOptions?: Record<string, string>;
     // Backward-compat props
     queryRegistrationNumber?: string | null;
     participant?: ParticipantEntity | null;
@@ -421,14 +495,471 @@ function ConsumptionCard({
     );
 }
 
+function CheckInTimelineCard({
+    timeline,
+    activeDay,
+    isAdministrator = false,
+    onResetCheckIn,
+    isProcessing = false,
+}: {
+    timeline?: CheckInTimelineItem[];
+    activeDay: number;
+    isAdministrator?: boolean;
+    onResetCheckIn?: (logId?: number, dayNum?: number, label?: string) => void;
+    isProcessing?: boolean;
+}) {
+    if (!timeline || timeline.length === 0) return null;
+
+    const checkedInCount = timeline.filter((d) => d.is_checked_in).length;
+    const allLoggedCheckins = timeline.flatMap((d) =>
+        (d.all_logs || []).map((l) => ({ ...l, day_number: d.day_number, day_name: d.name }))
+    );
+
+    return (
+        <div className="mt-6 rounded-3xl border border-slate-200/90 bg-slate-50/70 p-4 sm:p-6 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-slate-200/70 pb-3 gap-2">
+                <div className="flex items-center gap-2.5">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#17524A] text-white shadow-2xs">
+                        <Calendar className="size-4" />
+                    </div>
+                    <div>
+                        <h4 className="text-xs font-black uppercase tracking-wider text-slate-800">
+                            Presensi Kehadiran 4 Hari Acara
+                        </h4>
+                        <p className="text-[11px] text-slate-500">
+                            Multi-checkpoint per hari &bull; Mendukung kunjungan dinamis (Menteri, Meet & Greet, Venue)
+                        </p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-2 self-start sm:self-auto">
+                    <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-800">
+                        Kehadiran: {checkedInCount} dari 4 Hari
+                    </span>
+                    {isAdministrator && checkedInCount > 0 && onResetCheckIn && (
+                        <button
+                            type="button"
+                            onClick={() => onResetCheckIn(undefined, activeDay, `Hari ${activeDay}`)}
+                            disabled={isProcessing}
+                            className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2.5 py-1 text-[11px] font-bold text-rose-700 hover:bg-rose-100 transition shadow-2xs disabled:opacity-50"
+                            title="Reset seluruh kehadiran hari ini"
+                        >
+                            <RotateCcw className="size-3" />
+                            <span>Reset Hari {activeDay}</span>
+                        </button>
+                    )}
+                </div>
+            </div>
+
+            <div className="mt-3.5 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+                {timeline.map((dayItem) => {
+                    const isToday = dayItem.day_number === activeDay;
+                    const isAttended = dayItem.is_checked_in;
+                    const logCount = dayItem.all_logs?.length || 0;
+
+                    return (
+                        <div
+                            key={dayItem.day_number}
+                            className={`relative flex flex-col justify-between rounded-2xl border p-3 text-center transition ${
+                                isAttended
+                                    ? 'border-emerald-300 bg-emerald-50 text-emerald-950 shadow-2xs'
+                                    : isToday
+                                    ? 'border-amber-300 bg-amber-50/70 text-amber-950 ring-2 ring-amber-400/40 shadow-2xs'
+                                    : 'border-slate-200 bg-white text-slate-400'
+                            }`}
+                        >
+                            <div>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">
+                                        {dayItem.name}
+                                    </span>
+                                    {isToday && (
+                                        <span className="rounded bg-amber-200 px-1.5 py-0.2 text-[9px] font-black text-amber-900">
+                                            Sesi Ini
+                                        </span>
+                                    )}
+                                </div>
+                                <h5 className="mt-1 text-xs font-bold line-clamp-1 text-slate-800" title={dayItem.title}>
+                                    {dayItem.title}
+                                </h5>
+                            </div>
+
+                            <div className="my-2.5 flex justify-center">
+                                {isAttended ? (
+                                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-600 text-white shadow-xs">
+                                        <Check className="size-4 stroke-[3]" />
+                                    </div>
+                                ) : (
+                                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-300">
+                                        <Clock className="size-4" />
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="text-[11px]">
+                                {isAttended ? (
+                                    <div className="font-extrabold text-emerald-800">
+                                        {logCount > 1 ? (
+                                            <>
+                                                <span>{dayItem.all_logs[0]?.checked_in_at} &bull; {dayItem.all_logs[logCount - 1]?.checked_in_at}</span>
+                                                <div className="mt-1">
+                                                    <span className="inline-block rounded-md bg-emerald-200/90 px-1.5 py-0.5 text-[9px] font-black text-emerald-900">
+                                                        {logCount} Titik Lokasi
+                                                    </span>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <span>{dayItem.primary_time}</span>
+                                                <p className="text-[10px] text-emerald-700 font-semibold truncate" title={dayItem.primary_checkpoint || ''}>
+                                                    {dayItem.primary_checkpoint}
+                                                </p>
+                                            </>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <span className="text-slate-400 font-medium">Belum Hadir</span>
+                                )}
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+
+            {/* Riwayat Detail Multi-Checkpoint per Hari */}
+            {allLoggedCheckins.length > 0 && (
+                <div className="mt-4 pt-3.5 border-t border-slate-200/70">
+                    <div className="flex items-center justify-between mb-2">
+                        <span className="text-[11px] font-black uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
+                            <MapPin className="size-3.5 text-[#17524A]" />
+                            Rute & Titik Kehadiran Tercatat ({allLoggedCheckins.length} Titik)
+                        </span>
+                    </div>
+                    <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                        {allLoggedCheckins.map((log) => (
+                            <div
+                                key={log.id}
+                                className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs shadow-2xs hover:border-[#17524A]/30 transition"
+                            >
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                    <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-100 text-emerald-800 text-[10px] font-black shrink-0">
+                                        H{log.day_number}
+                                    </span>
+                                    <div className="min-w-0">
+                                        <p className="font-bold text-slate-800 truncate text-[11px]">
+                                            {log.checkpoint_label}
+                                        </p>
+                                        <p className="text-[10px] text-slate-500">
+                                            {log.checked_in_at} &bull; Dicatat oleh {log.verifier_name}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {isAdministrator && onResetCheckIn && (
+                                    <button
+                                        type="button"
+                                        onClick={() => onResetCheckIn(log.id, log.day_number, log.checkpoint_label)}
+                                        disabled={isProcessing}
+                                        title={`Reset check-in di ${log.checkpoint_label}`}
+                                        className="inline-flex items-center gap-1 text-[10px] font-bold text-rose-600 hover:text-rose-700 hover:bg-rose-50 px-2 py-1 rounded-lg transition shrink-0 disabled:opacity-50"
+                                    >
+                                        <Trash2 className="size-3" />
+                                        <span>Reset</span>
+                                    </button>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+function PackHandoverCard({
+    persona,
+    entityId,
+    entityName,
+    shirtSize,
+    isReceived,
+    receivedAt,
+    isProcessing,
+    isAdministrator,
+    onHandover,
+    onReset,
+}: {
+    persona: 'participant' | 'chaperone';
+    entityId: number;
+    entityName: string;
+    shirtSize?: string;
+    isReceived: boolean;
+    receivedAt?: string | null;
+    isProcessing: boolean;
+    isAdministrator: boolean;
+    onHandover: () => void;
+    onReset: () => void;
+}) {
+    return (
+        <div className="mt-6 rounded-3xl border-2 border-indigo-200 bg-indigo-50/50 p-4 sm:p-5 shadow-xs">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-3">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-sm">
+                        <Award className="size-5" />
+                    </div>
+                    <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                            <h4 className="text-xs font-black uppercase tracking-wider text-indigo-950 sm:text-sm">
+                                Serah Terima Event Pack & Kaos (Hari 1)
+                            </h4>
+                            <span className="rounded-md bg-indigo-200 px-2 py-0.5 text-xs font-black text-indigo-900 border border-indigo-300">
+                                Ukuran Kaos: {shirtSize || '-'}
+                            </span>
+                        </div>
+                        <p className="text-xs text-indigo-800/80">
+                            Pengambilan seragam kaos lomba resmi, kunci kamar asrama, & paket ID Pass.
+                        </p>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                    {isReceived ? (
+                        <div className="flex flex-col items-end">
+                            <span className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-1.5 text-xs font-black text-white shadow-xs">
+                                <CheckCircle2 className="size-4" />
+                                Pack Sudah Diterima
+                            </span>
+                            {receivedAt && (
+                                <span className="mt-0.5 text-[10px] text-slate-500 font-medium">
+                                    {receivedAt}
+                                </span>
+                            )}
+                        </div>
+                    ) : (
+                        <button
+                            type="button"
+                            onClick={onHandover}
+                            disabled={isProcessing}
+                            className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-black text-white shadow-md shadow-indigo-600/20 hover:bg-indigo-700 active:scale-95 transition"
+                        >
+                            <Check className="size-4 stroke-[3]" />
+                            Tandai Pack Diserahkan
+                        </button>
+                    )}
+
+                    {isReceived && isAdministrator && (
+                        <button
+                            type="button"
+                            onClick={onReset}
+                            disabled={isProcessing}
+                            className="inline-flex items-center rounded-xl p-2 text-slate-400 hover:bg-slate-200 hover:text-slate-600 transition"
+                            title="Reset Serah Terima (Admin Saja)"
+                        >
+                            <RotateCcw className="size-3.5" />
+                        </button>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function ChaperoneStudentsMealCard({
+    chaperoneId,
+    chaperoneName,
+    participants,
+    chaperoneConsumption,
+    isProcessing,
+    onRedeemBatch,
+}: {
+    chaperoneId: number;
+    chaperoneName: string;
+    participants: any[];
+    chaperoneConsumption?: ConsumptionData;
+    isProcessing: boolean;
+    onRedeemBatch: (selectedIds: number[], includeChaperone: boolean) => void;
+}) {
+    if (!participants || participants.length === 0) return null;
+
+    const availableParticipants = participants.filter(
+        (p) => p.consumption && p.consumption.can_redeem
+    );
+
+    const [selectedIds, setSelectedIds] = useState<number[]>([]);
+    const [includeChaperone, setIncludeChaperone] = useState(false);
+
+    const toggleSelect = (id: number) => {
+        setSelectedIds((prev) =>
+            prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+        );
+    };
+
+    const toggleSelectAll = () => {
+        if (selectedIds.length === availableParticipants.length && availableParticipants.length > 0) {
+            setSelectedIds([]);
+        } else {
+            setSelectedIds(availableParticipants.map((p) => p.id));
+        }
+    };
+
+    const canChaperoneRedeem = chaperoneConsumption?.can_redeem ?? false;
+    const totalPortions = selectedIds.length + (includeChaperone && canChaperoneRedeem ? 1 : 0);
+
+    return (
+        <div className="mt-6 rounded-3xl border-2 border-teal-500/40 bg-teal-50/40 p-5 sm:p-6 shadow-sm">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-3">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#17524A] text-white shadow-sm">
+                        <Utensils className="h-5 w-5" />
+                    </div>
+                    <div>
+                        <h4 className="text-base font-black text-slate-900 sm:text-lg">
+                            Ambilkan Konsumsi Santri Dampingan (Kolektif)
+                        </h4>
+                        <p className="text-xs text-slate-500">
+                            Pendamping dapat mewakili pengambilan makan santri binaan agar santri dapat beristirahat di kamar.
+                        </p>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                    <button
+                        type="button"
+                        onClick={toggleSelectAll}
+                        disabled={availableParticipants.length === 0}
+                        className="rounded-xl border border-teal-300 bg-white px-3 py-1.5 text-xs font-bold text-teal-800 hover:bg-teal-50 transition shadow-2xs"
+                    >
+                        {selectedIds.length === availableParticipants.length && availableParticipants.length > 0
+                            ? 'Batal Pilih Semua'
+                            : `Pilih Semua Santri Siap (${availableParticipants.length})`}
+                    </button>
+                </div>
+            </div>
+
+            {/* List Santri Dampingan dengan Checklist & Status Konsumsi */}
+            <div className="mt-4 divide-y divide-teal-100 rounded-2xl border border-teal-200/80 bg-white shadow-xs overflow-hidden">
+                {participants.map((p: any) => {
+                    const c = p.consumption;
+                    const canRedeem = c?.can_redeem ?? false;
+                    const isSelected = selectedIds.includes(p.id);
+
+                    return (
+                        <div
+                            key={p.id}
+                            onClick={() => canRedeem && toggleSelect(p.id)}
+                            className={`flex flex-col sm:flex-row sm:items-center justify-between p-3.5 gap-2 transition select-none ${
+                                canRedeem ? 'cursor-pointer hover:bg-teal-50/60' : 'bg-slate-50/60 opacity-80'
+                            } ${isSelected ? 'bg-teal-50/90 font-medium' : ''}`}
+                        >
+                            <div className="flex items-center gap-3">
+                                <input
+                                    type="checkbox"
+                                    checked={isSelected}
+                                    disabled={!canRedeem}
+                                    onChange={() => toggleSelect(p.id)}
+                                    className="h-4 w-4 rounded border-slate-300 text-[#17524A] focus:ring-[#17524A]"
+                                />
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <p className="text-xs sm:text-sm font-bold text-slate-900">{p.name}</p>
+                                        <span className="font-mono text-[10px] text-slate-500">({p.registration_number})</span>
+                                        {p.shirt_size && (
+                                            <span className="rounded bg-slate-100 px-1.5 py-0.2 text-[10px] font-bold text-slate-600">
+                                                Kaos: {p.shirt_size}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <p className="text-[11px] text-slate-500">{p.olimpiade_name} &bull; {p.school_name}</p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-2 self-end sm:self-auto">
+                                {c ? (
+                                    c.reason === 'ready' ? (
+                                        <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-100 px-2.5 py-1 text-[11px] font-black text-emerald-800">
+                                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 animate-pulse" />
+                                            Siap Porsi {c.next_session} (Sisa {c.remaining}x)
+                                        </span>
+                                    ) : c.reason === 'cooldown' ? (
+                                        <span className="inline-flex items-center gap-1 rounded-lg bg-amber-100 px-2.5 py-1 text-[11px] font-bold text-amber-800" title={c.message || ''}>
+                                            <Clock className="size-3" />
+                                            Jeda ({c.next_available_time} WIB)
+                                        </span>
+                                    ) : (
+                                        <span className="inline-flex items-center gap-1 rounded-lg bg-slate-200 px-2.5 py-1 text-[11px] font-bold text-slate-600">
+                                            <Check className="size-3" />
+                                            Lengkap (3/3 Porsi)
+                                        </span>
+                                    )
+                                ) : (
+                                    <span className="text-[11px] text-slate-400">Data konsumsi tidak tersedia</span>
+                                )}
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+
+            {/* Opsi Jatah Pendamping & CTA Submit */}
+            <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-2xl bg-white p-3.5 border border-teal-200 shadow-2xs">
+                {canChaperoneRedeem ? (
+                    <label className="flex items-center gap-2.5 cursor-pointer text-xs font-bold text-teal-900 select-none">
+                        <input
+                            type="checkbox"
+                            checked={includeChaperone}
+                            onChange={(e) => setIncludeChaperone(e.target.checked)}
+                            className="h-4 w-4 rounded border-slate-300 text-[#17524A] focus:ring-[#17524A]"
+                        />
+                        <span>Sertakan juga jatah makan pendamping sendiri (+1 Porsi)</span>
+                    </label>
+                ) : (
+                    <span className="text-xs text-slate-500 font-medium">
+                        (Jatah makan pendamping: {chaperoneConsumption?.reason === 'exhausted' ? 'Lengkap 3/3' : 'Sedang cooldown'})
+                    </span>
+                )}
+
+                <button
+                    type="button"
+                    onClick={() => onRedeemBatch(selectedIds, includeChaperone)}
+                    disabled={totalPortions === 0 || isProcessing}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#17524A] px-5 py-2.5 text-xs font-black text-white shadow-md shadow-[#17524A]/20 hover:bg-[#13443d] active:scale-95 transition disabled:opacity-50"
+                >
+                    <Utensils className="size-4" />
+                    Ambilkan Konsumsi ({totalPortions} Porsi) ➔
+                </button>
+            </div>
+        </div>
+    );
+}
+
+const DEFAULT_CHECKPOINTS: Record<string, string> = {
+    penginapan: '🏨 Penginapan / Asrama & Kumpul Bus',
+    kunjungan_mentan: '🏛️ Kunjungan Kediaman Menteri Pertanian',
+    meet_greet_tokoh: '🌟 Meet & Greet Tokoh Nasional',
+    venue_lomba: '🎯 Venue Perlombaan (Gate Utama)',
+    presscon: '🎙️ Portal Presscon & Media',
+    study_tour: '🚌 Study Tour & Wisata Edukasi',
+    ramah_tamah: '🍽️ Jamuan Ramah Tamah / Gala Dinner',
+    gate_umum: '🚪 Gate Akses Terpadu',
+};
+
+interface CustomCheckpoint {
+    key: string;
+    label: string;
+}
+
 export default function UniversalVerifyPage({
     pageTitle,
     queryCode,
     persona,
     isValid,
     isFirstCheckIn,
+    checkInMessage,
     entity,
     isAdministrator = false,
+    activeDay: activeDayProp = 1,
+    activeCheckpoint: activeCheckpointProp = 'penginapan',
+    activeCheckpointLabel: activeCheckpointLabelProp = 'Penginapan / Asrama',
+    dayOptions,
+    checkpointOptions,
     queryRegistrationNumber,
     participant: propParticipant,
     chaperone: propChaperone,
@@ -443,6 +974,45 @@ export default function UniversalVerifyPage({
     const [cameraError, setCameraError] = useState<string | null>(null);
     const [isProcessingAction, setIsProcessingAction] = useState(false);
     const [scanCooldownCountdown, setScanCooldownCountdown] = useState<number>(0);
+
+    const [customCheckpoints, setCustomCheckpoints] = useState<CustomCheckpoint[]>(() => {
+        if (typeof window !== 'undefined') {
+            try {
+                const saved = localStorage.getItem('omatiq_custom_checkpoints');
+                if (saved) return JSON.parse(saved);
+            } catch {
+                // ignore
+            }
+        }
+        return [];
+    });
+
+    const [isCustomPosModalOpen, setIsCustomPosModalOpen] = useState(false);
+    const [newCustomPosName, setNewCustomPosName] = useState('');
+
+    const [activeDay, setActiveDay] = useState<number>(() => {
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('omatiq_verify_day');
+            if (saved) return Number(saved);
+        }
+        return activeDayProp || 1;
+    });
+
+    const [activeCheckpoint, setActiveCheckpoint] = useState<string>(() => {
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('omatiq_verify_checkpoint');
+            if (saved) return saved;
+        }
+        return activeCheckpointProp || 'penginapan';
+    });
+
+    const [activeCheckpointLabel, setActiveCheckpointLabel] = useState<string>(() => {
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('omatiq_verify_checkpoint_label');
+            if (saved) return saved;
+        }
+        return activeCheckpointLabelProp || 'Penginapan / Asrama';
+    });
 
     const searchInputRef = useRef<HTMLInputElement>(null);
     const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
@@ -547,13 +1117,43 @@ export default function UniversalVerifyPage({
         return text;
     };
 
-    const navigateToCode = (code: string) => {
+    const navigateToCode = (
+        code: string,
+        dayNum: number = activeDay,
+        cp: string = activeCheckpoint,
+        cpLabel: string = activeCheckpointLabel
+    ) => {
         const cleanCode = extractCode(code);
-        
         if (!cleanCode) return;
 
         const url = `/verifikasi/${encodeURIComponent(cleanCode)}`;
-        router.get(url, {}, { preserveScroll: true });
+        router.get(
+            url,
+            { day: dayNum, checkpoint: cp, checkpoint_label: cpLabel },
+            { preserveScroll: true }
+        );
+    };
+
+    const handleDayChange = (newDay: number) => {
+        setActiveDay(newDay);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('omatiq_verify_day', String(newDay));
+        }
+        if (activeCode) {
+            navigateToCode(activeCode, newDay, activeCheckpoint, activeCheckpointLabel);
+        }
+    };
+
+    const handleCheckpointChange = (newCheckpoint: string, newLabel: string) => {
+        setActiveCheckpoint(newCheckpoint);
+        setActiveCheckpointLabel(newLabel);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('omatiq_verify_checkpoint', newCheckpoint);
+            localStorage.setItem('omatiq_verify_checkpoint_label', newLabel);
+        }
+        if (activeCode) {
+            navigateToCode(activeCode, activeDay, newCheckpoint, newLabel);
+        }
     };
 
     const handleSearch = (e: FormEvent) => {
@@ -716,6 +1316,143 @@ export default function UniversalVerifyPage({
         );
     };
 
+    // Serah terima pack & kaos (Hari 1)
+    const handleHandoverPack = (type: 'participant' | 'chaperone', id: number) => {
+        setIsProcessingAction(true);
+        router.post(
+            '/verifikasi/pack/handover',
+            { type, id },
+            {
+                preserveScroll: true,
+                onFinish: () => setIsProcessingAction(false),
+            }
+        );
+    };
+
+    // Reset serah terima pack & kaos (Admin only)
+    const handleResetPack = async (type: 'participant' | 'chaperone', id: number) => {
+        const confirmed = await confirmAction({
+            title: 'Reset Serah Terima Pack?',
+            text: 'Status serah terima event pack & kaos akan dikembalikan menjadi belum diterima.',
+            confirmButtonText: 'Ya, Reset',
+            cancelButtonText: 'Batal',
+            icon: 'warning',
+        });
+        if (!confirmed) return;
+
+        setIsProcessingAction(true);
+        router.post(
+            '/verifikasi/pack/reset',
+            { type, id },
+            {
+                preserveScroll: true,
+                onFinish: () => setIsProcessingAction(false),
+            }
+        );
+    };
+
+    // Pengambilan konsumsi kolektif santri binaan oleh pendamping
+    const handleRedeemChaperoneStudents = async (selectedIds: number[], includeChaperone: boolean) => {
+        if (selectedIds.length === 0 && !includeChaperone) return;
+
+        const totalCount = selectedIds.length + (includeChaperone ? 1 : 0);
+        const confirmed = await confirmAction({
+            title: `Ambilkan Konsumsi (${totalCount} Porsi)?`,
+            text: `Apakah Anda yakin ingin mengambilkan jatah konsumsi untuk ${selectedIds.length} santri binaan terpilih${includeChaperone ? ' dan 1 porsi pendamping' : ''}? Jatah makan masing-masing santri akan otomatis terpotong 1 porsi hari ini.`,
+            confirmButtonText: 'Ya, Ambilkan Konsumsi',
+            cancelButtonText: 'Batal',
+            icon: 'question',
+        });
+        if (!confirmed) return;
+
+        setIsProcessingAction(true);
+        router.post(
+            '/verifikasi/consumption/redeem-chaperone-students',
+            {
+                chaperone_id: activeEntity.id,
+                participant_ids: selectedIds,
+                include_chaperone: includeChaperone,
+            },
+            {
+                preserveScroll: true,
+                onFinish: () => setIsProcessingAction(false),
+            }
+        );
+    };
+
+    // Tambah Pos Kustom oleh Administrator
+    const handleAddCustomPos = (e: FormEvent) => {
+        e.preventDefault();
+        const trimmed = newCustomPosName.trim();
+        if (!trimmed) return;
+
+        const slug = 'custom_' + trimmed.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+        const label = `📍 ${trimmed}`;
+
+        const updated = [...customCheckpoints.filter((c) => c.key !== slug), { key: slug, label }];
+        setCustomCheckpoints(updated);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('omatiq_custom_checkpoints', JSON.stringify(updated));
+        }
+
+        handleCheckpointChange(slug, label);
+        setNewCustomPosName('');
+        setIsCustomPosModalOpen(false);
+    };
+
+    // Hapus Pos Kustom dari memori browser
+    const handleDeleteCustomPos = (keyToDelete: string) => {
+        const updated = customCheckpoints.filter((c) => c.key !== keyToDelete);
+        setCustomCheckpoints(updated);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('omatiq_custom_checkpoints', JSON.stringify(updated));
+        }
+        if (activeCheckpoint === keyToDelete) {
+            handleCheckpointChange('penginapan', DEFAULT_CHECKPOINTS.penginapan);
+        }
+    };
+
+    // Reset Check-in Log (Khusus Administrator)
+    const handleResetCheckIn = async (logId?: number, dayNum?: number, label?: string) => {
+        if (!activeEntity?.id || !resolvedPersona) return;
+
+        const targetName = activeEntity.student?.full_name || activeEntity.name || activeEntity.registration_number || 'entitas';
+        const title = logId
+            ? `Reset Kehadiran di ${label || 'Pos Ini'}?`
+            : dayNum
+            ? `Reset Semua Kehadiran Hari ${dayNum}?`
+            : 'Reset Kehadiran Hari Ini?';
+
+        const text = logId
+            ? `Catatan absensi di ${label || 'pos ini'} untuk ${targetName} akan dihapus dari sistem.`
+            : `Seluruh riwayat presensi hari ke-${dayNum || activeDay} untuk ${targetName} akan di-reset.`;
+
+        const confirmed = await confirmAction({
+            title,
+            text,
+            confirmButtonText: 'Ya, Reset Kehadiran',
+            cancelButtonText: 'Batal',
+            icon: 'warning',
+        });
+
+        if (!confirmed) return;
+
+        setIsProcessingAction(true);
+        router.post(
+            '/verifikasi/checkin/reset',
+            {
+                persona: resolvedPersona,
+                target_id: activeEntity.id,
+                log_id: logId,
+                day_number: dayNum,
+            },
+            {
+                preserveScroll: true,
+                onFinish: () => setIsProcessingAction(false),
+            }
+        );
+    };
+
     return (
         <>
             <Head title={pageTitle || 'Universal Gate Terminal OMATIQ'} />
@@ -768,6 +1505,124 @@ export default function UniversalVerifyPage({
                     )}
 
 
+
+                    {/* Selector Sesi Hari & Pos Verifikator Aktif */}
+                    <div className="mb-4 rounded-2xl border border-[#17524A]/20 bg-white/95 p-3.5 shadow-sm backdrop-blur-md">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <span className="text-[10px] font-black uppercase tracking-wider text-[#17524A]">
+                                    PILIHAN SESI HARI:
+                                </span>
+                                <div className="mt-1 flex flex-wrap gap-1.5">
+                                    {[1, 2, 3, 4].map((d) => {
+                                        const isSelected = activeDay === d;
+                                        const dayLabels: Record<number, string> = {
+                                            1: 'Hari 1 (Penginapan)',
+                                            2: 'Hari 2 (Venue Lomba)',
+                                            3: 'Hari 3 (Venue Final)',
+                                            4: 'Hari 4 (Study Tour)',
+                                        };
+                                        return (
+                                            <button
+                                                key={d}
+                                                type="button"
+                                                onClick={() => handleDayChange(d)}
+                                                className={`rounded-xl px-3 py-1.5 text-xs font-black transition ${
+                                                    isSelected
+                                                        ? 'bg-[#17524A] text-white shadow-xs'
+                                                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                                }`}
+                                            >
+                                                {dayLabels[d] || `Hari ${d}`}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            <div className="sm:border-l sm:border-slate-200 sm:pl-4">
+                                <div className="flex items-center justify-between gap-2">
+                                    <span className="text-[10px] font-black uppercase tracking-wider text-[#17524A]">
+                                        POS / GATE TUGAS ANDA:
+                                    </span>
+                                    {isAdministrator && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsCustomPosModalOpen(true)}
+                                            className="inline-flex items-center gap-1 text-[10px] font-black text-[#17524A] hover:text-[#09767a] transition"
+                                            title="Kelola / Tambah Pos Kustom (Khusus Admin)"
+                                        >
+                                            <Plus className="size-3" />
+                                            <span>Pos Kustom</span>
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="mt-1 flex items-center gap-1.5">
+                                    <select
+                                        value={activeCheckpoint}
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            if (val === '__add_custom__') {
+                                                setIsCustomPosModalOpen(true);
+                                                return;
+                                            }
+                                            const foundCustom = customCheckpoints.find((c) => c.key === val);
+                                            const label =
+                                                foundCustom?.label ||
+                                                checkpointOptions?.[val] ||
+                                                DEFAULT_CHECKPOINTS[val] ||
+                                                e.target.options[e.target.selectedIndex].text;
+                                            handleCheckpointChange(val, label);
+                                        }}
+                                        className="rounded-xl border-slate-300 bg-slate-50 py-1.5 pr-8 pl-3 text-xs font-black text-slate-800 shadow-2xs focus:border-[#17524A] focus:bg-white focus:ring-[#17524A]"
+                                    >
+                                        <optgroup label="Pos Resmi Agenda Acara">
+                                            {Object.entries({ ...DEFAULT_CHECKPOINTS, ...(checkpointOptions || {}) }).map(([key, label]) => (
+                                                <option key={key} value={key}>
+                                                    {label}
+                                                </option>
+                                            ))}
+                                        </optgroup>
+
+                                        {customCheckpoints.length > 0 && (
+                                            <optgroup label="Pos Kustom Tersimpan">
+                                                {customCheckpoints.map((cp) => (
+                                                    <option key={cp.key} value={cp.key}>
+                                                        {cp.label}
+                                                    </option>
+                                                ))}
+                                            </optgroup>
+                                        )}
+
+                                        {isAdministrator && (
+                                            <option value="__add_custom__">
+                                                ➕ Tambah Pos Kustom Lainnya...
+                                            </option>
+                                        )}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Banner Auto Check-In Notification */}
+                    {isFirstCheckIn && (
+                        <div className="mb-4 flex items-center justify-between gap-3 rounded-2xl border-2 border-emerald-400 bg-emerald-100 px-4 py-3.5 text-sm font-black text-emerald-950 shadow-md">
+                            <div className="flex items-center gap-2.5">
+                                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-600 text-white shadow-xs">
+                                    <Check className="size-4 stroke-[3]" />
+                                </span>
+                                <div>
+                                    <p className="text-sm font-black text-emerald-950">
+                                        {checkInMessage || `Auto Check-In Berhasil! Hadir di ${activeCheckpointLabel} (Hari ${activeDay}).`}
+                                    </p>
+                                    <p className="text-xs font-semibold text-emerald-800">
+                                        Kehadiran entitas telah otomatis terekam dalam sistem log presensi harian acara.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Scanner Input Terminal (Optimized for USB Cashier Barcode Guns & Camera) */}
                     <div className="mb-6 rounded-2xl bg-white p-3.5 shadow-xl shadow-slate-200/50 ring-2 ring-[#17524A]/20">
@@ -992,11 +1847,41 @@ export default function UniversalVerifyPage({
                                                     Atribut Peserta Nasional
                                                 </div>
                                                 <p className="mt-1 text-sm font-bold text-slate-800">
-                                                    Ukuran Kaos: {activeEntity.national?.shirt_size ?? '-'}
+                                                    Ukuran Kaos: {activeEntity.shirt_size || activeEntity.national?.shirt_size || '-'}
                                                 </p>
                                                 <p className="text-xs text-emerald-700">Status: {activeEntity.status === 'verified' ? 'Terverifikasi Resmi' : activeEntity.status}</p>
                                             </div>
                                         </div>
+
+                                        {/* Presensi Kehadiran 4 Hari Acara */}
+                                        <CheckInTimelineCard
+                                            timeline={activeEntity.check_in_timeline}
+                                            activeDay={activeDay}
+                                            isAdministrator={isAdministrator}
+                                            onResetCheckIn={handleResetCheckIn}
+                                            isProcessing={isProcessingAction}
+                                        />
+
+                                        {/* Logistik Serah Terima Pack & Kaos (Khusus Finalis Nasional) */}
+                                        {activeEntity.is_national_qualified ? (
+                                            <PackHandoverCard
+                                                persona="participant"
+                                                entityId={activeEntity.id}
+                                                entityName={activeEntity.student?.full_name || activeEntity.registration_number}
+                                                shirtSize={activeEntity.shirt_size || activeEntity.national?.shirt_size}
+                                                isReceived={Boolean(activeEntity.pack_is_received)}
+                                                receivedAt={activeEntity.pack_received_at}
+                                                isProcessing={isProcessingAction}
+                                                isAdministrator={isAdministrator}
+                                                onHandover={() => handleHandoverPack('participant', activeEntity.id)}
+                                                onReset={() => handleResetPack('participant', activeEntity.id)}
+                                            />
+                                        ) : (
+                                            <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 p-4 text-xs text-slate-500 flex items-center gap-3">
+                                                <Info className="h-4 w-4 text-slate-400 shrink-0" />
+                                                <span>Peserta babak penyisihan regional (bukan finalis nasional, alokasi event pack tidak tersedia).</span>
+                                            </div>
+                                        )}
 
                                         {/* =========================================================================
                                             CONSUMPTION TRACKING WIDGET (PARTICIPANT)
@@ -1094,9 +1979,29 @@ export default function UniversalVerifyPage({
                                             </div>
                                         </div>
 
-                                        {/* =========================================================================
-                                            CONSUMPTION TRACKING WIDGET (CHAPERONE)
-                                           ========================================================================= */}
+                                        {/* Presensi Kehadiran 4 Hari Acara (Pendamping) */}
+                                        <CheckInTimelineCard
+                                            timeline={activeEntity.check_in_timeline}
+                                            activeDay={activeDay}
+                                            isAdministrator={isAdministrator}
+                                            onResetCheckIn={handleResetCheckIn}
+                                            isProcessing={isProcessingAction}
+                                        />
+
+                                        {/* Logistik Serah Terima Pack & Kaos Pendamping */}
+                                        <PackHandoverCard
+                                            persona="chaperone"
+                                            entityId={activeEntity.id}
+                                            entityName={activeEntity.name}
+                                            shirtSize={activeEntity.shirt_size}
+                                            isReceived={Boolean(activeEntity.pack_is_received)}
+                                            receivedAt={activeEntity.pack_received_at}
+                                            isProcessing={isProcessingAction}
+                                            isAdministrator={isAdministrator}
+                                            onHandover={() => handleHandoverPack('chaperone', activeEntity.id)}
+                                            onReset={() => handleResetPack('chaperone', activeEntity.id)}
+                                        />
+
                                         {/* =========================================================================
                                             CONSUMPTION TRACKING WIDGET (CHAPERONE)
                                            ========================================================================= */}
@@ -1109,6 +2014,18 @@ export default function UniversalVerifyPage({
                                                 onRedeem={handleRedeemConsumption}
                                                 onReset={handleResetConsumption}
                                                 theme="teal"
+                                            />
+                                        )}
+
+                                        {/* FITUR KOLEKTIF: Ambilkan Konsumsi Santri Binaan oleh Pendamping */}
+                                        {activeEntity.participants && activeEntity.participants.length > 0 && (
+                                            <ChaperoneStudentsMealCard
+                                                chaperoneId={activeEntity.id}
+                                                chaperoneName={activeEntity.name}
+                                                participants={activeEntity.participants}
+                                                chaperoneConsumption={activeEntity.consumption}
+                                                isProcessing={isProcessingAction}
+                                                onRedeemBatch={handleRedeemChaperoneStudents}
                                             />
                                         )}
 
@@ -1210,9 +2127,97 @@ export default function UniversalVerifyPage({
                                             </div>
                                         </div>
 
+                                        {/* Badge Lokasi Penugasan Resmi Hari Ini */}
+                                        <div className="mt-4 rounded-2xl border-2 border-indigo-200 bg-indigo-50/70 p-4 text-indigo-950">
+                                            <div className="flex items-center gap-3">
+                                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-xs">
+                                                    <MapPin className="size-5" />
+                                                </div>
+                                                <div>
+                                                    <span className="text-[10px] font-black uppercase tracking-wider text-indigo-700">
+                                                        LOKASI PENUGASAN RESMI HARI INI (HARI {activeDay}):
+                                                    </span>
+                                                    <p className="text-sm sm:text-base font-black text-indigo-950">
+                                                        {activeEntity.duty_today || activeEntity.access_zone || 'All Access'}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Jadwal Penugasan 4 Hari Acara Panitia */}
+                                        <div className="mt-4 rounded-2xl border border-indigo-200 bg-white p-4 shadow-xs text-left">
+                                            <div className="flex items-center justify-between mb-3">
+                                                <div className="flex items-center gap-2">
+                                                    <CalendarDays className="size-4 text-indigo-600" />
+                                                    <span className="text-xs font-bold text-slate-800">
+                                                        Jadwal Penugasan 4 Hari Panitia
+                                                    </span>
+                                                </div>
+                                                <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-md">
+                                                    Sesi Aktif: Hari {activeDay}
+                                                </span>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                                {[
+                                                    { num: 1, title: 'Kedatangan & Penginapan', badgeColor: 'bg-emerald-100 text-emerald-800 border-emerald-300' },
+                                                    { num: 2, title: 'Venue Perlombaan (Penyisihan)', badgeColor: 'bg-blue-100 text-blue-800 border-blue-300' },
+                                                    { num: 3, title: 'Venue Perlombaan (Babak Final)', badgeColor: 'bg-indigo-100 text-indigo-800 border-indigo-300' },
+                                                    { num: 4, title: 'Study Tour & Jamuan Ramah Tamah', badgeColor: 'bg-amber-100 text-amber-800 border-amber-300' },
+                                                ].map((d) => {
+                                                    const daily = activeEntity.daily_duties;
+                                                    let duty = '';
+                                                    if (daily) {
+                                                        duty = daily[`day_${d.num}`] || daily[d.num] || daily[String(d.num)] || '';
+                                                    }
+                                                    if (!duty) {
+                                                        duty = activeEntity.access_zone || `${activeEntity.division} - ${activeEntity.position || 'Panitia Pelaksana'}`;
+                                                    }
+                                                    const isToday = d.num === activeDay;
+
+                                                    return (
+                                                        <div
+                                                            key={d.num}
+                                                            className={`rounded-xl border p-2.5 transition ${
+                                                                isToday
+                                                                    ? 'bg-indigo-50/70 border-indigo-400 ring-2 ring-indigo-300/60 shadow-2xs'
+                                                                    : 'bg-slate-50/70 border-slate-200'
+                                                            }`}
+                                                        >
+                                                            <div className="flex items-center justify-between gap-1 mb-1">
+                                                                <span className={`px-1.5 py-0.5 rounded text-[9px] font-black uppercase border ${d.badgeColor}`}>
+                                                                    HARI {d.num}
+                                                                </span>
+                                                                {isToday && (
+                                                                    <span className="text-[9px] font-black uppercase tracking-wider text-indigo-700 bg-indigo-100 px-1.5 py-0.5 rounded">
+                                                                        Hari Ini
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <p className="text-xs font-bold text-slate-800 line-clamp-1">
+                                                                {duty}
+                                                            </p>
+                                                            <p className="text-[10px] text-slate-400 truncate">
+                                                                {d.title}
+                                                            </p>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+
+                                        {/* Presensi Kehadiran 4 Hari Panitia */}
+                                        <CheckInTimelineCard
+                                            timeline={activeEntity.check_in_timeline}
+                                            activeDay={activeDay}
+                                            isAdministrator={isAdministrator}
+                                            onResetCheckIn={handleResetCheckIn}
+                                            isProcessing={isProcessingAction}
+                                        />
+
                                         {activeEntity.duty_description && (
                                             <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3.5 text-xs text-slate-700">
-                                                <span className="font-bold text-slate-900">Uraian Tugas: </span>
+                                                <span className="font-bold text-slate-900">Uraian Tugas Umum: </span>
                                                 {activeEntity.duty_description}
                                             </div>
                                         )}
@@ -1463,6 +2468,89 @@ export default function UniversalVerifyPage({
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* Modal Tambah Pos Kustom (Khusus Administrator) */}
+            {isAdministrator && (
+                <Dialog open={isCustomPosModalOpen} onOpenChange={setIsCustomPosModalOpen}>
+                    <DialogContent className="max-w-md">
+                        <form onSubmit={handleAddCustomPos}>
+                            <DialogHeader>
+                                <DialogTitle className="flex items-center gap-2 text-base font-bold text-slate-900">
+                                    <MapPin className="size-5 text-[#17524A]" />
+                                    Tambah Pos / Titik Kunjungan Kustom
+                                </DialogTitle>
+                                <DialogDescription className="text-xs text-slate-500">
+                                    Tambahkan pos khusus (seperti kunjungan insidental, lokasi studi, atau venue tambahan). Tersimpan khusus di perangkat verifikator Anda.
+                                </DialogDescription>
+                            </DialogHeader>
+
+                            <div className="py-4 space-y-3">
+                                <div>
+                                    <Label htmlFor="custom-pos-name" className="text-xs font-bold text-slate-700">
+                                        Nama Titik / Pos Acara <span className="text-rose-500">*</span>
+                                    </Label>
+                                    <Input
+                                        id="custom-pos-name"
+                                        value={newCustomPosName}
+                                        onChange={(e) => setNewCustomPosName(e.target.value)}
+                                        placeholder="Contoh: Kunjungan Museum Kepresidenan"
+                                        className="mt-1 h-9 text-xs"
+                                        autoFocus
+                                    />
+                                </div>
+
+                                {customCheckpoints.length > 0 && (
+                                    <div className="mt-2">
+                                        <span className="text-[10px] font-black uppercase text-slate-400">
+                                            Pos Kustom yang Tersimpan:
+                                        </span>
+                                        <div className="mt-1.5 space-y-1 max-h-32 overflow-y-auto pr-1">
+                                            {customCheckpoints.map((cp) => (
+                                                <div
+                                                    key={cp.key}
+                                                    className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs"
+                                                >
+                                                    <span className="font-semibold text-slate-700 truncate text-[11px]">
+                                                        {cp.label}
+                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleDeleteCustomPos(cp.key)}
+                                                        className="text-slate-400 hover:text-rose-500 transition p-1"
+                                                        title="Hapus pos ini"
+                                                    >
+                                                        <Trash2 className="size-3" />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            <DialogFooter className="gap-2 sm:gap-0">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setIsCustomPosModalOpen(false)}
+                                    className="text-xs"
+                                >
+                                    Batal
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    size="sm"
+                                    disabled={!newCustomPosName.trim()}
+                                    className="bg-[#17524A] hover:bg-[#13433c] text-white text-xs font-bold"
+                                >
+                                    Simpan & Pilih Pos
+                                </Button>
+                            </DialogFooter>
+                        </form>
+                    </DialogContent>
+                </Dialog>
             )}
         </>
     );

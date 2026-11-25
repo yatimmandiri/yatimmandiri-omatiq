@@ -624,7 +624,7 @@ class ParticipantController extends Controller
         $this->authorize('data-participant', Participant::class);
 
         $user = Auth::user();
-        $allowed = ['id', 'registration_number', 'status', 'created_at', 'updated_at'];
+        $allowed = ['id', 'registration_number', 'status', 'branch', 'registration_type', 'payment_status', 'social_status', 'created_at', 'updated_at'];
         $orderBy = in_array($request->input('orderBy'), $allowed, true)
             ? $request->input('orderBy')
             : 'created_at';
@@ -699,7 +699,7 @@ class ParticipantController extends Controller
             ->orderBy($orderBy, $direction)
             ->orderBy('id', 'desc');
 
-        $perPage = min($request->integer('perPage') ?: 10, 100);
+        $perPage = min(max((int) ($request->input('perPage') ?? $request->input('pageSize') ?? 10), 1), 100);
 
         $data = $query->paginate($perPage, ['*'], 'page', $request->integer('page') ?: null);
         $data->through(fn (Participant $p) => $this->participantPayload($p));
