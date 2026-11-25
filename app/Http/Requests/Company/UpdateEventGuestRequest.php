@@ -19,7 +19,7 @@ class UpdateEventGuestRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'institution' => ['nullable', 'string', 'max:150'],
             'position' => ['nullable', 'string', 'max:150'],
-            'category' => ['required', 'in:vip,non_vip,non-vip,vvip,tokoh,sponsor,umum'],
+            'category' => ['required', 'in:vip,non_vip,non-vip,vvip,tokoh,sponsor,umum,press,media'],
             'phone' => ['nullable', 'string', 'max:30'],
             'email' => ['nullable', 'email', 'max:255'],
             'table_number' => ['nullable', 'string', 'max:50'],

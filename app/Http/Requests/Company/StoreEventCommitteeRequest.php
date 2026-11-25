@@ -25,6 +25,11 @@ class StoreEventCommitteeRequest extends FormRequest
             'position' => ['nullable', 'string', 'max:100'],
             'shirt_size' => ['required', 'string', 'in:XS,S,M,L,XL,XXL,XXXL'],
             'access_zone' => ['nullable', 'string', 'max:100'],
+            'daily_duties' => ['nullable', 'array'],
+            'daily_duties.day_1' => ['nullable', 'string', 'max:255'],
+            'daily_duties.day_2' => ['nullable', 'string', 'max:255'],
+            'daily_duties.day_3' => ['nullable', 'string', 'max:255'],
+            'daily_duties.day_4' => ['nullable', 'string', 'max:255'],
             'user_id' => ['nullable', 'exists:users,id'],
             'status' => ['required', 'in:active,inactive'],
             'notes' => ['nullable', 'string'],
@@ -39,6 +44,10 @@ class StoreEventCommitteeRequest extends FormRequest
             'gender' => 'jenis kelamin',
             'division' => 'divisi kepanitiaan',
             'shirt_size' => 'ukuran kaos / baju panitia',
+            'daily_duties.day_1' => 'penugasan hari 1',
+            'daily_duties.day_2' => 'penugasan hari 2',
+            'daily_duties.day_3' => 'penugasan hari 3',
+            'daily_duties.day_4' => 'penugasan hari 4',
         ];
     }
 }

@@ -40,6 +40,8 @@ use Spatie\Activitylog\Support\LogOptions;
     'status',
     'verified_by',
     'verified_at',
+    'pack_received_at',
+    'pack_received_by',
     'notes',
 ])]
 class NationalChaperone extends Model
@@ -51,6 +53,7 @@ class NationalChaperone extends Model
         return [
             'birth_date' => 'date',
             'verified_at' => 'datetime',
+            'pack_received_at' => 'datetime',
             'kantor_id' => 'integer',
             'penyaluran_teacher_id' => 'integer',
         ];

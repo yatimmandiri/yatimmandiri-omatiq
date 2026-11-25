@@ -176,4 +176,55 @@ class EventConsumptionLog extends Model
             'log' => $log,
         ];
     }
+
+    public static function redeemBatchForChaperoneStudents(
+        NationalChaperone $chaperone,
+        array $participantIds,
+        int $verifierId,
+        bool $includeChaperone = false,
+        bool $force = false,
+        ?string $customNotes = null
+    ): array {
+        $chaperoneFormattedId = 'OFF-'.str_pad((string) $chaperone->id, 5, '0', STR_PAD_LEFT);
+        $chaperoneNote = "Diambilkan oleh Pendamping: {$chaperone->name} ({$chaperoneFormattedId})";
+        if ($customNotes) {
+            $chaperoneNote .= " - {$customNotes}";
+        }
+
+        $participants = Participant::with('student:id,full_name')
+            ->whereIn('id', $participantIds)
+            ->get();
+
+        $successList = [];
+        $failedList = [];
+
+        foreach ($participants as $participant) {
+            $name = $participant->student?->full_name ?? $participant->registration_number;
+            $res = static::redeem('participant', $participant->id, $verifierId, $chaperoneNote, force: $force);
+            if ($res['success']) {
+                $successList[] = "{$name} (Porsi ke-{$res['log']->session_number})";
+            } else {
+                $failedList[] = "{$name}: {$res['message']}";
+            }
+        }
+
+        $chaperoneResult = null;
+        if ($includeChaperone) {
+            $chaperoneSelfNote = 'Porsi Pendamping bersama santri binaan'.($customNotes ? " - {$customNotes}" : '');
+            $chaperoneResult = static::redeem('chaperone', $chaperone->id, $verifierId, $chaperoneSelfNote, force: $force);
+        }
+
+        $totalRedeemed = count($successList) + ($chaperoneResult && $chaperoneResult['success'] ? 1 : 0);
+
+        return [
+            'success' => $totalRedeemed > 0,
+            'total_redeemed' => $totalRedeemed,
+            'success_list' => $successList,
+            'failed_list' => $failedList,
+            'chaperone_redeemed' => $chaperoneResult && $chaperoneResult['success'],
+            'message' => $totalRedeemed > 0
+                ? "Berhasil mencatat pengambilan konsumsi untuk {$totalRedeemed} porsi!".(count($failedList) > 0 ? ' ('.count($failedList).' peserta dilewati karena kuota/cooldown)' : '')
+                : 'Tidak ada porsi yang dapat diambil saat ini (semua peserta terpilih dalam masa cooldown atau kuota habis).',
+        ];
+    }
 }

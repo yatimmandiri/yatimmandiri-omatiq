@@ -1,12 +1,13 @@
 import { ProofModal } from '@/components/ui/proof-modal';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { dashboard } from '@/routes/admin';
 import { Head, Link } from '@inertiajs/react';
 import {
     ArrowLeft,
     BadgeCheck,
+    CalendarDays,
     CheckCircle2,
     Clock,
     ExternalLink,
@@ -17,25 +18,91 @@ import {
     Phone,
     Printer,
     Shield,
+    Sparkles,
     User,
     XCircle,
 } from 'lucide-react';
 import { useState } from 'react';
 
+type CheckInTimelineItem = {
+    day_number: number;
+    name: string;
+    title: string;
+    subtitle: string;
+    is_checked_in: boolean;
+    checkpoint?: string | null;
+    checkpoint_label?: string | null;
+    checked_in_at?: string | null;
+    checked_in_at_formatted?: string | null;
+    checked_in_by_name?: string | null;
+};
+
 type CommitteeShowProps = {
     committee: any;
     photoUrl?: string | null;
     verifyUrl: string;
+    checkInTimeline?: CheckInTimelineItem[];
 };
+
+const EVENT_DAYS = [
+    {
+        dayNum: 1,
+        title: 'Kedatangan & Penginapan',
+        subtitle: 'Check-in Asrama & Penyerahan Pack',
+        badgeColor: 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800',
+        borderColor: 'border-emerald-200 dark:border-emerald-900/40',
+        bgColor: 'bg-emerald-50/40 dark:bg-emerald-950/20',
+        iconColor: 'text-emerald-600',
+    },
+    {
+        dayNum: 2,
+        title: 'Venue Perlombaan (Penyisihan)',
+        subtitle: 'Gate Utama & Sesi Pagi Lomba',
+        badgeColor: 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800',
+        borderColor: 'border-blue-200 dark:border-blue-900/40',
+        bgColor: 'bg-blue-50/40 dark:bg-blue-950/20',
+        iconColor: 'text-blue-600',
+    },
+    {
+        dayNum: 3,
+        title: 'Venue Perlombaan (Babak Final)',
+        subtitle: 'Babak Final & Pengumuman Juara',
+        badgeColor: 'bg-indigo-100 text-indigo-800 border-indigo-300 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800',
+        borderColor: 'border-indigo-200 dark:border-indigo-900/40',
+        bgColor: 'bg-indigo-50/40 dark:bg-indigo-950/20',
+        iconColor: 'text-indigo-600',
+    },
+    {
+        dayNum: 4,
+        title: 'Study Tour & Jamuan Ramah Tamah',
+        subtitle: 'Wisata Edukasi & Makan Bersama Kontingen',
+        badgeColor: 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800',
+        borderColor: 'border-amber-200 dark:border-amber-900/40',
+        bgColor: 'bg-amber-50/40 dark:bg-amber-950/20',
+        iconColor: 'text-amber-600',
+    },
+];
 
 export default function ShowCommitteePage({
     committee,
     photoUrl,
     verifyUrl,
+    checkInTimeline = [],
 }: CommitteeShowProps) {
     const [isProofModalOpen, setIsProofModalOpen] = useState(false);
     const isActive = committee.status === 'active';
     const isCheckedIn = !!committee.checked_in_at;
+
+    const getDuty = (dayNum: number): { text: string; isCustom: boolean } => {
+        const daily = committee.daily_duties;
+        if (daily) {
+            if (daily[`day_${dayNum}`]) return { text: daily[`day_${dayNum}`], isCustom: true };
+            if (daily[dayNum]) return { text: daily[dayNum], isCustom: true };
+            if (daily[String(dayNum)]) return { text: daily[String(dayNum)], isCustom: true };
+        }
+        const fallback = committee.access_zone || `${committee.division} - ${committee.position || 'Panitia Pelaksana'}`;
+        return { text: fallback, isCustom: false };
+    };
 
     return (
         <>
@@ -262,28 +329,134 @@ export default function ShowCommitteePage({
                             </CardContent>
                         </Card>
 
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                                    <Clock className="h-4 w-4 text-blue-600" />
-                                    Riwayat Masuk Venue (Gate Check-In)
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                {committee.checked_in_at ? (
-                                    <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-4 dark:border-emerald-900/40 dark:bg-emerald-950/20 text-xs text-emerald-900 dark:text-emerald-200 flex items-center gap-3">
-                                        <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
+                        {/* Jadwal Penugasan Harian 4 Hari Card */}
+                        <Card className="border-indigo-200 dark:border-indigo-900/60 shadow-xs">
+                            <CardHeader className="bg-indigo-50/50 dark:bg-indigo-950/20 rounded-t-xl border-b border-indigo-100 dark:border-indigo-900/40">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 text-white shadow-xs">
+                                            <CalendarDays className="h-4 w-4" />
+                                        </div>
                                         <div>
-                                            <span className="font-bold">Telah Memasuki Venue:</span>{' '}
-                                            Waktu scan tercatat pada <strong>{new Date(committee.checked_in_at).toLocaleString('id-ID', { dateStyle: 'full', timeStyle: 'short' })} WIB</strong>.
+                                            <CardTitle className="text-sm font-bold text-indigo-950 dark:text-indigo-200">
+                                                Jadwal Penugasan Harian (Hari 1 s/d 4)
+                                            </CardTitle>
+                                            <CardDescription className="text-xs text-indigo-900/70 dark:text-indigo-300/70">
+                                                Penempatan lokasi tugas panitia yang tersinkronisasi ke terminal verifikator
+                                            </CardDescription>
                                         </div>
                                     </div>
+                                    <Button variant="outline" size="sm" asChild className="text-xs h-7 border-indigo-200 text-indigo-900 hover:bg-indigo-100 dark:border-indigo-800 dark:text-indigo-200">
+                                        <Link href={`/admin/companies/committees/${committee.id}/edit`}>
+                                            <Pencil className="mr-1 h-3 w-3" />
+                                            Edit Jadwal
+                                        </Link>
+                                    </Button>
+                                </div>
+                            </CardHeader>
+                            <CardContent className="p-4 space-y-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    {EVENT_DAYS.map((day) => {
+                                        const dutyInfo = getDuty(day.dayNum);
+                                        return (
+                                            <div
+                                                key={day.dayNum}
+                                                className={`rounded-xl border ${day.borderColor} ${day.bgColor} p-3 space-y-1.5 transition hover:shadow-2xs`}
+                                            >
+                                                <div className="flex items-center justify-between">
+                                                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider border ${day.badgeColor}`}>
+                                                        HARI {day.dayNum}
+                                                    </span>
+                                                    <span className="text-[10px] text-slate-500 font-medium">
+                                                        {day.title}
+                                                    </span>
+                                                </div>
+                                                <div className="pt-1 flex items-start gap-1.5">
+                                                    <MapPin className={`h-4 w-4 shrink-0 mt-0.5 ${day.iconColor}`} />
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 truncate">
+                                                            {dutyInfo.text}
+                                                        </p>
+                                                        <p className="text-[10px] text-slate-500">
+                                                            {dutyInfo.isCustom ? 'Lokasi Penugasan Khusus' : 'Berdasarkan Hak Akses / Divisi'}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Presensi Kehadiran 4 Hari Panitia Card */}
+                        <Card>
+                            <CardHeader>
+                                <div className="flex items-center justify-between">
+                                    <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                                        <Clock className="h-4 w-4 text-emerald-600" />
+                                        Presensi Kehadiran 4 Hari Panitia (Gate Check-In)
+                                    </CardTitle>
+                                    {committee.checked_in_at && (
+                                        <span className="text-[11px] font-medium text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-lg border border-emerald-200">
+                                            Terakhir Scan: {new Date(committee.checked_in_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB
+                                        </span>
+                                    )}
+                                </div>
+                            </CardHeader>
+                            <CardContent className="space-y-3">
+                                {checkInTimeline && checkInTimeline.length > 0 ? (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5">
+                                        {checkInTimeline.map((item) => (
+                                            <div
+                                                key={item.day_number}
+                                                className={`rounded-xl border p-3 flex flex-col justify-between transition ${
+                                                    item.is_checked_in
+                                                        ? 'bg-emerald-50/80 border-emerald-300 dark:bg-emerald-950/30 dark:border-emerald-800'
+                                                        : 'bg-slate-50/60 border-slate-200 dark:bg-slate-900/40 dark:border-slate-800'
+                                                }`}
+                                            >
+                                                <div className="flex items-center justify-between gap-1 mb-2">
+                                                    <span className="text-[10px] font-black uppercase text-slate-500">
+                                                        HARI {item.day_number}
+                                                    </span>
+                                                    {item.is_checked_in ? (
+                                                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
+                                                            <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                                                            Hadir
+                                                        </span>
+                                                    ) : (
+                                                        <span className="inline-flex items-center gap-1 text-[10px] text-slate-400">
+                                                            <Clock className="h-3 w-3" />
+                                                            Belum
+                                                        </span>
+                                                    )}
+                                                </div>
+
+                                                <div>
+                                                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200 leading-tight">
+                                                        {item.title}
+                                                    </p>
+                                                    {item.is_checked_in ? (
+                                                        <div className="mt-1.5 text-[10px] text-emerald-800 dark:text-emerald-300">
+                                                            <div className="font-semibold">{item.checkpoint_label || item.checkpoint}</div>
+                                                            <div className="text-emerald-600 dark:text-emerald-400">{item.checked_in_at_formatted}</div>
+                                                        </div>
+                                                    ) : (
+                                                        <p className="mt-1.5 text-[10px] text-slate-400">
+                                                            Belum melakukan scan
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
                                 ) : (
-                                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900/40 text-xs text-slate-600 dark:text-slate-400 flex items-center gap-3">
+                                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600 dark:border-slate-800 dark:bg-slate-900/40 flex items-center gap-3">
                                         <Clock className="h-5 w-5 text-slate-400 shrink-0" />
                                         <div>
-                                            <span className="font-semibold">Belum Melakukan Scan di Pintu Masuk:</span>{' '}
-                                            Panitia ini belum memindai kartu lanyard pass di gerbang masuk venue OMATIQ 2026.
+                                            <span className="font-semibold">Belum Ada Catatan Check-in:</span>{' '}
+                                            Panitia ini belum memindai kartu lanyard pass di pos gerbang check-in.
                                         </div>
                                     </div>
                                 )}

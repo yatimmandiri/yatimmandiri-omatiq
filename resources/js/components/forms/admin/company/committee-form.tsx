@@ -24,12 +24,16 @@ import {
     ArrowLeft,
     BadgeCheck,
     Building2,
+    CalendarDays,
+    Copy,
     Image as ImageIcon,
     Info,
     Loader2,
+    MapPin,
     Save,
     Shield,
     Shirt,
+    Sparkles,
     Upload,
     User,
     X,
@@ -81,6 +85,52 @@ const SHIRT_SIZES = [
     { value: 'XXXL', label: 'XXXL (3XL)' },
 ];
 
+const DUTY_PRESETS = [
+    'Penginapan / Registrasi Asrama',
+    'Venue Perlombaan (Gate Utama)',
+    'Area Panggung & Arena Lomba',
+    'Portal Presscon & Media',
+    'Pos Konsumsi & Logistik',
+    'Medis & Pertolongan Pertama',
+    'Pemandu Bus & Study Tour',
+    'All Access / Koordinator Lapangan',
+];
+
+const EVENT_DAYS_CONFIG = [
+    {
+        key: 'day_1' as const,
+        dayNum: 1,
+        title: 'Kedatangan & Penginapan',
+        subtitle: 'Check-in Asrama & Penyerahan Pack',
+        defaultPreset: 'Penginapan / Registrasi Asrama',
+        badgeColor: 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800',
+    },
+    {
+        key: 'day_2' as const,
+        dayNum: 2,
+        title: 'Venue Perlombaan (Penyisihan)',
+        subtitle: 'Gate Masuk & Sesi Pagi Lomba',
+        defaultPreset: 'Venue Perlombaan (Gate Utama)',
+        badgeColor: 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800',
+    },
+    {
+        key: 'day_3' as const,
+        dayNum: 3,
+        title: 'Venue Perlombaan (Babak Final)',
+        subtitle: 'Babak Final & Pengumuman Juara',
+        defaultPreset: 'Area Panggung & Arena Lomba',
+        badgeColor: 'bg-indigo-100 text-indigo-800 border-indigo-300 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800',
+    },
+    {
+        key: 'day_4' as const,
+        dayNum: 4,
+        title: 'Study Tour & Jamuan Ramah Tamah',
+        subtitle: 'Wisata Edukasi & Makan Bersama Kontingen',
+        defaultPreset: 'Pemandu Bus & Study Tour',
+        badgeColor: 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800',
+    },
+];
+
 export function CommitteeForm({
     committee,
     photoUrl,
@@ -89,7 +139,7 @@ export function CommitteeForm({
 }: CommitteeFormProps) {
     const isEdit = !!committee;
 
-    const { data, setData, post, put, processing, errors, setError, clearErrors, reset } = useForm({
+    const { data, setData, post, put, processing, errors, setError, clearErrors, reset, transform } = useForm({
         name: committee?.name ?? '',
         branch: committee?.branch ?? '',
         nik: committee?.nik ?? '',
@@ -100,6 +150,12 @@ export function CommitteeForm({
         division: committee?.division ?? 'Acara & Lomba',
         position: committee?.position ?? 'Anggota Panitia',
         access_zone: committee?.access_zone ?? 'All Access',
+        daily_duties: {
+            day_1: (committee?.daily_duties?.day_1 ?? committee?.daily_duties?.['1'] ?? '') as string,
+            day_2: (committee?.daily_duties?.day_2 ?? committee?.daily_duties?.['2'] ?? '') as string,
+            day_3: (committee?.daily_duties?.day_3 ?? committee?.daily_duties?.['3'] ?? '') as string,
+            day_4: (committee?.daily_duties?.day_4 ?? committee?.daily_duties?.['4'] ?? '') as string,
+        },
         user_id: committee?.user_id ? String(committee.user_id) : '',
         status: committee?.status ?? 'active',
         notes: committee?.notes ?? '',
@@ -108,6 +164,22 @@ export function CommitteeForm({
 
     const [photoPreview, setPhotoPreview] = useState<string | null>(photoUrl ?? null);
     const [isProofModalOpen, setIsProofModalOpen] = useState(false);
+
+    const setDailyDuty = (dayKey: 'day_1' | 'day_2' | 'day_3' | 'day_4', value: string) => {
+        setData('daily_duties', {
+            ...data.daily_duties,
+            [dayKey]: value,
+        });
+    };
+
+    const copyToAllDays = (value: string) => {
+        setData('daily_duties', {
+            day_1: value,
+            day_2: value,
+            day_3: value,
+            day_4: value,
+        });
+    };
 
     const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -126,6 +198,11 @@ export function CommitteeForm({
         setPhotoPreview(null);
     };
 
+    transform((currentData: any) => ({
+        ...currentData,
+        ...(isEdit && { _method: 'PUT' }),
+    }));
+
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
 
@@ -136,14 +213,15 @@ export function CommitteeForm({
         clearErrors('shirt_size');
 
         if (isEdit) {
-            router.post(`/admin/companies/committees/${committee.id}`, {
-                ...data,
-                _method: 'PUT',
-            }, {
+            post(`/admin/companies/committees/${committee.id}`, {
                 forceFormData: true,
+                preserveScroll: true,
             });
         } else {
-            post('/admin/companies/committees');
+            post('/admin/companies/committees', {
+                forceFormData: true,
+                preserveScroll: true,
+            });
         }
     };
 
@@ -455,6 +533,127 @@ export function CommitteeForm({
                 </CardContent>
             </Card>
 
+            {/* Jadwal Penugasan Harian 4 Hari Acara Card */}
+            <Card className="border-indigo-200 dark:border-indigo-900/60 shadow-xs">
+                <CardHeader className="bg-indigo-50/50 dark:bg-indigo-950/20 rounded-t-xl border-b border-indigo-100 dark:border-indigo-900/40">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div>
+                            <CardTitle className="text-base flex items-center gap-2 text-indigo-950 dark:text-indigo-200">
+                                <CalendarDays className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                                Jadwal Penugasan Harian (Hari 1 s/d Hari 4)
+                            </CardTitle>
+                            <CardDescription className="text-xs text-indigo-900/70 dark:text-indigo-300/70 mt-1">
+                                Tentukan lokasi atau pos penugasan resmi panitia pada masing-masing hari acara OMATIQ 2026.
+                                Data ini disinkronkan secara realtime ke layar terminal verifikator saat barcode panitia di-scan.
+                            </CardDescription>
+                        </div>
+                    </div>
+
+                    {/* Quick Preset Toolbar */}
+                    <div className="pt-3 border-t border-indigo-100/80 dark:border-indigo-900/40 mt-3">
+                        <div className="flex items-center gap-1.5 text-xs font-semibold text-indigo-950 dark:text-indigo-200 mb-2">
+                            <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+                            <span>Pilihan Cepat / Preset Pos Lapangan (Klik untuk Terapkan ke Semua Hari):</span>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                            {DUTY_PRESETS.map((preset) => (
+                                <button
+                                    key={preset}
+                                    type="button"
+                                    onClick={() => copyToAllDays(preset)}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium rounded-lg bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-800 text-indigo-900 dark:text-indigo-200 hover:bg-indigo-50 dark:hover:bg-indigo-950 hover:border-indigo-400 transition shadow-2xs"
+                                >
+                                    <Copy className="h-3 w-3 text-indigo-500 opacity-70" />
+                                    {preset}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </CardHeader>
+                <CardContent className="p-4 sm:p-6 space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {EVENT_DAYS_CONFIG.map((day) => (
+                            <div
+                                key={day.key}
+                                className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 p-4 space-y-3 relative hover:border-indigo-300 dark:hover:border-indigo-700 transition"
+                            >
+                                <div className="flex items-center justify-between gap-2">
+                                    <div className="flex items-center gap-2">
+                                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider border ${day.badgeColor}`}>
+                                            HARI {day.dayNum}
+                                        </span>
+                                        <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                                            {day.title}
+                                        </span>
+                                    </div>
+                                    <span className="text-[10px] text-slate-400 font-normal hidden sm:inline">
+                                        {day.subtitle}
+                                    </span>
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <Label htmlFor={`duty_${day.key}`} className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center justify-between">
+                                        <span>Pos / Uraian Tugas Hari {day.dayNum}</span>
+                                        {data.daily_duties[day.key] && (
+                                            <button
+                                                type="button"
+                                                onClick={() => copyToAllDays(data.daily_duties[day.key])}
+                                                className="text-[10px] text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 inline-flex items-center gap-1 font-normal"
+                                                title="Terapkan teks ini ke semua hari"
+                                            >
+                                                <Copy className="h-2.5 w-2.5" />
+                                                Salin ke Hari 1-4
+                                            </button>
+                                        )}
+                                    </Label>
+                                    <Input
+                                        id={`duty_${day.key}`}
+                                        value={data.daily_duties[day.key]}
+                                        onChange={(e) => setDailyDuty(day.key, e.target.value)}
+                                        placeholder={`Contoh: ${day.defaultPreset}`}
+                                        className="bg-white dark:bg-slate-900 text-xs sm:text-sm font-medium"
+                                    />
+                                </div>
+
+                                {/* Quick pills for this specific day */}
+                                <div className="flex flex-wrap gap-1 pt-1">
+                                    <button
+                                        type="button"
+                                        onClick={() => setDailyDuty(day.key, day.defaultPreset)}
+                                        className="text-[10px] px-2 py-0.5 rounded-md bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 dark:hover:bg-indigo-900 border border-indigo-200/60 dark:border-indigo-800 transition"
+                                    >
+                                        + {day.defaultPreset}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setDailyDuty(day.key, 'All Access / Koordinator Lapangan')}
+                                        className="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition"
+                                    >
+                                        + All Access
+                                    </button>
+                                    {data.daily_duties[day.key] && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setDailyDuty(day.key, '')}
+                                            className="text-[10px] px-2 py-0.5 rounded-md text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition"
+                                        >
+                                            Reset
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="flex items-center gap-2 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 p-3 text-xs text-amber-900 dark:text-amber-200">
+                        <Info className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                        <span>
+                            <strong>Petunjuk:</strong> Jika hari tertentu tidak diisi secara spesifik, sistem otomatis menggunakan fallback dari <strong>Zona Akses Venue ({data.access_zone || 'All Access'})</strong> atau <strong>Divisi Kepanitiaan ({data.division})</strong>.
+                        </span>
+                    </div>
+                </CardContent>
+            </Card>
+
             {/* Foto Panitia (Opsional) Card */}
             <Card>
                 <CardHeader>
@@ -549,20 +748,24 @@ export function CommitteeForm({
 
             {/* Submit Action Buttons */}
             <div className="flex items-center justify-end gap-3 pt-2">
-                <Button variant="outline" type="button" asChild>
-                    <Link href="/admin/companies/committees">
-                        Batal
-                    </Link>
+                <Button variant="outline" type="button" disabled={processing} asChild={!processing}>
+                    {processing ? (
+                        <span>Batal</span>
+                    ) : (
+                        <Link href="/admin/companies/committees">
+                            Batal
+                        </Link>
+                    )}
                 </Button>
                 <Button
                     type="submit"
                     disabled={processing}
-                    className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold shadow-md shadow-amber-500/20"
+                    className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold shadow-md shadow-amber-500/20 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                     {processing ? (
                         <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Menyimpan...
+                            {isEdit ? 'Memperbarui Data...' : 'Menyimpan Data...'}
                         </>
                     ) : (
                         <>

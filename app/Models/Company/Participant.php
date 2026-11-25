@@ -113,6 +113,16 @@ class Participant extends Model
         ];
     }
 
+    public function getPackReceivedAtAttribute(): ?\DateTimeInterface
+    {
+        return $this->national?->pack_received_at;
+    }
+
+    public function getPackReceivedByAttribute(): ?int
+    {
+        return $this->national?->pack_received_by;
+    }
+
     public function olimpiade(): BelongsTo
     {
         return $this->belongsTo(Olimpiade::class);

@@ -6,6 +6,7 @@ use App\Concerns\Traits\UploadFiles;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Company\StoreEventCommitteeRequest;
 use App\Http\Requests\Company\UpdateEventCommitteeRequest;
+use App\Models\Company\EventCheckInLog;
 use App\Models\Company\EventCommittee;
 use App\Models\Core\User;
 use App\Services\BarcodeService;
@@ -100,18 +101,19 @@ class EventCommitteeController extends Controller
             });
         }
 
-        $sortField = $request->input('sorting.0.id', 'id');
-        $sortDesc = $request->boolean('sorting.0.desc', true);
+        $orderBy = $request->input('orderBy') ?? $request->input('sorting.0.id', 'id');
+        $orderDirection = strtolower((string) ($request->input('orderDirection') ?? ($request->boolean('sorting.0.desc', true) ? 'desc' : 'asc'))) === 'asc' ? 'asc' : 'desc';
         $allowedSorts = ['id', 'code', 'name', 'branch', 'division', 'position', 'shirt_size', 'status', 'checked_in_at', 'created_at'];
 
-        if (in_array($sortField, $allowedSorts, true)) {
-            $query->orderBy($sortField, $sortDesc ? 'desc' : 'asc');
+        if (in_array($orderBy, $allowedSorts, true)) {
+            $query->orderBy($orderBy, $orderDirection);
         } else {
-            $query->orderByDesc('id');
+            $query->orderBy('id', 'desc');
         }
 
-        $perPage = (int) $request->input('pagination.pageSize', 10);
-        $committees = $query->paginate($perPage);
+        $perPage = min(max((int) ($request->input('perPage') ?? $request->input('pageSize') ?? $request->input('pagination.pageSize') ?? 10), 1), 100);
+        $page = max((int) $request->input('page', 1), 1);
+        $committees = $query->paginate($perPage, ['*'], 'page', $page);
 
         return response()->json($committees);
     }
@@ -160,6 +162,7 @@ class EventCommitteeController extends Controller
             'committee' => $committee,
             'photoUrl' => $committee->photo_url,
             'verifyUrl' => route('home.committee.verify', ['code' => $committee->code]),
+            'checkInTimeline' => EventCheckInLog::getTimeline('committee', $committee->id),
         ]);
     }
 

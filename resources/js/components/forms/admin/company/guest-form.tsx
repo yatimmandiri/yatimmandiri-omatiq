@@ -40,7 +40,8 @@ type GuestFormProps = {
 };
 
 const GUEST_CATEGORIES = [
-    { value: 'vip', label: 'VIP (Undangan Email Resmi & VIP Pass QR Code)' },
+    { value: 'vip', label: 'VIP (Undangan Instansi & VIP Pass E-Ticket)' },
+    { value: 'press', label: 'Press / Media (Jurnalis & Wartawan Peliput)' },
     { value: 'non_vip', label: 'Non-VIP (Tamu Biasa / Check-In Normal Venue)' },
 ];
 
@@ -51,11 +52,17 @@ export function GuestForm({
 }: GuestFormProps) {
     const isEdit = !!guest;
 
-    const { data, setData, post, processing, errors } = useForm({
+    const { data, setData, post, processing, errors, transform } = useForm({
         name: guest?.name ?? '',
         institution: guest?.institution ?? '',
         position: guest?.position ?? '',
-        category: guest?.category ? (['vip', 'vvip', 'tokoh', 'sponsor'].includes(guest.category.toLowerCase()) ? 'vip' : 'non_vip') : 'vip',
+        category: guest?.category
+            ? ['press', 'media'].includes(guest.category.toLowerCase())
+                ? 'press'
+                : ['vip', 'vvip', 'tokoh', 'sponsor'].includes(guest.category.toLowerCase())
+                ? 'vip'
+                : 'non_vip'
+            : 'vip',
         phone: guest?.phone ?? '',
         email: guest?.email ?? '',
         table_number: guest?.table_number ?? '',
@@ -85,18 +92,24 @@ export function GuestForm({
         setPhotoPreview(null);
     };
 
+    transform((currentData: any) => ({
+        ...currentData,
+        ...(isEdit && { _method: 'PUT' }),
+    }));
+
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
 
         if (isEdit) {
-            router.post(`/admin/companies/guests/${guest.id}`, {
-                ...data,
-                _method: 'PUT',
-            }, {
+            post(`/admin/companies/guests/${guest.id}`, {
                 forceFormData: true,
+                preserveScroll: true,
             });
         } else {
-            post('/admin/companies/guests');
+            post('/admin/companies/guests', {
+                forceFormData: true,
+                preserveScroll: true,
+            });
         }
     };
 
@@ -420,20 +433,24 @@ export function GuestForm({
 
             {/* Submit Action Buttons */}
             <div className="flex items-center justify-end gap-3 pt-2">
-                <Button variant="outline" type="button" asChild>
-                    <Link href="/admin/companies/guests">
-                        Batal
-                    </Link>
+                <Button variant="outline" type="button" disabled={processing} asChild={!processing}>
+                    {processing ? (
+                        <span>Batal</span>
+                    ) : (
+                        <Link href="/admin/companies/guests">
+                            Batal
+                        </Link>
+                    )}
                 </Button>
                 <Button
                     type="submit"
                     disabled={processing}
-                    className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold shadow-md shadow-amber-500/20"
+                    className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold shadow-md shadow-amber-500/20 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                     {processing ? (
                         <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Menyimpan...
+                            {isEdit ? 'Memperbarui Data...' : 'Menyimpan Data...'}
                         </>
                     ) : (
                         <>

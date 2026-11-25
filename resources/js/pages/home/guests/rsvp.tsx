@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Head, useForm, usePage } from '@inertiajs/react';
@@ -9,13 +10,17 @@ import {
     Clock,
     Crown,
     ExternalLink,
+    Mail,
     MapPin,
+    Phone,
     Printer,
     QrCode,
     Sparkles,
+    User,
     UserCheck,
     Users,
     XCircle,
+    Loader2,
 } from 'lucide-react';
 import type { FormEvent } from 'react';
 
@@ -45,6 +50,8 @@ type EventInfo = {
 
 type PageProps = {
     guest: GuestData;
+    isPress?: boolean;
+    isVip?: boolean;
     token: string;
     verifyUrl: string;
     qrCodeSvg: string;
@@ -56,11 +63,16 @@ type PageProps = {
 };
 
 export default function GuestRsvpPage() {
-    const { guest, token, verifyUrl, qrCodeSvg, eventInfo, flash } = usePage<PageProps>().props;
+    const { guest, isPress = false, isVip = true, token, verifyUrl, qrCodeSvg, eventInfo, flash } = usePage<PageProps>().props;
 
-    const { data, setData, post, processing } = useForm({
+    const initialName = guest.name && guest.name !== guest.institution ? guest.name : '';
+    const { data, setData, post, processing, errors } = useForm({
         attendance: guest.status === 'declined' ? 'declined' : 'confirmed',
-        seat_count: guest.seat_count || 1,
+        name: initialName,
+        email: guest.email || '',
+        phone: guest.phone || '',
+        has_companion: guest.seat_count === 2,
+        seat_count: isPress ? 1 : (guest.seat_count || 1),
         notes: '',
     });
 
@@ -207,25 +219,8 @@ export default function GuestRsvpPage() {
                                     </div>
                                 </div>
 
-                                <div className="flex flex-wrap items-center justify-center gap-3">
-                                    <Button
-                                        type="button"
-                                        onClick={handlePrint}
-                                        variant="outline"
-                                        className="h-10 rounded-xl border-slate-300 text-xs font-bold text-slate-800 hover:bg-slate-100"
-                                    >
-                                        <Printer className="mr-1.5 size-4" />
-                                        Cetak / Simpan PDF
-                                    </Button>
-                                    <a
-                                        href={verifyUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="inline-flex h-10 items-center justify-center rounded-xl bg-[#17524A] px-4 text-xs font-bold text-white shadow hover:bg-[#134e45]"
-                                    >
-                                        <ExternalLink className="mr-1.5 size-4" />
-                                        Buka Gate Verifikasi
-                                    </a>
+                                <div className="rounded-2xl border border-amber-200 bg-amber-50/80 p-3.5 text-xs text-amber-900">
+                                    📸 <strong>Simpan Tiket Anda:</strong> Silakan <strong>screenshot</strong> QR Code di atas atau gunakan tiket E-Pass yang telah dikirimkan ke email Anda untuk ditunjukkan kepada petugas saat registrasi di venue.
                                 </div>
 
                                 <div className="mt-5 rounded-2xl border border-emerald-200 bg-white/80 p-3.5 text-xs text-emerald-900">
@@ -322,36 +317,121 @@ export default function GuestRsvpPage() {
                                     </div>
 
                                     {data.attendance === 'confirmed' && (
-                                        <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 space-y-3">
-                                            <div>
-                                                <Label htmlFor="seat_count" className="text-xs font-bold text-slate-700">
-                                                    Jumlah Kursi yang Dibutuhkan (Termasuk Pendamping)
-                                                </Label>
-                                                <select
-                                                    id="seat_count"
-                                                    value={data.seat_count}
-                                                    onChange={(e) => setData('seat_count', Number(e.target.value))}
-                                                    className="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm focus:border-[#17524A] focus:outline-none"
-                                                >
-                                                    {[1, 2, 3, 4, 5].map((num) => (
-                                                        <option key={num} value={num}>
-                                                            {num} Orang {num === 1 ? '(Hanya Saya)' : `(Saya + ${num - 1} Pendamping)`}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                            </div>
+                                        <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 sm:p-5 space-y-4">
+                                            {/* Info banner instansi */}
+                                            {!isPress ? (
+                                                <>
+                                                    {guest.institution && (
+                                                        <div className="rounded-xl border border-emerald-200 bg-emerald-50/80 p-3 text-xs text-emerald-900">
+                                                            🏛️ <strong>Undangan Delegasi / Instansi:</strong>{' '}
+                                                            <span className="font-bold">{guest.institution}</span>
+                                                            <p className="mt-0.5 text-[11px] text-emerald-700">
+                                                                Silakan isi data nama pejabat / perwakilan yang ditugaskan untuk hadir mewakili instansi Anda.
+                                                            </p>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Nama Lengkap Yang Hadir / Mewakili */}
+                                                    <div>
+                                                        <Label htmlFor="rep_name" className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                                                            <User className="size-3.5 text-[#17524A]" />
+                                                            Nama Lengkap (Yang Hadir / Mewakili) <span className="text-rose-500">*</span>
+                                                        </Label>
+                                                        <Input
+                                                            id="rep_name"
+                                                            type="text"
+                                                            value={data.name}
+                                                            onChange={(e) => setData('name', e.target.value)}
+                                                            placeholder="Contoh: Bpk. H. Rahmat Hidayat, M.Pd"
+                                                            className="mt-1 h-10 text-xs sm:text-sm bg-white"
+                                                            required
+                                                        />
+                                                        {errors.name && <p className="mt-1 text-xs text-rose-500">{errors.name}</p>}
+                                                    </div>
+
+                                                    {/* Email Aktif */}
+                                                    <div>
+                                                        <Label htmlFor="rep_email" className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                                                            <Mail className="size-3.5 text-[#17524A]" />
+                                                            Email Aktif (VIP Pass & Barcode Dikirim ke Sini) <span className="text-rose-500">*</span>
+                                                        </Label>
+                                                        <Input
+                                                            id="rep_email"
+                                                            type="email"
+                                                            value={data.email}
+                                                            onChange={(e) => setData('email', e.target.value)}
+                                                            placeholder="nama@instansi.go.id atau email@gmail.com"
+                                                            className="mt-1 h-10 text-xs sm:text-sm bg-white"
+                                                            required
+                                                        />
+                                                        {errors.email && <p className="mt-1 text-xs text-rose-500">{errors.email}</p>}
+                                                        <p className="mt-1 text-[11px] text-slate-500">
+                                                            Tiket resmi, QR Code akses gate, dan panduan protokoler akan otomatis terkirim ke email ini.
+                                                        </p>
+                                                    </div>
+
+                                                    {/* Nomor WhatsApp / HP */}
+                                                    <div>
+                                                        <Label htmlFor="rep_phone" className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                                                            <Phone className="size-3.5 text-[#17524A]" />
+                                                            Nomor WhatsApp / HP Aktif <span className="text-rose-500">*</span>
+                                                        </Label>
+                                                        <Input
+                                                            id="rep_phone"
+                                                            type="tel"
+                                                            value={data.phone}
+                                                            onChange={(e) => setData('phone', e.target.value)}
+                                                            placeholder="Contoh: 081234567890"
+                                                            className="mt-1 h-10 text-xs sm:text-sm bg-white"
+                                                            required
+                                                        />
+                                                        {errors.phone && <p className="mt-1 text-xs text-rose-500">{errors.phone}</p>}
+                                                    </div>
+
+                                                    {/* Pilihan Pendamping: Hanya untuk non-press */}
+                                                    <div className="pt-1">
+                                                        <label className="flex items-start gap-3 cursor-pointer rounded-xl border border-slate-200 bg-white p-3 hover:bg-slate-50 transition">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={data.has_companion}
+                                                                onChange={(e) => {
+                                                                    const checked = e.target.checked;
+                                                                    setData((prev) => ({
+                                                                        ...prev,
+                                                                        has_companion: checked,
+                                                                        seat_count: checked ? 2 : 1,
+                                                                    }));
+                                                                }}
+                                                                className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#17524A] focus:ring-[#17524A]"
+                                                            />
+                                                            <div>
+                                                                <span className="text-xs font-bold text-slate-800">
+                                                                    Membawa 1 Orang Pendamping (Ajudan / Sekretaris)
+                                                                </span>
+                                                                <p className="text-[11px] text-slate-500 mt-0.5">
+                                                                    Centang jika hadir bersama 1 orang pendamping resmi (total reservasi: 2 kursi). Default: 1 orang jika tidak dicentang.
+                                                                </p>
+                                                            </div>
+                                                        </label>
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                <div className="rounded-xl border border-sky-200 bg-sky-50/80 p-3 text-xs text-sky-900">
+                                                    📰 <strong>Undangan Liputan Pers & Media:</strong> Data identitas Anda telah terdaftar di sistem. Cukup konfirmasikan kehadiran Anda (undangan berlaku perorangan untuk 1 orang jurnalis).
+                                                </div>
+                                            )}
 
                                             <div>
                                                 <Label htmlFor="notes" className="text-xs font-bold text-slate-700">
-                                                    Catatan Tambahan / Nama Pendamping (Opsional)
+                                                    Catatan Khusus / Permintaan Protokoler (Opsional)
                                                 </Label>
                                                 <Textarea
                                                     id="notes"
                                                     rows={2}
-                                                    placeholder="Contoh: Didampingi oleh Ibu Sekretaris / butuh kursi roda..."
+                                                    placeholder="Contoh: Didampingi oleh staf humas / butuh fasilitas akses khusus..."
                                                     value={data.notes}
                                                     onChange={(e) => setData('notes', e.target.value)}
-                                                    className="mt-1 rounded-xl text-xs"
+                                                    className="mt-1 rounded-xl text-xs bg-white"
                                                 />
                                             </div>
                                         </div>
@@ -360,9 +440,16 @@ export default function GuestRsvpPage() {
                                     <Button
                                         type="submit"
                                         disabled={processing}
-                                        className="w-full h-12 rounded-xl bg-[#17524A] text-sm font-black text-white shadow-lg transition hover:bg-[#134e45]"
+                                        className="w-full h-12 rounded-xl bg-[#17524A] text-sm font-black text-white shadow-lg transition hover:bg-[#134e45] disabled:opacity-50"
                                     >
-                                        {processing ? 'Menyimpan...' : 'Kirim Konfirmasi Kehadiran'}
+                                        {processing ? (
+                                            <>
+                                                <Loader2 className="mr-2 size-4 animate-spin" />
+                                                Menyimpan Konfirmasi...
+                                            </>
+                                        ) : (
+                                            'Kirim Konfirmasi Kehadiran'
+                                        )}
                                     </Button>
                                 </form>
                             </div>

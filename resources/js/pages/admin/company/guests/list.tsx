@@ -202,7 +202,7 @@ export default function ListGuestsPage() {
             header: 'Aksi',
             cell: ({ row }: any) => {
                 const guest = row.original;
-                const isVip = ['vip', 'vvip'].includes(guest.category?.toLowerCase());
+                const isVip = ['vip', 'vvip', 'press', 'media'].includes(guest.category?.toLowerCase());
 
                 return (
                     <DropdownMenu>
@@ -235,18 +235,20 @@ export default function ListGuestsPage() {
                                     Cetak Kartu Pass
                                 </a>
                             </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                                <a
+                                    href={`/admin/companies/guests/${guest.id}/invitation`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-[#17524A] dark:text-emerald-400 font-medium"
+                                >
+                                    <Mail className="mr-2 h-4 w-4" />
+                                    Cetak Undangan (A5)
+                                </a>
+                            </DropdownMenuItem>
                             {isVip && (
                                 <>
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuItem asChild>
-                                        <a
-                                            href={`/admin/companies/guests/${guest.id}/download-rsvp-qr`}
-                                            className="text-[#17524A] dark:text-emerald-400 font-semibold cursor-pointer"
-                                        >
-                                            <QrCode className="mr-2 h-4 w-4" />
-                                            Unduh QR RSVP (PNG)
-                                        </a>
-                                    </DropdownMenuItem>
                                     {guest.rsvp_url && (
                                         <DropdownMenuItem
                                             onClick={() => handleCopyRsvp(guest)}
@@ -425,12 +427,17 @@ export default function ListGuestsPage() {
                         <Button
                             type="button"
                             variant="outline"
-                            onClick={handleDownloadAllQr}
-                            disabled={isDownloading}
+                            asChild
                             className="border-[#17524A] text-[#17524A] hover:bg-emerald-50 dark:border-emerald-400 dark:text-emerald-300 font-bold shadow-sm"
                         >
-                            <Archive className="mr-1.5 h-4 w-4" />
-                            {isDownloading ? 'Mengompres...' : 'Unduh Semua Barcode / QR (ZIP)'}
+                            <a
+                                href="/admin/companies/guests/bulk-invitations?all=1"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                <Mail className="mr-1.5 h-4 w-4" />
+                                Cetak Semua Undangan (A5)
+                            </a>
                         </Button>
                         <Button
                             asChild
@@ -572,13 +579,17 @@ export default function ListGuestsPage() {
                             <>
                                 <Button
                                     type="button"
-                                    onClick={handleBulkDownloadQr}
-                                    disabled={isDownloading}
+                                    onClick={() => {
+                                        const ids = selectedRows.map((r) => r.id);
+                                        const params = new URLSearchParams();
+                                        ids.forEach((id) => params.append('ids[]', String(id)));
+                                        window.open(`/admin/companies/guests/bulk-invitations?${params.toString()}`, '_blank');
+                                    }}
                                     variant="outline"
                                     className="border-[#17524A] text-[#17524A] hover:bg-emerald-50 dark:border-emerald-400 dark:text-emerald-300 font-bold text-xs"
                                 >
-                                    <Archive className="mr-1.5 h-3.5 w-3.5" />
-                                    {isDownloading ? 'Mengompres...' : `Unduh QR Terpilih (ZIP) (${selectedRows.length})`}
+                                    <Printer className="mr-1.5 h-3.5 w-3.5" />
+                                    Cetak Undangan Terpilih (A5) ({selectedRows.length})
                                 </Button>
                                 <Button
                                     type="button"
