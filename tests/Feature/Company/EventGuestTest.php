@@ -228,13 +228,11 @@ test('vip guest can view rsvp page using code and confirm attendance which sends
     });
 });
 
-test('press guest can confirm attendance strictly for 1 seat without companion or re-entering identity', function () {
+test('press guest can confirm attendance with identity and is strictly locked to 1 seat without companion', function () {
     $guest = EventGuest::create([
         'code' => 'INV-00008',
-        'name' => 'Ahmad Jurnalis',
+        'name' => 'Media Jawa Pos',
         'institution' => 'Jawa Pos Media Group',
-        'email' => 'ahmad@jawapos.local',
-        'phone' => '081399887766',
         'category' => 'press',
         'status' => 'invited',
         'table_number' => 'Area Press Conference',
@@ -243,6 +241,9 @@ test('press guest can confirm attendance strictly for 1 seat without companion o
     ]);
 
     $postResponse = $this->post(route('home.guest.rsvp.confirm', ['identifier' => $guest->code]), [
+        'name' => 'Ahmad Jurnalis',
+        'email' => 'ahmad@jawapos.local',
+        'phone' => '081399887766',
         'attendance' => 'confirmed',
         'has_companion' => true, // Attempting to pass companion should still be forced to 1 seat for press
     ]);

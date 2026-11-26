@@ -58,15 +58,15 @@ class GuestRsvpController extends Controller
                     'name' => 'Press Conference OMATIQ 2026 & Tema Tahunan 2027',
                     'date' => 'Senin, 14 Desember 2026',
                     'time' => '09.00 WIB - Selesai',
-                    'venue' => 'Lobby Abdurrahman Saleh RRI, Jl. Medan Merdeka Barat, Kec. Gambir, Jakarta Pusat',
-                    'organizer' => 'Panitia Pelaksana OMATIQ & Laznas Yatim Mandiri',
+                    'venue' => "Lobby Abdurrahman Saleh RRI\nJl. Medan Merdeka Barat, Kec. Gambir, Jakarta Pusat",
+                    'organizer' => '',
                 ]
                 : [
                     'name' => 'Grand Final OMATIQ & Sholawat Senandung Islami Bersama Haddad Alwi',
                     'date' => 'Rabu, 16 Desember 2026',
                     'time' => '13.00 WIB - Selesai',
-                    'venue' => 'Auditorium Abdurrahman Saleh RRI, Jl. Medan Merdeka Barat, Kec. Gambir, Jakarta Pusat',
-                    'organizer' => 'Panitia Pelaksana OMATIQ & Laznas Yatim Mandiri',
+                    'venue' => "Auditorium Abdurrahman Saleh RRI\nJl. Medan Merdeka Barat, Kec. Gambir, Jakarta Pusat",
+                    'organizer' => '',
                 ],
             'pageTitle' => "Konfirmasi Kehadiran VIP — {$guest->name}",
             'meta' => [
@@ -95,12 +95,14 @@ class GuestRsvpController extends Controller
             'notes' => ['nullable', 'string', 'max:500'],
         ];
 
-        if ($request->input('attendance') === 'confirmed' && ! $isPress) {
+        if ($request->input('attendance') === 'confirmed') {
             $rules['name'] = ['required', 'string', 'max:255'];
             $rules['email'] = ['required', 'email', 'max:255'];
             $rules['phone'] = ['required', 'string', 'max:30'];
-            $rules['has_companion'] = ['nullable', 'boolean'];
-            $rules['seat_count'] = ['nullable', 'integer', 'min:1', 'max:2'];
+            if (! $isPress) {
+                $rules['has_companion'] = ['nullable', 'boolean'];
+                $rules['seat_count'] = ['nullable', 'integer', 'min:1', 'max:2'];
+            }
         }
 
         $validated = $request->validate($rules, [
@@ -115,12 +117,13 @@ class GuestRsvpController extends Controller
         $guest->confirmed_at = now();
 
         if ($newStatus === 'confirmed') {
+            $guest->name = trim($validated['name']);
+            $guest->email = strtolower(trim($validated['email']));
+            $guest->phone = trim($validated['phone']);
+
             if ($isPress) {
                 $guest->seat_count = 1;
             } else {
-                $guest->name = trim($validated['name']);
-                $guest->email = strtolower(trim($validated['email']));
-                $guest->phone = trim($validated['phone']);
                 $hasCompanion = ! empty($validated['has_companion']) || ((int) ($validated['seat_count'] ?? 1) === 2);
                 $guest->seat_count = $hasCompanion ? 2 : 1;
             }

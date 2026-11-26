@@ -1506,37 +1506,23 @@ export default function UniversalVerifyPage({
 
 
 
-                    {/* Selector Sesi Hari & Pos Verifikator Aktif */}
+                    {/* Tanggal Otomatis & Pos Verifikator Aktif */}
                     <div className="mb-4 rounded-2xl border border-[#17524A]/20 bg-white/95 p-3.5 shadow-sm backdrop-blur-md">
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <div>
                                 <span className="text-[10px] font-black uppercase tracking-wider text-[#17524A]">
-                                    PILIHAN SESI HARI:
+                                    TANGGAL PRESENSI (OTOMATIS):
                                 </span>
-                                <div className="mt-1 flex flex-wrap gap-1.5">
-                                    {[1, 2, 3, 4].map((d) => {
-                                        const isSelected = activeDay === d;
-                                        const dayLabels: Record<number, string> = {
-                                            1: 'Hari 1 (Penginapan)',
-                                            2: 'Hari 2 (Venue Lomba)',
-                                            3: 'Hari 3 (Venue Final)',
-                                            4: 'Hari 4 (Study Tour)',
-                                        };
-                                        return (
-                                            <button
-                                                key={d}
-                                                type="button"
-                                                onClick={() => handleDayChange(d)}
-                                                className={`rounded-xl px-3 py-1.5 text-xs font-black transition ${
-                                                    isSelected
-                                                        ? 'bg-[#17524A] text-white shadow-xs'
-                                                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                                                }`}
-                                            >
-                                                {dayLabels[d] || `Hari ${d}`}
-                                            </button>
-                                        );
-                                    })}
+                                <div className="mt-1 inline-flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-1.5 text-xs font-black text-[#17524A] border border-emerald-200">
+                                    <span>📅</span>
+                                    <span>
+                                        {new Date().toLocaleDateString('id-ID', {
+                                            weekday: 'long',
+                                            day: 'numeric',
+                                            month: 'long',
+                                            year: 'numeric',
+                                        })}
+                                    </span>
                                 </div>
                             </div>
 
@@ -2309,17 +2295,10 @@ export default function UniversalVerifyPage({
                                                         isGuestVip ? 'text-amber-900' : 'text-emerald-800'
                                                     }`}
                                                 >
-                                                    {isGuestVip ? 'Alokasi Kursi / Meja Kehormatan' : 'Alokasi Kursi / Tempat Duduk'}
+                                                    Kapasitas Undangan
                                                 </span>
                                                 <p className="mt-1 text-2xl font-black sm:text-3xl">
-                                                    {activeEntity.table_number || 'Sesuai Arahan Protokoler'}
-                                                </p>
-                                                <p
-                                                    className={`mt-1 text-xs font-semibold ${
-                                                        isGuestVip ? 'text-amber-800' : 'text-emerald-700'
-                                                    }`}
-                                                >
-                                                    Kapasitas: <strong>{activeEntity.seat_count} Orang</strong>
+                                                    {activeEntity.seat_count} Orang
                                                 </p>
                                             </div>
 

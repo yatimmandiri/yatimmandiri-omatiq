@@ -17,6 +17,7 @@ import activities from '@/routes/admin/logs/activities';
 import site from '@/routes/admin/settings/site';
 import chaperones from '@/routes/admin/companies/chaperones';
 import {
+    Activity,
     BadgeCheck,
     Building2,
     CalendarClock,
@@ -317,6 +318,12 @@ export const NavigationList = [
                 href: '/admin/companies/guests',
                 roles: ['Administrators'],
                 icon: Crown,
+            },
+            {
+                title: 'Monitoring Nasional',
+                href: '/admin/companies/national-monitoring',
+                roles: ['Administrators'],
+                icon: Activity,
             },
         ],
     },

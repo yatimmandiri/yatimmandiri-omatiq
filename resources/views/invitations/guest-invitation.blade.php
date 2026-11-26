@@ -510,8 +510,8 @@
                                 <ul class="rundown-list">
                                     <li>Registrasi (09.00 - 10.00)</li>
                                     <li>Press Conference OMATIQ 2026 (10.00 - 11.30)</li>
-                                    <li>Ishoma (11.30 - 12.35)</li>
-                                    <li>Press Conference Tema Tahunan 2027 (12.35 - 14.00)</li>
+                                    <li>Ishoma (11.30 - 12.30)</li>
+                                    <li>Press Conference Tema Tahunan 2027 (12.30 - 14.00)</li>
                                 </ul>
                             @else
                                 <ul class="rundown-list">
