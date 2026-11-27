@@ -1,3 +1,4 @@
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -52,6 +53,11 @@ type PageProps = {
     guest: GuestData;
     isPress?: boolean;
     isVip?: boolean;
+    pressQuota?: {
+        max: number;
+        registered: number;
+        remaining: number;
+    } | null;
     token: string;
     verifyUrl: string;
     qrCodeSvg: string;
@@ -63,7 +69,7 @@ type PageProps = {
 };
 
 export default function GuestRsvpPage() {
-    const { guest, isPress = false, isVip = true, token, verifyUrl, qrCodeSvg, eventInfo, flash } = usePage<PageProps>().props;
+    const { guest, isPress = false, isVip = true, pressQuota = null, token, verifyUrl, qrCodeSvg, eventInfo, flash } = usePage<PageProps>().props;
 
     const initialName = guest.name && guest.name !== guest.institution ? guest.name : '';
     const { data, setData, post, processing, errors } = useForm({
@@ -177,22 +183,31 @@ export default function GuestRsvpPage() {
                                 <MapPin className="size-5 shrink-0 text-[#17524A]" />
                                 <div>
                                     <span className="font-bold text-slate-500">Lokasi Venue</span>
-                                    <p className="font-bold text-slate-900">{eventInfo.venue}</p>
+                                    <p className="font-bold text-slate-900 whitespace-pre-line">{eventInfo.venue}</p>
                                 </div>
                             </div>
-                        </div>
-
-                        {/* Table / Seating Info */}
-                        <div className="mt-4 rounded-2xl border-2 border-amber-300 bg-amber-50/80 p-4 text-center">
-                            <span className="text-xs font-extrabold uppercase tracking-wider text-amber-900">
-                                Alokasi Meja / Kursi Kehormatan
-                            </span>
-                            <p className="mt-1 text-2xl font-black text-amber-950 sm:text-3xl">
-                                {guest.table_number}
-                            </p>
-                            <p className="mt-1 text-xs font-semibold text-amber-800">
-                                Alokasi: {guest.seat_count} Kursi (Termasuk Pendamping)
-                            </p>
+                            <div className="flex items-start gap-3 rounded-2xl border border-slate-200/80 bg-slate-50 p-3.5 sm:col-span-2">
+                                <Clock className="size-5 shrink-0 text-[#17524A]" />
+                                <div className="w-full">
+                                    <span className="font-bold text-slate-500">Rangkaian Acara</span>
+                                    {isPress ? (
+                                        <ul className="mt-1.5 list-disc space-y-1 pl-4 text-xs font-semibold text-slate-800">
+                                            <li>Registrasi (09.00 - 10.00)</li>
+                                            <li>Press Conference OMATIQ 2026 (10.00 - 11.30)</li>
+                                            <li>Ishoma (11.30 - 12.30)</li>
+                                            <li>Press Conference Tema Tahunan 2027 (12.30 - 14.00)</li>
+                                        </ul>
+                                    ) : (
+                                        <ul className="mt-1.5 list-disc space-y-1 pl-4 text-xs font-semibold text-slate-800">
+                                            <li>Pembukaan &amp; Sambutan (08.00-09.00 WIB)</li>
+                                            <li>Grand Final Al-Qur&apos;an (09.00-11.00 WIB)</li>
+                                            <li>Grand Final Matematika (11.00-12.30 WIB)</li>
+                                            <li>Sholawat dan Senandung Islami bersama Haddad Alwi (13.30-14.30 WIB)</li>
+                                            <li>Pengumuman Pemenang (14.30-15.00 WIB)</li>
+                                        </ul>
+                                    )}
+                                </div>
+                            </div>
                         </div>
 
                         {/* SECTION A: IF ALREADY CONFIRMED -> SHOW QR PASS (NO FORM) */}
@@ -247,15 +262,39 @@ export default function GuestRsvpPage() {
                             </div>
                         )}
 
-                        {/* SECTION C: RSVP FORM (ONLY SHOWN IF STATUS === 'invited') */}
-                        {!isConfirmed && !isDeclined && (
-                            <div className="mt-8 border-t border-slate-200 pt-6">
-                                <h3 className="text-base font-black text-slate-900">
-                                    Formulir Konfirmasi Kehadiran
+                        {/* SECTION C: PRESS QUOTA FULL */}
+                        {isPress && pressQuota && pressQuota.remaining <= 0 && !isDeclined && (
+                            <div className="mt-8 rounded-3xl border-2 border-amber-300 bg-amber-50/70 p-6 text-center">
+                                <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+                                    <Users className="size-8" />
+                                </div>
+                                <h3 className="text-lg font-black text-slate-900">
+                                    Kuota Undangan Media Terpenuhi
                                 </h3>
-                                <p className="mt-1 text-xs text-slate-500">
-                                    Mohon konfirmasikan rencana kehadiran Bapak/Ibu demi kelancaran penyambutan tamu kehormatan.
+                                <p className="mt-1 text-xs text-slate-600 max-w-md mx-auto">
+                                    Seluruh kuota peserta untuk <strong>{guest.institution || guest.name}</strong> ({pressQuota.registered} / {pressQuota.max} orang) telah terdaftar. Masing-masing jurnalis telah mendapatkan E-Pass &amp; Barcode melalui email.
                                 </p>
+                            </div>
+                        )}
+
+                        {/* SECTION D: RSVP FORM (ONLY SHOWN IF STATUS === 'invited' AND QUOTA AVAILABLE) */}
+                        {!isConfirmed && !isDeclined && (!isPress || !pressQuota || pressQuota.remaining > 0) && (
+                            <div className="mt-8 border-t border-slate-200 pt-6">
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <div>
+                                        <h3 className="text-base font-black text-slate-900">
+                                            Formulir Konfirmasi Kehadiran
+                                        </h3>
+                                        <p className="mt-1 text-xs text-slate-500">
+                                            Mohon konfirmasikan rencana kehadiran Bapak/Ibu demi kelancaran penyambutan tamu kehormatan.
+                                        </p>
+                                    </div>
+                                    {isPress && pressQuota && (
+                                        <Badge className="bg-sky-100 text-sky-900 border border-sky-300 font-bold text-xs px-3 py-1">
+                                            Kuota Terisi: {pressQuota.registered} / {pressQuota.max} Orang (Sisa {pressQuota.remaining})
+                                        </Badge>
+                                    )}
+                                </div>
 
                                 <form onSubmit={handleSubmit} className="mt-5 space-y-4">
                                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -279,10 +318,12 @@ export default function GuestRsvpPage() {
                                             </div>
                                             <div>
                                                 <span className="text-sm font-black text-slate-900">
-                                                    Insya Allah Hadir
+                                                    Hadir
                                                 </span>
                                                 <p className="text-xs text-slate-500">
-                                                    Saya akan hadir di Grand Final OMATIQ 2026.
+                                                    {isPress
+                                                        ? 'Saya akan hadir di Press Conference OMATIQ 2026 dan Tema Tahunan 2027.'
+                                                        : 'Saya akan hadir di Grand Final OMATIQ 2026.'}
                                                 </p>
                                             </div>
                                         </button>
@@ -319,111 +360,111 @@ export default function GuestRsvpPage() {
                                     {data.attendance === 'confirmed' && (
                                         <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 sm:p-5 space-y-4">
                                             {/* Info banner instansi */}
+                                            {guest.institution && (
+                                                <div className="rounded-xl border border-emerald-200 bg-emerald-50/80 p-3 text-xs text-emerald-900">
+                                                    🏛️ <strong>{isPress ? 'Undangan Liputan Pers / Media:' : 'Undangan Delegasi / Instansi:'}</strong>{' '}
+                                                    <span className="font-bold">{guest.institution}</span>
+                                                    <p className="mt-0.5 text-[11px] text-emerald-700">
+                                                        {isPress
+                                                            ? 'Silakan isi data nama jurnalis / perwakilan media yang bertugas meliput acara ini.'
+                                                            : 'Silakan isi data nama pejabat / perwakilan yang ditugaskan untuk hadir mewakili instansi Anda.'}
+                                                    </p>
+                                                </div>
+                                            )}
+
+                                            {/* Nama Lengkap Yang Hadir / Mewakili */}
+                                            <div>
+                                                <Label htmlFor="rep_name" className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                                                    <User className="size-3.5 text-[#17524A]" />
+                                                    Nama Lengkap (Yang Hadir / Mewakili) <span className="text-rose-500">*</span>
+                                                </Label>
+                                                <Input
+                                                    id="rep_name"
+                                                    type="text"
+                                                    value={data.name}
+                                                    onChange={(e) => setData('name', e.target.value)}
+                                                    placeholder="Contoh: Bpk. H. Rahmat Hidayat, M.Pd"
+                                                    className="mt-1 h-10 text-xs sm:text-sm bg-white"
+                                                    required
+                                                />
+                                                {errors.name && <p className="mt-1 text-xs text-rose-500">{errors.name}</p>}
+                                            </div>
+
+                                            {/* Email Aktif */}
+                                            <div>
+                                                <Label htmlFor="rep_email" className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                                                    <Mail className="size-3.5 text-[#17524A]" />
+                                                    Email Aktif ({isPress ? 'E-Pass & Barcode Dikirim ke Sini' : 'VIP Pass & Barcode Dikirim ke Sini'}) <span className="text-rose-500">*</span>
+                                                </Label>
+                                                <Input
+                                                    id="rep_email"
+                                                    type="email"
+                                                    value={data.email}
+                                                    onChange={(e) => setData('email', e.target.value)}
+                                                    placeholder="nama@instansi.go.id atau email@gmail.com"
+                                                    className="mt-1 h-10 text-xs sm:text-sm bg-white"
+                                                    required
+                                                />
+                                                {errors.email && <p className="mt-1 text-xs text-rose-500">{errors.email}</p>}
+                                                <p className="mt-1 text-[11px] text-slate-500">
+                                                    Tiket resmi dan QR Code akses gate akan otomatis terkirim ke email ini.
+                                                </p>
+                                            </div>
+
+                                            {/* Nomor WhatsApp / HP */}
+                                            <div>
+                                                <Label htmlFor="rep_phone" className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                                                    <Phone className="size-3.5 text-[#17524A]" />
+                                                    Nomor WhatsApp / HP Aktif <span className="text-rose-500">*</span>
+                                                </Label>
+                                                <Input
+                                                    id="rep_phone"
+                                                    type="tel"
+                                                    value={data.phone}
+                                                    onChange={(e) => setData('phone', e.target.value)}
+                                                    placeholder="Contoh: 081234567890"
+                                                    className="mt-1 h-10 text-xs sm:text-sm bg-white"
+                                                    required
+                                                />
+                                                {errors.phone && <p className="mt-1 text-xs text-rose-500">{errors.phone}</p>}
+                                            </div>
+
+                                            {/* Pilihan Pendamping: Hanya untuk non-press */}
                                             {!isPress ? (
-                                                <>
-                                                    {guest.institution && (
-                                                        <div className="rounded-xl border border-emerald-200 bg-emerald-50/80 p-3 text-xs text-emerald-900">
-                                                            🏛️ <strong>Undangan Delegasi / Instansi:</strong>{' '}
-                                                            <span className="font-bold">{guest.institution}</span>
-                                                            <p className="mt-0.5 text-[11px] text-emerald-700">
-                                                                Silakan isi data nama pejabat / perwakilan yang ditugaskan untuk hadir mewakili instansi Anda.
+                                                <div className="pt-1">
+                                                    <label className="flex items-start gap-3 cursor-pointer rounded-xl border border-slate-200 bg-white p-3 hover:bg-slate-50 transition">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={data.has_companion}
+                                                            onChange={(e) => {
+                                                                const checked = e.target.checked;
+                                                                setData((prev) => ({
+                                                                    ...prev,
+                                                                    has_companion: checked,
+                                                                    seat_count: checked ? 2 : 1,
+                                                                }));
+                                                            }}
+                                                            className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#17524A] focus:ring-[#17524A]"
+                                                        />
+                                                        <div>
+                                                            <span className="text-xs font-bold text-slate-800">
+                                                                Membawa 1 Orang Pendamping (Ajudan / Sekretaris)
+                                                            </span>
+                                                            <p className="text-[11px] text-slate-500 mt-0.5">
+                                                                Centang jika hadir bersama 1 orang pendamping resmi (total reservasi: 2 kursi). Default: 1 orang jika tidak dicentang.
                                                             </p>
                                                         </div>
-                                                    )}
-
-                                                    {/* Nama Lengkap Yang Hadir / Mewakili */}
-                                                    <div>
-                                                        <Label htmlFor="rep_name" className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                                                            <User className="size-3.5 text-[#17524A]" />
-                                                            Nama Lengkap (Yang Hadir / Mewakili) <span className="text-rose-500">*</span>
-                                                        </Label>
-                                                        <Input
-                                                            id="rep_name"
-                                                            type="text"
-                                                            value={data.name}
-                                                            onChange={(e) => setData('name', e.target.value)}
-                                                            placeholder="Contoh: Bpk. H. Rahmat Hidayat, M.Pd"
-                                                            className="mt-1 h-10 text-xs sm:text-sm bg-white"
-                                                            required
-                                                        />
-                                                        {errors.name && <p className="mt-1 text-xs text-rose-500">{errors.name}</p>}
-                                                    </div>
-
-                                                    {/* Email Aktif */}
-                                                    <div>
-                                                        <Label htmlFor="rep_email" className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                                                            <Mail className="size-3.5 text-[#17524A]" />
-                                                            Email Aktif (VIP Pass & Barcode Dikirim ke Sini) <span className="text-rose-500">*</span>
-                                                        </Label>
-                                                        <Input
-                                                            id="rep_email"
-                                                            type="email"
-                                                            value={data.email}
-                                                            onChange={(e) => setData('email', e.target.value)}
-                                                            placeholder="nama@instansi.go.id atau email@gmail.com"
-                                                            className="mt-1 h-10 text-xs sm:text-sm bg-white"
-                                                            required
-                                                        />
-                                                        {errors.email && <p className="mt-1 text-xs text-rose-500">{errors.email}</p>}
-                                                        <p className="mt-1 text-[11px] text-slate-500">
-                                                            Tiket resmi, QR Code akses gate, dan panduan protokoler akan otomatis terkirim ke email ini.
-                                                        </p>
-                                                    </div>
-
-                                                    {/* Nomor WhatsApp / HP */}
-                                                    <div>
-                                                        <Label htmlFor="rep_phone" className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                                                            <Phone className="size-3.5 text-[#17524A]" />
-                                                            Nomor WhatsApp / HP Aktif <span className="text-rose-500">*</span>
-                                                        </Label>
-                                                        <Input
-                                                            id="rep_phone"
-                                                            type="tel"
-                                                            value={data.phone}
-                                                            onChange={(e) => setData('phone', e.target.value)}
-                                                            placeholder="Contoh: 081234567890"
-                                                            className="mt-1 h-10 text-xs sm:text-sm bg-white"
-                                                            required
-                                                        />
-                                                        {errors.phone && <p className="mt-1 text-xs text-rose-500">{errors.phone}</p>}
-                                                    </div>
-
-                                                    {/* Pilihan Pendamping: Hanya untuk non-press */}
-                                                    <div className="pt-1">
-                                                        <label className="flex items-start gap-3 cursor-pointer rounded-xl border border-slate-200 bg-white p-3 hover:bg-slate-50 transition">
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={data.has_companion}
-                                                                onChange={(e) => {
-                                                                    const checked = e.target.checked;
-                                                                    setData((prev) => ({
-                                                                        ...prev,
-                                                                        has_companion: checked,
-                                                                        seat_count: checked ? 2 : 1,
-                                                                    }));
-                                                                }}
-                                                                className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#17524A] focus:ring-[#17524A]"
-                                                            />
-                                                            <div>
-                                                                <span className="text-xs font-bold text-slate-800">
-                                                                    Membawa 1 Orang Pendamping (Ajudan / Sekretaris)
-                                                                </span>
-                                                                <p className="text-[11px] text-slate-500 mt-0.5">
-                                                                    Centang jika hadir bersama 1 orang pendamping resmi (total reservasi: 2 kursi). Default: 1 orang jika tidak dicentang.
-                                                                </p>
-                                                            </div>
-                                                        </label>
-                                                    </div>
-                                                </>
+                                                    </label>
+                                                </div>
                                             ) : (
                                                 <div className="rounded-xl border border-sky-200 bg-sky-50/80 p-3 text-xs text-sky-900">
-                                                    📰 <strong>Undangan Liputan Pers & Media:</strong> Data identitas Anda telah terdaftar di sistem. Cukup konfirmasikan kehadiran Anda (undangan berlaku perorangan untuk 1 orang jurnalis).
+                                                    📰 <strong>Undangan Liputan Pers &amp; Media:</strong> Undangan ini berlaku perorangan untuk <strong>1 orang jurnalis</strong> tanpa pendamping/asisten.
                                                 </div>
                                             )}
 
                                             <div>
                                                 <Label htmlFor="notes" className="text-xs font-bold text-slate-700">
-                                                    Catatan Khusus / Permintaan Protokoler (Opsional)
+                                                    Catatan (Opsional)
                                                 </Label>
                                                 <Textarea
                                                     id="notes"
@@ -458,7 +499,16 @@ export default function GuestRsvpPage() {
 
                     {/* Card Footer */}
                     <div className="border-t border-slate-100 bg-slate-50 px-6 py-4 text-center text-xs text-slate-500">
-                        Pusat Layanan Tamu Undangan: <strong>0811-1234-5678</strong> (Panitia Humas & VIP)
+                        Pusat Layanan Tamu Undangan:{' '}
+                        <a
+                            href="https://wa.me/628994291548"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-bold text-[#17524A] underline hover:text-[#12423c]"
+                        >
+                            628994291548
+                        </a>{' '}
+                        (Panitia Humas &amp; VIP)
                     </div>
                 </div>
             </div>

@@ -186,7 +186,7 @@
                     </div>
                     <div class="pass-code">{{ $guest->code }}</div>
                     <div class="table-pill">
-                        📍 {{ $guest->table_number ?: 'Area Kursi Kehormatan VIP' }} &bull; {{ $guest->seat_count }} Kursi
+                        🎟️ Kapasitas: {{ $guest->seat_count }} Orang
                     </div>
                 </div>
 

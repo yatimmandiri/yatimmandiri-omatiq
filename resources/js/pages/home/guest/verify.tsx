@@ -335,7 +335,7 @@ export default function GuestVerifyPage({
                                             <Crown className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
                                             <div>
                                                 <span className="font-bold text-amber-300">Panduan Protokoler & Penerima Tamu:</span>{' '}
-                                                Sambut dan arahkan tamu kehormatan menuju <strong>VIP Lounge / {guest.table_number || 'Area Kursi Kehormatan'}</strong>. Sediakan pendamping protokoler untuk mengantar ke meja.
+                                                Sambut dan arahkan tamu kehormatan sesuai arahan protokoler acara.
                                             </div>
                                         </div>
                                     </div>

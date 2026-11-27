@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\Company\EventCommitteeController;
 use App\Http\Controllers\Admin\Company\EventGuestController;
 use App\Http\Controllers\Admin\Company\FaqCompanyController;
 use App\Http\Controllers\Admin\Company\NationalChaperoneController;
+use App\Http\Controllers\Admin\Company\NationalMonitoringController;
 use App\Http\Controllers\Admin\Company\OlimpiadeController;
 use App\Http\Controllers\Admin\Company\OlimpiadeGalleryController;
 use App\Http\Controllers\Admin\Company\OlimpiadeObjectiveController;
@@ -111,6 +112,11 @@ Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'auth.admi
         Route::get('participants/data', [ParticipantController::class, 'getData'])->name('participants.data');
         Route::post('participants/sync-sheet', [ParticipantController::class, 'syncSheet'])->name('participants.sync-sheet');
         Route::resource('participants', ParticipantController::class)->except(['create', 'store']);
+
+        Route::get('national-monitoring/data', [NationalMonitoringController::class, 'getData'])->name('national-monitoring.data');
+        Route::get('national-monitoring', [NationalMonitoringController::class, 'index'])->name('national-monitoring.index');
+        Route::post('national-monitoring/{nationalParticipant}/reset-checkin', [NationalMonitoringController::class, 'resetCheckIn'])->name('national-monitoring.reset-checkin');
+        Route::post('national-monitoring/{nationalParticipant}/reset-pack', [NationalMonitoringController::class, 'resetPack'])->name('national-monitoring.reset-pack');
 
         Route::get('chaperones/{chaperone}/card', [NationalChaperoneController::class, 'printCard'])->name('chaperones.card');
         Route::put('chaperones/{chaperone}/verify', [NationalChaperoneController::class, 'verify'])->name('chaperones.verify');
