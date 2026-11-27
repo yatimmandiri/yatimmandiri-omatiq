@@ -49,8 +49,8 @@ class NationalMonitoringController extends Controller
 
         $today = today()->toDateString();
         $search = trim((string) $request->input('globalSearch', ''));
-        $checkpointFilter = trim((string) $request->input('checkpoint', ''));
-        $statusFilter = trim((string) $request->input('status', ''));
+        $checkpointFilter = trim((string) ($request->input('filterValue.checkpoint') ?? $request->input('checkpoint', '')));
+        $statusFilter = trim((string) ($request->input('filterValue.status') ?? $request->input('status', '')));
 
         $nationalParticipants = NationalParticipant::query()
             ->where('status', 'verified')
@@ -178,6 +178,6 @@ class NationalMonitoringController extends Controller
             'pack_received_by' => null,
         ]);
 
-        return back()->with('success', 'Status penyerahan Event Pack berhasil di-reset.');
+        return back()->with('success', 'Status penyerahan Event Kit berhasil di-reset.');
     }
 }

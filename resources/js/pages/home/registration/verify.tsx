@@ -708,7 +708,7 @@ function PackHandoverCard({
                     <div>
                         <div className="flex flex-wrap items-center gap-2">
                             <h4 className="text-xs font-black uppercase tracking-wider text-indigo-950 sm:text-sm">
-                                Serah Terima Event Pack & Kaos (Hari 1)
+                                Serah Terima Event Kit & Kaos (Hari 1)
                             </h4>
                             <span className="rounded-md bg-indigo-200 px-2 py-0.5 text-xs font-black text-indigo-900 border border-indigo-300">
                                 Ukuran Kaos: {shirtSize || '-'}
@@ -725,7 +725,7 @@ function PackHandoverCard({
                         <div className="flex flex-col items-end">
                             <span className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-1.5 text-xs font-black text-white shadow-xs">
                                 <CheckCircle2 className="size-4" />
-                                Pack Sudah Diterima
+                                Kit Sudah Diterima
                             </span>
                             {receivedAt && (
                                 <span className="mt-0.5 text-[10px] text-slate-500 font-medium">
@@ -1107,7 +1107,12 @@ export default function UniversalVerifyPage({
                 const pathParts = url.pathname.split('/').filter(Boolean);
 
                 if (pathParts.length > 0) {
-                    return decodeURIComponent(pathParts[pathParts.length - 1]);
+                    const lastPart = decodeURIComponent(pathParts[pathParts.length - 1]);
+                    if (lastPart.toLowerCase() === 'konfirmasi' && pathParts.length >= 2) {
+                        return decodeURIComponent(pathParts[pathParts.length - 2]);
+                    }
+
+                    return lastPart;
                 }
             }
         } catch {
@@ -1333,7 +1338,7 @@ export default function UniversalVerifyPage({
     const handleResetPack = async (type: 'participant' | 'chaperone', id: number) => {
         const confirmed = await confirmAction({
             title: 'Reset Serah Terima Pack?',
-            text: 'Status serah terima event pack & kaos akan dikembalikan menjadi belum diterima.',
+            text: 'Status serah terima event kit & kaos akan dikembalikan menjadi belum diterima.',
             confirmButtonText: 'Ya, Reset',
             cancelButtonText: 'Batal',
             icon: 'warning',
@@ -1733,7 +1738,9 @@ export default function UniversalVerifyPage({
                                         </div>
                                         <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-0.5 text-xs font-black tracking-wide text-[#FFE600] uppercase">
                                             <GraduationCap className="size-3.5" />
-                                            KARTU PESERTA ASLI &bull; FINALIS OMATIQ
+                                            {activeEntity.is_national_qualified
+                                                ? 'KARTU PESERTA ASLI • FINALIS NASIONAL OMATIQ'
+                                                : 'KARTU PESERTA ASLI • PESERTA PENYISIHAN REGIONAL'}
                                         </div>
                                         <h2 className="mt-2 text-xl font-black tracking-wide uppercase sm:text-2xl">
                                             {activeEntity.student?.full_name ?? '-'}
@@ -1865,7 +1872,7 @@ export default function UniversalVerifyPage({
                                         ) : (
                                             <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 p-4 text-xs text-slate-500 flex items-center gap-3">
                                                 <Info className="h-4 w-4 text-slate-400 shrink-0" />
-                                                <span>Peserta babak penyisihan regional (bukan finalis nasional, alokasi event pack tidak tersedia).</span>
+                                                <span>Peserta babak penyisihan regional (bukan finalis nasional, alokasi event kit tidak tersedia).</span>
                                             </div>
                                         )}
 

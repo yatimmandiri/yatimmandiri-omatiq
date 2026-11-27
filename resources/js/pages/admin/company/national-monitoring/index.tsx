@@ -90,8 +90,8 @@ export default function NationalMonitoringPage() {
 
     const handleResetPack = async (row: MonitoringRow) => {
         const confirmed = await confirmAction({
-            title: 'Reset Status Event Pack?',
-            text: `Status penerimaan Event Pack untuk ${row.name} akan dikembalikan menjadi Belum Diterima.`,
+            title: 'Reset Status Event Kit?',
+            text: `Status penerimaan Event Kit untuk ${row.name} akan dikembalikan menjadi Belum Diterima.`,
             confirmButtonText: 'Ya, Reset Pack',
         });
 
@@ -103,10 +103,10 @@ export default function NationalMonitoringPage() {
             {
                 preserveScroll: true,
                 onSuccess: () => {
-                    showSuccessAlert('Berhasil Direset', 'Status Event Pack telah dikembalikan.');
+                    showSuccessAlert('Berhasil Direset', 'Status Event Kit telah dikembalikan.');
                     setRefreshData((prev) => !prev);
                 },
-                onError: () => showErrorAlert('Gagal', 'Terjadi kesalahan saat mereset Event Pack.'),
+                onError: () => showErrorAlert('Gagal', 'Terjadi kesalahan saat mereset Event Kit.'),
             }
         );
     };
@@ -147,7 +147,7 @@ export default function NationalMonitoringPage() {
                                         className="text-amber-700 focus:text-amber-700 cursor-pointer"
                                     >
                                         <Package className="mr-2 h-4 w-4" />
-                                        Reset Event Pack
+                                        Reset Event Kit
                                     </DropdownMenuItem>
                                 </>
                             )}
@@ -248,7 +248,7 @@ export default function NationalMonitoringPage() {
         {
             id: 'pack_received',
             accessorKey: 'pack_received',
-            header: (info: any) => renderRowHeader(info, 'Event Pack'),
+            header: (info: any) => renderRowHeader(info, 'Event Kit'),
             cell: ({ row }: any) => {
                 const item: MonitoringRow = row.original;
                 return item.pack_received ? (
@@ -282,7 +282,7 @@ export default function NationalMonitoringPage() {
                             Monitoring Peserta Nasional
                         </h1>
                         <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                            Pantau pergerakan lokasi, riwayat check-in hari ini ({todayLabel}), dan status Event Pack secara real-time. Khusus Administrator.
+                            Pantau pergerakan lokasi, riwayat check-in hari ini ({todayLabel}), dan status Event Kit secara real-time. Khusus Administrator.
                         </p>
                     </div>
 
@@ -338,7 +338,7 @@ export default function NationalMonitoringPage() {
                     <Card className="border-slate-200/80 dark:border-slate-800 shadow-sm">
                         <CardContent className="p-4 flex items-center justify-between">
                             <div>
-                                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Event Pack Diterima</p>
+                                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Event Kit Diterima</p>
                                 <p className="text-2xl font-black text-amber-600 dark:text-amber-400 mt-1">{stats?.pack_received ?? 0}</p>
                             </div>
                             <div className="h-10 w-10 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 flex items-center justify-center">
@@ -355,21 +355,21 @@ export default function NationalMonitoringPage() {
 
                         <div className="w-56">
                             <SelectComponent
-                                options={checkpointOptions}
-                                value={filterValue.checkpoint || ''}
-                                onValueChange={(val: string) => setFilterValue((prev) => ({ ...prev, checkpoint: val }))}
+                                data={checkpointOptions}
+                                dataSelected={filterValue.checkpoint || ''}
+                                handleOnChange={(val: string) => setFilterValue((prev) => ({ ...prev, checkpoint: val }))}
                                 placeholder="Semua Pos / Lokasi Terakhir"
                             />
                         </div>
 
                         <div className="w-48">
                             <SelectComponent
-                                options={[
+                                data={[
                                     { value: 'checked_in', label: 'Sudah Scan Hari Ini' },
                                     { value: 'not_checked_in', label: 'Belum Scan Hari Ini' },
                                 ]}
-                                value={filterValue.status || ''}
-                                onValueChange={(val: string) => setFilterValue((prev) => ({ ...prev, status: val }))}
+                                dataSelected={filterValue.status || ''}
+                                handleOnChange={(val: string) => setFilterValue((prev) => ({ ...prev, status: val }))}
                                 placeholder="Semua Status Kehadiran"
                             />
                         </div>
@@ -413,7 +413,7 @@ export default function NationalMonitoringPage() {
                                     item.today_logs.length > 0
                                         ? item.today_logs.map((l) => `${l.checkpoint_label} (${l.time})`).join(' -> ')
                                         : '-',
-                                'Event Pack': item.pack_received ? `Sudah (${item.pack_received_at})` : 'Belum',
+                                'Event Kit': item.pack_received ? `Sudah (${item.pack_received_at})` : 'Belum',
                             }))
                         }
                     >

@@ -318,6 +318,11 @@ export default function ListGuestsPage() {
                             <div className="text-[11px] text-slate-500 truncate">
                                 {g.institution || g.phone || 'Tamu Kehormatan'}
                             </div>
+                            {['press', 'media'].includes(g.category?.toLowerCase()) && !g.parent_guest_id && (
+                                <span className="mt-0.5 inline-block rounded bg-sky-100 px-1.5 py-0.5 text-[10px] font-bold text-sky-800 dark:bg-sky-950/50 dark:text-sky-300">
+                                    Induk Lembaga &bull; Kuota {g.registered_children_count ?? 0}/{g.seat_count ?? 1}
+                                </span>
+                            )}
                         </div>
                     </div>
                 );
@@ -393,6 +398,14 @@ export default function ListGuestsPage() {
                         <Badge variant="outline" className="border-amber-300 text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/20 text-[10px] font-medium">
                             <Clock className="mr-1 h-3 w-3 text-amber-600" />
                             Terkonfirmasi
+                        </Badge>
+                    );
+                }
+
+                if (['press', 'media'].includes(g.category?.toLowerCase()) && !g.parent_guest_id && g.status !== 'declined') {
+                    return (
+                        <Badge variant="outline" className="border-sky-300 text-sky-800 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/30 text-[10px] font-bold">
+                            Induk Kuota ({g.registered_children_count ?? 0}/{g.seat_count ?? 1} Terdaftar)
                         </Badge>
                     );
                 }
@@ -522,12 +535,13 @@ export default function ListGuestsPage() {
                         {/* Category Filter */}
                         <div className="w-40">
                             <SelectComponent
-                                options={[
+                                data={[
                                     { value: 'vip', label: 'Tamu VIP' },
+                                    { value: 'press', label: 'Press / Media' },
                                     { value: 'non_vip', label: 'Tamu Non-VIP' },
                                 ]}
-                                value={filterValue.category || ''}
-                                onValueChange={(val: string) => setFilterValue((prev) => ({ ...prev, category: val }))}
+                                dataSelected={filterValue.category || ''}
+                                handleOnChange={(val: string) => setFilterValue((prev) => ({ ...prev, category: val }))}
                                 placeholder="Semua Kategori"
                             />
                         </div>
@@ -535,12 +549,12 @@ export default function ListGuestsPage() {
                         {/* Presence Filter */}
                         <div className="w-36">
                             <SelectComponent
-                                options={[
+                                data={[
                                     { value: 'yes', label: 'Sudah Hadir' },
                                     { value: 'no', label: 'Belum Hadir' },
                                 ]}
-                                value={filterValue.checked_in || ''}
-                                onValueChange={(val: string) => setFilterValue((prev) => ({ ...prev, checked_in: val }))}
+                                dataSelected={filterValue.checked_in || ''}
+                                handleOnChange={(val: string) => setFilterValue((prev) => ({ ...prev, checked_in: val }))}
                                 placeholder="Kehadiran"
                             />
                         </div>
@@ -548,14 +562,14 @@ export default function ListGuestsPage() {
                         {/* Status Filter */}
                         <div className="w-40">
                             <SelectComponent
-                                options={[
+                                data={[
                                     { value: 'confirmed', label: 'Terkonfirmasi' },
                                     { value: 'attended', label: 'Sudah Masuk' },
                                     { value: 'invited', label: 'Terkirim' },
                                     { value: 'declined', label: 'Berhalangan' },
                                 ]}
-                                value={filterValue.status || ''}
-                                onValueChange={(val: string) => setFilterValue((prev) => ({ ...prev, status: val }))}
+                                dataSelected={filterValue.status || ''}
+                                handleOnChange={(val: string) => setFilterValue((prev) => ({ ...prev, status: val }))}
                                 placeholder="Status RSVP"
                             />
                         </div>
