@@ -336,7 +336,39 @@
         .sig-greeting {
             font-size: 8.5pt;
             font-weight: 700;
-            margin-bottom: 14mm;
+            margin-bottom: 1mm;
+        }
+
+        .sig-stamp-wrap {
+            position: relative;
+            height: 16mm;
+            width: 38mm;
+            margin: 0 auto 1mm auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sig-stamp {
+            position: absolute;
+            left: 1mm;
+            top: 1mm;
+            width: 20mm;
+            height: auto;
+            opacity: 0.85;
+            mix-blend-mode: multiply;
+            transform: rotate(-6deg);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .sig-ttd {
+            position: relative;
+            z-index: 2;
+            height: 35mm;
+            width: auto;
+            object-fit: contain;
+            mix-blend-mode: multiply;
         }
 
         .sig-name {
@@ -537,6 +569,10 @@
 
                         <div class="signature-box">
                             <div class="sig-greeting">Hormat kami,</div>
+                            <div class="sig-stamp-wrap">
+                                <img src="{{ asset('assets/images/stempel.png') }}" alt="Stempel Resmi" class="sig-stamp">
+                                <img src="{{ asset('assets/images/ttd.png') }}" alt="Tanda Tangan Ketua Acara" class="sig-ttd">
+                            </div>
                             <div class="sig-name">M. Faqih Qodril Akbar</div>
                             <div class="sig-role">Ketua Acara OMATIQ</div>
                         </div>
