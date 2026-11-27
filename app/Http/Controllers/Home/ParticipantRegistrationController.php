@@ -939,7 +939,7 @@ class ParticipantRegistrationController extends Controller
             $displayName = $participant->student?->full_name ?? $participant->registration_number;
 
             if (! $participant->national) {
-                return back()->with('error', "Peserta {$displayName} bukan peserta babak nasional dan tidak memiliki alokasi event pack.");
+                return back()->with('error', "Peserta {$displayName} bukan peserta babak nasional dan tidak memiliki alokasi event kit.");
             }
 
             $participant->national->update([
@@ -955,7 +955,7 @@ class ParticipantRegistrationController extends Controller
             ]);
         }
 
-        return back()->with('success', "Event Pack & Kaos berhasil diserahkan kepada {$displayName}!");
+        return back()->with('success', "Event Kit & Kaos berhasil diserahkan kepada {$displayName}!");
     }
 
     public function resetPack(Request $request): RedirectResponse
@@ -986,6 +986,6 @@ class ParticipantRegistrationController extends Controller
             ]);
         }
 
-        return back()->with('success', 'Status serah terima event pack berhasil di-reset.');
+        return back()->with('success', 'Status serah terima event kit berhasil di-reset.');
     }
 }

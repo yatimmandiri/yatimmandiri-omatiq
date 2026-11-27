@@ -47,20 +47,31 @@ class EventGuestController extends Controller
     {
         $this->authorize('viewAny', EventGuest::class);
 
-        $query = EventGuest::query()->with('creator:id,name');
+        $query = EventGuest::query()
+            ->with('creator:id,name')
+            ->withCount([
+                'children as registered_children_count' => fn ($q) => $q->where('status', '!=', 'declined'),
+            ]);
 
-        if ($request->filled('status')) {
-            $query->where('status', $request->string('status')->toString());
+        $statusFilter = $request->input('filterValue.status') ?? $request->input('status');
+        if (filled($statusFilter)) {
+            $query->where('status', (string) $statusFilter);
         }
 
-        if ($request->filled('category')) {
-            $query->where('category', $request->string('category')->toString());
+        $categoryFilter = $request->input('filterValue.category') ?? $request->input('category');
+        if (filled($categoryFilter)) {
+            if ($categoryFilter === 'non_vip') {
+                $query->whereIn('category', ['non_vip', 'non-vip', 'umum']);
+            } else {
+                $query->where('category', (string) $categoryFilter);
+            }
         }
 
-        if ($request->filled('checked_in')) {
-            if ($request->string('checked_in')->toString() === 'yes') {
+        $checkedInFilter = $request->input('filterValue.checked_in') ?? $request->input('checked_in');
+        if (filled($checkedInFilter)) {
+            if ($checkedInFilter === 'yes') {
                 $query->whereNotNull('checked_in_at');
-            } elseif ($request->string('checked_in')->toString() === 'no') {
+            } elseif ($checkedInFilter === 'no') {
                 $query->whereNull('checked_in_at');
             }
         }
