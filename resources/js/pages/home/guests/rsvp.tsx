@@ -1,3 +1,4 @@
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -52,6 +53,11 @@ type PageProps = {
     guest: GuestData;
     isPress?: boolean;
     isVip?: boolean;
+    pressQuota?: {
+        max: number;
+        registered: number;
+        remaining: number;
+    } | null;
     token: string;
     verifyUrl: string;
     qrCodeSvg: string;
@@ -63,7 +69,7 @@ type PageProps = {
 };
 
 export default function GuestRsvpPage() {
-    const { guest, isPress = false, isVip = true, token, verifyUrl, qrCodeSvg, eventInfo, flash } = usePage<PageProps>().props;
+    const { guest, isPress = false, isVip = true, pressQuota = null, token, verifyUrl, qrCodeSvg, eventInfo, flash } = usePage<PageProps>().props;
 
     const initialName = guest.name && guest.name !== guest.institution ? guest.name : '';
     const { data, setData, post, processing, errors } = useForm({
@@ -256,15 +262,39 @@ export default function GuestRsvpPage() {
                             </div>
                         )}
 
-                        {/* SECTION C: RSVP FORM (ONLY SHOWN IF STATUS === 'invited') */}
-                        {!isConfirmed && !isDeclined && (
-                            <div className="mt-8 border-t border-slate-200 pt-6">
-                                <h3 className="text-base font-black text-slate-900">
-                                    Formulir Konfirmasi Kehadiran
+                        {/* SECTION C: PRESS QUOTA FULL */}
+                        {isPress && pressQuota && pressQuota.remaining <= 0 && !isDeclined && (
+                            <div className="mt-8 rounded-3xl border-2 border-amber-300 bg-amber-50/70 p-6 text-center">
+                                <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+                                    <Users className="size-8" />
+                                </div>
+                                <h3 className="text-lg font-black text-slate-900">
+                                    Kuota Undangan Media Terpenuhi
                                 </h3>
-                                <p className="mt-1 text-xs text-slate-500">
-                                    Mohon konfirmasikan rencana kehadiran Bapak/Ibu demi kelancaran penyambutan tamu kehormatan.
+                                <p className="mt-1 text-xs text-slate-600 max-w-md mx-auto">
+                                    Seluruh kuota peserta untuk <strong>{guest.institution || guest.name}</strong> ({pressQuota.registered} / {pressQuota.max} orang) telah terdaftar. Masing-masing jurnalis telah mendapatkan E-Pass &amp; Barcode melalui email.
                                 </p>
+                            </div>
+                        )}
+
+                        {/* SECTION D: RSVP FORM (ONLY SHOWN IF STATUS === 'invited' AND QUOTA AVAILABLE) */}
+                        {!isConfirmed && !isDeclined && (!isPress || !pressQuota || pressQuota.remaining > 0) && (
+                            <div className="mt-8 border-t border-slate-200 pt-6">
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <div>
+                                        <h3 className="text-base font-black text-slate-900">
+                                            Formulir Konfirmasi Kehadiran
+                                        </h3>
+                                        <p className="mt-1 text-xs text-slate-500">
+                                            Mohon konfirmasikan rencana kehadiran Bapak/Ibu demi kelancaran penyambutan tamu kehormatan.
+                                        </p>
+                                    </div>
+                                    {isPress && pressQuota && (
+                                        <Badge className="bg-sky-100 text-sky-900 border border-sky-300 font-bold text-xs px-3 py-1">
+                                            Kuota Terisi: {pressQuota.registered} / {pressQuota.max} Orang (Sisa {pressQuota.remaining})
+                                        </Badge>
+                                    )}
+                                </div>
 
                                 <form onSubmit={handleSubmit} className="mt-5 space-y-4">
                                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

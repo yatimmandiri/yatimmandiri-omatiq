@@ -31,6 +31,18 @@ class GuestRsvpController extends Controller
         $categoryLower = strtolower((string) $guest->category);
         $isPress = in_array($categoryLower, ['press', 'media'], true);
         $isVip = in_array($categoryLower, ['vip', 'vvip', 'tokoh', 'sponsor'], true) || ! $isPress;
+        $isParentPress = $isPress && $guest->parent_guest_id === null;
+
+        $pressQuota = null;
+        if ($isParentPress) {
+            $registeredCount = $guest->children()->where('status', '!=', 'declined')->count();
+            $maxSeats = max(1, (int) $guest->seat_count);
+            $pressQuota = [
+                'max' => $maxSeats,
+                'registered' => $registeredCount,
+                'remaining' => max(0, $maxSeats - $registeredCount),
+            ];
+        }
 
         return Inertia::render('home/guests/rsvp', [
             'guest' => [
@@ -50,6 +62,7 @@ class GuestRsvpController extends Controller
             ],
             'isPress' => $isPress,
             'isVip' => $isVip,
+            'pressQuota' => $pressQuota,
             'token' => $guest->code,
             'verifyUrl' => $verifyUrl,
             'qrCodeSvg' => $qrCodeSvg,
@@ -83,12 +96,17 @@ class GuestRsvpController extends Controller
             ->orWhere('rsvp_token', $identifier)
             ->firstOrFail();
 
-        if ($guest->status !== 'invited') {
-            return back()->with('error', 'Konfirmasi kehadiran telah tercatat sebelumnya dan formulir telah dikunci. Hubungi panitia jika membutuhkan perubahan data.');
-        }
-
         $categoryLower = strtolower((string) $guest->category);
         $isPress = in_array($categoryLower, ['press', 'media'], true);
+        $isParentPress = $isPress && $guest->parent_guest_id === null;
+
+        if ($isParentPress) {
+            if ($guest->status === 'declined') {
+                return back()->with('error', 'Undangan ini telah ditandai berhalangan hadir. Hubungi panitia jika membutuhkan perubahan.');
+            }
+        } elseif ($guest->status !== 'invited') {
+            return back()->with('error', 'Konfirmasi kehadiran telah tercatat sebelumnya dan formulir telah dikunci. Hubungi panitia jika membutuhkan perubahan data.');
+        }
 
         $rules = [
             'attendance' => ['required', 'in:confirmed,declined'],
@@ -113,6 +131,55 @@ class GuestRsvpController extends Controller
         ]);
 
         $newStatus = $validated['attendance'];
+
+        if ($isParentPress) {
+            if ($newStatus === 'declined') {
+                $guest->status = 'declined';
+                $guest->confirmed_at = now();
+                if (! empty($validated['notes'])) {
+                    $guest->notes = trim(($guest->notes ? $guest->notes."\n[Catatan Tamu: " : '[Catatan Tamu: ').$validated['notes'].']');
+                }
+                $guest->save();
+
+                return back()->with('success', 'Terima kasih atas konfirmasi Anda. Kami memaklumi bila media Anda berhalangan hadir pada acara ini.');
+            }
+
+            $registeredCount = $guest->children()->where('status', '!=', 'declined')->count();
+            $maxSeats = max(1, (int) $guest->seat_count);
+
+            if ($registeredCount >= $maxSeats) {
+                return back()->with('error', "Kuota undangan untuk {$guest->name} sudah terpenuhi ({$maxSeats}/{$maxSeats} orang).");
+            }
+
+            $childGuest = EventGuest::create([
+                'parent_guest_id' => $guest->id,
+                'created_by' => $guest->created_by,
+                'code' => EventGuest::generateCode(),
+                'name' => trim($validated['name']),
+                'email' => strtolower(trim($validated['email'])),
+                'phone' => trim($validated['phone']),
+                'institution' => $guest->institution ?: $guest->name,
+                'position' => 'Jurnalis / Pers',
+                'category' => $guest->category,
+                'seat_count' => 1,
+                'status' => 'confirmed',
+                'confirmed_at' => now(),
+                'notes' => ! empty($validated['notes']) ? '[Catatan Tamu: '.trim($validated['notes']).']' : null,
+                'event_year' => $guest->event_year ?? 2026,
+            ]);
+
+            if (! empty($childGuest->email)) {
+                try {
+                    Mail::to($childGuest->email)->send(new VipPassTicketMail($childGuest));
+                } catch (Exception $e) {
+                    Log::warning("Gagal mengirimkan email Press Pass ke {$childGuest->email}: ".$e->getMessage());
+                }
+            }
+
+            return redirect()->route('home.guest.rsvp', ['identifier' => $childGuest->code])
+                ->with('success', "Terima kasih atas konfirmasi kehadiran Anda. Tiket E-Pass ({$childGuest->code}) dan QR Code telah dikirimkan ke email {$childGuest->email}.");
+        }
+
         $guest->status = $newStatus;
         $guest->confirmed_at = now();
 

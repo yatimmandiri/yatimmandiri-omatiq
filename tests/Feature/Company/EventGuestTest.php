@@ -228,34 +228,52 @@ test('vip guest can view rsvp page using code and confirm attendance which sends
     });
 });
 
-test('press guest can confirm attendance with identity and is strictly locked to 1 seat without companion', function () {
-    $guest = EventGuest::create([
+test('press guest parent with seat_count quota creates individual child INV codes and blocks when full', function () {
+    $parent = EventGuest::create([
         'code' => 'INV-00008',
         'name' => 'Media Jawa Pos',
         'institution' => 'Jawa Pos Media Group',
         'category' => 'press',
         'status' => 'invited',
-        'table_number' => 'Area Press Conference',
-        'seat_count' => 1,
+        'seat_count' => 2,
         'event_year' => 2026,
     ]);
 
-    $postResponse = $this->post(route('home.guest.rsvp.confirm', ['identifier' => $guest->code]), [
+    // 1st journalist registers
+    $res1 = $this->post(route('home.guest.rsvp.confirm', ['identifier' => $parent->code]), [
         'name' => 'Ahmad Jurnalis',
         'email' => 'ahmad@jawapos.local',
         'phone' => '081399887766',
         'attendance' => 'confirmed',
-        'has_companion' => true, // Attempting to pass companion should still be forced to 1 seat for press
     ]);
+    $res1->assertSessionHas('success');
 
-    $postResponse->assertSessionHas('success');
+    $child1 = EventGuest::where('parent_guest_id', $parent->id)->where('email', 'ahmad@jawapos.local')->first();
+    expect($child1)->not->toBeNull()
+        ->and($child1->code)->not->toBe($parent->code)
+        ->and($child1->seat_count)->toBe(1)
+        ->and($child1->status)->toBe('confirmed');
 
-    $guest->refresh();
-    expect($guest->status)->toBe('confirmed')
-        ->and($guest->name)->toBe('Ahmad Jurnalis')
-        ->and($guest->email)->toBe('ahmad@jawapos.local')
-        ->and($guest->phone)->toBe('081399887766')
-        ->and($guest->seat_count)->toBe(1);
+    // 2nd journalist registers
+    $res2 = $this->post(route('home.guest.rsvp.confirm', ['identifier' => $parent->code]), [
+        'name' => 'Budi Reporter',
+        'email' => 'budi@jawapos.local',
+        'phone' => '081399887755',
+        'attendance' => 'confirmed',
+    ]);
+    $res2->assertSessionHas('success');
+
+    expect($parent->children()->count())->toBe(2);
+
+    // 3rd journalist should be blocked because quota (2) is full
+    $res3 = $this->post(route('home.guest.rsvp.confirm', ['identifier' => $parent->code]), [
+        'name' => 'Cici Fotografer',
+        'email' => 'cici@jawapos.local',
+        'phone' => '081399887744',
+        'attendance' => 'confirmed',
+    ]);
+    $res3->assertSessionHas('error');
+    expect($parent->children()->count())->toBe(2);
 });
 
 test('admin can print single guest invitation as A5 landscape', function () {

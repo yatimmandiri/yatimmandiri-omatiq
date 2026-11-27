@@ -404,8 +404,8 @@
             @php
                 $categoryLower = strtolower((string) $g->category);
                 $isPress = in_array($categoryLower, ['press', 'media'], true);
-                $universalUrl = route('home.registration.verify', ['registrationNumber' => $g->code]);
-                $qrSvg = app(\App\Services\BarcodeService::class)->generateQrCodeSvg($universalUrl, size: 92, color: '#0f172a');
+                $rsvpUrl = route('home.guest.rsvp', ['identifier' => $g->code]);
+                $qrSvg = app(\App\Services\BarcodeService::class)->generateQrCodeSvg($rsvpUrl, size: 92, color: '#0f172a');
 
                 $coverBg = $isPress
                     ? asset('assets/images/bg-press-inv.png')
